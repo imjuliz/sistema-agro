@@ -1,46 +1,52 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Textarea } from './ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, Download, AlertCircle } from 'lucide-react';
 import { Category } from './CategoryManager';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from './ui/alert';
 
-// export interface AccountPayable {
-//   id: string;
-//   competencyDate: string;
-//   dueDate: string;
-//   paymentDate?: string;
-//   amount: number;
-//   subcategoryId: string;
-//   description: string;
-//   status: 'pending' | 'paid' | 'overdue';
-// }
+export interface AccountPayable {
+  id: string;
+  competencyDate: string;
+  dueDate: string;
+  paymentDate?: string;
+  amount: number;
+  subcategoryId: string;
+  description: string;
+  status: 'pending' | 'paid' | 'overdue';
+}
 
-// interface AccountsPayableProps {
-//   accounts: AccountPayable[];
-//   categories: Category[];
-//   onAccountsChange: (accounts: AccountPayable[]) => void;
-// }
+interface AccountsPayableProps {
+  accounts: AccountPayable[];
+  categories: Category[];
+  onAccountsChange: (accounts: AccountPayable[]) => void;
+}
 
-// interface CSVRow {
-//   [key: string]: string;
-// }
+interface CSVRow {
+  [key: string]: string;
+}
 
-export function AccountsPayable({ accounts, categories, onAccountsChange }) {
+export function AccountsPayable({ accounts, categories, onAccountsChange }: AccountsPayableProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState(null);
-  const [importFile, setImportFile] = useState(null);
-  const [importProgress, setImportProgress] = useState({ show: false, processed: 0, total: 0, errors: [], imported: 0 });
+  const [editingAccount, setEditingAccount] = useState<AccountPayable | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importProgress, setImportProgress] = useState<{
+    show: boolean;
+    processed: number;
+    total: number;
+    errors: string[];
+    imported: number;
+  }>({ show: false, processed: 0, total: 0, errors: [], imported: 0 });
 
   // Estados para filtro
   const currentDate = new Date();
@@ -150,12 +156,12 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
     if (lines.length < 2) return [];
 
     const headers = parseCSVLine(lines[0]);
-    const rows = [];
+    const rows: CSVRow[] = [];
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
       if (values.length >= headers.length) {
-        const row = {};
+        const row: CSVRow = {};
         headers.forEach((header, index) => {
           row[header] = values[index] || '';
         });

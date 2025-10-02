@@ -1,66 +1,66 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Label } from './ui/label';
 import { TrendingUp, TrendingDown, Calendar, BarChart3, Edit, DollarSign } from 'lucide-react';
 import { Category } from './CategoryManager';
 import { AccountPayable } from './AccountsPayable';
 import { AccountReceivable } from './AccountsReceivable';
-import useLocalStorage from '../../hooks/useLocalStorage';
+import useLocalStorage from '../hooks/useLocalStorage';
 
-// interface BudgetData {
-//   [year: string]: {
-//     [categoryId: string]: {
-//       [subcategoryId: string]: {
-//         [month: number]: number; // 0-11 para Janeiro-Dezembro
-//       };
-//     };
-//   };
-// }
+interface BudgetData {
+  [year: string]: {
+    [categoryId: string]: {
+      [subcategoryId: string]: {
+        [month: number]: number; // 0-11 para Janeiro-Dezembro
+      };
+    };
+  };
+}
 
-// interface MonthlyIncomeStatementData {
-//   budgeted: number;
-//   actual: number;
-// }
+interface MonthlyIncomeStatementData {
+  budgeted: number;
+  actual: number;
+}
 
-// interface CategoryIncomeStatementData {
-//   [subcategoryId: string]: MonthlyIncomeStatementData;
-// }
+interface CategoryIncomeStatementData {
+  [subcategoryId: string]: MonthlyIncomeStatementData;
+}
 
-// interface MonthlyData {
-//   month: string;
-//   totalRevenue: MonthlyIncomeStatementData;
-//   totalExpenses: MonthlyIncomeStatementData;
-//   netResult: MonthlyIncomeStatementData;
-//   revenueByCategory: { [categoryId: string]: CategoryIncomeStatementData };
-//   expensesByCategory: { [categoryId: string]: CategoryIncomeStatementData };
-// }
+interface MonthlyData {
+  month: string;
+  totalRevenue: MonthlyIncomeStatementData;
+  totalExpenses: MonthlyIncomeStatementData;
+  netResult: MonthlyIncomeStatementData;
+  revenueByCategory: { [categoryId: string]: CategoryIncomeStatementData };
+  expensesByCategory: { [categoryId: string]: CategoryIncomeStatementData };
+}
 
-// interface YearSummary {
-//   totalRevenue: MonthlyIncomeStatementData;
-//   totalExpenses: MonthlyIncomeStatementData;
-//   netResult: MonthlyIncomeStatementData;
-//   revenueByCategory: { [categoryId: string]: CategoryIncomeStatementData };
-//   expensesByCategory: { [categoryId: string]: CategoryIncomeStatementData };
-// }
+interface YearSummary {
+  totalRevenue: MonthlyIncomeStatementData;
+  totalExpenses: MonthlyIncomeStatementData;
+  netResult: MonthlyIncomeStatementData;
+  revenueByCategory: { [categoryId: string]: CategoryIncomeStatementData };
+  expensesByCategory: { [categoryId: string]: CategoryIncomeStatementData };
+}
 
-// interface IncomeStatementProps {
-//   categories: Category[];
-//   accountsPayable: AccountPayable[];
-//   accountsReceivable: AccountReceivable[];
-// }
+interface IncomeStatementProps {
+  categories: Category[];
+  accountsPayable: AccountPayable[];
+  accountsReceivable: AccountReceivable[];
+}
 
-export function IncomeStatement({ categories, accountsPayable, accountsReceivable }) {
+export function IncomeStatement({ categories, accountsPayable, accountsReceivable }: IncomeStatementProps) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
-  const [budgetData, setBudgetData] = useLocalStorage('financial-app-budget-data', {});
+  const [budgetData, setBudgetData] = useLocalStorage<BudgetData>('financial-app-budget-data', {});
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingCategory, setEditingCategory] = useState<{ categoryId: string; subcategoryId: string } | null>(null);
   const [budgetValues, setBudgetValues] = useState(new Array(12).fill(0));
 
   const months = [
@@ -82,10 +82,10 @@ export function IncomeStatement({ categories, accountsPayable, accountsReceivabl
 
   const { incomeStatementData, yearSummary } = useMemo(() => {
     const year = parseInt(selectedYear);
-    const monthlyData = [];
+    const monthlyData: MonthlyData[] = [];
 
     // Inicializar resumo anual
-    const yearSummaryy = {
+    const yearSummary: YearSummary = {
       totalRevenue: { budgeted: 0, actual: 0 },
       totalExpenses: { budgeted: 0, actual: 0 },
       netResult: { budgeted: 0, actual: 0 },
@@ -110,7 +110,7 @@ export function IncomeStatement({ categories, accountsPayable, accountsReceivabl
       });
 
       // Calcular receitas por categoria
-      const revenueByCategory = {};
+      const revenueByCategory: { [categoryId: string]: CategoryIncomeStatementData } = {};
       let totalActualRevenue = 0;
       let totalBudgetedRevenue = 0;
 
@@ -150,7 +150,7 @@ export function IncomeStatement({ categories, accountsPayable, accountsReceivabl
       });
 
       // Calcular despesas por categoria
-      const expensesByCategory = {};
+      const expensesByCategory: { [categoryId: string]: CategoryIncomeStatementData } = {};
       let totalActualExpenses = 0;
       let totalBudgetedExpenses = 0;
 
