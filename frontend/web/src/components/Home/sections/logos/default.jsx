@@ -1,10 +1,10 @@
 import { siteConfig } from "@/config/site";
 
-import Plataforma from "@/components/logos/plataforma";
-import Acesso from "@/components/logos/acesso";
-import Seguranca from "@/components/logos/seguranca";
-import Tailwind from "@/components/logos/tailwind";
-import Iot from "@/components/logos/iot";
+import Plataforma from "@/components/Home/logos/plataforma";
+import Acesso from "@/components/Home/logos/acesso";
+import Seguranca from "@/components/Home/logos/seguranca";
+import Tailwind from "@/components/Home/logos/tailwind";
+import Iot from "@/components/Home/logos/iot";
 import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/ui/logo";
 import { Section } from "@/components/ui/section";
