@@ -1,0 +1,1 @@
+// Gestão de Lotes e Talhões: Cadastro de talhões (área de plantio). Criação de lotes vinculados a um talhão e período. Status automático do lote: Próprio para consumo, Consumo com alerta, Impróprio para venda. Histórico de rastreabilidade (todas as atividades registradas no lote).

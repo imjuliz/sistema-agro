@@ -1,0 +1,2 @@
+// Agricultura: Registrar Plantio (data, talhão, cultura, quantidade). Irrigação (data, área, volume). Adubação / Agrotóxicos (produto, quantidade, responsável, validade).
+// Pecuária: Registrar Alimentação (tipo, lote/animal, quantidade). Vacinação e manejo veterinário (animal/lote, medicamento, dose, responsável). Histórico por lote ou por animal.

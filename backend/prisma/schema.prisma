@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model perfis {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique
+  descricao String?
+  usuarios  usuarios[]
+
+  @@map("perfis")
+}
+
+model unidades {
+  id            Int         @id @default(autoincrement())
+  nome          String
+  endereco      String?
+  criado_em     DateTime    @default(now())
+  atualizado_em DateTime    @default(now())
+  tipo          TipoUnidade
+  usuarios      usuarios[]
+
+  @@map("unidades")
+}
+
+model usuarios {
+  id            Int       @id @default(autoincrement())
+  nome          String
+  email         String    @unique
+  senha         String
+  telefone      String?
+  perfil_id     Int
+  unidade_id    Int?
+  status        Boolean   @default(true)
+  criado_em     DateTime  @default(now())
+  atualizado_em DateTime  @default(now())
+  perfil        perfis    @relation(fields: [perfil_id], references: [id])
+  unidade       unidades? @relation(fields: [unidade_id], references: [id])
+
+  @@map("usuarios")
+}
+
+enum TipoUnidade {
+  MATRIZ
+  FAZENDA
+  LOJA
+}

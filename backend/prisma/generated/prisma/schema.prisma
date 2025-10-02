@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model perfis {
+  id        Int     @id @default(autoincrement())
+  nome      String  @unique
+  descricao String?
+
+  usuarios usuarios[]
+
+  @@map("perfis")
+}
+
+model unidades {
+  id            Int         @id @default(autoincrement())
+  nome          String
+  tipo          TipoUnidade
+  endereco      String?
+  criado_em     DateTime    @default(now())
+  atualizado_em DateTime    @default(now())
+
+  usuarios usuarios[]
+
+  @@map("unidades")
+}
+
+model usuarios {
+  id            Int      @id @default(autoincrement())
+  nome          String
+  email         String   @unique
+  senha         String
+  telefone      String?
+  perfil_id     Int
+  unidade_id    Int?
+  status        Boolean  @default(true)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @default(now())
+
+  perfil  perfis    @relation(fields: [perfil_id], references: [id])
+  unidade unidades? @relation(fields: [unidade_id], references: [id])
+
+  @@map("usuarios")
+}
+
+enum TipoUnidade {
+  MATRIZ
+  FAZENDA
+  LOJA
+}
+
+/**
+ * ----------------------------------------Create----------------------------------------
+ * Create - cria
+ * const user = await prisma.user.create({
+ * data: {
+ * name: "Richard",
+ * email: "richard@email.com",
+ * age: 22,
+ * },
+ * });
+ * createMany - cria múltiplos registros de uma vez.
+ * const users = await prisma.user.createMany({
+ * data: [
+ * { name: "Ana", email: "ana@email.com", age: 25 },
+ * { name: "Lucas", email: "lucas@email.com", age: 30 },
+ * ],
+ * });
+ * ----------------------------------------Read---------------------------------------------
+ * findUnique - busca um registro único por campo único (id ou email).
+ * const user = await prisma.user.findUnique({
+ * where: { email: "richard@email.com" },
+ * });
+ * findFirst - busca o primeiro registro que bate com o filtro.
+ * const user = await prisma.user.findFirst({
+ * where: { age: { gte: 18 } }, // maior ou igual a 18
+ * });
+ * findMany → busca vários registros com filtros, ordenação e paginação.
+ * const users = await prisma.user.findMany({
+ * where: { age: { gte: 18 } },
+ * orderBy: { name: "asc" },
+ * take: 10, // limita a 10 resultados
+ * skip: 5,  // pula os 5 primeiros
+ * });
+ * count → conta quantos registros batem com um filtro.
+ * const total = await prisma.user.count({
+ * where: { age: { gte: 18 } },
+ * });
+ * ---------------------------------------update---------------------------------------
+ * update → atualiza um registro único.
+ * const user = await prisma.user.update({
+ * where: { id: 1 },
+ * data: { age: 23 },
+ * });
+ * updateMany → atualiza múltiplos registros.
+ * const result = await prisma.user.updateMany({
+ * where: { age: { lt: 18 } },
+ * data: { age: 18 },
+ * });
+ * ---------------------------------------Delete---------------------------------------
+ * delete → deleta um registro único.
+ * const user = await prisma.user.delete({
+ * where: { id: 1 },
+ * });
+ * deleteMany → deleta múltiplos registros.
+ * const result = await prisma.user.deleteMany({
+ * where: { age: { lt: 18 } },
+ * });
+ */

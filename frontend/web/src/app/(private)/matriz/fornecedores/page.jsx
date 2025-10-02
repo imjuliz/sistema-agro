@@ -1,0 +1,2 @@
+// Gestão de Fornecedores, Insumos e Ativos: Organizar toda a base de recursos do negócio.
+// layout: Fornecedores -> Cadastro de fornecedores (nome, contato, tipo de insumo fornecido). Histórico de compras. Insumos -> Tabela com insumos (sementes, adubos, rações, agrotóxicos). Estoque consolidado. Alertas de vencimento. Ativos -> Cadastro de máquinas e animais. Para animais: ficha veterinária individual. Para máquinas: controle de manutenção.
