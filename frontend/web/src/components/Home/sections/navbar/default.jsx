@@ -3,7 +3,7 @@ import { Menu } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import LaunchUI from "@/components/logos/launch-ui";
+import LaunchUI from "@/components/Home/logos/launch-ui";
 import { Button } from "@/components/ui/button";
 import {
   Navbar as NavbarComponent,

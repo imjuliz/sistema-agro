@@ -3,7 +3,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import Github from "@/components/logos/github";
+import Github from "@/components/Home/logos/github";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Glow from "@/components/ui/glow";
