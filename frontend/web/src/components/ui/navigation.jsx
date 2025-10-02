@@ -6,7 +6,7 @@ import React from "react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import LaunchUI from "@/components/logos/launch-ui";
+import LaunchUI from "@/components/Home/logos/launch-ui";
 import {
   NavigationMenu,
   NavigationMenuContent,

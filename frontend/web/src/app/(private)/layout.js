@@ -1,7 +1,7 @@
 'use client';
 
 import '@/app/globals.css'
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/NavBar/app-sidebar"
 import {
     Breadcrumb,
     BreadcrumbItem,
