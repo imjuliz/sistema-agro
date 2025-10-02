@@ -39,7 +39,7 @@ export async function cadastrarSe({ nome, email, senha }) {
   const hash = await bcrypt.hash(senha, salt)
   
   // busca o perfil gerente_fazenda
-  const perfil = await prisma.perfil.findUnique({
+  const perfil = await prisma.perfis.findUnique({
     where: { nome: 'gerente_fazenda' }
   })
 
@@ -48,7 +48,7 @@ export async function cadastrarSe({ nome, email, senha }) {
   }
   
   // cria usuário
-  const usuario = await prisma.usuario.create({
+  const usuario = await prisma.usuarios.create({
     data: {
       nome,
       email,
@@ -62,7 +62,7 @@ export async function cadastrarSe({ nome, email, senha }) {
 
 // Buscar usuário por email
 export async function getUserByEmail(email) {
-  const usuario = await prisma.usuario.findUnique({
+  const usuario = await prisma.usuarios.findUnique({
     where: { email }
   })
   return usuario // pode ser null se não existir
@@ -89,4 +89,21 @@ export async function deletarUsuario(userId) {
 
   console.log('Usuário deletado com sucesso:', data)
   return { sucesso: true }
+}
+
+export async function updatePerfis (id, nome, descricao) {
+try {
+  const update = prisma.perfis.update({
+    where: {
+      id
+    },
+    data: {
+      nome: nome, 
+      descricao: descricao
+    },
+
+  })
+} catch (error) {
+  
+}
 }
