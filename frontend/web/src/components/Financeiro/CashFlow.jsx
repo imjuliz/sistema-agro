@@ -1,56 +1,56 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Badge } from './ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Calendar, BarChart3 } from 'lucide-react';
 import { Category } from './CategoryManager';
 import { AccountPayable } from './AccountsPayable';
 import { AccountReceivable } from './AccountsReceivable';
-import useLocalStorage from '../hooks/useLocalStorage';
+import useLocalStorage from '../../hooks/useLocalStorage';
 
-interface CashFlowProps {
-  categories: Category[];
-  accountsPayable: AccountPayable[];
-  accountsReceivable: AccountReceivable[];
-}
+// interface CashFlowProps {
+//   categories: Category[];
+//   accountsPayable: AccountPayable[];
+//   accountsReceivable: AccountReceivable[];
+// }
 
-interface MonthlyFlowData {
-  forecasted: number;
-  actual: number;
-}
+// interface MonthlyFlowData {
+//   forecasted: number;
+//   actual: number;
+// }
 
-interface CategoryFlowData {
-  [subcategoryId: string]: MonthlyFlowData;
-}
+// interface CategoryFlowData {
+//   [subcategoryId: string]: MonthlyFlowData;
+// }
 
-interface MonthlyData {
-  month: string;
-  previousBalance: MonthlyFlowData;
-  totalIncome: MonthlyFlowData;
-  totalExpenses: MonthlyFlowData;
-  netGeneration: MonthlyFlowData;
-  finalBalance: MonthlyFlowData;
-  incomeByCategory: { [categoryId: string]: CategoryFlowData };
-  expensesByCategory: { [categoryId: string]: CategoryFlowData };
-}
+// interface MonthlyData {
+//   month: string;
+//   previousBalance: MonthlyFlowData;
+//   totalIncome: MonthlyFlowData;
+//   totalExpenses: MonthlyFlowData;
+//   netGeneration: MonthlyFlowData;
+//   finalBalance: MonthlyFlowData;
+//   incomeByCategory: { [categoryId: string]: CategoryFlowData };
+//   expensesByCategory: { [categoryId: string]: CategoryFlowData };
+// }
 
-interface YearSummary {
-  totalIncome: MonthlyFlowData;
-  totalExpenses: MonthlyFlowData;
-  netGeneration: MonthlyFlowData;
-  finalBalance: MonthlyFlowData;
-  incomeByCategory: { [categoryId: string]: CategoryFlowData };
-  expensesByCategory: { [categoryId: string]: CategoryFlowData };
-}
+// interface YearSummary {
+//   totalIncome: MonthlyFlowData;
+//   totalExpenses: MonthlyFlowData;
+//   netGeneration: MonthlyFlowData;
+//   finalBalance: MonthlyFlowData;
+//   incomeByCategory: { [categoryId: string]: CategoryFlowData };
+//   expensesByCategory: { [categoryId: string]: CategoryFlowData };
+// }
 
-export function CashFlow({ categories, accountsPayable, accountsReceivable }: CashFlowProps) {
+export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [initialBalance, setInitialBalance] = useLocalStorage('financial-app-initial-balance', 0);
-  
+
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -61,10 +61,10 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
       ...accountsPayable.map(acc => acc.competencyDate),
       ...accountsReceivable.map(acc => acc.competencyDate)
     ];
-    
+
     const yearSet = new Set(allDates.map(date => new Date(date).getFullYear()));
     yearSet.add(currentYear);
-    
+
     return Array.from(yearSet).sort((a, b) => b - a);
   }, [accountsPayable, accountsReceivable, currentYear]);
 
@@ -116,7 +116,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
       });
 
       // Calcular receitas por categoria
-      const incomeByCategory: { [categoryId: string]: CategoryFlowData } = {};
+      const incomeByCategory = {};
       let totalForecastedIncome = 0;
       let totalActualIncome = 0;
 
@@ -125,7 +125,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
         const subcategory = categories
           .flatMap(cat => cat.subcategories.map(sub => ({ ...sub, categoryId: cat.id })))
           .find(sub => sub.id === acc.subcategoryId);
-        
+
         if (subcategory) {
           if (!incomeByCategory[subcategory.categoryId]) {
             incomeByCategory[subcategory.categoryId] = {};
@@ -143,7 +143,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
         const subcategory = categories
           .flatMap(cat => cat.subcategories.map(sub => ({ ...sub, categoryId: cat.id })))
           .find(sub => sub.id === acc.subcategoryId);
-        
+
         if (subcategory) {
           if (!incomeByCategory[subcategory.categoryId]) {
             incomeByCategory[subcategory.categoryId] = {};
@@ -157,24 +157,51 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
       });
 
       // Calcular despesas por categoria
-      const expensesByCategory: { [categoryId: string]: CategoryFlowData } = {};
+      // const expensesByCategory: { [categoryId: string]: CategoryFlowData } = {};
+      // let totalForecastedExpenses = 0;
+      // let totalActualExpenses = 0;
+
+      // // DESPESAS PREVISTAS
+      // forecastedAccountsPayable.forEach(acc => {
+      //   const subcategory = categories
+      //     .flatMap(cat => cat.subcategories.map(sub => ({ ...sub, categoryId: cat.id })))
+      //     .find(sub => sub.id === acc.subcategoryId);
+
+      //   if (subcategory) {
+      //     if (!expensesByCategory[subcategory.categoryId]) {
+      //       expensesByCategory[subcategory.categoryId] = {};
+      //     }
+      //     if (!expensesByCategory[subcategory.categoryId][subcategory.id]) {
+      //       expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };
+      //     }
+      //     expensesByCategory[subcategory.categoryId][subcategory.id].forecasted += acc.amount;
+      //     totalForecastedExpenses += acc.amount;
+      //   }
+      // });
+      const expensesByCategory = {};
       let totalForecastedExpenses = 0;
       let totalActualExpenses = 0;
 
       // DESPESAS PREVISTAS
-      forecastedAccountsPayable.forEach(acc => {
+      forecastedAccountsPayable.forEach((acc) => {
         const subcategory = categories
-          .flatMap(cat => cat.subcategories.map(sub => ({ ...sub, categoryId: cat.id })))
-          .find(sub => sub.id === acc.subcategoryId);
-        
+          .flatMap((cat) =>
+            cat.subcategories.map((sub) => ({ ...sub, categoryId: cat.id }))
+          )
+          .find((sub) => sub.id === acc.subcategoryId);
+
         if (subcategory) {
           if (!expensesByCategory[subcategory.categoryId]) {
             expensesByCategory[subcategory.categoryId] = {};
           }
           if (!expensesByCategory[subcategory.categoryId][subcategory.id]) {
-            expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };
+            expensesByCategory[subcategory.categoryId][subcategory.id] = {
+              forecasted: 0,
+              actual: 0,
+            };
           }
-          expensesByCategory[subcategory.categoryId][subcategory.id].forecasted += acc.amount;
+          expensesByCategory[subcategory.categoryId][subcategory.id].forecasted +=
+            acc.amount;
           totalForecastedExpenses += acc.amount;
         }
       });
@@ -184,7 +211,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
         const subcategory = categories
           .flatMap(cat => cat.subcategories.map(sub => ({ ...sub, categoryId: cat.id })))
           .find(sub => sub.id === acc.subcategoryId);
-        
+
         if (subcategory) {
           if (!expensesByCategory[subcategory.categoryId]) {
             expensesByCategory[subcategory.categoryId] = {};
@@ -199,31 +226,31 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
 
       const netForecastedGeneration = totalForecastedIncome - totalForecastedExpenses;
       const netActualGeneration = totalActualIncome - totalActualExpenses;
-      
+
       const finalForecastedBalance = runningForecastedBalance + netForecastedGeneration;
       const finalActualBalance = runningActualBalance + netActualGeneration;
 
       monthlyData.push({
         month: months[month],
-        previousBalance: { 
-          forecasted: runningForecastedBalance, 
-          actual: runningActualBalance 
+        previousBalance: {
+          forecasted: runningForecastedBalance,
+          actual: runningActualBalance
         },
-        totalIncome: { 
-          forecasted: totalForecastedIncome, 
-          actual: totalActualIncome 
+        totalIncome: {
+          forecasted: totalForecastedIncome,
+          actual: totalActualIncome
         },
-        totalExpenses: { 
-          forecasted: totalForecastedExpenses, 
-          actual: totalActualExpenses 
+        totalExpenses: {
+          forecasted: totalForecastedExpenses,
+          actual: totalActualExpenses
         },
-        netGeneration: { 
-          forecasted: netForecastedGeneration, 
-          actual: netActualGeneration 
+        netGeneration: {
+          forecasted: netForecastedGeneration,
+          actual: netActualGeneration
         },
-        finalBalance: { 
-          forecasted: finalForecastedBalance, 
-          actual: finalActualBalance 
+        finalBalance: {
+          forecasted: finalForecastedBalance,
+          actual: finalActualBalance
         },
         incomeByCategory,
         expensesByCategory
@@ -248,9 +275,9 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
           if (!yearSummary.incomeByCategory[categoryId][subcategoryId]) {
             yearSummary.incomeByCategory[categoryId][subcategoryId] = { forecasted: 0, actual: 0 };
           }
-          yearSummary.incomeByCategory[categoryId][subcategoryId].forecasted += 
+          yearSummary.incomeByCategory[categoryId][subcategoryId].forecasted +=
             incomeByCategory[categoryId][subcategoryId].forecasted;
-          yearSummary.incomeByCategory[categoryId][subcategoryId].actual += 
+          yearSummary.incomeByCategory[categoryId][subcategoryId].actual +=
             incomeByCategory[categoryId][subcategoryId].actual;
         });
       });
@@ -263,9 +290,9 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
           if (!yearSummary.expensesByCategory[categoryId][subcategoryId]) {
             yearSummary.expensesByCategory[categoryId][subcategoryId] = { forecasted: 0, actual: 0 };
           }
-          yearSummary.expensesByCategory[categoryId][subcategoryId].forecasted += 
+          yearSummary.expensesByCategory[categoryId][subcategoryId].forecasted +=
             expensesByCategory[categoryId][subcategoryId].forecasted;
-          yearSummary.expensesByCategory[categoryId][subcategoryId].actual += 
+          yearSummary.expensesByCategory[categoryId][subcategoryId].actual +=
             expensesByCategory[categoryId][subcategoryId].actual;
         });
       });
@@ -291,12 +318,12 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
   const saidas = categories.filter(cat => cat.type === 'saida');
 
   const getCategoryYearTotal = (categoryId, type) => {
-    const categoryData = type === 'income' 
-      ? yearSummary.incomeByCategory[categoryId] 
+    const categoryData = type === 'income'
+      ? yearSummary.incomeByCategory[categoryId]
       : yearSummary.expensesByCategory[categoryId];
-    
+
     if (!categoryData) return { forecasted: 0, actual: 0 };
-    
+
     return Object.values(categoryData).reduce(
       (sum, subcategory) => ({
         forecasted: sum.forecasted + subcategory.forecasted,
@@ -313,7 +340,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }: Ca
           <h2>DFC - Demonstrativo de Fluxo de Caixa</h2>
           <p className="text-muted-foreground">Análise mensal e anual com previsão vs realizado</p>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Label htmlFor="initial-balance">Saldo Inicial:</Label>

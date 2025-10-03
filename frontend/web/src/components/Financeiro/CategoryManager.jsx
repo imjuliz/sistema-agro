@@ -1,41 +1,41 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Plus, Edit, Check, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-export interface Category {
-  id: string;
-  name: string;
-  type: 'entrada' | 'saida';
-  subcategories: Subcategory[];
-}
+// export interface Category {
+//   id: string;
+//   name: string;
+//   type: 'entrada' | 'saida';
+//   subcategories: Subcategory[];
+// }
 
-export interface Subcategory {
-  id: string;
-  name: string;
-  categoryId: string;
-}
+// export interface Subcategory {
+//   id: string;
+//   name: string;
+//   categoryId: string;
+// }
 
-interface CategoryManagerProps {
-  categories: Category[];
-  onCategoriesChange: (categories: Category[]) => void;
-}
+// interface CategoryManagerProps {
+//   categories: Category[];
+//   onCategoriesChange: (categories: Category[]) => void;
+// }
 
-export function CategoryManager({ categories, onCategoriesChange }: CategoryManagerProps) {
+export function CategoryManager({ categories, onCategoriesChange }) {
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryType, setNewCategoryType] = useState<'entrada' | 'saida'>('entrada');
+  const [newCategoryType, setNewCategoryType] = useState('entrada');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddSubcategoryOpen, setIsAddSubcategoryOpen] = useState(false);
   
   // Estados para edição
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editingSubcategoryId, setEditingSubcategoryId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingSubcategoryId, setEditingSubcategoryId] = useState(null);
   const [editCategoryName, setEditCategoryName] = useState('');
   const [editSubcategoryName, setEditSubcategoryName] = useState('');
 
@@ -178,7 +178,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
               </div>
               <div>
                 <Label htmlFor="category-type">Tipo</Label>
-                <Select value={newCategoryType} onValueChange={(value: 'entrada' | 'saida') => setNewCategoryType(value)}>
+                <Select value={newCategoryType} onValueChange={(value) => setNewCategoryType(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
