@@ -4,6 +4,8 @@ import "./globals.css";
 import { siteConfig } from "../config/site";
 import { metadata, getMetadataFromPath } from './utils/metadata.js'
 import { ThemeProvider } from "@/contexts/theme-provider";
+import { TranslationProvider } from "@/hooks/useTranslation";
+
 // export const metadata = {
 //     title: {
 //       default: siteConfig.name,
@@ -77,9 +79,11 @@ export default function RootLayout({ children }) {
                 <meta name="description" content={siteConfig.description} />
             </head>
             <body className="bg-background antialiased">
+        <TranslationProvider>
                 <ThemeProvider>
                     {children}
                 </ThemeProvider>
+        </TranslationProvider>
             </body>
         </html>
     );
