@@ -91,19 +91,23 @@ export async function deletarUsuario(userId) {
   return { sucesso: true }
 }
 
-export async function updatePerfis (id, nome, descricao) {
+export async function updateUsuario(id, data) {
 try {
-  const update = prisma.perfis.update({
-    where: {
-      id
-    },
-    data: {
-      nome: nome, 
-      descricao: descricao
-    },
- 
-  })
+  const usuario = await prisma.usuarios.update({
+    where: { id },
+    data
+  });
+
+  return {
+    sucesso: true,
+    usuario,
+    message: "Perfis atualizados com sucesso."
+  };
 } catch (error) {
-  
+  return {
+    sucesso: false,
+    erro: "Erro ao atualizar perfis",
+    detalhes: error.message // opcional, para debug
+  };
 }
 }
