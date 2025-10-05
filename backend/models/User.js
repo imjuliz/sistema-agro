@@ -2,42 +2,12 @@ import { supabase } from "../config/supabase.js";
 import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client.js'
 
-// export async function cadastrarSe({ nome, email, senha }) {
-//   // hash da senha
-//   const salt = await bcrypt.genSalt(10);
-//   const hash = await bcrypt.hash(senha, salt);
-
-//   // busca o perfil gerente_fazenda
-//   const { data: perfilData, error: perfilError } = await supabase
-//     .from('perfis')
-//     .select('id')
-//     .eq('nome', 'gerente_fazenda')
-//     .maybeSingle();
-
-//   if (perfilError) throw perfilError;
-//   if (!perfilData) throw new Error("Perfil gerente_fazenda não encontrado");
-
-//   const perfil_id = perfilData.id;
-
-//   // insere usuário
-//   const { data, error } = await supabase
-//     .from('usuarios')
-//     .insert([{ nome, email, senha: hash, perfil_id }])
-//     .select();
-
-//   if (error) throw error;
-
-//   return data[0]; // retorna o usuário criado
-// }
-
-
-
 // Criar usuário
 export async function cadastrarSe({ nome, email, senha }) {
   // hash da senha
   const salt = await bcrypt.genSalt(10)
   const hash = await bcrypt.hash(senha, salt)
-  
+
   // busca o perfil gerente_fazenda
   const perfil = await prisma.perfis.findUnique({
     where: { nome: 'gerente_fazenda' }
@@ -46,7 +16,7 @@ export async function cadastrarSe({ nome, email, senha }) {
   if (!perfil) {
     throw new Error('Perfil gerente_fazenda não encontrado')
   }
-  
+
   // cria usuário
   const usuario = await prisma.usuarios.create({
     data: {
@@ -56,7 +26,7 @@ export async function cadastrarSe({ nome, email, senha }) {
       perfilId: perfil.id
     }
   })
-  
+
   return usuario
 }
 
@@ -68,17 +38,7 @@ export async function getUserByEmail(email) {
   return usuario // pode ser null se não existir
 }
 
-// export async function getUserByEmail(email) {
-//   const { data, error } = await supabase
-//     .from('usuarios')
-//     .select('*')
-//     .eq('email', email)
-//     .maybeSingle();
-
-//   if (error) throw error;
-//   return data; // pode ser null se não existir
-// }
-
+// deletar usuario
 export async function deletarUsuario(userId) {
   const { data, error } = await supabase.auth.admin.deleteUser(userId)
 
@@ -91,23 +51,24 @@ export async function deletarUsuario(userId) {
   return { sucesso: true }
 }
 
+// editar informacoes do usuario
 export async function updateUsuario(id, data) {
-try {
-  const usuario = await prisma.usuarios.update({
-    where: { id },
-    data
-  });
+  try {
+    const usuario = await prisma.usuarios.update({
+      where: { id },
+      data
+    });
 
-  return {
-    sucesso: true,
-    usuario,
-    message: "Perfis atualizados com sucesso."
-  };
-} catch (error) {
-  return {
-    sucesso: false,
-    erro: "Erro ao atualizar perfis",
-    detalhes: error.message // opcional, para debug
-  };
-}
+    return {
+      sucesso: true,
+      usuario,
+      message: "Perfis atualizados com sucesso."
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao atualizar perfis",
+      detalhes: error.message // opcional, para debug
+    };
+  }
 }

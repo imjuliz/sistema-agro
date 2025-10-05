@@ -8,13 +8,13 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 export default function FooterSection(props) {
   const {
     logo = <LaunchUI />,
-    name = "Launch UI",
+    name = "RuralTech",
     columns = [
       {
         title: "Outros conteúdos relevantes",
         links: [
-          { text: "Sobre Nós", href: siteConfig.url },
-          { text: "Blog", href: siteConfig.url },
+          { text: "Sobre Nós", href: '/sobreNos' },
+          { text: "Blog", href: '/blog' },
           // { text: "Documentation", href: siteConfig.url },
         ],
       },
@@ -29,16 +29,16 @@ export default function FooterSection(props) {
       {
         title: "Contatos",
         links: [
-          { text: "Email", href: siteConfig.url },
+          { text: "Email", href: 'mailto:ruraltech91@gmail.com' },
           { text: "Telefone", href: siteConfig.url },
-          { text: "Instagram", href: siteConfig.links.github },
+          { text: "Instagram", href: 'https://www.instagram.com/' },
         ],
       },
     ],
     copyright = "© 2025 RuralTech. Todos os direitos reservados",
     policies = [
-      { text: "Politica de Privacidade", href: siteConfig.url },
-      { text: "Termos de serviço", href: siteConfig.url },
+      { text: "Politica de Privacidade", href: '/politicaPrivacidade' },
+      { text: "Termos de Uso", href: '/termosDeUso' },
     ],
     showModeToggle = true,
     className,

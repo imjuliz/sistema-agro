@@ -1,3 +1,5 @@
+"use client"
+
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const TranslationContext = createContext();
@@ -6,8 +8,8 @@ export function TranslationProvider({ children }) {
   const [lang, setLang] = useState('pt-BR');
   const [dict, setDict] = useState({});
 
-  const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-  const TRANSLATE_ENDPOINT = `${BACKEND_BASE}/translate`;
+  const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
+  const TRANSLATE_ENDPOINT = `${BACKEND_BASE}translate`;
   console.log(TRANSLATE_ENDPOINT)
 
   useEffect(() => {

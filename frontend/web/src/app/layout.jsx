@@ -6,6 +6,10 @@ import { metadata, getMetadataFromPath } from './utils/metadata.js'
 import { ThemeProvider } from "@/contexts/theme-provider";
 import { TranslationProvider } from "@/hooks/useTranslation";
 
+// para tradução
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
+
 // export const metadata = {
 //     title: {
 //       default: siteConfig.name,
@@ -79,11 +83,13 @@ export default function RootLayout({ children }) {
                 <meta name="description" content={siteConfig.description} />
             </head>
             <body className="bg-background antialiased">
-        <TranslationProvider>
-                <ThemeProvider>
-                    {children}
-                </ThemeProvider>
-        </TranslationProvider>
+                <TranslationProvider>
+                    <ThemeProvider>
+                        <Transl>
+                            {children}
+                        </Transl>
+                    </ThemeProvider>
+                </TranslationProvider>
             </body>
         </html>
     );

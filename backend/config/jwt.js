@@ -1,1 +1,1 @@
-export const JWT_SECRET = '320c2a4afff5ab80f94f1264f3e643a15d6d391affa6cde663a458c515f76e2d6e171700fa0c8916bdc1a0ee376627ac8b239faed6b5b7e533b1565ba789d60c'; // Substitua pela sua chave secreta
+export const JWT_SECRET = '21d81a4b27a98483fb409cefa01b7994973e8fabe29715be264b2713f923d5ca1241d2fc4e073f24831519e0fc5cb105bd2ae0a4b0112d0c20c9b7d5a2f58e55'; // Substitua pela sua chave secreta

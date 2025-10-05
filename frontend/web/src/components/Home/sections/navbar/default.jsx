@@ -15,18 +15,19 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Navbar({
   logo = <LaunchUI />,
-  name = "Launch UI",
-  homeUrl = siteConfig.url,
+  name = "RuralTech",
+  // homeUrl = siteConfig.url,
+  homeUrl = '/',
   mobileLinks = [
-    { text: "Getting Started", href: siteConfig.url },
-    { text: "Components", href: siteConfig.url },
-    { text: "Documentation", href: siteConfig.url },
+    { text: "Para você", href: siteConfig.url },
+    { text: "Sobre nós", href: '/sobreNos' },
+    { text: "Blog", href: '/blog' },
   ],
   actions = [
-    { text: "Sign in", href: siteConfig.url, isButton: false },
+    { text: "Criar conta", href: '/cadastrar', isButton: true, variant:'outline' },
     {
-      text: "Get Started",
-      href: siteConfig.url,
+      text: "Entrar",
+      href: '/login',
       isButton: true,
       variant: "default",
     },

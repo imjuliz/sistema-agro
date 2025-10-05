@@ -31,21 +31,21 @@ export default function Hero(props) {
         <span className="text-muted-foreground">
           {/* New version of Launch UI is out! */}
         </span>
-        <a href={siteConfig.getStartedUrl} className="flex items-center gap-1">
+        <p className="flex items-center gap-1">
         Leve seu agronegócio para o próximo nível
-          <ArrowRightIcon className="size-3" />
-        </a>
+          {/* <ArrowRightIcon className="size-3" /> */}
+        </p>
       </Badge>
     ),
     buttons = [
       {
-        href: siteConfig.getStartedUrl,
-        text: "Get Started",
+        href: '/login',
+        text: "Entrar",
         variant: "default",
       },
       {
-        href: siteConfig.links.github,
-        text: "Github",
+        href: '/sobreNos',
+        text: "Conheça a RuralTech",
         variant: "glow",
         icon: <Github className="mr-2 size-4" />,
       },

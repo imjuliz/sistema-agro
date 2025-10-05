@@ -12,6 +12,10 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
+// para tradução
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
+
 import data from "./data.json"
 
 export default function Page() {

@@ -771,6 +771,10 @@ import {
   Filter
 } from 'lucide-react';
 
+// para tradução
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
+
 export default function App() {
   // Dados padrão para inicialização
   const defaultCategories = [

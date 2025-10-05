@@ -14,7 +14,7 @@ export default function CadastrarPage() {
             <BubbleBackground />
       </div>
       <div className="flex flex-col gap-4 p-6 md:p-10 relative">
-        <img src="/img/seila.svg" className='absolute top-0 left-0 w-[800px] h-[600px] z-0 -ml-19.5 -mt-10  dark:brightness-[0.0]' alt="Background"/>
+        {/* <img src="/img/seila.svg" className='absolute top-0 left-0 w-[800px] h-[600px] z-0 -ml-19.5 -mt-10  dark:brightness-[0.0]' alt="Background"/> */}
 
         <div className="flex items-center relative z-10"> 
           <a href="#" className="flex items-center gap-2 font-medium">

@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 
 // middlewares -----------------------------------------------------------------------------------------
-import { garantirAutenticado } from '../middlewares/authMiddleware.js';
+import { auth } from '../middlewares/authMiddleware.js'
 
 // controllers --------------------------------------------------------------------
 import { translateText } from '../controllers/TranslateController.js'

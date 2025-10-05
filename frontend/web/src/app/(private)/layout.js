@@ -17,6 +17,10 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 
+// para tradução
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
+
 export default function PrivateLayout({ children }) {
     return (
         <>
@@ -51,7 +55,9 @@ export default function PrivateLayout({ children }) {
           </div>
           <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
         </div> */}
-                    {children}
+                    <Transl>
+                        {children}
+                    </Transl>
 
                 </SidebarInset>
             </SidebarProvider>
