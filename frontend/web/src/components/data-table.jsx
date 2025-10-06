@@ -1,52 +1,21 @@
 "use client"
 
 import * as React from "react"
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
+import { closestCenter, DndContext, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors, } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import {
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-  IconCircleCheckFilled,
-  IconDotsVertical,
-  IconGripVertical,
-  IconLayoutColumns,
-  IconLoader,
-  IconPlus,
-  IconTrendingUp,
-  IconTrendingDown
+  IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconCircleCheckFilled, IconDotsVertical,
+  IconGripVertical, IconLayoutColumns, IconLoader, IconPlus, IconTrendingUp, IconTrendingDown
 } from "@tabler/icons-react"
 import {
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel,
+  getSortedRowModel, useReactTable,
 } from "@tanstack/react-table";
 import { Area, AreaChart, CartesianGrid, XAxis, Dot, Line, LineChart } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
-
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -73,40 +42,11 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardContent
-} from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs"
+import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 export const schema = z.object({
   id: z.number(),
@@ -121,22 +61,13 @@ export const schema = z.object({
 
 import { TrendingUp } from "lucide-react"
 
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 
 // Create a separate component for the drag handle
 function DragHandle({
   id
 }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  })
+  const { attributes, listeners } = useSortable({ id, })
 
   return (
     <Button
@@ -162,10 +93,7 @@ const columns = [
     header: ({ table }) => (
       <div className="flex items-center justify-center">
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all" />
       </div>
@@ -184,9 +112,7 @@ const columns = [
   {
     accessorKey: "header",
     header: "Header",
-    cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />;
-    },
+    cell: ({ row }) => { return <TableCellViewer item={row.original} />; },
     enableHiding: false,
   },
   {
@@ -265,10 +191,7 @@ const columns = [
     header: "Reviewer",
     cell: ({ row }) => {
       const isAssigned = row.original.reviewer !== "Assign reviewer"
-
-      if (isAssigned) {
-        return row.original.reviewer
-      }
+      if (isAssigned) { return row.original.reviewer }
 
       return (
         <>
@@ -321,9 +244,7 @@ const columns = [
 function DraggableRow({
   row
 }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  })
+  const { transform, transition, setNodeRef, isDragging } = useSortable({ id: row.original.id, })
 
   return (
     <TableRow
@@ -331,10 +252,7 @@ function DraggableRow({
       data-dragging={isDragging}
       ref={setNodeRef}
       className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}>
+      style={{ transform: CSS.Transform.toString(transform), transition: transition, }}>
       {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -349,14 +267,10 @@ export function DataTable({
 }) {
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] =
-    React.useState({})
+  const [columnVisibility, setColumnVisibility] = React.useState({})
   const [columnFilters, setColumnFilters] = React.useState([])
   const [sorting, setSorting] = React.useState([])
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10, })
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -376,14 +290,8 @@ export function DataTable({
 
   // Configuração das cores e labels do gráfico
   const chart1Config = {
-    producao: {
-      label: "Produção",
-      color: "var(--chart-1)",
-    },
-    entregas: {
-      label: "Entregas",
-      color: "var(--chart-2)",
-    },
+    producao: { label: "Produção", color: "var(--chart-1)", },
+    entregas: { label: "Entregas", color: "var(--chart-2)", },
   };
 
   // grafico 2 (de linha)
@@ -396,30 +304,12 @@ export function DataTable({
   ];
 
   const chart2Config = {
-    visitors: {
-      label: "Visitors",
-      color: "var(--chart-2)",
-    },
-    chrome: {
-      label: "Chrome",
-      color: "var(--chart-1)",
-    },
-    safari: {
-      label: "Safari",
-      color: "var(--chart-2)",
-    },
-    firefox: {
-      label: "Firefox",
-      color: "var(--chart-3)",
-    },
-    edge: {
-      label: "Edge",
-      color: "var(--chart-4)",
-    },
-    other: {
-      label: "Other",
-      color: "var(--chart-5)",
-    },
+    visitors: { label: "Visitors", color: "var(--chart-2)", },
+    chrome: { label: "Chrome", color: "var(--chart-1)", },
+    safari: { label: "Safari", color: "var(--chart-2)", },
+    firefox: { label: "Firefox", color: "var(--chart-3)", },
+    edge: { label: "Edge", color: "var(--chart-4)", },
+    other: { label: "Other", color: "var(--chart-5)", },
   };
 
   const dataIds = React.useMemo(() => data?.map(({ id }) => id) || [], [data])
@@ -427,13 +317,7 @@ export function DataTable({
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      pagination,
-    },
+    state: { sorting, columnVisibility, rowSelection, columnFilters, pagination, },
     getRowId: (row) => row.id.toString(),
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
@@ -501,17 +385,14 @@ export function DataTable({
             <DropdownMenuContent align="end" className="w-56">
               {table
                 .getAllColumns()
-                .filter((column) =>
-                  typeof column.accessorFn !== "undefined" &&
-                  column.getCanHide())
+                .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
                 .map((column) => {
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)
                       }>
                       {column.id}
                     </DropdownMenuCheckboxItem>
@@ -525,9 +406,7 @@ export function DataTable({
           </Button>
         </div>
       </div>
-      <TabsContent
-        value="geral"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+      <TabsContent value="geral" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
         <div className="overflow-hidden rounded-lg border">
           <DndContext
             collisionDetection={closestCenter}
@@ -542,9 +421,7 @@ export function DataTable({
                     {headerGroup.headers.map((header) => {
                       return (
                         <TableHead key={header.id} colSpan={header.colSpan}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
+                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
                       );
                     })}
@@ -581,9 +458,7 @@ export function DataTable({
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}>
+                onValueChange={(value) => { table.setPageSize(Number(value)) }}>
                 <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                   <SelectValue placeholder={table.getState().pagination.pageSize} />
                 </SelectTrigger>
@@ -601,38 +476,19 @@ export function DataTable({
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}>
+              <Button variant="outline" className="hidden h-8 w-8 p-0 lg:flex" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
                 <span className="sr-only">Primeira página</span>
                 <IconChevronsLeft />
               </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}>
+              <Button variant="outline" className="size-8" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                 <span className="sr-only">Página anterior</span>
                 <IconChevronLeft />
               </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}>
+              <Button variant="outline" className="size-8" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                 <span className="sr-only">Próxima página</span>
                 <IconChevronRight />
               </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}>
+              <Button variant="outline" className="hidden size-8 lg:flex" size="icon" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
                 <span className="sr-only">Última página</span>
                 <IconChevronsRight />
               </Button>
@@ -641,241 +497,326 @@ export function DataTable({
         </div>
       </TabsContent>
 
-
       <TabsContent value="fazendas" className="flex flex-col px-4 lg:px-6">
         <div className="aspect-video w-full flex flex-row gap-8 rounded-lg border border-dashed">
+          <div className="w-2/3">
+            {/* KPIs */}
+            <div
+              className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Total de unidades/filiais ativas</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    $1,250.00
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingUp />
+                      +12.5%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Trending up this month <IconTrendingUp className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">
+                    Visitors for the last 6 months
+                  </div>
+                </CardFooter>
+              </Card>
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Faturamento total consolidado</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    1,234
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingDown />
+                      -20%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Down 20% this period <IconTrendingDown className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">
+                    Acquisition needs attention
+                  </div>
+                </CardFooter>
+              </Card>
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Active Accounts</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    45,678
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingUp />
+                      +12.5%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Strong user retention <IconTrendingUp className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">Engagement exceed targets</div>
+                </CardFooter>
+              </Card>
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Growth Rate</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    4.5%
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingUp />
+                      +4.5%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Steady performance increase <IconTrendingUp className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">Meets growth projections</div>
+                </CardFooter>
+              </Card>
+            </div>
 
-<div className="w-2/3">
-
-{/* KPIs */}
-          <div
-            className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-            <Card className="@container/card">
+            {/* grafico */}
+            <Card>
               <CardHeader>
-                <CardDescription>Total de unidades/filiais ativas</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  $1,250.00
-                </CardTitle>
-                <CardAction>
-                  <Badge variant="outline">
-                    <IconTrendingUp />
-                    +12.5%
-                  </Badge>
-                </CardAction>
+                <CardTitle>Volume de produção e entregas por mês</CardTitle>
+                <CardDescription>
+                  {/* Showing total visitors for the last 6 months */}
+                  Mostrando total de produção/entregas nos últimos X meses
+                </CardDescription>
               </CardHeader>
-              <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                <div className="line-clamp-1 flex gap-2 font-medium">
-                  Trending up this month <IconTrendingUp className="size-4" />
+              <CardContent >
+                <ChartContainer config={chart1Config} className={'h-80 w-full'}>
+                  <AreaChart accessibilityLayer data={chart1Data} margin={{left: 12,right: 12,}}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)}/>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />}/>
+                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a"/>
+                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a"/>
+                    <ChartLegend content={<ChartLegendContent />} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter>
+                <div className="flex w-full items-start gap-2 text-sm">
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2 leading-none font-medium">
+                      Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                    </div>
+                    <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                      Mês tal - Mês tal (ano)
+                    </div>
+                  </div>
                 </div>
-                <div className="text-muted-foreground">
-                  Visitors for the last 6 months
-                </div>
-              </CardFooter>
-            </Card>
-            <Card className="@container/card">
-              <CardHeader>
-                <CardDescription>Faturamento total consolidado</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  1,234
-                </CardTitle>
-                <CardAction>
-                  <Badge variant="outline">
-                    <IconTrendingDown />
-                    -20%
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                <div className="line-clamp-1 flex gap-2 font-medium">
-                  Down 20% this period <IconTrendingDown className="size-4" />
-                </div>
-                <div className="text-muted-foreground">
-                  Acquisition needs attention
-                </div>
-              </CardFooter>
-            </Card>
-            <Card className="@container/card">
-              <CardHeader>
-                <CardDescription>Active Accounts</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  45,678
-                </CardTitle>
-                <CardAction>
-                  <Badge variant="outline">
-                    <IconTrendingUp />
-                    +12.5%
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                <div className="line-clamp-1 flex gap-2 font-medium">
-                  Strong user retention <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">Engagement exceed targets</div>
-              </CardFooter>
-            </Card>
-            <Card className="@container/card">
-              <CardHeader>
-                <CardDescription>Growth Rate</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  4.5%
-                </CardTitle>
-                <CardAction>
-                  <Badge variant="outline">
-                    <IconTrendingUp />
-                    +4.5%
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                <div className="line-clamp-1 flex gap-2 font-medium">
-                  Steady performance increase <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">Meets growth projections</div>
               </CardFooter>
             </Card>
           </div>
-
-
-          {/* grafico */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Volume de produção e entregas por mês</CardTitle>
-              <CardDescription>
-                {/* Showing total visitors for the last 6 months */}
-                Mostrando total de produção/entregas nos últimos X meses
-              </CardDescription>
-            </CardHeader>
-            <CardContent >
-              <ChartContainer config={chart1Config} className={'h-80 w-full'}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chart1Data}
-                  margin={{
-                    left: 12,
-                    right: 12,
-                  }}
-
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="line" />}
-                  />
-                  <Area
-                    dataKey="producao"
-                    type="natural"
-                    fill="var(--color-producao)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-producao)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="entregas"
-                    type="natural"
-                    fill="var(--color-entregas)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-entregas)"
-                    stackId="a"
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                </AreaChart>
-              </ChartContainer>
-            </CardContent>
-            <CardFooter>
-              <div className="flex w-full items-start gap-2 text-sm">
-                <div className="grid gap-2">
-                  <div className="flex items-center gap-2 leading-none font-medium">
-                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                  </div>
-                  <div className="text-muted-foreground flex items-center gap-2 leading-none">
-                    Mês tal - Mês tal (ano)
-                  </div>
+          <div className="w-1/3">
+            <Card >
+              <CardHeader>
+                <CardTitle>Line Chart - Dots Colors</CardTitle>
+                <CardDescription>January - June 2024</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chart2Config}>
+                  <LineChart accessibilityLayer data={chart2Data} margin={{top: 24,left: 24,right: 24,}}>
+                    <CartesianGrid vertical={false} />
+                    <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
+                    <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
+                      dot={({ payload, ...props }) => {
+                        return (
+                          <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>
+                        )
+                      }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter className="flex-col items-start gap-2 text-sm">
+                <div className="flex gap-2 leading-none font-medium">
+                  Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
                 </div>
-              </div>
-            </CardFooter>
-          </Card>
-</div>
-
-<div className="w-1/3">
-<Card >
-      <CardHeader>
-        <CardTitle>Line Chart - Dots Colors</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chart2Config}>
-          <LineChart
-            accessibilityLayer
-            data={chart2Data}
-            margin={{
-              top: 24,
-              left: 24,
-              right: 24,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  indicator="line"
-                  nameKey="visitors"
-                  hideLabel
-                />
-              }
-            />
-            <Line
-              dataKey="visitors"
-              type="natural"
-              stroke="var(--color-visitors)"
-              strokeWidth={2}
-              dot={({ payload, ...props }) => {
-                return (
-                  <Dot
-                    key={payload.browser}
-                    r={5}
-                    cx={props.cx}
-                    cy={props.cy}
-                    fill={payload.fill}
-                    stroke={payload.fill}
-                  />
-                )
-              }}
-            />
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                <div className="text-muted-foreground leading-none">
+                  Showing total visitors for the last 6 months
+                </div>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
-        <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
-    </Card>
-  
-</div>
-          
-        </div>
-
-
-
-
-
-
 
       </TabsContent>
       <TabsContent value="lojas" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
+          <div className="w-2/3">
+            {/* KPIs */}
+            <div
+              className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Total de unidades/filiais ativas</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    $1,250.00
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingUp />
+                      +12.5%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Trending up this month <IconTrendingUp className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">
+                    Visitors for the last 6 months
+                  </div>
+                </CardFooter>
+              </Card>
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Faturamento total consolidado</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    1,234
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingDown />
+                      -20%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Down 20% this period <IconTrendingDown className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">
+                    Acquisition needs attention
+                  </div>
+                </CardFooter>
+              </Card>
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Active Accounts</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    45,678
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingUp />
+                      +12.5%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Strong user retention <IconTrendingUp className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">Engagement exceed targets</div>
+                </CardFooter>
+              </Card>
+              <Card className="@container/card">
+                <CardHeader>
+                  <CardDescription>Growth Rate</CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                    4.5%
+                  </CardTitle>
+                  <CardAction>
+                    <Badge variant="outline">
+                      <IconTrendingUp />
+                      +4.5%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                  <div className="line-clamp-1 flex gap-2 font-medium">
+                    Steady performance increase <IconTrendingUp className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground">Meets growth projections</div>
+                </CardFooter>
+              </Card>
+            </div>
+
+            {/* grafico */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Volume de produção e entregas por mês</CardTitle>
+                <CardDescription>
+                  {/* Showing total visitors for the last 6 months */}
+                  Mostrando total de produção/entregas nos últimos X meses
+                </CardDescription>
+              </CardHeader>
+              <CardContent >
+                <ChartContainer config={chart1Config} className={'h-80 w-full'}>
+                  <AreaChart accessibilityLayer data={chart1Data} margin={{left: 12,right: 12,}}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)}/>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />}/>
+                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a"/>
+                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a"/>
+                    <ChartLegend content={<ChartLegendContent />} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter>
+                <div className="flex w-full items-start gap-2 text-sm">
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2 leading-none font-medium">
+                      Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                    </div>
+                    <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                      Mês tal - Mês tal (ano)
+                    </div>
+                  </div>
+                </div>
+              </CardFooter>
+            </Card>
+          </div>
+          <div className="w-1/3">
+            <Card >
+              <CardHeader>
+                <CardTitle>Line Chart - Dots Colors</CardTitle>
+                <CardDescription>January - June 2024</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chart2Config}>
+                  <LineChart accessibilityLayer data={chart2Data} margin={{top: 24,left: 24,right: 24,}}>
+                    <CartesianGrid vertical={false} />
+                    <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
+                    <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
+                      dot={({ payload, ...props }) => {
+                        return (
+                          <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>
+                        )
+                      }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter className="flex-col items-start gap-2 text-sm">
+                <div className="flex gap-2 leading-none font-medium">
+                  Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                </div>
+                <div className="text-muted-foreground leading-none">
+                  Showing total visitors for the last 6 months
+                </div>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
       </TabsContent>
       <TabsContent value="focus-documents" className="flex flex-col px-4 lg:px-6">
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
@@ -894,20 +835,11 @@ const chartData = [
 ]
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-
-  mobile: {
-    label: "Mobile",
-    color: "var(--primary)",
-  }
+  desktop: {label: "Desktop",color: "var(--primary)",},
+  mobile: {label: "Mobile",color: "var(--primary)",}
 }
 
-function TableCellViewer({
-  item
-}) {
+function TableCellViewer({item}) {
   const isMobile = useIsMobile()
 
   return (
@@ -928,36 +860,12 @@ function TableCellViewer({
           {!isMobile && (
             <>
               <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}>
+                <AreaChart accessibilityLayer data={chartData} margin={{left: 0,right: 10,}}>
                   <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} hide />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                  <Area
-                    dataKey="mobile"
-                    type="natural"
-                    fill="var(--color-mobile)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
-                    stackId="a" />
-                  <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a" />
+                  <Area dataKey="mobile" type="natural" fill="var(--color-mobile)" fillOpacity={0.6} stroke="var(--color-mobile)" stackId="a" />
+                  <Area dataKey="desktop" type="natural" fill="var(--color-desktop)" fillOpacity={0.4} stroke="var(--color-desktop)" stackId="a" />
                 </AreaChart>
               </ChartContainer>
               <Separator />
@@ -988,20 +896,12 @@ function TableCellViewer({
                     <SelectValue placeholder="Select a type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
+                    <SelectItem value="Table of Contents">Table of Contents</SelectItem>
+                    <SelectItem value="Executive Summary">Executive Summary</SelectItem>
+                    <SelectItem value="Technical Approach">Technical Approach</SelectItem>
                     <SelectItem value="Design">Design</SelectItem>
                     <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
+                    <SelectItem value="Focus Documents">Focus Documents</SelectItem>
                     <SelectItem value="Narrative">Narrative</SelectItem>
                     <SelectItem value="Cover Page">Cover Page</SelectItem>
                   </SelectContent>
@@ -1039,9 +939,7 @@ function TableCellViewer({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
-                  </SelectItem>
+                  <SelectItem value="Jamik Tashpulatov">Jamik Tashpulatov</SelectItem>
                   <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
                 </SelectContent>
               </Select>
