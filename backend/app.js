@@ -18,10 +18,35 @@ export const supabase = createClient(
 
 const app = express();
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+// app.use(cors({
+//   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+//   credentials: true
+// }));
+
+
+// --- CORS DINÂMICO ---
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://sistema-agro.vercel.app",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permite requisições sem "origin" (ex: Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.warn("❌ Origem bloqueada pelo CORS:", origin);
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 
 app.use(express.json());
 
@@ -36,7 +61,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production', // em dev use false
-    sameSite: 'lax', 
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     httpOnly: true 
   }
 }));
