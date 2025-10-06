@@ -691,7 +691,7 @@ export function DataTable({
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">Subiu 20%<IconTrendingDown className="size-4" /></div>
+                  <div className="line-clamp-1 flex gap-2 font-medium">Subiu 20%<IconTrendingUp className="size-4" /></div>
                   <div className="text-muted-foreground">Meta alcançada</div>
                 </CardFooter>
               </Card>

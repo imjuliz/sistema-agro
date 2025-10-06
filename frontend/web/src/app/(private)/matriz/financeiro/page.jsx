@@ -759,17 +759,7 @@ import { IncomeStatement } from '@/components/Financeiro/IncomeStatement';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import useLocalStorage from '@/hooks/useLocalStorage';
-import { 
-  Calculator, 
-  CreditCard, 
-  Wallet, 
-  TrendingUp, 
-  TrendingDown, 
-  BarChart3,
-  FileText,
-  Calendar,
-  Filter
-} from 'lucide-react';
+import { Calculator, CreditCard, Wallet, TrendingUp, TrendingDown, BarChart3, FileText, Calendar, Filter } from 'lucide-react';
 
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
@@ -903,10 +893,10 @@ export default function App() {
       ...accountsPayable.map(acc => acc.competencyDate),
       ...accountsReceivable.map(acc => acc.competencyDate)
     ];
-    
+
     const yearSet = new Set(allDates.map(date => new Date(date).getFullYear()));
     yearSet.add(currentDate.getFullYear());
-    
+
     return Array.from(yearSet).sort((a, b) => b - a);
   }, [accountsPayable, accountsReceivable, currentDate]);
 
@@ -914,7 +904,7 @@ export default function App() {
   const filteredData = useMemo(() => {
     const month = parseInt(selectedMonth);
     const year = parseInt(selectedYear);
-    
+
     const monthStart = new Date(year, month - 1, 1);
     const monthEnd = new Date(year, month, 0);
 
@@ -956,23 +946,11 @@ export default function App() {
     const receivedCount = filteredReceivable.filter(acc => acc.status === 'received').length;
     const paidCount = filteredPayable.filter(acc => acc.status === 'paid').length;
 
-    return {
-      totalReceivable,
-      totalPayable,
-      totalReceived,
-      totalPaid,
-      receivablePendingCount,
-      payablePendingCount,
-      receivedCount,
-      paidCount
-    };
+    return { totalReceivable, totalPayable, totalReceived, totalPaid, receivablePendingCount, payablePendingCount, receivedCount, paidCount };
   }, [filteredData]);
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
   const getSelectedMonthName = () => {
@@ -986,9 +964,9 @@ export default function App() {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="mb-2">Plataforma Financeira Pessoal</h1>
+              <h1 className="mb-2">Financeiro</h1>
               <p className="text-muted-foreground">
-                Gerencie suas finanças pessoais de forma organizada e eficiente
+                Orçamento da empresa
               </p>
             </div>
             <div className="text-xs text-muted-foreground">
@@ -1000,28 +978,22 @@ export default function App() {
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Dashboard
+              <BarChart3 className="h-4 w-4" />Dashboard
             </TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              Categorias
+              <Calculator className="h-4 w-4" />Categorias
             </TabsTrigger>
             <TabsTrigger value="payable" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Contas a Pagar
+              <CreditCard className="h-4 w-4" />Contas a Pagar
             </TabsTrigger>
             <TabsTrigger value="receivable" className="flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Contas a Receber
+              <Wallet className="h-4 w-4" />Contas a Receber
             </TabsTrigger>
             <TabsTrigger value="cashflow" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              DFC
+              <TrendingUp className="h-4 w-4" />DFC
             </TabsTrigger>
             <TabsTrigger value="dre" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              DRE
+              <FileText className="h-4 w-4" />DRE
             </TabsTrigger>
           </TabsList>
 
@@ -1030,8 +1002,7 @@ export default function App() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Filtro de Período
+                  <Filter className="h-5 w-5" />Filtro de Período
                 </CardTitle>
                 <CardDescription>
                   Selecione o mês e ano para visualizar os dados específicos do período
@@ -1131,7 +1102,6 @@ export default function App() {
                 </CardContent>
               </Card>
             </div>
-
             {/* Cards de Resumo Detalhado */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
@@ -1188,13 +1158,11 @@ export default function App() {
                     <div className="flex justify-between items-center">
                       <span>Resultado do Período</span>
                       <span className={
-                        (dashboardStats.totalReceived + dashboardStats.totalReceivable) - 
-                        (dashboardStats.totalPaid + dashboardStats.totalPayable) >= 0 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
+                        (dashboardStats.totalReceived + dashboardStats.totalReceivable) -
+                          (dashboardStats.totalPaid + dashboardStats.totalPayable) >= 0 ? 'text-green-600' : 'text-red-600'
                       }>
                         {formatCurrency(
-                          (dashboardStats.totalReceived + dashboardStats.totalReceivable) - 
+                          (dashboardStats.totalReceived + dashboardStats.totalReceivable) -
                           (dashboardStats.totalPaid + dashboardStats.totalPayable)
                         )}
                       </span>
@@ -1256,7 +1224,7 @@ export default function App() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingDown className="h-5 w-5 text-red-600" />
+                    <TrendingDown className="h-5 w-5 text-red-600"/>
                     Contas a Pagar - {getSelectedMonthName()}/{selectedYear}
                   </CardTitle>
                 </CardHeader>
@@ -1276,7 +1244,7 @@ export default function App() {
                         <div className="text-xs text-muted-foreground">{dashboardStats.payablePendingCount} contas</div>
                       </div>
                     </div>
-                    <hr />
+                    <hr/>
                     <div className="flex justify-between items-center">
                       <span>Total do Período</span>
                       <div className="text-right">
@@ -1284,7 +1252,7 @@ export default function App() {
                           {formatCurrency(dashboardStats.totalPaid + dashboardStats.totalPayable)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {dashboardStats.paidCount + dashboardStats.payablePendingCount} contas
+                          {dashboardStats.paidCount + dashboardStats.payablePendingCount}contas
                         </div>
                       </div>
                     </div>
@@ -1295,46 +1263,27 @@ export default function App() {
           </TabsContent>
 
           <TabsContent value="categories">
-            <CategoryManager 
-              categories={categories}
-              onCategoriesChange={setCategories}
-            />
+            <CategoryManager categories={categories} onCategoriesChange={setCategories}/>
           </TabsContent>
 
           <TabsContent value="payable">
-            <AccountsPayable 
-              accounts={accountsPayable}
-              categories={categories}
-              onAccountsChange={setAccountsPayable}
-            />
+            <AccountsPayable accounts={accountsPayable} categories={categories} onAccountsChange={setAccountsPayable}/>
           </TabsContent>
 
           <TabsContent value="receivable">
-            <AccountsReceivable 
-              accounts={accountsReceivable}
-              categories={categories}
-              onAccountsChange={setAccountsReceivable}
-            />
+            <AccountsReceivable accounts={accountsReceivable} categories={categories} onAccountsChange={setAccountsReceivable}/>
           </TabsContent>
 
           {/* Tabs com largura total para DFC e DRE */}
-          <TabsContent value="cashflow" className="-mx-4 w-screen relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
+          <TabsContent value="cashflow" className="-mx-4 w-500 relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
             <div className="px-4">
-              <CashFlow 
-                categories={categories}
-                accountsPayable={accountsPayable}
-                accountsReceivable={accountsReceivable}
-              />
+              <CashFlow categories={categories} accountsPayable={accountsPayable} accountsReceivable={accountsReceivable}/>
             </div>
           </TabsContent>
 
           <TabsContent value="dre" className="-mx-4 w-screen relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
             <div className="px-4">
-              <IncomeStatement 
-                categories={categories}
-                accountsPayable={accountsPayable}
-                accountsReceivable={accountsReceivable}
-              />
+              <IncomeStatement categories={categories} accountsPayable={accountsPayable} accountsReceivable={accountsReceivable}/>
             </div>
           </TabsContent>
         </Tabs>
