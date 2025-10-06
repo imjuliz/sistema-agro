@@ -278,7 +278,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
   };
 
   return (
-    <div className="space-y-6 max-w-full">
+    <div className="space-y-6 w-500 mg">
       <div className="flex justify-between items-center">
         <div>
           <h2>DFC - Demonstrativo de Fluxo de Caixa</h2>
@@ -309,7 +309,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
         </div>
       </div>
 
-      <Card className="w-100 ml-50">
+      <Card className="w-100">
         <CardHeader>
           <CardTitle>Fluxo de Caixa - {selectedYear}</CardTitle>
           <CardDescription>
