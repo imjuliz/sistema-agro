@@ -309,7 +309,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
         </div>
       </div>
 
-      <Card className="w-500 ml-50">
+      <Card className="w-400 ml-50">
         <CardHeader>
           <CardTitle>Fluxo de Caixa - {selectedYear}</CardTitle>
           <CardDescription>
