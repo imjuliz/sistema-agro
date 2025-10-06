@@ -17,14 +17,9 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 //   accountsReceivable: AccountReceivable[];
 // }
 
-// interface MonthlyFlowData {
-//   forecasted: number;
-//   actual: number;
-// }
+// interface MonthlyFlowData { forecasted: number; actual: number;}
 
-// interface CategoryFlowData {
-//   [subcategoryId: string]: MonthlyFlowData;
-// }
+// interface CategoryFlowData { [subcategoryId: string]: MonthlyFlowData;}
 
 // interface MonthlyData {
 //   month: string;
@@ -127,12 +122,8 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
           .find(sub => sub.id === acc.subcategoryId);
 
         if (subcategory) {
-          if (!incomeByCategory[subcategory.categoryId]) {
-            incomeByCategory[subcategory.categoryId] = {};
-          }
-          if (!incomeByCategory[subcategory.categoryId][subcategory.id]) {
-            incomeByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };
-          }
+          if (!incomeByCategory[subcategory.categoryId]) {incomeByCategory[subcategory.categoryId] = {};}
+          if (!incomeByCategory[subcategory.categoryId][subcategory.id]) {incomeByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };}
           incomeByCategory[subcategory.categoryId][subcategory.id].forecasted += acc.amount;
           totalForecastedIncome += acc.amount;
         }
@@ -145,12 +136,8 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
           .find(sub => sub.id === acc.subcategoryId);
 
         if (subcategory) {
-          if (!incomeByCategory[subcategory.categoryId]) {
-            incomeByCategory[subcategory.categoryId] = {};
-          }
-          if (!incomeByCategory[subcategory.categoryId][subcategory.id]) {
-            incomeByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };
-          }
+          if (!incomeByCategory[subcategory.categoryId]) {incomeByCategory[subcategory.categoryId] = {};}
+          if (!incomeByCategory[subcategory.categoryId][subcategory.id]) {incomeByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };}
           incomeByCategory[subcategory.categoryId][subcategory.id].actual += acc.amount;
           totalActualIncome += acc.amount;
         }
@@ -168,12 +155,8 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
       //     .find(sub => sub.id === acc.subcategoryId);
 
       //   if (subcategory) {
-      //     if (!expensesByCategory[subcategory.categoryId]) {
-      //       expensesByCategory[subcategory.categoryId] = {};
-      //     }
-      //     if (!expensesByCategory[subcategory.categoryId][subcategory.id]) {
-      //       expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };
-      //     }
+      //     if (!expensesByCategory[subcategory.categoryId]) { expensesByCategory[subcategory.categoryId] = {}; }
+      //     if (!expensesByCategory[subcategory.categoryId][subcategory.id]) { expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };}
       //     expensesByCategory[subcategory.categoryId][subcategory.id].forecasted += acc.amount;
       //     totalForecastedExpenses += acc.amount;
       //   }
@@ -185,23 +168,15 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
       // DESPESAS PREVISTAS
       forecastedAccountsPayable.forEach((acc) => {
         const subcategory = categories
-          .flatMap((cat) =>
-            cat.subcategories.map((sub) => ({ ...sub, categoryId: cat.id }))
-          )
+          .flatMap((cat) =>cat.subcategories.map((sub) => ({ ...sub, categoryId: cat.id })))
           .find((sub) => sub.id === acc.subcategoryId);
 
         if (subcategory) {
-          if (!expensesByCategory[subcategory.categoryId]) {
-            expensesByCategory[subcategory.categoryId] = {};
-          }
+          if (!expensesByCategory[subcategory.categoryId]) {expensesByCategory[subcategory.categoryId] = {};}
           if (!expensesByCategory[subcategory.categoryId][subcategory.id]) {
-            expensesByCategory[subcategory.categoryId][subcategory.id] = {
-              forecasted: 0,
-              actual: 0,
-            };
+            expensesByCategory[subcategory.categoryId][subcategory.id] = {forecasted: 0,actual: 0,};
           }
-          expensesByCategory[subcategory.categoryId][subcategory.id].forecasted +=
-            acc.amount;
+          expensesByCategory[subcategory.categoryId][subcategory.id].forecasted += acc.amount;
           totalForecastedExpenses += acc.amount;
         }
       });
@@ -213,12 +188,8 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
           .find(sub => sub.id === acc.subcategoryId);
 
         if (subcategory) {
-          if (!expensesByCategory[subcategory.categoryId]) {
-            expensesByCategory[subcategory.categoryId] = {};
-          }
-          if (!expensesByCategory[subcategory.categoryId][subcategory.id]) {
-            expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };
-          }
+          if (!expensesByCategory[subcategory.categoryId]) {expensesByCategory[subcategory.categoryId] = {};}
+          if (!expensesByCategory[subcategory.categoryId][subcategory.id]) {expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };}
           expensesByCategory[subcategory.categoryId][subcategory.id].actual += acc.amount;
           totalActualExpenses += acc.amount;
         }
@@ -232,26 +203,11 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
 
       monthlyData.push({
         month: months[month],
-        previousBalance: {
-          forecasted: runningForecastedBalance,
-          actual: runningActualBalance
-        },
-        totalIncome: {
-          forecasted: totalForecastedIncome,
-          actual: totalActualIncome
-        },
-        totalExpenses: {
-          forecasted: totalForecastedExpenses,
-          actual: totalActualExpenses
-        },
-        netGeneration: {
-          forecasted: netForecastedGeneration,
-          actual: netActualGeneration
-        },
-        finalBalance: {
-          forecasted: finalForecastedBalance,
-          actual: finalActualBalance
-        },
+        previousBalance: {forecasted: runningForecastedBalance,actual: runningActualBalance},
+        totalIncome: {forecasted: totalForecastedIncome,actual: totalActualIncome},
+        totalExpenses: {forecasted: totalForecastedExpenses,actual: totalActualExpenses},
+        netGeneration: {forecasted: netForecastedGeneration,actual: netActualGeneration},
+        finalBalance: {forecasted: finalForecastedBalance,actual: finalActualBalance},
         incomeByCategory,
         expensesByCategory
       });
@@ -268,13 +224,9 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
 
       // Acumular categorias no resumo anual
       Object.keys(incomeByCategory).forEach(categoryId => {
-        if (!yearSummary.incomeByCategory[categoryId]) {
-          yearSummary.incomeByCategory[categoryId] = {};
-        }
+        if (!yearSummary.incomeByCategory[categoryId]) {yearSummary.incomeByCategory[categoryId] = {};}
         Object.keys(incomeByCategory[categoryId]).forEach(subcategoryId => {
-          if (!yearSummary.incomeByCategory[categoryId][subcategoryId]) {
-            yearSummary.incomeByCategory[categoryId][subcategoryId] = { forecasted: 0, actual: 0 };
-          }
+          if (!yearSummary.incomeByCategory[categoryId][subcategoryId]) {yearSummary.incomeByCategory[categoryId][subcategoryId] = { forecasted: 0, actual: 0 };}
           yearSummary.incomeByCategory[categoryId][subcategoryId].forecasted +=
             incomeByCategory[categoryId][subcategoryId].forecasted;
           yearSummary.incomeByCategory[categoryId][subcategoryId].actual +=
@@ -283,13 +235,9 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
       });
 
       Object.keys(expensesByCategory).forEach(categoryId => {
-        if (!yearSummary.expensesByCategory[categoryId]) {
-          yearSummary.expensesByCategory[categoryId] = {};
-        }
+        if (!yearSummary.expensesByCategory[categoryId]) {yearSummary.expensesByCategory[categoryId] = {};}
         Object.keys(expensesByCategory[categoryId]).forEach(subcategoryId => {
-          if (!yearSummary.expensesByCategory[categoryId][subcategoryId]) {
-            yearSummary.expensesByCategory[categoryId][subcategoryId] = { forecasted: 0, actual: 0 };
-          }
+          if (!yearSummary.expensesByCategory[categoryId][subcategoryId]) {yearSummary.expensesByCategory[categoryId][subcategoryId] = { forecasted: 0, actual: 0 };}
           yearSummary.expensesByCategory[categoryId][subcategoryId].forecasted +=
             expensesByCategory[categoryId][subcategoryId].forecasted;
           yearSummary.expensesByCategory[categoryId][subcategoryId].actual +=
@@ -308,10 +256,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
   }, [selectedYear, accountsPayable, accountsReceivable, categories, initialBalance]);
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
+    return new Intl.NumberFormat('pt-BR', {style: 'currency',currency: 'BRL'}).format(value);
   };
 
   const entradas = categories.filter(cat => cat.type === 'entrada');
@@ -319,8 +264,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
 
   const getCategoryYearTotal = (categoryId, type) => {
     const categoryData = type === 'income'
-      ? yearSummary.incomeByCategory[categoryId]
-      : yearSummary.expensesByCategory[categoryId];
+      ? yearSummary.incomeByCategory[categoryId] : yearSummary.expensesByCategory[categoryId];
 
     if (!categoryData) return { forecasted: 0, actual: 0 };
 
@@ -334,25 +278,18 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
   };
 
   return (
-    <div className="space-y-6 max-w-full">
+    <div className="space-y-6 w-380 mg ml-35 ">
       <div className="flex justify-between items-center">
-        <div>
-          <h2>DFC - Demonstrativo de Fluxo de Caixa</h2>
+        <div className="ml-9">
+          <h2 >DFC - Demonstrativo de Fluxo de Caixa</h2>
           <p className="text-muted-foreground">Análise mensal e anual com previsão vs realizado</p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Label htmlFor="initial-balance">Saldo Inicial:</Label>
-            <Input
-              id="initial-balance"
-              type="number"
-              step="0.01"
-              placeholder="0,00"
-              value={initialBalance}
-              onChange={(e) => setInitialBalance(parseFloat(e.target.value) || 0)}
-              className="w-32"
-            />
+            <Input id="initial-balance" type="number" step="0.01" placeholder="0,00" value={initialBalance}
+              onChange={(e) => setInitialBalance(parseFloat(e.target.value) || 0)} className="w-32"/>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -372,11 +309,11 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
         </div>
       </div>
 
-      <Card className="w-full">
+      <Card className="w-380 ml-5 ">
         <CardHeader>
           <CardTitle>Fluxo de Caixa - {selectedYear}</CardTitle>
           <CardDescription>
-            Comparação entre valores previstos (vencimento) e realizados (pagamento)
+            Comparação entre valores previstos e realizados 
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
