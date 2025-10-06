@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export const usePerfilProtegido = (perfilNecessario) => {
   const router = useRouter();

@@ -17,6 +17,7 @@ export function LoginForm({
   const [loading, setLoading] = useState(false);
   const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
   const LOGIN_ENDPOINT = `${BACKEND_BASE}auth/login`;
+  console.log(LOGIN_ENDPOINT)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
