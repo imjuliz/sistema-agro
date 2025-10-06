@@ -1275,7 +1275,7 @@ export default function App() {
           </TabsContent>
 
           {/* Tabs com largura total para DFC e DRE */}
-          <TabsContent value="cashflow" className="-mx-4 w-500 relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
+          <TabsContent value="cashflow" className="-mx-4 w-300 relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
             <div className="px-4">
               <CashFlow categories={categories} accountsPayable={accountsPayable} accountsReceivable={accountsReceivable}/>
             </div>
