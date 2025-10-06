@@ -309,11 +309,11 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
         </div>
       </div>
 
-      <Card className="w-380 ml-12 ">
+      <Card className="w-380 ml-10 ">
         <CardHeader>
           <CardTitle>Fluxo de Caixa - {selectedYear}</CardTitle>
           <CardDescription>
-            Comparação entre valores previstos (vencimento) e realizados (pagamento)
+            Comparação entre valores previstos e realizados 
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
