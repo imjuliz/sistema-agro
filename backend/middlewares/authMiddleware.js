@@ -29,10 +29,7 @@ export const auth = (perfisPermitidos = []) => {
       const decoded = jwt.verify(token, JWT_SECRET);
 
       // Adiciona dados do usuário na requisição
-      req.usuarioId = decoded.id;
-      req.usuarioEmail = decoded.email;
-      req.usuarioPerfil = decoded.perfil;
-
+      req.usuario = decoded;
       // Se foram especificados perfis permitidos, verifica se o usuário está autorizado
       if (perfisPermitidos.length > 0 && !perfisPermitidos.includes(decoded.perfil)) {
         return res.status(403).json({ mensagem: "Acesso negado para este perfil" });

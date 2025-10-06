@@ -71,4 +71,4 @@ export async function updateUsuario(id, data) {
       detalhes: error.message // opcional, para debug
     };
   }
-}
+};

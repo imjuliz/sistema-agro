@@ -1,12 +1,14 @@
 import { cadastrarSe, getUserByEmail, updateUsuario, deletarUsuario } from "../models/User.js";
 import { createClient } from '@supabase/supabase-js';
 import prisma from "../prisma/client.js";
+import userShema from "../schemas/userSchema.js";
 
 // const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 export async function cadastrarSeController(req, res) {
   try {
-    const { nome, email, senha } = req.body;
+    const { nome, email, senha } = userShema.parse(req.body);
+    const id = req.usuario.id
 
     if (!nome || !email || !senha) {
       return res.status(400).json({ error: "Preencha todos os campos obrigatórios" });
@@ -30,17 +32,9 @@ export async function cadastrarSeController(req, res) {
 
 export const updateUsuarioController = async (req, res) => {
   const { id } = req.params.id;
-  const { nomeCompleto, email, funcao, setor, unidade, periodo } = req.body;
+  const { nomeCompleto, email, funcao, setor, unidade, periodo } = userShema.parse(req.body);
 
   try {
-    // Validações basicas
-    const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|example)\.com$/;
-      if (!domainEmailRegex.test(email)) {
-          return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @exemplo." });
-      }
-
-    const funcao = [];
-
     const unidadeData = { 
       nomeCompleto,
       email,
