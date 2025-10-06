@@ -661,15 +661,11 @@ export function DataTable({
       <TabsContent value="lojas" className="flex flex-col px-4 lg:px-6">
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
           <div className="w-2/3">
-            {/* KPIs */}
-            <div
-              className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+            <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
               <Card className="@container/card">
                 <CardHeader>
                   <CardDescription>Total de unidades/filiais ativas</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    $1,250.00
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">$1,250.00</CardTitle>
                   <CardAction>
                     <Badge variant="outline">
                       <IconTrendingUp />
@@ -678,20 +674,14 @@ export function DataTable({
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Trending up this month <IconTrendingUp className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">
-                    Visitors for the last 6 months
-                  </div>
+                  <div className="line-clamp-1 flex gap-2 font-medium">Trending up this month <IconTrendingUp className="size-4" /></div>
+                  <div className="text-muted-foreground">Visitors for the last 6 months</div>
                 </CardFooter>
               </Card>
               <Card className="@container/card">
                 <CardHeader>
                   <CardDescription>Faturamento total consolidado</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    1,234
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">1,234</CardTitle>
                   <CardAction>
                     <Badge variant="outline">
                       <IconTrendingDown />
@@ -700,20 +690,14 @@ export function DataTable({
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Down 20% this period <IconTrendingDown className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">
-                    Acquisition needs attention
-                  </div>
+                  <div className="line-clamp-1 flex gap-2 font-medium">Down 20% this period <IconTrendingDown className="size-4" /></div>
+                  <div className="text-muted-foreground">Acquisition needs attention</div>
                 </CardFooter>
               </Card>
               <Card className="@container/card">
                 <CardHeader>
                   <CardDescription>Active Accounts</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    45,678
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">45,678</CardTitle>
                   <CardAction>
                     <Badge variant="outline">
                       <IconTrendingUp />
@@ -722,18 +706,14 @@ export function DataTable({
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Strong user retention <IconTrendingUp className="size-4" />
-                  </div>
+                  <div className="line-clamp-1 flex gap-2 font-medium">Strong user retention <IconTrendingUp className="size-4" /></div>
                   <div className="text-muted-foreground">Engagement exceed targets</div>
                 </CardFooter>
               </Card>
               <Card className="@container/card">
                 <CardHeader>
                   <CardDescription>Growth Rate</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    4.5%
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">4.5%</CardTitle>
                   <CardAction>
                     <Badge variant="outline">
                       <IconTrendingUp />
@@ -742,22 +722,16 @@ export function DataTable({
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Steady performance increase <IconTrendingUp className="size-4" />
-                  </div>
+                  <div className="line-clamp-1 flex gap-2 font-medium">Steady performance increase <IconTrendingUp className="size-4" /></div>
                   <div className="text-muted-foreground">Meets growth projections</div>
                 </CardFooter>
               </Card>
             </div>
-
             {/* grafico */}
             <Card>
               <CardHeader>
                 <CardTitle>Volume de produção e entregas por mês</CardTitle>
-                <CardDescription>
-                  {/* Showing total visitors for the last 6 months */}
-                  Mostrando total de produção/entregas nos últimos X meses
-                </CardDescription>
+                <CardDescription> Mostrando total de produção/entregas nos últimos X meses</CardDescription>
               </CardHeader>
               <CardContent >
                 <ChartContainer config={chart1Config} className={'h-80 w-full'}>
@@ -774,12 +748,8 @@ export function DataTable({
               <CardFooter>
                 <div className="flex w-full items-start gap-2 text-sm">
                   <div className="grid gap-2">
-                    <div className="flex items-center gap-2 leading-none font-medium">
-                      Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                    </div>
-                    <div className="text-muted-foreground flex items-center gap-2 leading-none">
-                      Mês tal - Mês tal (ano)
-                    </div>
+                    <div className="flex items-center gap-2 leading-none font-medium">Trending up by 5.2% this month <TrendingUp className="h-4 w-4" /></div>
+                    <div className="text-muted-foreground flex items-center gap-2 leading-none">Mês tal - Mês tal (ano)</div>
                   </div>
                 </div>
               </CardFooter>
@@ -798,29 +768,21 @@ export function DataTable({
                     <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
                     <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
                       dot={({ payload, ...props }) => {
-                        return (
-                          <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>
-                        )
+                        return (<Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>)
                       }}
                     />
                   </LineChart>
                 </ChartContainer>
               </CardContent>
               <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="text-muted-foreground leading-none">
-                  Showing total visitors for the last 6 months
-                </div>
+                <div className="flex gap-2 leading-none font-medium">Trending up by 5.2% this month <TrendingUp className="h-4 w-4" /></div>
+                <div className="text-muted-foreground leading-none">Showing total visitors for the last 6 months</div>
               </CardFooter>
             </Card>
           </div>
         </div>
       </TabsContent>
-      <TabsContent value="focus-documents" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-      </TabsContent>
+      <TabsContent value="focus-documents" className="flex flex-col px-4 lg:px-6"><div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div></TabsContent>
     </Tabs>
   );
 }
@@ -834,10 +796,7 @@ const chartData = [
   { month: "June", desktop: 214, mobile: 140 },
 ]
 
-const chartConfig = {
-  desktop: {label: "Desktop",color: "var(--primary)",},
-  mobile: {label: "Mobile",color: "var(--primary)",}
-}
+const chartConfig = {desktop: {label: "Desktop",color: "var(--primary)",},mobile: {label: "Mobile",color: "var(--primary)",}}
 
 function TableCellViewer({item}) {
   const isMobile = useIsMobile()
@@ -845,16 +804,12 @@ function TableCellViewer({item}) {
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
-        <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.header}
-        </Button>
+        <Button variant="link" className="text-foreground w-fit px-0 text-left">{item.header}</Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.header}</DrawerTitle>
-          <DrawerDescription>
-            Showing total visitors for the last 6 months
-          </DrawerDescription>
+          <DrawerDescription>Showing total visitors for the last 6 months</DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           {!isMobile && (
@@ -874,11 +829,7 @@ function TableCellViewer({item}) {
                   Trending up by 5.2% this month{" "}
                   <IconTrendingUp className="size-4" />
                 </div>
-                <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
-                </div>
+                <div className="text-muted-foreground">Showing total visitors for the last 6 months. This is justsome random text to test the layout. It spans multiple linesand should wrap around.</div>
               </div>
               <Separator />
             </>
@@ -892,9 +843,7 @@ function TableCellViewer({item}) {
               <div className="flex flex-col gap-3">
                 <Label htmlFor="type">Type</Label>
                 <Select defaultValue={item.type}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
+                  <SelectTrigger id="type" className="w-full"><SelectValue placeholder="Select a type" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Table of Contents">Table of Contents</SelectItem>
                     <SelectItem value="Executive Summary">Executive Summary</SelectItem>
@@ -910,9 +859,7 @@ function TableCellViewer({item}) {
               <div className="flex flex-col gap-3">
                 <Label htmlFor="status">Status</Label>
                 <Select defaultValue={item.status}>
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Select a status" />
-                  </SelectTrigger>
+                  <SelectTrigger id="status" className="w-full"><SelectValue placeholder="Select a status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Done">Done</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
@@ -934,9 +881,7 @@ function TableCellViewer({item}) {
             <div className="flex flex-col gap-3">
               <Label htmlFor="reviewer">Reviewer</Label>
               <Select defaultValue={item.reviewer}>
-                <SelectTrigger id="reviewer" className="w-full">
-                  <SelectValue placeholder="Select a reviewer" />
-                </SelectTrigger>
+                <SelectTrigger id="reviewer" className="w-full"><SelectValue placeholder="Select a reviewer" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
                   <SelectItem value="Jamik Tashpulatov">Jamik Tashpulatov</SelectItem>
@@ -948,9 +893,7 @@ function TableCellViewer({item}) {
         </div>
         <DrawerFooter>
           <Button>Submit</Button>
-          <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
-          </DrawerClose>
+          <DrawerClose asChild><Button variant="outline">Done</Button></DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
