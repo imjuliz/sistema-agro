@@ -10,81 +10,27 @@ const router = express.Router();
 
 router.post("/cadastrar", cadastrarSeController);
 
-// router.post("/login", async (req, res) => {
-// const { email, senha } = req.body;
-// try {
-//     // Validações basicas
-//     const user = await prisma.usuarios.findUnique({
-//         where: { email: email }
-//     });
-        
-//     if (!user) { return res.status(401).json({ error: "Usuário ou senha incorretos" });}
-
-//     const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|exemplo)\.com$/;
-//     if (!domainEmailRegex.test(email)) {return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @exemplo." }); }
-
-//     const senhaValida = await bcrypt.compare(senha, user.senha);
-//     if (!senhaValida) { return res.status(401).json({ error: "Usuário ou senha incorretos" });}
-
-//     if (senha.length > 6) {return res.status(400).json({ mensagem: "A senha deve ter no máximo 6 caracteres." });  }
-
-//     // Verificar se o usuário está ativo
-//     if (user.status === "inativo") { return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." }); }
-
-// // Gerar o token JWT
-//     const token = jwt.sign(
-//     { id: user.id, email: user.email },
-//     JWT_SECRET,
-//     {expiresIn: "1h", }
-//     );
-  
-//     // Retornar dados do usuário (sem a senha) e o token
-//     const userData = {
-//         id: user.id,
-//         email: user.email
-//     };
-
-//         res.status(200).json({ message: "Usuário autenticado com sucesso", userData, token });
-//     } catch (error) {
-//         console.error("Erro ao buscar usuário:", error);
-//         res.status(500).json({ error: "Erro ao buscar usuário" });
-//     }
-// });
-
 router.post("/login", async (req, res) => {
     const { email, senha } = req.body;
     
     try {
-        // Validações básicas PRIMEIRO
-        if (!email || !senha) {
-            return res.status(400).json({ error: "Email e senha são obrigatórios" });
-        }
+        // Validações básicas 
+        if (!email || !senha) {return res.status(400).json({ error: "Email e senha são obrigatórios" });}
 
         // Validar formato do email ANTES de buscar no banco
         const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|example)\.com$/;
-        if (!domainEmailRegex.test(email)) {
-            return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @example." });
-        }
+        if (!domainEmailRegex.test(email)) {return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @example." });}
 
         // Validar tamanho da senha
-        if (senha.length < 1) {
-            return res.status(400).json({ mensagem: "A senha é obrigatória." });
-        }
+        if (senha.length < 1) {return res.status(400).json({ mensagem: "A senha é obrigatória." });}
 
         // Buscar usuário
-        const user = await prisma.usuarios.findUnique({
-            where: { email: email },
-            include: { perfil: true }
-        });
+        const user = await prisma.usuarios.findUnique({where: { email: email },include: { perfil: true }});
         
-        if (!user) {
-            return res.status(401).json({ error: "Usuário ou senha incorretos" });
-        }
+        if (!user) {return res.status(401).json({ error: "Usuário ou senha incorretos" });}
 
         // Verificar se o usuário está ativo
-        if (user.status === "inativo") {
-            return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });
-        }
+        if (user.status === "inativo") {return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });}
 
         // DEBUG: Verificar tipos dos dados
         console.log('Tipo da senha fornecida:', typeof senha);
@@ -97,29 +43,17 @@ router.post("/login", async (req, res) => {
 
         // Comparar senhas
         const senhaValida = await bcrypt.compare(senhaFornecida, senhaHash);
-        if (!senhaValida) {
-            return res.status(401).json({ error: "Usuário ou senha incorretos" });
-        }
+        if (!senhaValida) {return res.status(401).json({ error: "Usuário ou senha incorretos" });}
 
         // Gerar o token JWT
         const token = jwt.sign(
-            {
-                id: user.id,
-                email: user.email,
-                perfil: user.perfil.nome
-            },
+            {id: user.id,email: user.email,perfil: user.perfil.nome},
             JWT_SECRET,
-            {
-                expiresIn: "1h",
-            }
+            {expiresIn: "1h",}
         );
 
         // Retornar dados do usuário (sem a senha) e o token
-        const userData = {
-            id: user.id,
-            email: user.email,
-            perfil: user.perfil.nome
-        };
+        const userData = {id: user.id,email: user.email,perfil: user.perfil.nome};
 
         res.status(200).json({ message: "Usuário autenticado com sucesso", userData, token });
     } catch (error) {
@@ -131,18 +65,12 @@ router.post("/login", async (req, res) => {
 router.post("/forgotSenha", async (req, res) => {    
 const { email } = req.body;
 try {
-    const user = await prisma.usuarios.findUnique({
-        where: { email: email }
-    });
+    const user = await prisma.usuarios.findUnique({where: { email: email }});
         
-    if (!user) {
-        return res.status(401).json({ error: "Usuário ou senha incorretos" });
-    }
+    if (!user) {return res.status(401).json({ error: "Usuário ou senha incorretos" });}
     
     // Verificar se o usuário está ativo
-    if (user.status === "inativo") {
-        return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });
-    }
+    if (user.status === "inativo") {return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });}
 
     // Gerar código de 6 dígitos
     const codigo = String(Math.floor(100000 + Math.random() * 900000));
@@ -151,11 +79,7 @@ try {
 
     // Salvar no banco junto com a validade (10 minutos)
     await prisma.reset_senhas.create({
-        data: {
-            usuario_id: user.id,
-            codigo_reset: codigo,
-            codigo_expira: expira
-        }
+        data: {usuario_id: user.id,codigo_reset: codigo,codigo_expira: expira}
     });
 
     const oAuth2Client = new google.auth.OAuth2( process.env.SMTP_CLIENT_ID, process.env.SMTP_CLIENT_SECRET, process.env.GOOGLE_REDIRECT_URI );
@@ -202,18 +126,13 @@ try {
         where: { codigo_reset: codigo }
     });
 
-    if (!resetSenha) {
-        return res.status(401).json({ error: "Código inválido" });
-    }
+    if (!resetSenha) {return res.status(401).json({ error: "Código inválido" });}
 
     const codigo_expira = resetSenha.codigo_expira;
     const codigo_expirado = codigo_expira < new Date();
 
-    if (codigo_expirado === false) {
-        return res.status(400).json({ error: "Código expirado" });
-    } else {
-        return res.status(200).json({ message: "Código valido" });
-    }
+    if (codigo_expirado === false) {return res.status(400).json({ error: "Código expirado" });}
+    else {return res.status(200).json({ message: "Código valido" });}
 } catch (error) {
     console.error("Erro ao buscar codigo:", error);
     res.status(500).json({ error: "Erro ao buscar codigo" });
@@ -225,14 +144,9 @@ const { senha, confSenha } = req.body;
 try {
 
 // Validações 
-if (senha.length > 6 || confSenha.length > 6) {
-    return res.status(400).json({ mensagem: "A senha deve ter no máximo 6 caracteres." });
-}
+if (senha.length > 6 || confSenha.length > 6) {return res.status(400).json({ mensagem: "A senha deve ter no máximo 6 caracteres." });}
     const senhaData = await prisma.usuarios.create({
-        data: {
-            senha: senha, 
-            confSenha: confSenha
-        }
+        data: {senha: senha, confSenha: confSenha}
     });
 
 } catch (error) {
@@ -241,9 +155,7 @@ if (senha.length > 6 || confSenha.length > 6) {
 }
 });
 
-router.get('/teste', (req, res) => {
-  res.json({ message: 'Rota /auth/teste funcionando!' });
-});
+router.get('/teste', (req, res) => {res.json({ message: 'Rota /auth/teste funcionando!' });});
 
 
 export default router;
