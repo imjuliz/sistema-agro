@@ -710,7 +710,7 @@ export function DataTable({
               </Card>
               <Card className="@container/card">
                 <CardHeader>
-                  <CardDescription>Performance Geral</CardDescription>
+                  <CardDescription>Performance Geral da Empresa</CardDescription>
                   <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">85%</CardTitle>
                   <CardAction>
                     {/* <Badge variant="outline"> <IconTrendingUp /> +4.5% </Badge> */}
