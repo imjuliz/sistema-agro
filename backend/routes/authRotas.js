@@ -18,39 +18,24 @@ router.post("/cadastrar", cadastrarSeController);
 //         where: { email: email }
 //     });
         
-//     if (!user) {
-//         return res.status(401).json({ error: "Usuário ou senha incorretos" });
-//     }
+//     if (!user) { return res.status(401).json({ error: "Usuário ou senha incorretos" });}
 
 //     const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|exemplo)\.com$/;
-//     if (!domainEmailRegex.test(email)) {
-//         return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @exemplo." });
-//     }
+//     if (!domainEmailRegex.test(email)) {return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @exemplo." }); }
 
 //     const senhaValida = await bcrypt.compare(senha, user.senha);
-//     if (!senhaValida) {
-//         return res.status(401).json({ error: "Usuário ou senha incorretos" });
-//     }
+//     if (!senhaValida) { return res.status(401).json({ error: "Usuário ou senha incorretos" });}
 
-//     if (senha.length > 6) {
-//         return res.status(400).json({ mensagem: "A senha deve ter no máximo 6 caracteres." });
-//     }
+//     if (senha.length > 6) {return res.status(400).json({ mensagem: "A senha deve ter no máximo 6 caracteres." });  }
 
 //     // Verificar se o usuário está ativo
-//     if (user.status === "inativo") {
-//         return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });
-//     }
+//     if (user.status === "inativo") { return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." }); }
 
 // // Gerar o token JWT
 //     const token = jwt.sign(
-//     {
-//         id: user.id,
-//         email: user.email
-//     },
+//     { id: user.id, email: user.email },
 //     JWT_SECRET,
-//     {
-//         expiresIn: "1h",
-//     }
+//     {expiresIn: "1h", }
 //     );
   
 //     // Retornar dados do usuário (sem a senha) e o token
@@ -67,61 +52,79 @@ router.post("/cadastrar", cadastrarSeController);
 // });
 
 router.post("/login", async (req, res) => {
-const { email, senha } = req.body;
-try {
-    // Validações basicas
-    if (senha.length > 6) {
-        return res.status(400).json({ mensagem: "A senha deve ter no máximo 6 caracteres." });
-    }
+    const { email, senha } = req.body;
+    
+    try {
+        // Validações básicas PRIMEIRO
+        if (!email || !senha) {
+            return res.status(400).json({ error: "Email e senha são obrigatórios" });
+        }
 
-    const user = await prisma.usuarios.findUnique({
-        where: { email: email },
-        include: {perfil: true}
-    });
+        // Validar formato do email ANTES de buscar no banco
+        const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|example)\.com$/;
+        if (!domainEmailRegex.test(email)) {
+            return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @example." });
+        }
+
+        // Validar tamanho da senha
+        if (senha.length < 1) {
+            return res.status(400).json({ mensagem: "A senha é obrigatória." });
+        }
+
+        // Buscar usuário
+        const user = await prisma.usuarios.findUnique({
+            where: { email: email },
+            include: { perfil: true }
+        });
         
-    if (!user) {
-        return res.status(401).json({ error: "Usuário ou senha incorretos" });
-    }
+        if (!user) {
+            return res.status(401).json({ error: "Usuário ou senha incorretos" });
+        }
 
-    const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|exemplo)\.com$/;
-    if (!domainEmailRegex.test(email)) {
-        return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @exemplo." });
-    }
+        // Verificar se o usuário está ativo
+        if (user.status === "inativo") {
+            return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });
+        }
 
-    const senhaValida = await bcrypt.compare(senha, user.senha);
-    if (!senhaValida) {
-        return res.status(401).json({ error: "Usuário ou senha incorretos" });
-    }
- 
-    // Verificar se o usuário está ativo
-    if (user.status === "inativo") {
-        return res.status(403).json({ mensagem: "Usuário inativo. Entre em contato com o administrador." });
-    }
+        // DEBUG: Verificar tipos dos dados
+        console.log('Tipo da senha fornecida:', typeof senha);
+        console.log('Tipo da senha no banco:', typeof user.senha);
+        console.log('Senha no banco existe?:', user.senha ? 'Sim' : 'Não');
 
-// Gerar o token JWT
-    const token = jwt.sign(
-    {
-        id: user.id,
-        email: user.email,
-        perfil: user.perfil.nome // adiciona o perfil ao token
-    },
-    JWT_SECRET,
-    {
-        expiresIn: "1h",
-    }
-    );
-  
-    // Retornar dados do usuário (sem a senha) e o token
-    const userData = {
-        id: user.id,
-        email: user.email,
-        perfil: user.perfil.nome // envia o nome do perfil para o frontend
-    };
+        // Garantir que ambos são strings
+        const senhaFornecida = String(senha);
+        const senhaHash = String(user.senha);
+
+        // Comparar senhas
+        const senhaValida = await bcrypt.compare(senhaFornecida, senhaHash);
+        if (!senhaValida) {
+            return res.status(401).json({ error: "Usuário ou senha incorretos" });
+        }
+
+        // Gerar o token JWT
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email,
+                perfil: user.perfil.nome
+            },
+            JWT_SECRET,
+            {
+                expiresIn: "1h",
+            }
+        );
+
+        // Retornar dados do usuário (sem a senha) e o token
+        const userData = {
+            id: user.id,
+            email: user.email,
+            perfil: user.perfil.nome
+        };
 
         res.status(200).json({ message: "Usuário autenticado com sucesso", userData, token });
     } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
-        res.status(500).json({ error: "Erro ao buscar usuário" });
+        console.error("Erro ao fazer login:", error);
+        res.status(500).json({ error: "Erro interno do servidor" });
     }
 });
 
