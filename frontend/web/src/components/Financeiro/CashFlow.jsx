@@ -280,7 +280,7 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
   return (
     <div className="space-y-6 w-380 mg ml-35 ">
       <div className="flex justify-between items-center">
-        <div className="ml-8">
+        <div className="ml-9">
           <h2 >DFC - Demonstrativo de Fluxo de Caixa</h2>
           <p className="text-muted-foreground">Análise mensal e anual com previsão vs realizado</p>
         </div>
