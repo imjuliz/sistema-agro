@@ -34,7 +34,7 @@ export const updateUsuarioController = async (req, res) => {
 
   try {
     // Validações basicas
-    const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|exemplo)\.com$/;
+    const domainEmailRegex = /^[\w.-]+@(gmail|hotmail|outlook|example)\.com$/;
       if (!domainEmailRegex.test(email)) {
           return res.status(400).json({ mensagem: "O email é inválido. Por favor, use @gmail, @hotmail, @outlook ou @exemplo." });
       }
