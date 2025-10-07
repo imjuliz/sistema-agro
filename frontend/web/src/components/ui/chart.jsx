@@ -211,9 +211,7 @@ function ChartLegendContent({
 }) {
   const { config } = useChart()
 
-  if (!payload?.length) {
-    return null
-  }
+  if (!payload?.length) {return null}
 
   return (
     <div
@@ -237,11 +235,7 @@ function ChartLegendContent({
               {itemConfig?.icon && !hideIcon ? (
                 <itemConfig.icon />
               ) : (
-                <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
-                  style={{
-                    backgroundColor: item.color,
-                  }} />
+                <div className="h-2 w-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color,}} />
               )}
               {itemConfig?.label}
             </div>
@@ -252,14 +246,8 @@ function ChartLegendContent({
 }
 
 // Helper to extract item config from a payload.
-function getPayloadConfigFromPayload(
-  config,
-  payload,
-  key
-) {
-  if (typeof payload !== "object" || payload === null) {
-    return undefined
-  }
+function getPayloadConfigFromPayload(config,payload,key) {
+  if (typeof payload !== "object" || payload === null) {return undefined}
 
   const payloadPayload =
     "payload" in payload &&
@@ -279,20 +267,11 @@ function getPayloadConfigFromPayload(
     payloadPayload &&
     key in payloadPayload &&
     typeof payloadPayload[key] === "string"
-  ) {
-    configLabelKey = payloadPayload[key]
-  }
+  ) {configLabelKey = payloadPayload[key]}
 
   return configLabelKey in config
     ? config[configLabelKey]
     : config[key];
 }
 
-export {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  ChartStyle,
-}
+export {ChartContainer,ChartTooltip,ChartTooltipContent,ChartLegend,ChartLegendContent,ChartStyle,}

@@ -5,40 +5,19 @@ import { closestCenter, DndContext, KeyboardSensor, MouseSensor, TouchSensor, us
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import {
-  IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconCircleCheckFilled, IconDotsVertical,
-  IconGripVertical, IconLayoutColumns, IconLoader, IconPlus, IconTrendingUp, IconTrendingDown
-} from "@tabler/icons-react"
-import {
-  flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel,
-  getSortedRowModel, useReactTable,
-} from "@tanstack/react-table";
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconCircleCheckFilled, IconDotsVertical, IconGripVertical, IconLayoutColumns, IconLoader, IconPlus, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react"
+import { flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, } from "@tanstack/react-table";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
+import { TrendingUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger, } from "@/components/ui/drawer"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
@@ -46,6 +25,7 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+
 
 export const schema = z.object({
   id: z.number(),
@@ -57,15 +37,8 @@ export const schema = z.object({
   reviewer: z.string(),
 })
 
-
-import { TrendingUp } from "lucide-react"
-
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-
 // Create a separate component for the drag handle
-function DragHandle({
-  id
-}) {
+function DragHandle({ id }) {
   const { attributes, listeners } = useSortable({ id, })
 
   return (
@@ -99,26 +72,21 @@ const columns = [
     ),
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row" />
+        <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
       </div>
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-  accessorKey: "id",
-  header: "ID do produto",
-  cell: ({ row }) => <span>{row.original.id}</span>,
-},
+    accessorKey: "id",
+    header: "ID do produto",
+    cell: ({ row }) => <span>{row.original.id}</span>,
+  },
   {
     accessorKey: "header",
     header: "Nome do produto",
-    cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />;
-    },
+    cell: ({ row }) => { return <TableCellViewer item={row.original} />; },
     enableHiding: false,
   },
   {
@@ -137,11 +105,7 @@ const columns = [
     header: "Status",
     cell: ({ row }) => (
       <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.status === "Done" ? (
-          <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
-          <IconLoader />
-        )}
+        {row.original.status === "Done" ? (<IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />) : (<IconLoader />)}
         {row.original.status}
       </Badge>
     ),
@@ -193,10 +157,10 @@ const columns = [
   //   ),
   // },
   {
-  accessorKey: "unit",
-  header: "Unidade",
-  cell: ({ row }) => <span>{row.original.unit}</span>,
-},
+    accessorKey: "unit",
+    header: "Unidade",
+    cell: ({ row }) => <span>{row.original.unit}</span>,
+  },
   {
     accessorKey: "reviewer",
     header: "Reviewer",
@@ -232,10 +196,7 @@ const columns = [
     cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon">
+          <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
             <IconDotsVertical />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -252,9 +213,7 @@ const columns = [
   },
 ]
 
-function DraggableRow({
-  row
-}) {
+function DraggableRow({row}) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({ id: row.original.id, })
 
   return (
@@ -273,9 +232,7 @@ function DraggableRow({
   );
 }
 
-export function DataTable({
-  data: initialData
-}) {
+export function DataTable({data: initialData}) {
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState({})
@@ -283,11 +240,7 @@ export function DataTable({
   const [sorting, setSorting] = React.useState([])
   const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10, })
   const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
+  const sensors = useSensors(useSensor(MouseSensor, {}),useSensor(TouchSensor, {}),useSensor(KeyboardSensor, {}))
 
   const dataIds = React.useMemo(() => data?.map(({ id }) => id) || [], [data])
 
@@ -363,14 +316,11 @@ export function DataTable({
               {table
                 .getAllColumns()
                 .filter((column) =>
-                typeof column.accessorFn !== "undefined" &&
-                column.getCanHide())
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide())
                 .map((column) => {
                   return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
+                    <DropdownMenuCheckboxItem key={column.id} className="capitalize" checked={column.getIsVisible()}
                       onCheckedChange={(value) => column.toggleVisibility(!!value)
                       }>
                       {column.id}
@@ -457,38 +407,19 @@ export function DataTable({
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}>
+              <Button variant="outline" className="hidden h-8 w-8 p-0 lg:flex" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
                 <span className="sr-only">Go to first page</span>
                 <IconChevronsLeft />
               </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}>
+              <Button variant="outline" className="size-8" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                 <span className="sr-only">Go to previous page</span>
                 <IconChevronLeft />
               </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}>
+              <Button variant="outline" className="size-8" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                 <span className="sr-only">Go to next page</span>
                 <IconChevronRight />
               </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}>
+              <Button variant="outline" className="hidden size-8 lg:flex" size="icon" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
                 <span className="sr-only">Go to last page</span>
                 <IconChevronsRight />
               </Button>
@@ -519,9 +450,9 @@ const chartData = [
   { month: "June", desktop: 214, mobile: 140 },
 ]
 
-const chartConfig = {desktop: {label: "Desktop",color: "var(--primary)",},mobile: {label: "Mobile",color: "var(--primary)",}}
+const chartConfig = { desktop: { label: "Desktop", color: "var(--primary)", }, mobile: { label: "Mobile", color: "var(--primary)", } }
 
-function TableCellViewer({item}) {
+function TableCellViewer({ item }) {
   const isMobile = useIsMobile()
 
   return (
@@ -538,7 +469,7 @@ function TableCellViewer({item}) {
           {!isMobile && (
             <>
               <ChartContainer config={chartConfig}>
-                <AreaChart accessibilityLayer data={chartData} margin={{left: 0,right: 10,}}>
+                <AreaChart accessibilityLayer data={chartData} margin={{ left: 0, right: 10, }}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} hide />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
@@ -621,4 +552,66 @@ function TableCellViewer({item}) {
       </DrawerContent>
     </Drawer>
   );
+}
+
+export const description = "An area chart with gradient fill"
+
+const chartData1 = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+]
+
+const chartConfig1 = {
+  desktop: { label: "Desktop", color: "var(--chart-1)", },
+  mobile: { label: "Mobile", color: "var(--chart-2)", },
+}
+
+export function ChartAreaGradient() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Area Chart - Gradient</CardTitle>
+        <CardDescription>
+          Showing total visitors for the last 6 months
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig1}>
+          <AreaChart accessibilityLayer data={chartData1} margin={{ left: 12, right: 12, }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <defs>
+              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-desktop)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-desktop)" stopOpacity={0.1} />
+              </linearGradient>
+              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-mobile)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-mobile)" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <Area dataKey="mobile" type="natural" fill="url(#fillMobile)" fillOpacity={0.4} stroke="var(--color-mobile)" stackId="a" />
+            <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" fillOpacity={0.4} stroke="var(--color-desktop)" stackId="a" />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 leading-none font-medium">
+              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2 leading-none">
+              January - June 2024
+            </div>
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
+  )
 }
