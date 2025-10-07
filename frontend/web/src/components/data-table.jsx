@@ -7,14 +7,14 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, }
 import { CSS } from "@dnd-kit/utilities"
 import { IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconCircleCheckFilled, IconDotsVertical, IconGripVertical, IconLayoutColumns, IconLoader, IconPlus, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react"
 import { flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, } from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis,ResponsiveContainer } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-import { TrendingUp } from "lucide-react"
+import { TrendingUp, PlusIcon } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger, } from "@/components/ui/drawer"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
@@ -25,7 +25,6 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-
 
 export const schema = z.object({
   id: z.number(),
@@ -133,34 +132,7 @@ const columns = [
       </form>
     ),
   },
-  // {
-  //   accessorKey: "limit",
-  //   header: () => <div className="">Limit</div>,
-  //   cell: ({ row }) => (
-  //     <form
-  //       onSubmit={(e) => {
-  //         e.preventDefault()
-  //         toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-  //           loading: `Saving ${row.original.header}`,
-  //           success: "Done",
-  //           error: "Error",
-  //         })
-  //       }}>
-  //       <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
-  //         Limit
-  //       </Label>
-  //       <Input
-  //         className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent  shadow-none focus-visible:border dark:bg-transparent"
-  //         defaultValue={row.original.limit}
-  //         id={`${row.original.id}-limit`} />
-  //     </form>
-  //   ),
-  // },
-  {
-    accessorKey: "unit",
-    header: "Unidade",
-    cell: ({ row }) => <span>{row.original.unit}</span>,
-  },
+  {accessorKey: "unit",header: "Unidade",cell: ({ row }) => <span>{row.original.unit}</span>,},
   {
     accessorKey: "reviewer",
     header: "Reviewer",
@@ -315,14 +287,11 @@ export function DataTable({data: initialData}) {
             <DropdownMenuContent align="end" className="w-56">
               {table
                 .getAllColumns()
-                .filter((column) =>
-                  typeof column.accessorFn !== "undefined" &&
-                  column.getCanHide())
+                .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
                 .map((column) => {
                   return (
                     <DropdownMenuCheckboxItem key={column.id} className="capitalize" checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)
-                      }>
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}>
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   );
@@ -362,9 +331,7 @@ export function DataTable({data: initialData}) {
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
                 {table.getRowModel().rows?.length ? (
                   <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
-                    {table.getRowModel().rows.map((row) => (
-                      <DraggableRow key={row.id} row={row} />
-                    ))}
+                    {table.getRowModel().rows.map((row) => (<DraggableRow key={row.id} row={row} />))}
                   </SortableContext>
                 ) : (
                   <TableRow>
@@ -556,6 +523,8 @@ function TableCellViewer({ item }) {
 
 export const description = "An area chart with gradient fill"
 
+
+//--------Gráfico--------
 const chartData1 = [
   { month: "January", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
@@ -572,7 +541,7 @@ const chartConfig1 = {
 
 export function ChartAreaGradient() {
   return (
-    <Card>
+    <Card className={"w-350 h-200 mr-20"}>
       <CardHeader>
         <CardTitle>Area Chart - Gradient</CardTitle>
         <CardDescription>
@@ -580,8 +549,9 @@ export function ChartAreaGradient() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig1}>
-          <AreaChart accessibilityLayer data={chartData1} margin={{ left: 12, right: 12, }}>
+        <ChartContainer config={chartConfig1} className="h-[650px] w-[1305px]">
+  <ResponsiveContainer width="100%" height="100%">
+    <AreaChart accessibilityLayer data={chartData1} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
@@ -598,20 +568,9 @@ export function ChartAreaGradient() {
             <Area dataKey="mobile" type="natural" fill="url(#fillMobile)" fillOpacity={0.4} stroke="var(--color-mobile)" stackId="a" />
             <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" fillOpacity={0.4} stroke="var(--color-desktop)" stackId="a" />
           </AreaChart>
-        </ChartContainer>
+  </ResponsiveContainer>
+</ChartContainer>
       </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 leading-none font-medium">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="text-muted-foreground flex items-center gap-2 leading-none">
-              January - June 2024
-            </div>
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   )
 }
