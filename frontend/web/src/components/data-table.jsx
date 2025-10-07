@@ -37,9 +37,6 @@ export const schema = z.object({
   reviewer: z.string(),
 })
 
-import { TrendingUp } from "lucide-react"
-
-
 // Create a separate component for the drag handle
 function DragHandle({ id }) {
   const { attributes, listeners } = useSortable({ id, })

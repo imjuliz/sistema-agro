@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/site-header"
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
-import { ChartAreaGradient } from "@/components/Dashboard/grafico";
+// import { ChartAreaGradient } from "@/components/Dashboard/grafico";
 
 import data from "./data.json"
 export default function Page() {
