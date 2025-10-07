@@ -15,7 +15,7 @@ import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/NavBar/sidebar"
 
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";

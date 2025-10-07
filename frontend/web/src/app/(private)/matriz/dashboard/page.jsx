@@ -2,15 +2,10 @@
 // layout: Cards principais (produção atual, vendas totais, despesas totais, lucro líquido). Gráficos: Produção por fazenda. Vendas por loja. Evolução financeira (últimos 6 meses). Alertas: Lotes prestes a vencer. Estoque baixo. Lotes bloqueados por agrotóxicos.
 // Funcionalidades: Filtros (por período, unidade, tipo de produto). Exportação rápida para PDF/Excel. Links de atalho para páginas detalhadas.
 
-import { AppSidebar } from "@/components/NavBar/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
+import { DataTable } from "@/components/matriz/dashboard/data-table"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
 
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
