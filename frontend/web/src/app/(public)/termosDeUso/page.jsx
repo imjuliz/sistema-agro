@@ -1,8 +1,110 @@
 //uma página de termos de uso com indice para rapida navegação
+
+import Footer from "@/components/Home/sections/footer/default";
+import Navbar from "@/components/Home/sections/navbar/default";
+
 export default function TermosDeUso() {
+
+    const termos = [
+        {
+            'titulo': 'Aceitação dos Termos', 
+            'texto': 'Ao acessar ou utilizar o sistema de monitoramento agropecuário (“Sistema”), o usuário declara ter lido, compreendido e aceitado integralmente estes Termos de Uso. Se você não concordar com qualquer condição aqui estabelecida, não deverá utilizar o Sistema.',
+            'id': 'termos'
+        },
+        {
+            'titulo': 'Definições', 
+            'texto': '',
+            'id': 'definicoes'
+        },
+        {
+            'titulo': 'Funcionalidade do Sistema', 
+            'texto': '',
+            'id': 'funcionalidade'
+        },
+        {
+            'titulo': 'Obrigações do Usuário', 
+            'texto': '',
+            'id': 'obrigacoes'
+        },
+        {
+            'titulo': 'Propriedade Intelectual', 
+            'texto': 'Todo o conteúdo do Sistema, incluindo textos, gráficos, logotipos, imagens, vídeos, códigos e funcionalidades, é de propriedade exclusiva da empresa desenvolvedora ou de seus licenciadores, sendo protegido pelas leis de propriedade intelectual. O uso do Sistema não concede ao Usuário qualquer direito sobre tais conteúdos, exceto pela licença limitada, não exclusiva e intransferível para uso conforme previsto nestes Termos.',
+            'id': 'propriedade'
+        },
+        {
+            'titulo': 'Privacidade e Proteção de Dados', 
+            'texto': 'Os dados coletados pelo Sistema serão tratados de acordo com a Política de Privacidade aplicável, em conformidade com a legislação de proteção de dados vigente (como a LGPD - Lei Geral de Proteção de Dados). O Usuário declara estar ciente de que seus dados poderão ser utilizados para a prestação dos serviços, análises internas, melhorias do Sistema e, quando autorizado, para fins comerciais ou estatísticos.',
+            'id': 'privacidade'
+        },
+        {
+            'titulo': 'Limitação de Responsabilidade', 
+            'texto': '',
+            'id': 'limitacao'
+        },
+        {
+            'titulo': 'Modificações nos Termos e no Sistema', 
+            'texto': 'A empresa reserva-se o direito de alterar, a qualquer momento, estes Termos de Uso ou as funcionalidades do Sistema, mediante aviso prévio ao Usuário, por meio da própria plataforma ou por outros canais de comunicação. A continuidade do uso após tais alterações será considerada como aceitação tácita das novas condições.',
+            'id': 'modificacoes'
+        },
+        {
+            'titulo': 'Cancelamento e Encerramento de Conta', 
+            'texto': 'O Usuário pode solicitar o cancelamento de sua conta a qualquer momento, por meio dos canais de atendimento disponíveis. A empresa também poderá encerrar ou suspender o acesso do Usuário em caso de violação destes Termos ou de uso indevido do Sistema.',
+            'id': 'cancelamento'
+        },
+        {
+            'titulo': 'Disposições Gerais', 
+            'texto': '',
+            'id': 'disposicoes'
+        },
+    ];
+
+    const indice = [
+        {
+            'href': 'termos',
+            'titulo': 'Aceitação dos Termos'
+        },
+        {
+            'href': 'definicoes',
+            'titulo': 'Definições'
+        },
+        {
+            'href': 'funcionalidade',
+            'titulo': 'Funcionalidade do Sistema'
+        },
+        {
+            'href': 'obrigacoes',
+            'titulo': 'Obrigações do Usuário'
+        },
+        {
+            'href': 'propriedade',
+            'titulo': 'Propriedade Intelectual'
+        },
+        {
+            'href': 'privacidade',
+            'titulo': 'Privacidade e Proteção de Dados'
+        },
+        {
+            'href': 'limitacao',
+            'titulo': 'Limitação de Responsabilidade'
+        },
+        {
+            'href': 'modificacoes',
+            'titulo': 'Modificações nos Termos e no Sistema'
+        },
+        {
+            'href': 'cancelamento',
+            'titulo': 'Cancelamento e Encerramento de Conta'
+        },
+        {
+            'href': 'disposicoes',
+            'titulo': 'Disposições Gerais'
+        },
+    ]
     return (
         <>
-            <main className='w-full open-sans text-lg flex  justify-center pt-[150px] pb-[150px] bg-stone-950 '>
+      <Navbar />
+
+            <main className='w-full open-sans text-lg flex  justify-center pt-[150px] pb-[150px] dark:bg-stone-950 bg-white'>
                 <div className="flex flex-col gap-5 w-100 lg:w-240 md:w-160">
                     <h1 className='archivo-black-regular text-5xl'>Termos de Serviço</h1>
                     <p>Última atualização: 25 de setembro de 2025</p>
@@ -90,6 +192,7 @@ export default function TermosDeUso() {
                 </div>
 
             </main>
+            <Footer />
         </>
     )
 }

@@ -57,7 +57,7 @@ export default function SocialProofMarquee({ testimonials }) {
     <>
       <section aria-label="Social proof" className="py-12">
         <div className="max-w-6xl mx-auto text-center mb-8">
-          <h2 className="text-3xl font-semibold text-white">Histórias de quem já confia na AgroTech</h2>
+          <h2 className="text-3xl font-semibold text-black dark:text-white">Histórias de quem já confia na AgroTech</h2>
           <p className="mt-2 text-sm text-gray-300">Da fazenda à prateleira, veja como nossa solução está transformando o agronegócio.</p>
         </div>
 
