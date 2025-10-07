@@ -35,7 +35,7 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "RuralTech",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
@@ -52,41 +52,37 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Geral",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Dashboard",
+          url: "/dashboard",
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Financeiro",
+          url: "/financeiro",
         },
         {
-          title: "Settings",
-          url: "#",
+          title: "Fornecedores",
+          url: "/fornecedores",
         },
+        {
+          title: "Unidades",
+          url: "/unidades",
+        }
       ],
     },
     {
-      title: "Models",
+      title: "Ajuda",
       url: "#",
       icon: Bot,
       items: [
         {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
+          title: "Suporte",
+          url: "/suporte",
         },
       ],
     },
@@ -114,25 +110,13 @@ const data = {
       ],
     },
     {
-      title: "Settings",
+      title: "Configurações",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Configurações",
+          url: "/configuracoes",
         },
       ],
     },
@@ -156,9 +140,7 @@ const data = {
   ],
 }
 
-export function AppSidebar({
-  ...props
-}) {
+export function AppSidebar({...props}) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
