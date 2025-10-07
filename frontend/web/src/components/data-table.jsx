@@ -5,41 +5,19 @@ import { closestCenter, DndContext, KeyboardSensor, MouseSensor, TouchSensor, us
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import {
-  IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconCircleCheckFilled, IconDotsVertical,
-  IconGripVertical, IconLayoutColumns, IconLoader, IconPlus, IconTrendingUp, IconTrendingDown
-} from "@tabler/icons-react"
-import {
-  flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel,
-  getSortedRowModel, useReactTable,
-} from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis, Dot, Line, LineChart } from "recharts"
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconCircleCheckFilled, IconDotsVertical, IconGripVertical, IconLayoutColumns, IconLoader, IconPlus, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react"
+import { flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, } from "@tanstack/react-table";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
+import { TrendingUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger, } from "@/components/ui/drawer"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
@@ -47,6 +25,7 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+
 
 export const schema = z.object({
   id: z.number(),
@@ -58,15 +37,8 @@ export const schema = z.object({
   reviewer: z.string(),
 })
 
-
-import { TrendingUp } from "lucide-react"
-
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-
 // Create a separate component for the drag handle
-function DragHandle({
-  id
-}) {
+function DragHandle({ id }) {
   const { attributes, listeners } = useSortable({ id, })
 
   return (
@@ -100,24 +72,26 @@ const columns = [
     ),
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row" />
+        <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
       </div>
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
+    accessorKey: "id",
+    header: "ID do produto",
+    cell: ({ row }) => <span>{row.original.id}</span>,
+  },
+  {
     accessorKey: "header",
-    header: "Header",
+    header: "Nome do produto",
     cell: ({ row }) => { return <TableCellViewer item={row.original} />; },
     enableHiding: false,
   },
   {
     accessorKey: "type",
-    header: "Section Type",
+    header: "Categoria",
     cell: ({ row }) => (
       <div className="w-32">
         <Badge variant="outline" className="text-muted-foreground px-1.5">
@@ -131,18 +105,14 @@ const columns = [
     header: "Status",
     cell: ({ row }) => (
       <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.status === "Done" ? (
-          <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
-          <IconLoader />
-        )}
+        {row.original.status === "Done" ? (<IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />) : (<IconLoader />)}
         {row.original.status}
       </Badge>
     ),
   },
   {
-    accessorKey: "target",
-    header: () => <div className="w-full text-right">Target</div>,
+    accessorKey: "quantity",
+    header: () => <div className="">Qtd.</div>,
     cell: ({ row }) => (
       <form
         onSubmit={(e) => {
@@ -157,34 +127,39 @@ const columns = [
           Target
         </Label>
         <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
+          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent  shadow-none focus-visible:border dark:bg-transparent"
           defaultValue={row.original.target}
           id={`${row.original.id}-target`} />
       </form>
     ),
   },
+  // {
+  //   accessorKey: "limit",
+  //   header: () => <div className="">Limit</div>,
+  //   cell: ({ row }) => (
+  //     <form
+  //       onSubmit={(e) => {
+  //         e.preventDefault()
+  //         toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
+  //           loading: `Saving ${row.original.header}`,
+  //           success: "Done",
+  //           error: "Error",
+  //         })
+  //       }}>
+  //       <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
+  //         Limit
+  //       </Label>
+  //       <Input
+  //         className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent  shadow-none focus-visible:border dark:bg-transparent"
+  //         defaultValue={row.original.limit}
+  //         id={`${row.original.id}-limit`} />
+  //     </form>
+  //   ),
+  // },
   {
-    accessorKey: "limit",
-    header: () => <div className="w-full text-right">Limit</div>,
-    cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          })
-        }}>
-        <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
-          Limit
-        </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.limit}
-          id={`${row.original.id}-limit`} />
-      </form>
-    ),
+    accessorKey: "unit",
+    header: "Unidade",
+    cell: ({ row }) => <span>{row.original.unit}</span>,
   },
   {
     accessorKey: "reviewer",
@@ -221,10 +196,7 @@ const columns = [
     cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon">
+          <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
             <IconDotsVertical />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -241,9 +213,7 @@ const columns = [
   },
 ]
 
-function DraggableRow({
-  row
-}) {
+function DraggableRow({row}) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({ id: row.original.id, })
 
   return (
@@ -262,9 +232,7 @@ function DraggableRow({
   );
 }
 
-export function DataTable({
-  data: initialData
-}) {
+export function DataTable({data: initialData}) {
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState({})
@@ -272,45 +240,7 @@ export function DataTable({
   const [sorting, setSorting] = React.useState([])
   const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10, })
   const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
-
-  // grafico 1
-  const chart1Data = [
-    { month: "January", producao: 186, entregas: 80 },
-    { month: "February", producao: 305, entregas: 200 },
-    { month: "March", producao: 237, entregas: 120 },
-    { month: "April", producao: 73, entregas: 190 },
-    { month: "May", producao: 209, entregas: 130 },
-    { month: "June", producao: 214, entregas: 140 },
-  ];
-
-  // Configuração das cores e labels do gráfico
-  const chart1Config = {
-    producao: { label: "Produção", color: "var(--chart-1)", },
-    entregas: { label: "Entregas", color: "var(--chart-2)", },
-  };
-
-  // grafico 2 (de linha)
-  const chart2Data = [
-    { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-    { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-    { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-    { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-    { browser: "other", visitors: 90, fill: "var(--color-other)" },
-  ];
-
-  const chart2Config = {
-    visitors: { label: "Visitors", color: "var(--chart-2)", },
-    chrome: { label: "Chrome", color: "var(--chart-1)", },
-    safari: { label: "Safari", color: "var(--chart-2)", },
-    firefox: { label: "Firefox", color: "var(--chart-3)", },
-    edge: { label: "Edge", color: "var(--chart-4)", },
-    other: { label: "Other", color: "var(--chart-5)", },
-  };
+  const sensors = useSensors(useSensor(MouseSensor, {}),useSensor(TouchSensor, {}),useSensor(KeyboardSensor, {}))
 
   const dataIds = React.useMemo(() => data?.map(({ id }) => id) || [], [data])
 
@@ -345,30 +275,30 @@ export function DataTable({
   }
 
   return (
-    <Tabs defaultValue="geral" className="w-full flex-col justify-start gap-6">
+    <Tabs defaultValue="outline" className="w-full flex-col justify-start gap-6">
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
           View
         </Label>
-        <Select defaultValue="geral">
+        <Select defaultValue="outline">
           <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
             <SelectValue placeholder="Select a view" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="geral">Geral</SelectItem>
-            <SelectItem value="fazendas">Fazendas</SelectItem>
-            <SelectItem value="lojas">Lojas</SelectItem>
+            <SelectItem value="outline">Outline</SelectItem>
+            <SelectItem value="past-performance">Past Performance</SelectItem>
+            <SelectItem value="key-personnel">Key Personnel</SelectItem>
             <SelectItem value="focus-documents">Focus Documents</SelectItem>
           </SelectContent>
         </Select>
         <TabsList
           className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="geral">Geral</TabsTrigger>
-          <TabsTrigger value="fazendas">
-            Fazendas <Badge variant="secondary">3</Badge>
+          <TabsTrigger value="outline">Outline</TabsTrigger>
+          <TabsTrigger value="past-performance">
+            Past Performance <Badge variant="secondary">3</Badge>
           </TabsTrigger>
-          <TabsTrigger value="lojas">
-            Lojas <Badge variant="secondary">2</Badge>
+          <TabsTrigger value="key-personnel">
+            Key Personnel <Badge variant="secondary">2</Badge>
           </TabsTrigger>
           <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
         </TabsList>
@@ -385,13 +315,12 @@ export function DataTable({
             <DropdownMenuContent align="end" className="w-56">
               {table
                 .getAllColumns()
-                .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
+                .filter((column) =>
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide())
                 .map((column) => {
                   return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
+                    <DropdownMenuCheckboxItem key={column.id} className="capitalize" checked={column.getIsVisible()}
                       onCheckedChange={(value) => column.toggleVisibility(!!value)
                       }>
                       {column.id}
@@ -406,7 +335,9 @@ export function DataTable({
           </Button>
         </div>
       </div>
-      <TabsContent value="geral" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+      <TabsContent
+        value="outline"
+        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
         <div className="overflow-hidden rounded-lg border">
           <DndContext
             collisionDetection={closestCenter}
@@ -448,13 +379,13 @@ export function DataTable({
         </div>
         <div className="flex items-center justify-between px-4">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-            {table.getFilteredSelectedRowModel().rows.length} de{" "}
-            {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Linhas por página
+                Rows per page
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
@@ -472,310 +403,38 @@ export function DataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Página {table.getState().pagination.pageIndex + 1} de{" "}
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
               <Button variant="outline" className="hidden h-8 w-8 p-0 lg:flex" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-                <span className="sr-only">Primeira página</span>
+                <span className="sr-only">Go to first page</span>
                 <IconChevronsLeft />
               </Button>
               <Button variant="outline" className="size-8" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                <span className="sr-only">Página anterior</span>
+                <span className="sr-only">Go to previous page</span>
                 <IconChevronLeft />
               </Button>
               <Button variant="outline" className="size-8" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                <span className="sr-only">Próxima página</span>
+                <span className="sr-only">Go to next page</span>
                 <IconChevronRight />
               </Button>
               <Button variant="outline" className="hidden size-8 lg:flex" size="icon" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
-                <span className="sr-only">Última página</span>
+                <span className="sr-only">Go to last page</span>
                 <IconChevronsRight />
               </Button>
             </div>
           </div>
         </div>
       </TabsContent>
-
-      <TabsContent value="fazendas" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex flex-row gap-8 rounded-lg border border-dashed">
-          <div className="w-2/3">
-            {/* KPIs */}
-            <div
-              className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Total de unidades/filiais ativas</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    $1,250.00
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +12.5%
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Trending up this month <IconTrendingUp className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">
-                    Visitors for the last 6 months
-                  </div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Faturamento total consolidado</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    1,234
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingDown />
-                      -20%
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Down 20% this period <IconTrendingDown className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">
-                    Acquisition needs attention
-                  </div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Active Accounts</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    45,678
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +12.5%
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Strong user retention <IconTrendingUp className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">Engagement exceed targets</div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Growth Rate</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    4.5%
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +4.5%
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Steady performance increase <IconTrendingUp className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">Meets growth projections</div>
-                </CardFooter>
-              </Card>
-            </div>
-
-            {/* grafico */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Volume de produção e entregas por mês</CardTitle>
-                <CardDescription>
-                  {/* Showing total visitors for the last 6 months */}
-                  Mostrando total de produção/entregas nos últimos X meses
-                </CardDescription>
-              </CardHeader>
-              <CardContent >
-                <ChartContainer config={chart1Config} className={'h-80 w-full'}>
-                  <AreaChart accessibilityLayer data={chart1Data} margin={{left: 12,right: 12,}}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)}/>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />}/>
-                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a"/>
-                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a"/>
-                    <ChartLegend content={<ChartLegendContent />} />
-                  </AreaChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter>
-                <div className="flex w-full items-start gap-2 text-sm">
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2 leading-none font-medium">
-                      Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                    </div>
-                    <div className="text-muted-foreground flex items-center gap-2 leading-none">
-                      Mês tal - Mês tal (ano)
-                    </div>
-                  </div>
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-          <div className="w-1/3">
-            <Card >
-              <CardHeader>
-                <CardTitle>Line Chart - Dots Colors</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chart2Config}>
-                  <LineChart accessibilityLayer data={chart2Data} margin={{top: 24,left: 24,right: 24,}}>
-                    <CartesianGrid vertical={false} />
-                    <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
-                    <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
-                      dot={({ payload, ...props }) => {
-                        return (
-                          <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>
-                        )
-                      }}
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="text-muted-foreground leading-none">
-                  Showing total visitors for the last 6 months
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
-
+      <TabsContent value="past-performance" className="flex flex-col px-4 lg:px-6">
+        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
-      <TabsContent value="lojas" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
-          <div className="w-2/3">
-            <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Total de lojas ativas</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  555 {/* Trocar por numero de unidades cadastradas no banco */}
-                  </CardTitle>
-                  <CardAction>{/* <Badge variant="outline"> <IconTrendingUp/> +12.5% </Badge> */}</CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Mais 3 novas unidades neste ano {/* número de unidades adicionadas no ultimo ano*/}
-                    <IconTrendingUp className="size-4" /></div>
-                  <div className="text-muted-foreground">Em toda a américa latina</div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Faturamento total consolidado</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  R$1,234{/* Trocar pela soma do saldo de todas as unidades */}
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +20% {/* % de se tem mais que o previsto ou menos--opcional */}
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">Subiu 20%<IconTrendingUp className="size-4" /></div>
-                  <div className="text-muted-foreground">Meta alcançada</div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Funcionarios</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">6.875</CardTitle>
-                  <CardAction>
-                    {/* <Badge variant="outline"> <IconTrendingUp/> +12.5% </Badge> */}
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">1.300 funcionários contratados neste ano<IconTrendingUp className="size-4" /></div>
-                  <div className="text-muted-foreground">Meta alcançada</div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Performance Geral da Empresa</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">85%</CardTitle>
-                  <CardAction>
-                    {/* <Badge variant="outline"> <IconTrendingUp /> +4.5% </Badge> */}
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">Excelente <IconTrendingUp className="size-4" /></div>
-                  <div className="text-muted-foreground"></div>
-                </CardFooter>
-              </Card>
-            </div>
-            {/* grafico */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Volume de produção e entregas por mês</CardTitle>
-                <CardDescription> Mostrando total de produção/entregas nos últimos X meses</CardDescription>
-              </CardHeader>
-              <CardContent >
-                <ChartContainer config={chart1Config} className={'h-80 w-full'}>
-                  <AreaChart accessibilityLayer data={chart1Data} margin={{left: 12,right: 12,}}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)}/>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />}/>
-                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a"/>
-                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a"/>
-                    <ChartLegend content={<ChartLegendContent />} />
-                  </AreaChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter>
-                <div className="flex w-full items-start gap-2 text-sm">
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2 leading-none font-medium">Trending up by 5.2% this month <TrendingUp className="h-4 w-4" /></div>
-                    <div className="text-muted-foreground flex items-center gap-2 leading-none">Mês tal - Mês tal (ano)</div>
-                  </div>
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-          <div className="w-1/3">
-            <Card >
-              <CardHeader>
-                <CardTitle>Line Chart - Dots Colors</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chart2Config}>
-                  <LineChart accessibilityLayer data={chart2Data} margin={{top: 24,left: 24,right: 24,}}>
-                    <CartesianGrid vertical={false} />
-                    <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
-                    <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
-                      dot={({ payload, ...props }) => {
-                        return (<Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>)
-                      }}
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">Trending up by 5.2% this month <TrendingUp className="h-4 w-4" /></div>
-                <div className="text-muted-foreground leading-none">Showing total visitors for the last 6 months</div>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
+      <TabsContent value="key-personnel" className="flex flex-col px-4 lg:px-6">
+        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+      </TabsContent>
+      <TabsContent value="focus-documents" className="flex flex-col px-4 lg:px-6">
+        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
       <TabsContent value="focus-documents" className="flex flex-col px-4 lg:px-6"><div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div></TabsContent>
     </Tabs>
@@ -791,9 +450,9 @@ const chartData = [
   { month: "June", desktop: 214, mobile: 140 },
 ]
 
-const chartConfig = {desktop: {label: "Desktop",color: "var(--primary)",},mobile: {label: "Mobile",color: "var(--primary)",}}
+const chartConfig = { desktop: { label: "Desktop", color: "var(--primary)", }, mobile: { label: "Mobile", color: "var(--primary)", } }
 
-function TableCellViewer({item}) {
+function TableCellViewer({ item }) {
   const isMobile = useIsMobile()
 
   return (
@@ -810,7 +469,7 @@ function TableCellViewer({item}) {
           {!isMobile && (
             <>
               <ChartContainer config={chartConfig}>
-                <AreaChart accessibilityLayer data={chartData} margin={{left: 0,right: 10,}}>
+                <AreaChart accessibilityLayer data={chartData} margin={{ left: 0, right: 10, }}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} hide />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
@@ -893,4 +552,66 @@ function TableCellViewer({item}) {
       </DrawerContent>
     </Drawer>
   );
+}
+
+export const description = "An area chart with gradient fill"
+
+const chartData1 = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+]
+
+const chartConfig1 = {
+  desktop: { label: "Desktop", color: "var(--chart-1)", },
+  mobile: { label: "Mobile", color: "var(--chart-2)", },
+}
+
+export function ChartAreaGradient() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Area Chart - Gradient</CardTitle>
+        <CardDescription>
+          Showing total visitors for the last 6 months
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig1}>
+          <AreaChart accessibilityLayer data={chartData1} margin={{ left: 12, right: 12, }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <defs>
+              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-desktop)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-desktop)" stopOpacity={0.1} />
+              </linearGradient>
+              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-mobile)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-mobile)" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <Area dataKey="mobile" type="natural" fill="url(#fillMobile)" fillOpacity={0.4} stroke="var(--color-mobile)" stackId="a" />
+            <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" fillOpacity={0.4} stroke="var(--color-desktop)" stackId="a" />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 leading-none font-medium">
+              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2 leading-none">
+              January - June 2024
+            </div>
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
+  )
 }
