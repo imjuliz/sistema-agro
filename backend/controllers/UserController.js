@@ -1,13 +1,13 @@
 import { cadastrarSe, getUserByEmail, updateUsuario, deletarUsuario } from "../models/User.js";
 import { createClient } from '@supabase/supabase-js';
 import prisma from "../prisma/client.js";
-import userShema from "../schemas/userSchema.js";
+import { userSchema } from "../schemas/userSchema.js";
 
 // const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 export async function cadastrarSeController(req, res) {
   try {
-    const { nome, email, senha } = userShema.parse(req.body);
+    const { nome, email, senha } = userShema.partial().parse(req.body);
     const id = req.usuario.id
 
     if (!nome || !email || !senha) {
@@ -32,9 +32,13 @@ export async function cadastrarSeController(req, res) {
 
 export const updateUsuarioController = async (req, res) => {
   const { id } = req.params.id;
-  const { nomeCompleto, email, funcao, setor, unidade, periodo } = userShema.parse(req.body);
-
+  const { nomeCompleto, email, funcao, setor, unidade, periodo } = userShema.partial().parse(req.body);
   try {
+    // Validação dos campos obrigatórios
+    if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) {
+      return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' });
+    }
+
     const unidadeData = { 
       nomeCompleto,
       email,
@@ -46,7 +50,7 @@ export const updateUsuarioController = async (req, res) => {
 
     const result = await updateUsuario(id, unidadeData);
 
-      return res.status(200).json({ sucesso: true, mensagem: 'Usuário atualizado com sucesso' });
+    return res.status(200).json({ sucesso: true, mensagem: 'Usuário atualizado com sucesso', result });
   } catch (error) {
     return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' });
   }
