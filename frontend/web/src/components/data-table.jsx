@@ -60,7 +60,6 @@ export const schema = z.object({
 
 import { TrendingUp } from "lucide-react"
 
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 
 // Create a separate component for the drag handle
 function DragHandle({
