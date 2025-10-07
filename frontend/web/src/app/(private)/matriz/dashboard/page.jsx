@@ -11,13 +11,12 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-
+import { ChartAreaGradient } from "@/components/Dashboard/grafico"
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 
 import data from "./data.json"
-
 export default function Page() {
   return (
     // <SidebarProvider
@@ -37,7 +36,8 @@ export default function Page() {
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
               </div> */}
-              <DataTable data={data} />
+              {/* <DataTable data={data} /> */}
+              <ChartAreaGradient/>
             </div>
           </div>
         </div>
