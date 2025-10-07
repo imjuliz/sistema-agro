@@ -18,16 +18,15 @@ export default function Page() {
     <div className="flex flex-col p-10 gap-10">
       <div className="@container/main flex flex-2 flex-col gap-1">
         <div className="flex flex-col gap-1 py-1 md:gap-6 md:py-6">
-          <div className="flex justify-center">
-        <Component />
-      </div>
-          {/* <SectionCards /> */}
-          {/* <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
-              </div>  */}
+          <div className="flex flex-row gap-6 items-start justify-between px-4 lg:px-6 mt-10">
+            <div className="w-full">
+              <Component />
+            </div>
+            <div className="flex-1">
+              <Calendar />
+            </div>
+          </div>
           <DataTable data={data} />
-          {/* <ChartAreaGradient/>
-              <Calendar/> */}
           <div className="flex flex-row gap-6 items-start justify-between px-4 lg:px-6 mt-10">
             <div className="flex-1">
               <ChartAreaGradient />
