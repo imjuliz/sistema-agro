@@ -8,17 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Truck, 
-  Eye,
-  MessageSquare,
-  Calendar,
-  DollarSign
-} from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Truck, Eye,MessageSquare,Calendar,DollarSign} from 'lucide-react';
 
 export function OrderManagement({ userType }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -37,7 +27,7 @@ export function OrderManagement({ userType }) {
       date: '2024-01-15',
       estimatedDelivery: '2024-01-17',
       notes: 'Please ensure cold chain delivery',
-      priority: 'high'
+      priority: 'alta'
     },
     {
       id: 'ORD-002',
@@ -56,9 +46,7 @@ export function OrderManagement({ userType }) {
     {
       id: 'ORD-003',
       customer: userType === 'supplier' ? 'Metro Bistro' : 'Ocean Fresh Seafood',
-      items: [
-        { name: 'Organic Mixed Greens', quantity: 10, price: 8.50 }
-      ],
+      items: [{ name: 'Organic Mixed Greens', quantity: 10, price: 8.50 }],
       total: 85.00,
       status: 'delivered',
       date: '2024-01-12',
@@ -78,7 +66,7 @@ export function OrderManagement({ userType }) {
       date: '2024-01-10',
       estimatedDelivery: '2024-01-12',
       notes: 'Customer requested cancellation due to event postponement',
-      priority: 'low'
+      priority: 'baixa'
     }
   ];
 
@@ -104,9 +92,9 @@ export function OrderManagement({ userType }) {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'text-red-600';
+      case 'alta': return 'text-red-600';
       case 'normal': return 'text-blue-600';
-      case 'low': return 'text-gray-600';
+      case 'baixa': return 'text-gray-600';
       default: return 'text-gray-600';
     }
   };
@@ -120,18 +108,17 @@ export function OrderManagement({ userType }) {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Eye className="h-4 w-4 mr-1" />
-          View
+          <Eye className="h-4 w-4 mr-1" />Visualizar
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Order Details - {order.id}</DialogTitle>
+          <DialogTitle>Detalhes - {order.id}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Customer/Supplier</Label>
+              <Label>Consumidor/Fornecedor</Label>
               <p>{order.customer}</p>
             </div>
             <div>
@@ -144,26 +131,26 @@ export function OrderManagement({ userType }) {
               </div>
             </div>
             <div>
-              <Label>Order Date</Label>
+              <Label>Data do Pedido</Label>
               <p>{new Date(order.date).toLocaleDateString()}</p>
             </div>
             <div>
-              <Label>Estimated Delivery</Label>
+              <Label>Entrega Estimada</Label>
               <p>{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
             </div>
           </div>
 
           <div>
-            <Label>Items Ordered</Label>
+            <Label>Itens Comprados</Label>
             <div className="mt-2 space-y-2">
               {order.items.map((item, index) => (
                 <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
                   <div>
                     <p>{item.name}</p>
-                    <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                    <p className="text-sm text-muted-foreground">Quantidade: {item.quantity}</p>
                   </div>
                   <div className="text-right">
-                    <p>${item.price.toFixed(2)} each</p>
+                    <p>${item.price.toFixed(2)} cada</p>
                     <p className="text-sm">${(item.quantity * item.price).toFixed(2)}</p>
                   </div>
                 </div>
@@ -171,7 +158,7 @@ export function OrderManagement({ userType }) {
             </div>
             <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex justify-between items-center">
-                <span>Total Amount:</span>
+                <span>Total:</span>
                 <span className="text-lg">${order.total.toFixed(2)}</span>
               </div>
             </div>
@@ -188,11 +175,11 @@ export function OrderManagement({ userType }) {
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1">
                 <XCircle className="h-4 w-4 mr-2" />
-                Reject Order
+                Rejeitar Pedido
               </Button>
               <Button className="flex-1">
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Confirm Order
+                Confirmar Pedido
               </Button>
             </div>
           )}
@@ -208,18 +195,18 @@ export function OrderManagement({ userType }) {
         <div className="flex gap-2">
           <Button variant="outline">
             <Calendar className="h-4 w-4 mr-2" />
-            Export Orders
+            Pedidos de Exportação
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="all">All Orders</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
-          <TabsTrigger value="delivered">Delivered</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+          <TabsTrigger value="all">Todos os Pedidos</TabsTrigger>
+          <TabsTrigger value="pending">Pendentes</TabsTrigger>
+          <TabsTrigger value="confirmed">Confirmados</TabsTrigger>
+          <TabsTrigger value="delivered">Entregues</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelados</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
@@ -236,7 +223,7 @@ export function OrderManagement({ userType }) {
                           {order.status}
                         </Badge>
                         <span className={`text-sm ${getPriorityColor(order.priority)}`}>
-                          {order.priority} priority
+                          {order.priority} prioridade
                         </span>
                       </div>
                       
@@ -245,11 +232,11 @@ export function OrderManagement({ userType }) {
                       </p>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Ordered: {new Date(order.date).toLocaleDateString()}</span>
+                        <span>Encomendado: {new Date(order.date).toLocaleDateString()}</span>
                         <span>•</span>
-                        <span>Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>
+                        <span>Entrega: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>
                         <span>•</span>
-                        <span>{order.items.length} items</span>
+                        <span>{order.items.length} itens</span>
                       </div>
                     </div>
 
@@ -263,12 +250,12 @@ export function OrderManagement({ userType }) {
                         <OrderDetails order={order} />
                         <Button variant="outline" size="sm">
                           <MessageSquare className="h-4 w-4 mr-1" />
-                          Chat
+                          Bate-papo
                         </Button>
                         {userType === 'supplier' && order.status === 'pending' && (
                           <Button size="sm">
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Process
+                            Processo
                           </Button>
                         )}
                       </div>
@@ -282,7 +269,7 @@ export function OrderManagement({ userType }) {
           {filteredOrders.length === 0 && (
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h4>No orders found</h4>
+              <h4>Nenhum pedido encontrado</h4>
               <p className="text-muted-foreground">
                 {activeTab === 'all' 
                   ? 'No orders have been placed yet'

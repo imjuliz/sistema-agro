@@ -8,17 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Send, 
-  Paperclip, 
-  Mic, 
-  Search,
-  Phone,
-  Video,
-  MoreVertical,
-  Clock,
-  CheckCheck
-} from 'lucide-react';
+import { Send, Paperclip, Mic, Search, Phone, Video, MoreVertical, Clock, CheckCheck } from 'lucide-react';
 
 export function ChatInterface({ userType }) {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -28,33 +18,33 @@ export function ChatInterface({ userType }) {
   const conversations = [
     {
       id: 1,
-      name: userType === 'supplier' ? 'Bella Vista Restaurant' : 'Fresh Valley Farms',
-      role: userType === 'supplier' ? 'Restaurant Manager' : 'Sales Rep',
-      lastMessage: 'Can we discuss the delivery schedule for next week?',
-      timestamp: '2 min ago',
+      name: userType === 'supplier' ? 'Comidas Naturais' : 'Animals',
+      role: userType === 'supplier' ? 'Restaurant Manager' : 'Fornecedor de Gado',
+      lastMessage: 'Podemos discutir o cronograma de entrega para a próxima semana?',
+      timestamp: '2 minutos atrás',
       unread: 3,
       online: true,
-      avatar: 'BV'
+      avatar: 'AN'
     },
     {
       id: 2,
-      name: userType === 'supplier' ? 'Grand Hotel Kitchen' : 'Premium Meats Co.',
-      role: userType === 'supplier' ? 'Head Chef' : 'Account Manager',
-      lastMessage: 'Thank you for the quick delivery yesterday!',
-      timestamp: '1 hour ago',
+      name: userType === 'supplier' ? 'Premium Meats Co.' : 'Nature Co',
+      role: userType === 'supplier' ? 'Restaurante' : 'Fornecedor de Insumos',
+      lastMessage: 'Obrigado pela entrega rápida ontem!',
+      timestamp: '1 hora atrás',
       unread: 0,
       online: false,
-      avatar: 'GH'
+      avatar: 'NC'
     },
     {
       id: 3,
-      name: userType === 'supplier' ? 'Metro Bistro' : 'Ocean Fresh Seafood',
-      role: userType === 'supplier' ? 'Owner' : 'Sales Rep',
-      lastMessage: 'I need to place a large order for the weekend rush',
-      timestamp: '3 hours ago',
+      name: userType === 'supplier' ? 'Ocean Fresh Seafood' : 'PetFood',
+      role: userType === 'supplier' ? 'Owner' : 'Fornecedor de Ração',
+      lastMessage: 'Preciso fazer um pedido grande para o fim de semana',
+      timestamp: '3 horas atrás',
       unread: 1,
       online: true,
-      avatar: 'MB'
+      avatar: 'PF'
     }
   ];
 
@@ -62,28 +52,28 @@ export function ChatInterface({ userType }) {
     {
       id: 1,
       sender: 'other',
-      text: 'Hello! I wanted to discuss our upcoming order for next week.',
+      text: 'Olá! Gostaria de discutir nosso próximo pedido para a semana que vem.',
       timestamp: '10:30 AM',
       type: 'text'
     },
     {
       id: 2,
       sender: 'me',
-      text: 'Of course! What specific items are you looking for?',
+      text: 'Claro! Que itens específicos você está procurando?',
       timestamp: '10:32 AM',
       type: 'text'
     },
     {
       id: 3,
       sender: 'other',
-      text: 'We need about 50 lbs of your premium ribeye steaks and 20 cases of mixed greens.',
+      text: 'Precisamos de cerca de 22,6 kg de seus bifes de costela premium e 20 caixas de verduras variadas.',
       timestamp: '10:35 AM',
       type: 'text'
     },
     {
       id: 4,
       sender: 'me',
-      text: 'I can definitely accommodate that. The ribeye is $24.99/lb and mixed greens are $8.50/case. Would Tuesday delivery work?',
+      text: 'Posso atender a essa necessidade. O filé de costela custa US$ 24,99/kg e a salada mista custa US$ 8,50/caixa. A entrega na terça-feira seria viável?',
       timestamp: '10:37 AM',
       type: 'text'
     },
@@ -98,7 +88,7 @@ export function ChatInterface({ userType }) {
     {
       id: 6,
       sender: 'me',
-      text: 'Perfect! I\'ll prepare the order and send you the invoice. Delivery confirmed for Tuesday at 8 AM.',
+      text: 'Perfeito! Vou preparar o pedido e enviar a fatura. Entrega confirmada para terça-feira às 8h.',
       timestamp: '10:42 AM',
       type: 'text'
     }
@@ -117,34 +107,28 @@ export function ChatInterface({ userType }) {
 
   return (
     <div className="space-y-6">
-      <h3>Messages & Communication</h3>
-      
+      <h3>Mensagens e Comunicações</h3>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         {/* Conversations List */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Conversations</CardTitle>
-              <Badge variant="secondary">{conversations.filter(c => c.unread > 0).length} unread</Badge>
+              <CardTitle className="text-lg">Conversas</CardTitle>
+              <Badge variant="secondary">{conversations.filter(c => c.unread > 0).length} Não lido</Badge>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search conversations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Pesquisar conversa..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10"/>
             </div>
           </CardHeader>
+
           <CardContent className="p-0">
             <ScrollArea className="h-[480px]">
               {filteredConversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                    selectedChat?.id === conversation.id ? 'bg-muted' : ''
-                  }`}
+                <div key={conversation.id}
+                  className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${selectedChat?.id === conversation.id ? 'bg-muted' : ''
+                    }`}
                   onClick={() => setSelectedChat(conversation)}
                 >
                   <div className="flex items-start gap-3">
@@ -156,7 +140,7 @@ export function ChatInterface({ userType }) {
                         <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
                       )}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h4 className="truncate">{conversation.name}</h4>
@@ -165,7 +149,7 @@ export function ChatInterface({ userType }) {
                       <p className="text-sm text-muted-foreground mb-1">{conversation.role}</p>
                       <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage}</p>
                     </div>
-                    
+
                     {conversation.unread > 0 && (
                       <Badge variant="default" className="ml-2">
                         {conversation.unread}
@@ -211,16 +195,12 @@ export function ChatInterface({ userType }) {
                 <ScrollArea className="h-[400px] p-4">
                   <div className="space-y-4">
                     {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                      >
+                      <div key={message.id} className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                         <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            message.sender === 'me'
+                          className={`max-w-[70%] rounded-lg p-3 ${message.sender === 'me'
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-muted'
-                          }`}
+                            }`}
                         >
                           {message.type === 'audio' ? (
                             <div className="flex items-center gap-2">
@@ -248,11 +228,7 @@ export function ChatInterface({ userType }) {
                     <Button variant="ghost" size="sm">
                       <Paperclip className="h-4 w-4" />
                     </Button>
-                    <Textarea
-                      placeholder="Type your message..."
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+                    <Textarea placeholder="Escreva..." value={messageText} onChange={(e) => setMessageText(e.target.value)} className="flex-1 min-h-[40px] max-h-[120px] resize-none"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -274,8 +250,8 @@ export function ChatInterface({ userType }) {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 {/* <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
-                <h4>Select a conversation</h4>
-                <p className="text-muted-foreground">Choose a conversation from the list to start messaging</p>
+                <h4>Selecione uma conversa</h4>
+                <p className="text-muted-foreground">Selecione uma conversa da lista para iniciar a mensagem</p>
               </div>
             </div>
           )}
@@ -285,21 +261,21 @@ export function ChatInterface({ userType }) {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Communication Features</CardTitle>
+          <CardTitle>Recursos de comunicação</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 border rounded-lg">
-              <h4>Real-time Chat</h4>
-              <p className="text-sm text-muted-foreground">Instant messaging with suppliers and customers</p>
+              <h4>Conversa em Tempo Real</h4>
+              <p className="text-sm text-muted-foreground">Mensagens instantâneas com fornecedores e clientes</p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h4>File Sharing</h4>
-              <p className="text-sm text-muted-foreground">Share documents, images, and order details</p>
+              <h4>Compartilhamento de Arquivos</h4>
+              <p className="text-sm text-muted-foreground">Compartilhe documentos, imagens e detalhes de pedidos</p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h4>Voice Messages</h4>
-              <p className="text-sm text-muted-foreground">Send audio messages for complex discussions</p>
+              <h4>Mensagens de Voz</h4>
+              <p className="text-sm text-muted-foreground">Envie mensagens de áudio para discussões complexas</p>
             </div>
           </div>
         </CardContent>

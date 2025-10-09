@@ -6,13 +6,14 @@ import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/matriz/dashboard/data-table"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
-// para tradução
-import { useTranslation } from "@/hooks/useTranslation";
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 import { ChartAreaGradient } from "@/components/data-table";
 import { Calendar } from "@/components/ui/calendar";
 import data from "./data.json"
 import Component from "@/components/highlight-card";
+// Para tradução
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
+//-------
 export default function Page() {
   return (
     <div className="flex flex-col p-10 gap-10">

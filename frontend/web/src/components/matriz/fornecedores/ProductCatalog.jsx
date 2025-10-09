@@ -10,77 +10,65 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 // import { ImageWithFallback } from './figma/ImageWithFallback';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  ShoppingCart,
-  Package,
-  Star,
-  DollarSign
-} from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, ShoppingCart,Package,Star,DollarSign} from 'lucide-react';
 
 export function ProductCatalog({ userType }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showAddProduct, setShowAddProduct] = useState(false);
 
-  const categories = [
-    'all', 'Fresh Produce', 'Meat & Poultry', 'Seafood', 'Dairy', 'Baked Goods', 'Beverages'
-  ];
+  const categories = ['all', 'Produtos Frescos', 'Carne e Aves', 'Seafood', 'Dairy', 'Produtos de panificação', 'Beverages'];
 
   const products = [
     {
       id: 1,
       name: 'Premium Ribeye Steaks',
-      category: 'Meat & Poultry',
+      category: 'Carne e Aves',
       price: 24.99,
       unit: 'per lb',
       stock: 45,
       supplier: 'Premium Meats Co.',
       image: '/api/placeholder/300/200',
-      description: 'Prime grade ribeye steaks, aged 21 days',
+      description: 'Bifes de ribeye de primeira qualidade, maturados por 21 dias',
       rating: 4.8,
       minOrder: 10
     },
     {
       id: 2,
       name: 'Organic Mixed Greens',
-      category: 'Fresh Produce',
+      category: 'Produtos Frescos',
       price: 8.50,
       unit: 'per case',
       stock: 120,
       supplier: 'Fresh Valley Farms',
       image: '/api/placeholder/300/200',
-      description: 'Fresh organic mixed salad greens',
+      description: 'Salada verde orgânica fresca e mista',
       rating: 4.6,
       minOrder: 5
     },
     {
       id: 3,
       name: 'Artisan Sourdough Bread',
-      category: 'Baked Goods',
+      category: 'Produtos de panificação',
       price: 6.75,
       unit: 'per loaf',
       stock: 30,
       supplier: 'Artisan Bakery Supply',
       image: '/api/placeholder/300/200',
-      description: 'Traditional sourdough bread, freshly baked daily',
+      description: 'Pão de fermentação natural tradicional, assado diariamente',
       rating: 4.9,
       minOrder: 12
     },
     {
       id: 4,
       name: 'Fresh Atlantic Salmon',
-      category: 'Seafood',
+      category: 'Frutos do mar',
       price: 18.99,
       unit: 'per lb',
       stock: 25,
       supplier: 'Ocean Fresh Seafood',
       image: '/api/placeholder/300/200',
-      description: 'Wild-caught Atlantic salmon fillets',
+      description: 'Filés de salmão selvagem do Atlântico',
       rating: 4.7,
       minOrder: 8
     }
@@ -97,18 +85,18 @@ export function ProductCatalog({ userType }) {
     <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle>Adicionar novo produto</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="productName">Product Name</Label>
-            <Input id="productName" placeholder="Enter product name" />
+            <Label htmlFor="productName">Nome do Produto</Label>
+            <Input id="productName" placeholder="Nome do Produto" />
           </div>
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Categoria</Label>
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
               <SelectContent>
                 {categories.slice(1).map((category) => (
@@ -119,28 +107,28 @@ export function ProductCatalog({ userType }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="price">Preço</Label>
               <Input id="price" type="number" placeholder="0.00" />
             </div>
             <div>
-              <Label htmlFor="unit">Unit</Label>
+              <Label htmlFor="unit">Unidade</Label>
               <Input id="unit" placeholder="per lb" />
             </div>
           </div>
           <div>
-            <Label htmlFor="stock">Stock Quantity</Label>
+            <Label htmlFor="stock">Estoque</Label>
             <Input id="stock" type="number" placeholder="0" />
           </div>
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Descrição</Label>
             <Textarea id="description" placeholder="Product description" />
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setShowAddProduct(false)} variant="outline" className="flex-1">
-              Cancel
+              Cancelar
             </Button>
             <Button onClick={() => setShowAddProduct(false)} className="flex-1">
-              Add Product
+             Adicionar
             </Button>
           </div>
         </div>
@@ -155,7 +143,7 @@ export function ProductCatalog({ userType }) {
         {userType === 'supplier' && (
           <Button onClick={() => setShowAddProduct(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Product
+            Adicionar Produto
           </Button>
         )}
       </div>
@@ -163,12 +151,7 @@ export function ProductCatalog({ userType }) {
       <div className="flex gap-4 items-center">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10"/>
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-48">
@@ -235,18 +218,14 @@ export function ProductCatalog({ userType }) {
                     <>
                       <Button variant="outline" size="sm" className="flex-1">
                         <Edit className="h-4 w-4 mr-1" />
-                        Edit
+                        Editar
                       </Button>
                       <Button variant="outline" size="sm">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </>
                   ) : (
-                    <Button 
-                      className="flex-1" 
-                      size="sm"
-                      disabled={product.stock === 0}
-                    >
+                    <Button className="flex-1" size="sm" disabled={product.stock === 0}>
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                     </Button>
@@ -261,8 +240,8 @@ export function ProductCatalog({ userType }) {
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
           <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h4>No products found</h4>
-          <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+          <h4>Nenhum produto encontrado</h4>
+          <p className="text-muted-foreground">Tente ajustar seus critérios de pesquisa ou filtro</p>
         </div>
       )}
 
