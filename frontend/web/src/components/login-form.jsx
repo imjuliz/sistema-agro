@@ -33,9 +33,8 @@ export function LoginForm({
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || data.mensagem || "Erro desconhecido");
-      } else {
+      if (!res.ok) {setError(data.error || data.mensagem || "Erro desconhecido");}
+      else {
         localStorage.setItem("token", data.token);
         localStorage.setItem("perfil", data.userData.perfil);
 
@@ -48,18 +47,14 @@ export function LoginForm({
             window.location.href = "/fazenda/dashboard";
             break;
           case "gerente_loja":
-            window.location.href = "/loja/frenteCaixa";
+            window.location.href = "/loja/dashboard";
             break;
-          // default:
-          //   window.location.href = "/dashboard"; // fallback
         }
       }
       } catch (err) {
         setError("Erro ao conectar com o servidor");
         console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      } finally {setLoading(false);}
     };
 
     return (

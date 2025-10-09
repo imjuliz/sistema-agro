@@ -28,40 +28,32 @@ export default function Fornecedores(){
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="h-24 flex flex-col gap-2"
-            onClick={() => setCurrentRole('supplier')}
-          >
+          <Button variant="outline" className="h-24 flex flex-col gap-2" onClick={() => setCurrentRole('supplier')}>
             <Store className="h-8 w-8" />
             <div>
-              <div>Supplier Portal</div>
-              <div className="text-sm text-muted-foreground">Manage catalogs & orders</div>
+              <div>Fornecedor</div>
+              <div className="text-sm text-muted-foreground">Gerenciar catálogos e pedidos</div>
             </div>
           </Button>
           
-          <Button
-            variant="outline"
-            className="h-24 flex flex-col gap-2"
-            onClick={() => setCurrentRole('consumer')}
-          >
+          <Button variant="outline" className="h-24 flex flex-col gap-2" onClick={() => setCurrentRole('consumer')}>
             <Building2 className="h-8 w-8" />
             <div>
-              <div>Consumer Portal</div>
-              <div className="text-sm text-muted-foreground">Browse & order products</div>
+              <div>Consumidor</div>
+              <div className="text-sm text-muted-foreground">Navegue e solicite produtos</div>
             </div>
           </Button>
         </div>
         
         <div className="mt-6 p-4 bg-muted rounded-lg">
-          <h4 className="mb-2">MVP Features Included:</h4>
+          <h4 className="mb-2">Recursos do MVP incluídos:</h4>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Catalog Management</Badge>
-            <Badge variant="secondary">Order Workflows</Badge>
-            <Badge variant="secondary">Chat System</Badge>
-            <Badge variant="secondary">Complaint Handling</Badge>
-            <Badge variant="secondary">Incident Logging</Badge>
-            <Badge variant="secondary">Link-based Access</Badge>
+            <Badge variant="secondary">Gerenciamento de catálogo</Badge>
+            <Badge variant="secondary">Ordenar fluxos de trabalho</Badge>
+            <Badge variant="secondary">Sistema de bate-papo</Badge>
+            <Badge variant="secondary">Tratamento de reclamações</Badge>
+            <Badge variant="secondary">Registro de incidentes</Badge>
+            <Badge variant="secondary">Acesso baseado em link</Badge>
           </div>
         </div>
       </CardContent>
@@ -70,9 +62,7 @@ export default function Fornecedores(){
 
   if (currentRole === 'guest') {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <RoleSelector />
-      </div>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center"><RoleSelector /></div>
     );
   }
 

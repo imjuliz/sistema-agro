@@ -62,7 +62,7 @@ async function main() {
         { nome: "Paulo Lima", email: "paulo.lima@example.com", senha: senhaHash, perfil_id: perfilMap["gerente_fazenda"], unidade_id: unidadeMap["Fazenda Beta"] },
         { nome: "Fernanda Rocha", email: "fernanda.rocha@example.com", senha: senhaHash, perfil_id: perfilMap["gerente_fazenda"], unidade_id: unidadeMap["Fazenda Beta"] },
 
-        // Gerente Loja
+        // Gerente Loja -- unidade de venda
         { nome: "Bruno Pereira", email: "bruno.pereira@example.com", senha: senhaHash, perfil_id: perfilMap["gerente_loja"], unidade_id: unidadeMap["Loja Central"] },
         { nome: "Carla Mendes", email: "carla.mendes@example.com", senha: senhaHash, perfil_id: perfilMap["gerente_loja"], unidade_id: unidadeMap["Loja Central"] },
         { nome: "Thiago Santos", email: "thiago.santos@example.com", senha: senhaHash, perfil_id: perfilMap["gerente_loja"], unidade_id: unidadeMap["Loja Norte"] },

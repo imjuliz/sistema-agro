@@ -13,16 +13,7 @@ import { ProductCatalog } from './ProductCatalog';
 import { OrderManagement } from './OrderManagement';
 import { ChatInterface } from './ChatInterface';
 import { ComplaintSystem } from './ComplaintSystem';
-import { 
-  Package, 
-  ShoppingCart, 
-  MessageSquare, 
-  AlertTriangle, 
-  Plus,
-  Users,
-  TrendingUp,
-  DollarSign
-} from 'lucide-react';
+import { Package, ShoppingCart, MessageSquare, AlertTriangle, Plus,Users,TrendingUp,DollarSign} from 'lucide-react';
 
 export function SupplierDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -51,50 +42,30 @@ export function SupplierDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>Supplier Dashboard</h2>
-          <p className="text-muted-foreground">Manage your products, orders, and customer relationships</p>
+          <h2>Dashboard do Fornecedor</h2>
+          <p className="text-muted-foreground">Gerencie seus produtos, pedidos e relacionamentos com clientes</p>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Add Product
+          Adicionar produto
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="catalog">Catalog</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="chat">Messages</TabsTrigger>
-          <TabsTrigger value="complaints">Complaints</TabsTrigger>
+          <TabsTrigger value="overview">Visão geral</TabsTrigger>
+          <TabsTrigger value="catalog">Catalogo</TabsTrigger>
+          <TabsTrigger value="orders">Pedidos</TabsTrigger>
+          <TabsTrigger value="chat">Mensagens</TabsTrigger>
+          <TabsTrigger value="complaints">Reclamações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <OverviewCard
-              title="Total Products"
-              value="247"
-              icon={Package}
-              trend="+12 this month"
-            />
-            <OverviewCard
-              title="Active Orders"
-              value="18"
-              icon={ShoppingCart}
-              trend="+5 today"
-            />
-            <OverviewCard
-              title="Connected Restaurants"
-              value="34"
-              icon={Users}
-              trend="+3 this week"
-            />
-            <OverviewCard
-              title="Revenue (MTD)"
-              value="$12,450"
-              icon={DollarSign}
-              trend="+15.3%"
-            />
+            <OverviewCard title="Total Products" value="247" icon={Package} trend="+12 this month"/>
+            <OverviewCard title="Active Orders" value="18" icon={ShoppingCart} trend="+5 today"/>
+            <OverviewCard title="Connected Restaurants" value="34" icon={Users} trend="+3 this week"/>
+            <OverviewCard title="Revenue (MTD)" value="$12,450" icon={DollarSign} trend="+15.3%"/>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
