@@ -29,7 +29,7 @@ export default function Page() {
           <DataTable data={data} />
           <div className="flex flex-row gap-6 items-start justify-between px-4 lg:px-6 mt-10">
             <div className="flex-1">
-              <ChartAreaGradient />
+              {/* <ChartAreaGradient /> */}
             </div>
             <div className="w-full">
               <Calendar />

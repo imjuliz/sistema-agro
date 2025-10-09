@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -17,37 +17,163 @@ model perfis {
   @@map("perfis")
 }
 
+// unidades, fazendas, lojas e etc
 model unidades {
   id            Int         @id @default(autoincrement())
   nome          String
   endereco      String?
+  gerente_id    Int
   criado_em     DateTime    @default(now())
   atualizado_em DateTime    @default(now())
   tipo          TipoUnidade
-  usuarios      usuarios[]
+  status        Boolean     @default(true)
+
+  usuarios usuarios[]
+  gerente  usuarios   @relation("GerenteUnidade", fields: [gerente_id], references: [id])
+  estoque  estoques[]
+  lote     lotes[]
+  produto  produtos[]
 
   @@map("unidades")
 }
 
 model usuarios {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   nome          String
-  email         String    @unique
+  email         String   @unique
   senha         String
   telefone      String?
   perfil_id     Int
   unidade_id    Int?
-  status        Boolean   @default(true)
-  criado_em     DateTime  @default(now())
-  atualizado_em DateTime  @default(now())
-  perfil        perfis    @relation(fields: [perfil_id], references: [id])
-  unidade       unidades? @relation(fields: [unidade_id], references: [id])
+  status        Boolean  @default(true)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @default(now())
+
+  unidadesGerenciadas unidades[]     @relation("GerenteUnidade")
+  perfil              perfis         @relation(fields: [perfil_id], references: [id])
+  unidade             unidades?      @relation(fields: [unidade_id], references: [id])
+  lotes_responsavel   lotes[]        @relation("UsuarioResponsavelLote")
+  reset_senhas        reset_senhas[]
 
   @@map("usuarios")
+}
+
+// p esqueci a senha
+model reset_senhas {
+  id            Int      @id @default(autoincrement())
+  usuario_id    Int
+  codigo_reset  String
+  codigo_expira DateTime @default(now())
+  usado         Boolean  @default(false)
+  criado_em     DateTime @default(now())
+
+  usuario usuarios @relation(fields: [usuario_id], references: [id])
+
+  @@map("reset_senhas")
+}
+
+model estoques {
+  id            Int      @id @default(autoincrement())
+  unidade_id    Int
+  produto_id    Int
+  quantidade    Int
+  atualizado_em DateTime @default(now())
+
+  unidade unidades @relation(fields: [unidade_id], references: [id])
+  produto produtos @relation(fields: [produto_id], references: [id])
+}
+
+model lotes {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  tipo           TipoLote
+  unidade_id     Int
+  responsavel_id Int
+  qntd_itens     Int
+  data_criacao   DateTime @default(now())
+  observacoes    String?
+
+  responsavel usuarios @relation("UsuarioResponsavelLote", fields: [responsavel_id], references: [id])
+  unidade     unidades @relation(fields: [unidade_id], references: [id])
+
+  registrosSanitarios     registros_sanitarios[]
+  producoes               producoes[]
+  rastreabilidade_origem  rastreabilidade_lotes[] @relation("Origem")
+  rastreabilidade_destino rastreabilidade_lotes[] @relation("Destino")
+  produtos_relacionados   produtos[]
+
+  @@map("lotes")
+}
+
+model rastreabilidade_lotes {
+  id              Int      @id @default(autoincrement())
+  lote_origem_id  Int
+  lote_destino_id Int
+  descricao       String?
+  data_vinculo    DateTime @default(now())
+
+  origem  lotes @relation("Origem", fields: [lote_origem_id], references: [id])
+  destino lotes @relation("Destino", fields: [lote_destino_id], references: [id])
+
+  @@map("rastreabilidade_lotes")
+}
+
+model registros_sanitarios {
+  id             Int                   @id @default(autoincrement())
+  lote_id        Int
+  tipo           TipoRegistroSanitario
+  produto        String
+  data_aplicacao DateTime              @default(now())
+  quantidade     Float?
+  observacoes    String?
+
+  lote lotes @relation(fields: [lote_id], references: [id])
+
+  @@map("registros_sanitarios")
+}
+
+model producoes {
+  id             Int      @id @default(autoincrement())
+  lote_id        Int
+  tipo_produto   String // ex: "LEITE", "SOJA", "MILHO"
+  quantidade     Float
+  unidade_medida String // ex: "L", "kg", "sacas"
+  data_registro  DateTime @default(now())
+
+  lotes lotes @relation(fields: [lote_id], references: [id])
+
+  @@map("producoes")
+}
+
+model produtos {
+  id            Int      @id @default(autoincrement())
+  nome          String
+  data_validade DateTime
+  lote_id       Int
+  unidade_id    Int
+  sku           String
+
+  unidade unidades   @relation(fields: [unidade_id], references: [id])
+  lotes   lotes      @relation(fields: [lote_id], references: [id])
+  estoque estoques[]
 }
 
 enum TipoUnidade {
   MATRIZ
   FAZENDA
   LOJA
+}
+
+// adicionar mais tipos de lote
+enum TipoLote {
+  GADO
+  SOJA
+  LEITE
+}
+
+enum TipoRegistroSanitario {
+  VACINA
+  MEDICACAO
+  RACAO
+  OUTRO
 }

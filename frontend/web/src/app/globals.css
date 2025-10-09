@@ -264,20 +264,38 @@ body {
 
 /* small tweak to make the cards visually similar to Launch UI */
 .sp-card {
-  background: rgba(10,11,12,0.7); /* dark translucent card */
+  background: rgba(245,246,247,0.7); 
   border: 1px solid rgba(255,255,255,0.03);
-  box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+  box-shadow: 0 6px 22px rgba(255,255,255,0.6);
   border-radius: 0.5rem;
   padding: 1rem;
-  min-width: 18.5rem; /* adjust card width */
+  min-width: 18.5rem;
   max-width: 24rem;
-  color: rgba(255,255,255,0.88);
+  color: rgba(0,0,0,0.88);
 }
 .sp-card .meta { display:flex; gap:0.75rem; align-items:center; margin-bottom:0.4rem;}
 .sp-card .meta img { width:36px; height:36px; border-radius:9999px; object-fit:cover; }
 .sp-card .name { font-weight:600; font-size:0.95rem; }
-.sp-card .handle { font-size:0.78rem; color: rgba(255,255,255,0.65); margin-top: -2px; }
-.sp-card .text { font-size:0.86rem; color: rgba(255,255,255,0.75); line-height:1.25; white-space:pre-wrap; }
+.sp-card .handle { font-size:0.78rem; color: rgba(0,0,0,0.65); margin-top: -2px; }
+.sp-card .text { font-size:0.86rem; color: rgba(0,0,0,0.75); line-height:1.25; white-space:pre-wrap; }
+
+@media (prefers-color-scheme: dark) {
+  .sp-card {
+    background: rgba(10,11,12,0.7); 
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    min-width: 18.5rem;
+    max-width: 24rem;
+    color: rgba(255,255,255,0.88);
+  }
+  .sp-card .meta { display:flex; gap:0.75rem; align-items:center; margin-bottom:0.4rem;}
+  .sp-card .meta img { width:36px; height:36px; border-radius:9999px; object-fit:cover; }
+  .sp-card .name { font-weight:600; font-size:0.95rem; }
+  .sp-card .handle { font-size:0.78rem; color: rgba(255,255,255,0.65); margin-top: -2px; }
+  .sp-card .text { font-size:0.86rem; color: rgba(255,255,255,0.75); line-height:1.25; white-space:pre-wrap; }
+}
 
 /* responsive: reduce card width on small screens */
 @media (max-width: 640px) {
