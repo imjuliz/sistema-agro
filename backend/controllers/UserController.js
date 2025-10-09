@@ -1,7 +1,8 @@
-import { cadastrarSe, getUserByEmail, updateUsuario, deletarUsuario } from "../models/User.js";
-import { createClient } from '@supabase/supabase-js';
-import prisma from "../prisma/client.js";
+import { cadastrarSe, getUserByEmail, updateUsuario, deletarUsuario, login, esqSenha, codigo, updateSenha } from "../models/User.js";
 import { userSchema } from "../schemas/userSchema.js";
+import nodemailer from "nodemailer";
+import { google } from "googleapis";
+
 
 // const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -71,3 +72,98 @@ export const deletarUsuarioController = async (req, res) => {
     return res.status(500).json({ sucesso: false, erro: 'Erro interno do servidor' })
   }
 }
+
+export const loginController = async (req, res) => {
+  const { email, senha } = userSchema.partial().parse(req.body);
+  try {
+    // Validações básicas
+    if (!email || !senha) {
+      return res.status(400).json({ error: "Email e senha são obrigatórios" });
+    }
+
+    // Salva em response a resposta do login
+    const response =  await login(email, senha)
+
+    res
+      .status(200)
+      .json({ message: "Usuário autenticado com sucesso", response });
+  } catch (error) {
+    console.error("Erro ao fazer login:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+};
+
+export const esqSenhaController = async (req, res) => {
+  const { email } = userSchema.partial().parse(req.body);
+  try {
+    // Gerar código de 6 dígitos
+    const codigo = String(Math.floor(100000 + Math.random() * 900000));
+    const expira = new Date(Date.now() + 10 * 60 * 1000); // expira em 10 minutos
+
+    const oAuth2Client = new google.auth.OAuth2(
+      process.env.SMTP_CLIENT_ID,
+      process.env.SMTP_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    oAuth2Client.setCredentials({
+      refresh_token: process.env.SMTP_REFRESH_TOKEN,
+    });
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    const transport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: "ruraltech91@gmail.com",
+        clientId: process.env.SMTP_CLIENT_ID,
+        clientSecret: process.env.SMTP_CLIENT_SECRET,
+        refreshToken: process.env.SMTP_REFRESH_TOKEN,
+        accessToken: oAuth2Client.getAccessToken(),
+      },
+    });
+
+    const mailOptions = {
+      from: "RuralTech <ruraltech91@gmail.com>",
+      to: email,
+      subject: "Recuperação de senha",
+      text: `Seu código de recuperação é: ${codigo}`,
+      html: `
+        <h1>Recuperação de senha</h1>
+        <p>Seu código de recuperação é:</p>
+        <h2 style="color:blue;">${codigo}</h2>
+        <p>Este código expira em 10 minutos.</p>
+    `,
+    };
+    await transport.sendMail(mailOptions);
+    const token = await esqSenha(email, codigo, expira);
+
+    res.status(200).json({ message: "Código enviado com sucesso", token });
+  } catch {
+    console.error("Erro ao buscar usuário:", error);
+    res.status(500).json({ error: "Erro ao buscar usuário" });
+  }
+};
+
+export const codigoController = async (req, res) => {
+  const { codigo_reset } = req.body;
+  try {
+    const criarCodigo = await codigo(codigo_reset);
+    res.status(200).json({ message: "Código verificado com sucesso", criarCodigo });
+  } catch (error) {
+    console.error("Erro ao buscar codigo:", error);
+    res.status(500).json({ error: "Erro ao buscar codigo" });
+  }
+};
+
+export const updateSenhaController = async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { senha, confSenha } = userSchema.partial().parse(req.body);
+
+    const result = await updateSenha(codigo, senha, confSenha);
+    res.status(200).json({ message: "Senha atualizada com sucesso", result });
+  } catch (error) {
+    console.error("Erro ao buscar codigo:", error);
+    res.status(500).json({ error: "Erro ao buscar codigo" });
+  }
+};

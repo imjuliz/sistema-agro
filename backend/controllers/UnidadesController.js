@@ -1,6 +1,5 @@
-import prisma from "../prisma/client";
-import { deleteUnidade, getUnidadePorId, getUnidades, updateUnidade, createUnidade } from "../models/unidades";
-import { unidadeSchema } from "../schemas/unidadeSchema";
+import { deleteUnidade, getUnidadePorId, getUnidades, createUnidade } from "../models/unidades.js";
+import { unidadeSchema } from "../schemas/unidadeSchema.js";
 
 export async function getUnidadesController(req, res) {
     try {

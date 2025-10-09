@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const userSchema = z.object({
     nomeCompleto: z.string(),
-    email: z.email().regex(/@(gmail|hotmail|exemplo|outlook)\.com$/),
+    email: z.email().regex(/@(gmail|hotmail|example|outlook)\.com$/),
     cpf: z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/),
     funcao: z.string(),
     setor: z.string(),
