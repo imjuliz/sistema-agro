@@ -9,15 +9,7 @@ import { ProductCatalog } from './ProductCatalog';
 import { OrderManagement } from './OrderManagement';
 import { ChatInterface } from './ChatInterface';
 import { ComplaintSystem } from './ComplaintSystem';
-import { 
-  ShoppingCart, 
-  MessageSquare, 
-  AlertTriangle, 
-  Search,
-  TrendingUp,
-  Clock,
-  CheckCircle
-} from 'lucide-react';
+import { ShoppingCart, MessageSquare, AlertTriangle, Search,TrendingUp,Clock,CheckCircle} from 'lucide-react';
 
 export function ConsumerDashboard() {
   const [activeTab, setActiveTab] = useState('browse');
@@ -40,57 +32,41 @@ export function ConsumerDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>Consumer Dashboard</h2>
-          <p className="text-muted-foreground">Browse suppliers and manage your orders</p>
+          <h2>Dashboard do Consumidor</h2>
+          <p className="text-muted-foreground">Pesquise fornecedores e gerencie seus pedidos</p>
         </div>
         <Button>
-          <Search className="h-4 w-4 mr-2" />
-          Find Suppliers
+          <Search className="h-4 w-4 mr-2" />Ache fornecedores
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="browse">Browse Products</TabsTrigger>
-          <TabsTrigger value="orders">My Orders</TabsTrigger>
-          <TabsTrigger value="chat">Messages</TabsTrigger>
-          <TabsTrigger value="complaints">Support</TabsTrigger>
+          <TabsTrigger value="browse">Ache Produtos</TabsTrigger>
+          <TabsTrigger value="orders">Meus Pedidos</TabsTrigger>
+          <TabsTrigger value="chat">Mensagens</TabsTrigger>
+          <TabsTrigger value="complaints">Ajuda</TabsTrigger>
         </TabsList>
 
         <TabsContent value="browse" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatCard
-              title="Active Orders"
-              value="7"
-              icon={ShoppingCart}
-              color="text-blue-600"
-            />
-            <StatCard
-              title="Pending Approvals"
-              value="3"
-              icon={Clock}
-              color="text-yellow-600"
-            />
-            <StatCard
-              title="Completed This Month"
-              value="24"
-              icon={CheckCircle}
-              color="text-green-600"
-            />
+            <StatCard title="Pedidos Ativos" value="7" icon={ShoppingCart} color="text-blue-600"/>
+            <StatCard title="Aprovações pendentes" value="3" icon={Clock} color="text-yellow-600"/>
+            <StatCard title="Concluído este mês" value="24" icon={CheckCircle} color="text-green-600"/>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Approved Suppliers</CardTitle>
-              <p className="text-muted-foreground">Access catalogs from your approved suppliers</p>
+              <CardTitle>Fornecedores Aprovados</CardTitle>
+              <p className="text-muted-foreground">Acesse catálogos de seus fornecedores aprovados</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                  { name: 'Fresh Valley Farms', category: 'Organic Produce', status: 'active', products: 156 },
-                  { name: 'Premium Meats Co.', category: 'Meat & Poultry', status: 'active', products: 89 },
-                  { name: 'Artisan Bakery Supply', category: 'Baked Goods', status: 'active', products: 67 },
-                  { name: 'Ocean Fresh Seafood', category: 'Seafood', status: 'pending', products: 134 }
+                  { name: 'Animals', category: 'Animais', status: 'ativa', products: 156 },
+                  { name: 'Nature Co.', category: 'Insumos', status: 'ativa', products: 89 },
+                  { name: 'PetFood', category: 'Rações', status: 'ativa', products: 67 },
+                  { name: 'EcoMundo', category: 'Plantas', status: 'ativa', products: 134 }
                 ].map((supplier, index) => (
                   <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
@@ -102,7 +78,7 @@ export function ConsumerDashboard() {
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">{supplier.category}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">{supplier.products} products</span>
+                        <span className="text-sm">{supplier.products} produtos</span>
                         <Button size="sm" disabled={supplier.status !== 'active'}>
                           {supplier.status === 'active' ? 'Browse' : 'Awaiting Approval'}
                         </Button>

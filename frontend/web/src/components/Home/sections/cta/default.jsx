@@ -10,7 +10,7 @@ export default function CTA(props) {
     title = "Começar agora",
     buttons = [
       {
-        href: siteConfig.getStartedUrl,
+        href: '/login',
         text: "Entrar",
         variant: "default",
       },

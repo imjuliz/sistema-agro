@@ -11,18 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  AlertTriangle, 
-  Plus, 
-  Eye, 
-  MessageSquare,
-  Clock,
-  CheckCircle,
-  XCircle,
-  ArrowUp,
-  FileText,
-  Calendar
-} from 'lucide-react';
+import { AlertTriangle, Plus, Eye, MessageSquare, Clock, CheckCircle, XCircle, ArrowUp, FileText, Calendar } from 'lucide-react';
 
 export function ComplaintSystem({ userType }) {
   const [showNewComplaint, setShowNewComplaint] = useState(false);
@@ -32,9 +21,9 @@ export function ComplaintSystem({ userType }) {
     {
       id: 'CMP-001',
       title: 'Late Delivery - Order ORD-001',
-      description: 'Order was delivered 2 hours late, affecting our lunch service',
-      category: 'delivery',
-      priority: 'high',
+      description: 'O pedido foi entregue com 2 horas de atraso, afetando nosso serviço de almoço',
+      category: 'entrega',
+      priority: 'alta',
       status: 'open',
       submittedBy: userType === 'supplier' ? 'Bella Vista Restaurant' : 'Fresh Valley Farms',
       assignedTo: userType === 'supplier' ? 'Sales Manager' : 'Customer Support',
@@ -46,13 +35,13 @@ export function ComplaintSystem({ userType }) {
         {
           id: 1,
           author: 'Sales Rep',
-          message: 'I apologize for the delay. There was unexpected traffic on the delivery route.',
+          message: 'Peço desculpas pelo atraso. Houve trânsito inesperado na rota de entrega.',
           timestamp: '2024-01-15T11:00:00Z'
         },
         {
           id: 2,
           author: 'Restaurant Manager',
-          message: 'This has happened twice this month. We need a more reliable solution.',
+          message: 'Isso aconteceu duas vezes este mês. Precisamos de uma solução mais confiável.',
           timestamp: '2024-01-15T11:30:00Z'
         }
       ]
@@ -60,9 +49,9 @@ export function ComplaintSystem({ userType }) {
     {
       id: 'CMP-002',
       title: 'Product Quality Issue - Damaged Packaging',
-      description: 'Several packages of meat were damaged upon delivery, with torn vacuum seals',
-      category: 'quality',
-      priority: 'medium',
+      description: 'Vários pacotes de carne foram danificados na entrega, com lacres de vácuo rasgados',
+      category: 'qualidade',
+      priority: 'normal',
       status: 'in_progress',
       submittedBy: userType === 'supplier' ? 'Grand Hotel Kitchen' : 'Premium Meats Co.',
       assignedTo: userType === 'supplier' ? 'Quality Manager' : 'Customer Support',
@@ -74,7 +63,7 @@ export function ComplaintSystem({ userType }) {
         {
           id: 1,
           author: 'Quality Manager',
-          message: 'We are investigating this with our packaging team. Photos would be helpful.',
+          message: 'Estamos investigando isso com nossa equipe de embalagens. Fotos seriam úteis.',
           timestamp: '2024-01-14T10:00:00Z'
         }
       ]
@@ -82,9 +71,9 @@ export function ComplaintSystem({ userType }) {
     {
       id: 'CMP-003',
       title: 'Billing Discrepancy',
-      description: 'Invoice amount does not match the agreed pricing for organic vegetables',
-      category: 'billing',
-      priority: 'low',
+      description: 'O valor da fatura não corresponde ao preço acordado para vegetais orgânicos',
+      category: 'cobranca',
+      priority: 'baixa',
       status: 'resolved',
       submittedBy: userType === 'supplier' ? 'Metro Bistro' : 'Fresh Valley Farms',
       assignedTo: userType === 'supplier' ? 'Accounts Manager' : 'Billing Department',
@@ -96,7 +85,7 @@ export function ComplaintSystem({ userType }) {
         {
           id: 1,
           author: 'Accounts Manager',
-          message: 'You are correct. There was an error in the pricing. Corrected invoice attached.',
+          message: 'Você está correto. Houve um erro no preço. Fatura corrigida em anexo.',
           timestamp: '2024-01-13T09:30:00Z'
         }
       ]
@@ -125,9 +114,9 @@ export function ComplaintSystem({ userType }) {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'text-red-600';
-      case 'medium': return 'text-yellow-600';
-      case 'low': return 'text-green-600';
+      case 'alta': return 'text-red-600';
+      case 'normal': return 'text-yellow-600';
+      case 'baixa': return 'text-green-600';
       default: return 'text-gray-600';
     }
   };
@@ -141,66 +130,66 @@ export function ComplaintSystem({ userType }) {
     <Dialog open={showNewComplaint} onOpenChange={setShowNewComplaint}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Submit New Complaint</DialogTitle>
+          <DialogTitle>Enviar nova reclamação</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title">Complaint Title</Label>
-            <Input id="title" placeholder="Brief description of the issue" />
+            <Label htmlFor="title">Título da reclamação</Label>
+            <Input id="title" placeholder="Breve descrição do problema" />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">Categoria</Label>
               <Select>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="delivery">Delivery Issue</SelectItem>
-                  <SelectItem value="quality">Product Quality</SelectItem>
-                  <SelectItem value="billing">Billing/Pricing</SelectItem>
-                  <SelectItem value="service">Customer Service</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="entrega">Problema de entrega</SelectItem>
+                  <SelectItem value="qualidade">Qualidade do Produto</SelectItem>
+                  <SelectItem value="cobranca">Faturamento/Preços</SelectItem>
+                  <SelectItem value="atendimento">Atendimento ao Cliente</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="priority">Prioridade</Label>
               <Select>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
+                  <SelectValue placeholder="Selecione a Prioridade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="baixa">Baixa</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="alta">Alta</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="orderId">Related Order ID (Optional)</Label>
+            <Label htmlFor="orderId">ID do pedido relacionado (opcional)</Label>
             <Input id="orderId" placeholder="ORD-001" />
           </div>
 
           <div>
-            <Label htmlFor="description">Detailed Description</Label>
-            <Textarea 
-              id="description" 
-              placeholder="Please provide as much detail as possible about the issue..."
+            <Label htmlFor="description">Descrição Detalhada</Label>
+            <Textarea
+              id="description"
+              placeholder="Forneça o máximo de detalhes possível sobre o problema..."
               className="min-h-[120px]"
             />
           </div>
 
           <div className="flex gap-2">
             <Button onClick={() => setShowNewComplaint(false)} variant="outline" className="flex-1">
-              Cancel
+              Cancelar
             </Button>
             <Button onClick={() => setShowNewComplaint(false)} className="flex-1">
-              Submit Complaint
+              Enviar
             </Button>
           </div>
         </div>
@@ -213,7 +202,7 @@ export function ComplaintSystem({ userType }) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Eye className="h-4 w-4 mr-1" />
-          View
+          Visualizar
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -222,18 +211,18 @@ export function ComplaintSystem({ userType }) {
             <div>
               <DialogTitle>{complaint.title}</DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Complaint ID: {complaint.id}
+                ID da Reclamação: {complaint.id}
               </p>
             </div>
             {complaint.escalated && (
               <Badge variant="destructive" className="ml-2">
                 <ArrowUp className="h-3 w-3 mr-1" />
-                Escalated
+                Escalado
               </Badge>
             )}
           </div>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -246,28 +235,28 @@ export function ComplaintSystem({ userType }) {
               </div>
             </div>
             <div>
-              <Label>Priority</Label>
+              <Label>Prioridade</Label>
               <p className={`mt-1 ${getPriorityColor(complaint.priority)}`}>
                 {complaint.priority.toUpperCase()}
               </p>
             </div>
             <div>
-              <Label>Category</Label>
+              <Label>Categoria</Label>
               <p className="mt-1 capitalize">{complaint.category}</p>
             </div>
             <div>
-              <Label>Related Order</Label>
+              <Label>Pedido Relacionado</Label>
               <p className="mt-1">{complaint.orderId || 'N/A'}</p>
             </div>
           </div>
 
           <div>
-            <Label>Description</Label>
+            <Label>Descrição</Label>
             <p className="mt-1 p-3 bg-muted rounded-lg">{complaint.description}</p>
           </div>
 
           <div>
-            <Label>Responses & Updates</Label>
+            <Label>Respostas e Atualizações</Label>
             <div className="mt-2 space-y-3">
               {complaint.responses.map((response) => (
                 <div key={response.id} className="p-4 border rounded-lg">
@@ -291,21 +280,17 @@ export function ComplaintSystem({ userType }) {
           </div>
 
           <div>
-            <Label htmlFor="newResponse">Add Response</Label>
-            <Textarea 
-              id="newResponse"
-              placeholder="Type your response..."
-              className="mt-1"
-            />
+            <Label htmlFor="newResponse">Adicionar resposta</Label>
+            <Textarea id="newResponse" placeholder="Escreva sua resposta" className="mt-1" />
             <div className="flex gap-2 mt-2">
               <Button size="sm" className="flex-1">
                 <MessageSquare className="h-4 w-4 mr-2" />
-                Add Response
+                Adicionar resposta
               </Button>
               {userType === 'supplier' && !complaint.escalated && (
                 <Button size="sm" variant="outline">
                   <ArrowUp className="h-4 w-4 mr-2" />
-                  Escalate to Manager
+                  Escalar para Gerente
                 </Button>
               )}
             </div>
@@ -321,7 +306,7 @@ export function ComplaintSystem({ userType }) {
         <div>
           <h3>{userType === 'supplier' ? 'Complaint Management' : 'Support & Complaints'}</h3>
           <p className="text-muted-foreground">
-            {userType === 'supplier' 
+            {userType === 'supplier'
               ? 'Handle customer complaints and feedback'
               : 'Submit and track your complaints and support requests'
             }
@@ -329,16 +314,16 @@ export function ComplaintSystem({ userType }) {
         </div>
         <Button onClick={() => setShowNewComplaint(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          New Complaint
+          Nova Reclamação
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="all">All Complaints</TabsTrigger>
-          <TabsTrigger value="open">Open</TabsTrigger>
-          <TabsTrigger value="in_progress">In Progress</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved</TabsTrigger>
+          <TabsTrigger value="all">Todas as Reclamações</TabsTrigger>
+          <TabsTrigger value="open">Abertas</TabsTrigger>
+          <TabsTrigger value="in_progress">Em progresso</TabsTrigger>
+          <TabsTrigger value="resolved">Resolvidas</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
@@ -354,30 +339,30 @@ export function ComplaintSystem({ userType }) {
                         {complaint.status.replace('_', ' ')}
                       </Badge>
                       <span className={`text-sm ${getPriorityColor(complaint.priority)}`}>
-                        {complaint.priority} priority
+                        {complaint.priority} prioridade
                       </span>
                       {complaint.escalated && (
                         <Badge variant="destructive">
                           <ArrowUp className="h-3 w-3 mr-1" />
-                          Escalated
+                          Escalado
                         </Badge>
                       )}
                     </div>
-                    
+
                     <p className="text-muted-foreground">
                       {userType === 'supplier' ? 'Submitted by:' : 'Assigned to:'} {complaint.submittedBy}
                     </p>
-                    
+
                     <p className="text-sm line-clamp-2">{complaint.description}</p>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>Created: {new Date(complaint.createdAt).toLocaleDateString()}</span>
+                      <span>Criado: {new Date(complaint.createdAt).toLocaleDateString()}</span>
                       <span>•</span>
-                      <span>Updated: {new Date(complaint.updatedAt).toLocaleDateString()}</span>
+                      <span>Atualizado: {new Date(complaint.updatedAt).toLocaleDateString()}</span>
                       {complaint.orderId && (
                         <>
                           <span>•</span>
-                          <span>Order: {complaint.orderId}</span>
+                          <span>Ordem: {complaint.orderId}</span>
                         </>
                       )}
                     </div>
@@ -387,7 +372,7 @@ export function ComplaintSystem({ userType }) {
                     <ComplaintDetails complaint={complaint} />
                     <Button variant="outline" size="sm">
                       <MessageSquare className="h-4 w-4 mr-1" />
-                      Respond
+                      Responder
                     </Button>
                   </div>
                 </div>
@@ -398,9 +383,9 @@ export function ComplaintSystem({ userType }) {
           {filteredComplaints.length === 0 && (
             <div className="text-center py-12">
               <AlertTriangle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h4>No complaints found</h4>
+              <h4>Nenhuma reclamação</h4>
               <p className="text-muted-foreground">
-                {activeTab === 'all' 
+                {activeTab === 'all'
                   ? 'No complaints have been submitted yet'
                   : `No ${activeTab.replace('_', ' ')} complaints found`
                 }
@@ -417,21 +402,20 @@ export function ComplaintSystem({ userType }) {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 border rounded-lg">
-              <h4>Escalation Workflow</h4>
+              <h4>Fluxo de trabalho de escalonamento</h4>
               <p className="text-sm text-muted-foreground">
-                Sales reps can escalate issues to managers for complex resolution
+                Os representantes de vendas podem encaminhar problemas aos gerentes para resolução complexa</p>
+            </div>
+            <div className="p-4 border rounded-lg">
+              <h4>Registro de incidentes</h4>
+              <p className="text-sm text-muted-foreground">
+                Acompanhamento abrangente de todas as reclamações e suas resoluções
               </p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h4>Incident Logging</h4>
+              <h4>Rastreamento de Resposta</h4>
               <p className="text-sm text-muted-foreground">
-                Comprehensive tracking of all complaints and their resolutions
-              </p>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h4>Response Tracking</h4>
-              <p className="text-sm text-muted-foreground">
-                Monitor response times and customer satisfaction metrics
+                Monitore os tempos de resposta e as métricas de satisfação do cliente
               </p>
             </div>
           </div>

@@ -13,7 +13,7 @@ import {
   flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel,
   getSortedRowModel, useReactTable,
 } from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis, Dot, Line, LineChart } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, Dot, Line, LineChart, Bar, BarChart } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -63,6 +63,7 @@ import { TrendingUp } from "lucide-react"
 
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 
+
 // Create a separate component for the drag handle
 function DragHandle({
   id
@@ -81,6 +82,39 @@ function DragHandle({
     </Button>
   );
 }
+
+const data = [
+  {
+    id: "m5gr84i9",
+    amount: 316,
+    status: "success",
+    email: "ken99@example.com",
+  },
+  {
+    id: "3u1reuv4",
+    amount: 242,
+    status: "success",
+    email: "Abe45@example.com",
+  },
+  {
+    id: "derv1ws0",
+    amount: 837,
+    status: "processing",
+    email: "Monserrat44@example.com",
+  },
+  {
+    id: "5kma53ae",
+    amount: 874,
+    status: "success",
+    email: "Silas22@example.com",
+  },
+  {
+    id: "bhqecj4p",
+    amount: 721,
+    status: "failed",
+    email: "carmella@example.com",
+  },
+]
 
 const columns = [
   {
@@ -303,6 +337,7 @@ export function DataTable({
     { browser: "other", visitors: 90, fill: "var(--color-other)" },
   ];
 
+  // Configuração das cores e labels do gráfico
   const chart2Config = {
     visitors: { label: "Visitors", color: "var(--chart-2)", },
     chrome: { label: "Chrome", color: "var(--chart-1)", },
@@ -310,6 +345,28 @@ export function DataTable({
     firefox: { label: "Firefox", color: "var(--chart-3)", },
     edge: { label: "Edge", color: "var(--chart-4)", },
     other: { label: "Other", color: "var(--chart-5)", },
+  };
+
+  // grafico 1
+  const chart3Data = [
+    { month: "January", desktop: 186, mobile: 80 },
+    { month: "February", desktop: 305, mobile: 200 },
+    { month: "March", desktop: 237, mobile: 120 },
+    { month: "April", desktop: 73, mobile: 190 },
+    { month: "May", desktop: 209, mobile: 130 },
+    { month: "June", desktop: 214, mobile: 140 },
+  ];
+
+  // Configuração das cores e labels do gráfico
+  const chart3Config = {
+    desktop: {
+      label: "Desktop",
+      color: "var(--chart-1)",
+    },
+    mobile: {
+      label: "Mobile",
+      color: "var(--chart-2)",
+    },
   };
 
   const dataIds = React.useMemo(() => data?.map(({ id }) => id) || [], [data])
@@ -498,163 +555,200 @@ export function DataTable({
       </TabsContent>
 
       <TabsContent value="fazendas" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex flex-row gap-8 rounded-lg border border-dashed">
-          <div className="w-2/3">
-            {/* KPIs */}
-            <div
-              className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-              <Card className="@container/card">
+        <div className="aspect-video w-full flex flex-col gap-8 rounded-lg border border-dashed">
+          <div className="w-full flex flex-row justify-between">
+            <div className="w-6/10">
+              {/* KPIs */}
+              <div
+                className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-3">
+                <Card className="@container/card">
+                  <CardHeader>
+                    <CardDescription>Total de unidades/filiais ativas</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                      $1,250.00
+                    </CardTitle>
+                    <CardAction>
+                      <Badge variant="outline">
+                        <IconTrendingUp />
+                        +12.5%
+                      </Badge>
+                    </CardAction>
+                  </CardHeader>
+                  <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <div className="line-clamp-1 flex gap-2 font-medium">
+                      Trending up this month <IconTrendingUp className="size-4" />
+                    </div>
+                    <div className="text-muted-foreground">
+                      Visitors for the last 6 months
+                    </div>
+                  </CardFooter>
+                </Card>
+                <Card className="@container/card">
+                  <CardHeader>
+                    <CardDescription>Faturamento total consolidado</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                      1,234
+                    </CardTitle>
+                    <CardAction>
+                      <Badge variant="outline">
+                        <IconTrendingDown />
+                        -20%
+                      </Badge>
+                    </CardAction>
+                  </CardHeader>
+                  <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <div className="line-clamp-1 flex gap-2 font-medium">
+                      Down 20% this period <IconTrendingDown className="size-4" />
+                    </div>
+                    <div className="text-muted-foreground">
+                      Acquisition needs attention
+                    </div>
+                  </CardFooter>
+                </Card>
+                <Card className="@container/card">
+                  <CardHeader>
+                    <CardDescription>Active Accounts</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                      45,678
+                    </CardTitle>
+                    <CardAction>
+                      <Badge variant="outline">
+                        <IconTrendingUp />
+                        +12.5%
+                      </Badge>
+                    </CardAction>
+                  </CardHeader>
+                  <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <div className="line-clamp-1 flex gap-2 font-medium">
+                      Strong user retention <IconTrendingUp className="size-4" />
+                    </div>
+                    <div className="text-muted-foreground">Engagement exceed targets</div>
+                  </CardFooter>
+                </Card>
+
+              </div>
+
+            </div>
+
+            {/* grafico de linha */}
+            <div className="w-3/10">
+              <Card >
                 <CardHeader>
-                  <CardDescription>Total de unidades/filiais ativas</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    $1,250.00
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +12.5%
-                    </Badge>
-                  </CardAction>
+                  <CardTitle>Line Chart - Dots Colors</CardTitle>
+                  <CardDescription>January - June 2024</CardDescription>
                 </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Trending up this month <IconTrendingUp className="size-4" />
+                <CardContent>
+                  <ChartContainer config={chart2Config}>
+                    <LineChart accessibilityLayer data={chart2Data} margin={{ top: 24, left: 24, right: 24, }}>
+                      <CartesianGrid vertical={false} />
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" nameKey="visitors" hideLabel />} />
+                      <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
+                        dot={({ payload, ...props }) => {
+                          return (
+                            <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill} />
+                          )
+                        }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-2 text-sm">
+                  <div className="flex gap-2 leading-none font-medium">
+                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
                   </div>
-                  <div className="text-muted-foreground">
-                    Visitors for the last 6 months
+                  <div className="text-muted-foreground leading-none">
+                    Showing total visitors for the last 6 months
                   </div>
                 </CardFooter>
               </Card>
-              <Card className="@container/card">
+            </div>
+          </div>
+
+          <div className="w-full flex flex-row justify-between">
+            {/* grafico */}
+            <div className="w-6/10">
+              <Card>
                 <CardHeader>
-                  <CardDescription>Faturamento total consolidado</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    1,234
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingDown />
-                      -20%
-                    </Badge>
-                  </CardAction>
+                  <CardTitle>Volume de produção e entregas por mês</CardTitle>
+                  <CardDescription>
+                    {/* Showing total visitors for the last 6 months */}
+                    Mostrando total de produção/entregas nos últimos X meses
+                  </CardDescription>
                 </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Down 20% this period <IconTrendingDown className="size-4" />
+                <CardContent >
+                  <ChartContainer config={chart1Config} className={'h-80 w-full'}>
+                    <AreaChart accessibilityLayer data={chart1Data} margin={{ left: 12, right: 12, }}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                      <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a" />
+                      <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a" />
+                      <ChartLegend content={<ChartLegendContent />} />
+                    </AreaChart>
+                  </ChartContainer>
+                </CardContent>
+                <CardFooter>
+                  <div className="flex w-full items-start gap-2 text-sm">
+                    <div className="grid gap-2">
+                      <div className="flex items-center gap-2 leading-none font-medium">
+                        Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                        Mês tal - Mês tal (ano)
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-muted-foreground">
-                    Acquisition needs attention
-                  </div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Active Accounts</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    45,678
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +12.5%
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Strong user retention <IconTrendingUp className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">Engagement exceed targets</div>
-                </CardFooter>
-              </Card>
-              <Card className="@container/card">
-                <CardHeader>
-                  <CardDescription>Growth Rate</CardDescription>
-                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                    4.5%
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="outline">
-                      <IconTrendingUp />
-                      +4.5%
-                    </Badge>
-                  </CardAction>
-                </CardHeader>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                  <div className="line-clamp-1 flex gap-2 font-medium">
-                    Steady performance increase <IconTrendingUp className="size-4" />
-                  </div>
-                  <div className="text-muted-foreground">Meets growth projections</div>
                 </CardFooter>
               </Card>
             </div>
 
-            {/* grafico */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Volume de produção e entregas por mês</CardTitle>
-                <CardDescription>
-                  {/* Showing total visitors for the last 6 months */}
-                  Mostrando total de produção/entregas nos últimos X meses
-                </CardDescription>
-              </CardHeader>
-              <CardContent >
-                <ChartContainer config={chart1Config} className={'h-80 w-full'}>
-                  <AreaChart accessibilityLayer data={chart1Data} margin={{left: 12,right: 12,}}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)}/>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />}/>
-                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a"/>
-                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a"/>
-                    <ChartLegend content={<ChartLegendContent />} />
-                  </AreaChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter>
-                <div className="flex w-full items-start gap-2 text-sm">
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2 leading-none font-medium">
-                      Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                    </div>
-                    <div className="text-muted-foreground flex items-center gap-2 leading-none">
-                      Mês tal - Mês tal (ano)
-                    </div>
+            {/* grafico de barra */}
+            <div className="3/10">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bar Chart - Multiple</CardTitle>
+                  <CardDescription>January - June 2024</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chart3Config}>
+                    <BarChart accessibilityLayer data={chart3Data}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="month"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                        tickFormatter={(value) => value.slice(0, 3)}
+                      />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dashed" />}
+                      />
+                      <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+                      <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-2 text-sm">
+                  <div className="flex gap-2 leading-none font-medium">
+                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
                   </div>
-                </div>
-              </CardFooter>
-            </Card>
+                  <div className="text-muted-foreground leading-none">
+                    Showing total visitors for the last 6 months
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
           </div>
-          <div className="w-1/3">
-            <Card >
-              <CardHeader>
-                <CardTitle>Line Chart - Dots Colors</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chart2Config}>
-                  <LineChart accessibilityLayer data={chart2Data} margin={{top: 24,left: 24,right: 24,}}>
-                    <CartesianGrid vertical={false} />
-                    <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
-                    <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
-                      dot={({ payload, ...props }) => {
-                        return (
-                          <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>
-                        )
-                      }}
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="text-muted-foreground leading-none">
-                  Showing total visitors for the last 6 months
-                </div>
-              </CardFooter>
-            </Card>
+
+          <div className="w-full flex flex-row justify-between">
+            <div className="w-6/10">
+            
+            </div>
+            <div className="3/10">
+            </div>
           </div>
+
         </div>
 
       </TabsContent>
@@ -666,7 +760,7 @@ export function DataTable({
                 <CardHeader>
                   <CardDescription>Total de lojas ativas</CardDescription>
                   <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  555 {/* Trocar por numero de unidades cadastradas no banco */}
+                    555 {/* Trocar por numero de unidades cadastradas no banco */}
                   </CardTitle>
                   <CardAction>{/* <Badge variant="outline"> <IconTrendingUp/> +12.5% </Badge> */}</CardAction>
                 </CardHeader>
@@ -681,7 +775,7 @@ export function DataTable({
                 <CardHeader>
                   <CardDescription>Faturamento total consolidado</CardDescription>
                   <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  R$1,234{/* Trocar pela soma do saldo de todas as unidades */}
+                    R$1,234{/* Trocar pela soma do saldo de todas as unidades */}
                   </CardTitle>
                   <CardAction>
                     <Badge variant="outline">
@@ -730,12 +824,12 @@ export function DataTable({
               </CardHeader>
               <CardContent >
                 <ChartContainer config={chart1Config} className={'h-80 w-full'}>
-                  <AreaChart accessibilityLayer data={chart1Data} margin={{left: 12,right: 12,}}>
+                  <AreaChart accessibilityLayer data={chart1Data} margin={{ left: 12, right: 12, }}>
                     <CartesianGrid vertical={false} />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)}/>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />}/>
-                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a"/>
-                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a"/>
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                    <Area dataKey="producao" type="natural" fill="var(--color-producao)" fillOpacity={0.4} stroke="var(--color-producao)" stackId="a" />
+                    <Area dataKey="entregas" type="natural" fill="var(--color-entregas)" fillOpacity={0.4} stroke="var(--color-entregas)" stackId="a" />
                     <ChartLegend content={<ChartLegendContent />} />
                   </AreaChart>
                 </ChartContainer>
@@ -758,12 +852,12 @@ export function DataTable({
               </CardHeader>
               <CardContent>
                 <ChartContainer config={chart2Config}>
-                  <LineChart accessibilityLayer data={chart2Data} margin={{top: 24,left: 24,right: 24,}}>
+                  <LineChart accessibilityLayer data={chart2Data} margin={{ top: 24, left: 24, right: 24, }}>
                     <CartesianGrid vertical={false} />
-                    <ChartTooltip cursor={false} content={ <ChartTooltipContent indicator="line" nameKey="visitors" hideLabel/>}/>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" nameKey="visitors" hideLabel />} />
                     <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
                       dot={({ payload, ...props }) => {
-                        return (<Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill}/>)
+                        return (<Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill} />)
                       }}
                     />
                   </LineChart>
@@ -791,9 +885,9 @@ const chartData = [
   { month: "June", desktop: 214, mobile: 140 },
 ]
 
-const chartConfig = {desktop: {label: "Desktop",color: "var(--primary)",},mobile: {label: "Mobile",color: "var(--primary)",}}
+const chartConfig = { desktop: { label: "Desktop", color: "var(--primary)", }, mobile: { label: "Mobile", color: "var(--primary)", } }
 
-function TableCellViewer({item}) {
+function TableCellViewer({ item }) {
   const isMobile = useIsMobile()
 
   return (
@@ -810,7 +904,7 @@ function TableCellViewer({item}) {
           {!isMobile && (
             <>
               <ChartContainer config={chartConfig}>
-                <AreaChart accessibilityLayer data={chartData} margin={{left: 0,right: 10,}}>
+                <AreaChart accessibilityLayer data={chartData} margin={{ left: 0, right: 10, }}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} hide />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />

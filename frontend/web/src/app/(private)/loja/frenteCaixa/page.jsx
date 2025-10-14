@@ -74,6 +74,7 @@ const dailyStats = {
   peakHour: '2:00 PM - 3:00 PM'
 };
 
+//---- POSModule ------
 export default function POSModule() {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,62 +100,37 @@ export default function POSModule() {
     if (existingItem) {
       setCart(cart.map(item =>
         item.id === product.id
-          ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price }
-          : item
+          ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item
       ));
     } else {
       setCart([...cart, {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        total: product.price
+        id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price
       }]);
     }
   };
 
   const updateQuantity = (id, newQuantity) => {
-    if (newQuantity <= 0) {
-      setCart(cart.filter(item => item.id !== id));
-    } else {
+    if (newQuantity <= 0) { setCart(cart.filter(item => item.id !== id)); }
+    else {
       setCart(cart.map(item =>
-        item.id === id
-          ? { ...item, quantity: newQuantity, total: newQuantity * item.price }
-          : item
+        item.id === id ? { ...item, quantity: newQuantity, total: newQuantity * item.price } : item
       ));
     }
   };
 
-  const removeFromCart = (id) => {
-    setCart(cart.filter(item => item.id !== id));
-  };
+  const removeFromCart = (id) => { setCart(cart.filter(item => item.id !== id)); };
 
-  const getSubtotal = () => {
-    return cart.reduce((sum, item) => sum + item.total, 0);
-  };
+  const getSubtotal = () => { return cart.reduce((sum, item) => sum + item.total, 0); };
 
-  const getDiscountAmount = () => {
-    return getSubtotal() * (discountPercent / 100);
-  };
+  const getDiscountAmount = () => { return getSubtotal() * (discountPercent / 100); };
 
-  const getTax = () => {
-    return (getSubtotal() - getDiscountAmount()) * 0.08; // 8% tax
-  };
+  const getTax = () => { return (getSubtotal() - getDiscountAmount()) * 0.08; }; // 8% tax
 
-  const getTotal = () => {
-    return getSubtotal() - getDiscountAmount() + getTax();
-  };
+  const getTotal = () => { return getSubtotal() - getDiscountAmount() + getTax(); };
 
-  const getChange = () => {
-    return paymentMethod === 'cash' ? Math.max(0, amountReceived - getTotal()) : 0;
-  };
+  const getChange = () => { return paymentMethod === 'cash' ? Math.max(0, amountReceived - getTotal()) : 0; };
 
-  const clearCart = () => {
-    setCart([]);
-    setSelectedCustomer(null);
-    setDiscountPercent(0);
-    setAmountReceived(0);
-  };
+  const clearCart = () => { setCart([]); setSelectedCustomer(null); setDiscountPercent(0); setAmountReceived(0); };
 
   const processSale = () => {
     // In a real implementation, this would process the payment and update inventory
@@ -259,12 +235,7 @@ export default function POSModule() {
                   <div className="flex gap-4">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search products or scan barcode..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
+                      <Input placeholder="Pesquise produtos com o leitor de código de barras..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                     </div>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                       <SelectTrigger className="w-[180px]">
@@ -281,18 +252,10 @@ export default function POSModule() {
 
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-96 overflow-y-auto">
                     {filteredProducts.map((product) => (
-                      <Card
-                        key={product.id}
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => addToCart(product)}
-                      >
+                      <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => addToCart(product)}>
                         <CardContent className="p-4">
                           <div className="flex items-center space-x-3">
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded"
-                            />
+                            <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded" />
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{product.name}</div>
                               <div className="text-sm text-muted-foreground">{product.category}</div>
@@ -327,20 +290,12 @@ export default function POSModule() {
                   <div className="space-y-2">
                     <Label>Customer</Label>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 justify-start"
-                        onClick={() => setIsCustomerSelectOpen(true)}
-                      >
+                      <Button variant="outline" className="flex-1 justify-start" onClick={() => setIsCustomerSelectOpen(true)}>
                         <User className="size-4 mr-2" />
                         {selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}
                       </Button>
                       {selectedCustomer && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedCustomer(null)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>
                           Clear
                         </Button>
                       )}
@@ -361,26 +316,14 @@ export default function POSModule() {
                             <div className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
                               <Minus className="size-3" />
                             </Button>
                             <span className="w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
                               <Plus className="size-3" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeFromCart(item.id)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => removeFromCart(item.id)}>
                               <Trash2 className="size-3" />
                             </Button>
                           </div>
@@ -394,14 +337,7 @@ export default function POSModule() {
                     <div className="space-y-2">
                       <Label>Discount %</Label>
                       <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          value={discountPercent}
-                          onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
-                          placeholder="0"
-                          min="0"
-                          max="100"
-                        />
+                        <Input type="number" value={discountPercent} onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)} placeholder="0" min="0" max="100" />
                         <Button variant="outline" size="sm">
                           <Percent className="size-4" />
                         </Button>
@@ -435,11 +371,7 @@ export default function POSModule() {
                   )}
 
                   {/* Checkout Button */}
-                  <Button
-                    className="w-full"
-                    disabled={cart.length === 0}
-                    onClick={() => setIsPaymentOpen(true)}
-                  >
+                  <Button className="w-full" disabled={cart.length === 0} onClick={() => setIsPaymentOpen(true)}>
                     <CreditCard className="size-4 mr-2" />
                     Checkout
                   </Button>
@@ -461,14 +393,11 @@ export default function POSModule() {
                 <Input placeholder="Search customers..." />
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {customers.map((customer) => (
-                    <div
-                      key={customer.id}
-                      className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted"
+                    <div key={customer.id} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted"
                       onClick={() => {
                         setSelectedCustomer(customer);
                         setIsCustomerSelectOpen(false);
-                      }}
-                    >
+                      }}>
                       <div>
                         <div className="font-medium">{customer.name}</div>
                         <div className="text-sm text-muted-foreground">{customer.email}</div>
@@ -511,13 +440,7 @@ export default function POSModule() {
                 {paymentMethod === 'cash' && (
                   <div className="space-y-2">
                     <Label>Amount Received</Label>
-                    <Input
-                      type="number"
-                      value={amountReceived}
-                      onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)}
-                      placeholder="0.00"
-                      step="0.01"
-                    />
+                    <Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)} placeholder="0.00" step="0.01" />
                   </div>
                 )}
 
@@ -544,11 +467,7 @@ export default function POSModule() {
                   <Button variant="outline" onClick={() => setIsPaymentOpen(false)} className="flex-1">
                     Cancel
                   </Button>
-                  <Button
-                    onClick={processSale}
-                    className="flex-1"
-                    disabled={paymentMethod === 'cash' && amountReceived < getTotal()}
-                  >
+                  <Button onClick={processSale} className="flex-1" disabled={paymentMethod === 'cash' && amountReceived < getTotal()}>
                     Complete Sale
                   </Button>
                 </div>
@@ -613,10 +532,7 @@ export default function POSModule() {
               <div className="flex gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search customers..."
-                    className="pl-10"
-                  />
+                  <Input placeholder="Search customers..." className="pl-10" />
                 </div>
                 <Button>Add Customer</Button>
               </div>
@@ -687,10 +603,7 @@ export default function POSModule() {
                       <span>${dailyStats.cashSales.toFixed(2)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${(dailyStats.cashSales / dailyStats.totalSales) * 100}%` }}
-                      ></div>
+                      <div className="bg-green-600 h-2 rounded-full" style={{ width: `${(dailyStats.cashSales / dailyStats.totalSales) * 100}%` }}></div>
                     </div>
                   </div>
                   <div>
@@ -699,10 +612,7 @@ export default function POSModule() {
                       <span>${dailyStats.cardSales.toFixed(2)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${(dailyStats.cardSales / dailyStats.totalSales) * 100}%` }}
-                      ></div>
+                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(dailyStats.cardSales / dailyStats.totalSales) * 100}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -744,20 +654,16 @@ export default function POSModule() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Button variant="outline" className="h-20 flex-col">
-                  <Receipt className="size-6 mb-2" />
-                  Daily Sales
+                  <Receipt className="size-6 mb-2" />Daily Sales
                 </Button>
                 <Button variant="outline" className="h-20 flex-col">
-                  <Barcode className="size-6 mb-2" />
-                  Product Performance
+                  <Barcode className="size-6 mb-2" />Product Performance
                 </Button>
                 <Button variant="outline" className="h-20 flex-col">
-                  <User className="size-6 mb-2" />
-                  Customer Report
+                  <User className="size-6 mb-2" />Customer Report
                 </Button>
                 <Button variant="outline" className="h-20 flex-col">
-                  <CreditCard className="size-6 mb-2" />
-                  Payment Analysis
+                  <CreditCard className="size-6 mb-2" />Payment Analysis
                 </Button>
               </div>
             </CardContent>

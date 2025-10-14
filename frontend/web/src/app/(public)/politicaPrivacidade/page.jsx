@@ -1,13 +1,18 @@
 //uma página de termos de uso com indice para rapida navegação
+import Footer from "@/components/Home/sections/footer/default";
+import Glow from "@/components/ui/glow";
+import Navbar from "@/components/Home/sections/navbar/default";
+
 export default function PoliticaDePrivacidade() {
     return (
         <>
-            <main className='w-full open-sans text-lg flex  justify-center pt-[150px] pb-[150px] bg-stone-950 '>
+      <Navbar />
+            <main className='w-full open-sans text-lg flex justify-center pt-[150px] pb-[150px] dark:bg-stone-950 bg-white '>
                 <div className="flex flex-col gap-5 w-100 lg:w-240 md:w-160">
                     <h1 className='archivo-black-regular text-5xl'>Política de Privacidade</h1>
                     <p>Última atualização: 30 de setembro de 2025</p>
                     <div className="justify-center  flex gap-10">
-                        
+
                         <div className="conteudo  flex flex-col gap-2">
 
                             <p>Na RuralTech, sua privacidade e a segurança dos seus dados são prioridades absolutas. Esta Política de Privacidade explica detalhadamente como coletamos, utilizamos, armazenamos e protegemos as informações pessoais e operacionais dos usuários do nosso Sistema de monitoramento agropecuário.
@@ -25,7 +30,7 @@ export default function PoliticaDePrivacidade() {
                                 <li>Endereço;</li>
                                 <li>Dados da empresa/estabelecimento rural;</li>
 
-                            </ul> 
+                            </ul>
 
                             <h3>b) Dados Operacionais e Ambientais</h3>
                             <ul className="list-disc pl-5">
@@ -115,7 +120,7 @@ export default function PoliticaDePrivacidade() {
                             </p>
 
                         </div>
-                        
+
                         <div className="indice hidden md:block md:sticky  md:top-4 md:self-start">
                             <h2 className="text-xl pb-2"><b>Índice</b></h2>
                             <ul className="">
@@ -133,7 +138,11 @@ export default function PoliticaDePrivacidade() {
                     </div>
                 </div>
 
+
+
             </main>
+            
+            <Footer />
         </>
     )
 }

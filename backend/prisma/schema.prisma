@@ -6,6 +6,8 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -42,6 +44,7 @@ model unidades {
   id            Int         @id @default(autoincrement())
   nome          String
   endereco      String?
+  gerente_id    Int
   criado_em     DateTime    @default(now())
   atualizado_em DateTime    @default(now())
   tipo          TipoUnidade
