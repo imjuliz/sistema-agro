@@ -165,9 +165,9 @@ const chartConfig3 = {
 
 export function ChartPieDonut() {
   return (
-    <Card className="flex flex-col w-150 h-150">
+    <Card className="flex flex-col w-150 h-126.5">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Donut</CardTitle>
+        <CardTitle>Despesas do Mês</CardTitle>
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
