@@ -24,7 +24,6 @@ export default function FlexiFilterTable() {
   const [data] = useState(defaultData)
   const [selectedRows, setSelectedRows] = useState(new Set())
 
-  // Filters
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState("All")
   const [location, setLocation] = useState("Location")
@@ -54,11 +53,9 @@ export default function FlexiFilterTable() {
 
   return (
     <div className="bg-background border rounded-lg overflow-hidden">
-      {/* Super Mega Filters */}
       <div className="p-4 flex flex-col gap-3 md:flex-row md:flex-wrap items-start md:items-center">
         <Input placeholder="Pesquise por nome ou email" value={search} onChange={(e) => setSearch(e.target.value)} className="md:w-1/4" />
 
-        {/* Status Filter */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">{status}</Button>
@@ -72,7 +69,6 @@ export default function FlexiFilterTable() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Location Filter */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">{location}</Button>
@@ -86,13 +82,11 @@ export default function FlexiFilterTable() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Balance Range */}
         <div className="flex gap-2">
           <Input type="number" placeholder="Min $" value={minBalance} onChange={(e) => setMinBalance(e.target.value)} className="w-24" />
           <Input type="number" placeholder="Max $" value={maxBalance} onChange={(e) => setMaxBalance(e.target.value)} className="w-24" />
         </div>
 
-        {/* Date Joined */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">{joinedAfter ? joinedAfter.toDateString() : "Joined After"}</Button>
@@ -102,7 +96,7 @@ export default function FlexiFilterTable() {
           </PopoverContent>
         </Popover>
       </div>
-      {/* Table */}
+      
       <div className="max-h-[400px] overflow-y-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">

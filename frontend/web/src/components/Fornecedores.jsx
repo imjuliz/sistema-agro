@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, } from "@/components/ui/dropdown-menu"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { MoreVertical } from "lucide-react"
 
 const defaultData = [
-    { id: 1, name: "Fazenda 02", email: "f.02@company.com", local: "São Paulo", status: "Ativa", tel:"(11) 98342-7610  ", produtos: 'Pão, Trigo, Sementes', cnpj: "01.234.567/0001-89" },
-    { id: 2, name: "Fazenda 05", email: "f.05@company.com", local: "Minas Gerais", status: "Ativa", tel:"(31) 99785-2043", produtos: 'Laticinios', cnpj: "12.345.678/0001-90" },
+    { id: 1, name: "Fazenda 02", email: "f.02@company.com", local: "São Paulo", status: "Ativa", tel: "(11) 98342-7610  ", produtos: 'Pão, Trigo, Sementes', cnpj: "01.234.567/0001-89" },
+    { id: 2, name: "Fazenda 05", email: "f.05@company.com", local: "Minas Gerais", status: "Ativa", tel: "(31) 99785-2043", produtos: 'Laticinios', cnpj: "12.345.678/0001-90" },
     { id: 3, name: "Fazenda 54", email: "f.54@company.com", local: "Mato Grosso", status: "Inativa", tel: "(65) 99214-3387 ", produtos: 'Maçãs, Laranjas, Mexiricas', cnpj: "23.456.789/0001-01" },
     { id: 4, name: "Fazenda 12", email: "f.12@company.com", local: "São Paulo", status: "Ativa", tel: "(19) 99670-3321  ", produtos: 'Ovos, Farinha, Açucar ', cnpj: "34.567.890/0001-12" },
     { id: 5, name: "Fazenda 8", email: "f.08@company.com", local: "Bahia", status: "Ativa", tel: " (71) 98546-1097  ", produtos: 'Feijão, Arroz, Milho', cnpj: "45.678.901/0001-23" },
@@ -52,15 +50,12 @@ export default function FornecedoresTable() {
         <div className="bg-background border rounded-lg overflow-hidden">
             <div className="p-4 flex flex-col gap-3 md:flex-row md:flex-wrap items-start md:items-center">
                 <Input placeholder="Pesquise por nome ou email" value={search} onChange={(e) => setSearch(e.target.value)} className="md:w-1/4" />
-
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">{status}</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {["Tudo", "Ativa", "Inativa"].map((s) => (
-                            <DropdownMenuItem key={s} onClick={() => setStatus(s)}>{s}</DropdownMenuItem>
-                        ))}
+                        {["Tudo", "Ativa", "Inativa"].map((s) => (<DropdownMenuItem key={s} onClick={() => setStatus(s)}>{s}</DropdownMenuItem>))}
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -69,8 +64,8 @@ export default function FornecedoresTable() {
                         <Button variant="outline">{local}</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent> {["Local", "São Paulo", "Minas Gerais", "Mato Grosso", "São Paulo", "Bahia"].map((loc) => (
-                            <DropdownMenuItem key={loc} onClick={() => setlocal(loc)}>{loc}</DropdownMenuItem>
-                        ))}
+                        <DropdownMenuItem key={loc} onClick={() => setlocal(loc)}>{loc}</DropdownMenuItem>
+                    ))}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -80,7 +75,7 @@ export default function FornecedoresTable() {
                     <TableHeader className="sticky top-0 bg-background z-10">
                         <TableRow>
                             <TableHead>
-                                <Checkbox checked={selectedRows.size === data.length} onCheckedChange={(checked) =>setSelectedRows(checked ? new Set(data.map((d) => d.id)) : new Set())} />
+                                <Checkbox checked={selectedRows.size === data.length} onCheckedChange={(checked) => setSelectedRows(checked ? new Set(data.map((d) => d.id)) : new Set())} />
                             </TableHead>
                             <TableHead>Nome</TableHead>
                             <TableHead>Email</TableHead>
