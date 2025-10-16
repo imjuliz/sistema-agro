@@ -3,7 +3,9 @@ import { ThemeToggle } from "@/components/toggleSwitchTema";
 import { CadastrarForm } from "@/components/cadastrar-form"
 import { Component } from "@/components/etheral-shadow";
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
-import { BubbleBackground } from "@/components/animate-ui/components/backgrounds/bubble";
+// import { BubbleBackground } from "@/components/animate-ui/components/backgrounds/bubble";
+import {BackgroundBeams} from '@/components/ui/background-beams'
+
 export default function CadastrarPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2 dark:bg-black">
@@ -11,7 +13,8 @@ export default function CadastrarPage() {
         {/* <img src="/placeholder.svg" alt="Image" className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale" /> */}
        {/* <Component/> */}
             {/* <StarsBackground /> */}
-            <BubbleBackground />
+             {/* <BubbleBackground /> */}
+             <BackgroundBeams/>
       </div>
       <div className="flex flex-col gap-4 p-6 md:p-10 relative">
         {/* <img src="/img/seila.svg" className='absolute top-0 left-0 w-[800px] h-[600px] z-0 -ml-19.5 -mt-10  dark:brightness-[0.0]' alt="Background"/> */}

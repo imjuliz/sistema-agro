@@ -10,10 +10,10 @@ export default function FAQ(props) {
     title = "Perguntas frequentes",
     items = [
      {
-        question: "O que é o sistema AgroTech?",
+        question: "O que é o sistema RuralTech?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[640px] text-balance">
-            O AgroTech é um sistema de gestão e rastreabilidade que integra as
+            O RuralTech é um sistema de gestão e rastreabilidade que integra as
             operações de fazendas, lojas e matriz em uma única plataforma. Ele
             garante o controle da produção, das vendas e da qualidade dos
             produtos, oferecendo total transparência em toda a cadeia produtiva.
@@ -35,7 +35,7 @@ export default function FAQ(props) {
         question: "O sistema atende apenas grandes empresas?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[580px]">
-            Não. O AgroTech foi projetado para atender tanto pequenas quanto
+            Não. O RuralTech foi projetado para atender tanto pequenas quanto
             grandes operações. A estrutura modular permite que cada empresa
             utilize apenas os recursos necessários, garantindo eficiência em
             diferentes portes de negócio.
@@ -69,7 +69,7 @@ export default function FAQ(props) {
         question: "É possível acompanhar as finanças da empresa pelo sistema?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[580px]">
-            Sim. O AgroTech centraliza as informações financeiras de cada loja e
+            Sim. O RuralTech centraliza as informações financeiras de cada loja e
             unidade de produção, gerando relatórios de despesas, receitas e
             lucratividade. A matriz pode acompanhar os números consolidados em
             tempo real, apoiando decisões estratégicas.
