@@ -1,17 +1,12 @@
 import { GalleryVerticalEnd } from "lucide-react"
 import { LoginForm } from "@/components/login-form"
 import { ThemeToggle } from "@/components/toggleSwitchTema";
-import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
-import { BubbleBackground } from "@/components/animate-ui/components/backgrounds/bubble";
 
 export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex flex-col gap-4 p-6 md:p-10 relative">
-          {/* Imagem de fundo fora do container do logo */}
-          {/* <img src="/img/seila.svg" className='absolute top-0 left-0 w-[800px] h-[600px] z-0 -ml-30 -mt-10  dark:brightness-[0.0]' alt="Background"/> */}
-
           <div className="flex items-center relative z-10">
             <a href="#" className="flex items-center gap-2 font-medium">
               <div className="flex items-center justify-center rounded-md">
@@ -30,7 +25,6 @@ export default function LoginPage() {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <img src="img/login.png" alt="Image" className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9] dark:greenscale" />
-      {/* <StarsBackground /> */}
       </div>
     </div>
   );
