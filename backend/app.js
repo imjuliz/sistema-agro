@@ -40,7 +40,7 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
-        console.warn("❌ Origem bloqueada pelo CORS:", origin);
+        console.warn("Origem bloqueada pelo CORS:", origin);
         return callback(new Error("Not allowed by CORS"));
       }
     },

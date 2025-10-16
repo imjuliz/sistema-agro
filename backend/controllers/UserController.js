@@ -93,6 +93,61 @@ export const loginController = async (req, res) => {
   }
 };
 
+// -------------------------------------------- so testando
+// export const loginController = async (req, res) => {
+//   try {
+//     // validacao de entrada via schema
+//     const { email, senha } = userSchema.partial().parse(req.body);
+
+//     if (!email || !senha) {
+//       return res.status(400).json({ error: "Email e senha são obrigatórios" });
+//     }
+
+//     const response = await login({ email, senha });
+
+//     if (!response.success) {
+//       return res.status(401).json({ error: response.error || "Credenciais inválidas" });
+//     }
+
+//     // Salva o usuário na sessão
+//     req.session.user = response.user || null;
+
+//     return res.status(200).json({ message: "Usuário autenticado com sucesso", user: req.session.user });
+//   } catch (error) {
+//     console.error("Erro ao fazer login:", error);
+//     res.status(500).json({ error: "Erro interno do servidor" });
+//   }
+// };
+
+// // Me - retorna dados do usuário logado
+// export const meController = (req, res) => {
+//   if (req.session.user) {
+//     return res.status(200).json(req.session.user);
+//   } else {
+//     return res.status(401).json({ error: "Não autenticado" });
+//   }
+// };
+
+// // Logout - limpa sessão
+// export const logoutController = (req, res) => {
+//   req.session.destroy(err => {
+//     if (err) {
+//       console.error("Erro ao encerrar sessão:", err);
+//       return res.status(500).json({ error: "Erro ao deslogar" });
+//     }
+
+//     // limpa o cookie
+//     res.clearCookie("connect.sid", {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+//     });
+
+//     return res.json({ message: "Logout realizado com sucesso" });
+//   });
+// };
+// -------------------------------------------- 
+
 export const esqSenhaController = async (req, res) => {
   const { email } = userSchema.partial().parse(req.body);
   try {
