@@ -6,7 +6,6 @@ import React from "react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import LaunchUI from "@/components/Home/logos/launch-ui";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -25,7 +24,7 @@ export default function Navigation({
   ],
   components = [
     {
-      title: "Para Matriz/Empresa",
+      title: "Matriz / Empresa",
       href: "/paraEmpresa",
       description:
         "A modal dialog that interrupts the user with important content and expects a response.",

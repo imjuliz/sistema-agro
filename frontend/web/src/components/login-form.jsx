@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAuth } from "@/contexts/AuthContext";
+// import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginForm({ className, ...props }) {
-  const { login } = useAuth(); // pega a funcao login do AuthContext (que usa cookie httpOnly)
+  // const { login } = useAuth(); // pega a funcao login do AuthContext (que usa cookie httpOnly)
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -32,7 +32,7 @@ export function LoginForm({ className, ...props }) {
 
       const data = await res.json();
 
-      if (!res.ok) {setError(data.error || data.mensagem || "Erro desconhecido");}
+      if (!res.ok) { setError(data.error || data.mensagem || "Erro desconhecido"); }
       else {
         localStorage.setItem("token", data.token);
         localStorage.setItem("perfil", data.userData.perfil);
@@ -50,11 +50,11 @@ export function LoginForm({ className, ...props }) {
             break;
         }
       }
-      } catch (err) {
-        setError("Erro ao conectar com o servidor");
-        console.error(err);
-      } finally {setLoading(false);}
-    };
+    } catch (err) {
+      setError("Erro ao conectar com o servidor");
+      console.error(err);
+    } finally { setLoading(false); }
+  };
 
   // ---------------------------- como as rotas ainda nao existem essa parte esta comentada, mas n deve ser apagada
   // const [loading, setLoading] = useState(false); // flag de loading para desabilitar botão / mostrar texto
@@ -118,11 +118,17 @@ export function LoginForm({ className, ...props }) {
           </span>
         </div>
         <Button variant="outline" className="w-full">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path
-              d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-              fill="currentColor" />
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clipPath="url(#clip0_4507_2)">
+              <path d="M47.5391 19.5474H24.5113V28.7747H37.7431C37.5304 30.0805 37.0528 31.3652 36.3534 32.5366C35.552 33.8786 34.5613 34.9004 33.5459 35.6785C30.5042 38.0093 26.958 38.4859 24.4952 38.4859C18.2738 38.4859 12.9581 34.4649 10.9002 29.0011C10.8172 28.8029 10.762 28.5981 10.6949 28.3956C10.2401 27.005 9.99169 25.5323 9.99169 24.0015C9.99169 22.4084 10.2607 20.8835 10.7513 19.4432C12.6864 13.7628 18.122 9.52012 24.4997 9.52012C25.7824 9.52012 27.0178 9.67282 28.1892 9.97738C30.8665 10.6734 32.7603 12.0442 33.9207 13.1286L40.9225 6.27151C36.6634 2.36633 31.1111 5.90435e-09 24.488 5.90435e-09C19.1933 -0.000113959 14.305 1.64956 10.2992 4.43757C7.05062 6.69857 4.38633 9.72576 2.58825 13.2415C0.915782 16.5013 0 20.1138 0 23.9979C0 27.8822 0.917181 31.5322 2.58966 34.7619V34.7837C4.3562 38.2124 6.93949 41.1646 10.0792 43.4152C12.8221 45.3814 17.7403 48 24.488 48C28.3684 48 31.8075 47.3004 34.8405 45.9893C37.0285 45.0435 38.9671 43.8098 40.7222 42.2244C43.0413 40.1294 44.8575 37.5382 46.0972 34.557C47.3369 31.5757 48 28.2044 48 24.5493C48 22.8471 47.829 21.1184 47.5391 19.5473V19.5474Z" fill="currentColor" />
+            </g>
+            <defs>
+              <clipPath id="clip0_4507_2">
+                <rect width="48" height="48" fill="currentColor" />
+              </clipPath>
+            </defs>
           </svg>
+
           Entrar com o Google
         </Button>
       </div>
