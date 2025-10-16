@@ -1,8 +1,11 @@
 generator client {
+  output = "./generated"
   provider = "prisma-client-js"
 }
 
 datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
@@ -17,7 +20,26 @@ model perfis {
   @@map("perfis")
 }
 
-// unidades, fazendas, lojas e etc
+model usuarios {
+  id                  Int            @id @default(autoincrement())
+  nome                String
+  email               String         @unique
+  senha               String
+  telefone            String?
+  perfil_id           Int
+  unidade_id          Int?
+  status              Boolean        @default(true)
+  criado_em           DateTime       @default(now())
+  atualizado_em       DateTime       @default(now())
+  lotes               lotes[]        @relation("ResponsavelLote")
+  reset_senhas        reset_senhas[]
+  unidadesGerenciadas unidades[]     @relation("GerenteUnidade")
+  perfil              perfis         @relation(fields: [perfil_id], references: [id])
+  unidade             unidades?      @relation(fields: [unidade_id], references: [id])
+
+  @@map("usuarios")
+}
+
 model unidades {
   id            Int         @id @default(autoincrement())
   nome          String
@@ -26,50 +48,29 @@ model unidades {
   criado_em     DateTime    @default(now())
   atualizado_em DateTime    @default(now())
   tipo          TipoUnidade
+  gerente_id    Int
   status        Boolean     @default(true)
-
-  usuarios usuarios[]
-  gerente  usuarios   @relation("GerenteUnidade", fields: [gerente_id], references: [id])
-  estoque  estoques[]
-  lote     lotes[]
-  produto  produtos[]
+  estoques      estoques[]
+  lotes         lotes[]
+  produtos      produtos[]
+  gerente       usuarios    @relation("GerenteUnidade", fields: [gerente_id], references: [id])
+  usuarios      usuarios[]
 
   @@map("unidades")
 }
 
-model usuarios {
-  id            Int      @id @default(autoincrement())
+model produtos {
+  id            Int        @id @default(autoincrement())
   nome          String
-  email         String   @unique
-  senha         String
-  telefone      String?
-  perfil_id     Int
-  unidade_id    Int?
-  status        Boolean  @default(true)
-  criado_em     DateTime @default(now())
-  atualizado_em DateTime @default(now())
+  data_validade DateTime
+  lote_id       Int
+  unidade_id    Int
+  sku           String
+  estoques      estoques[]
+  lote          lotes      @relation(fields: [lote_id], references: [id])
+  unidade       unidades   @relation(fields: [unidade_id], references: [id])
 
-  unidadesGerenciadas unidades[]     @relation("GerenteUnidade")
-  perfil              perfis         @relation(fields: [perfil_id], references: [id])
-  unidade             unidades?      @relation(fields: [unidade_id], references: [id])
-  lotes_responsavel   lotes[]        @relation("UsuarioResponsavelLote")
-  reset_senhas        reset_senhas[]
-
-  @@map("usuarios")
-}
-
-// p esqueci a senha
-model reset_senhas {
-  id            Int      @id @default(autoincrement())
-  usuario_id    Int
-  codigo_reset  String
-  codigo_expira DateTime @default(now())
-  usado         Boolean  @default(false)
-  criado_em     DateTime @default(now())
-
-  usuario usuarios @relation(fields: [usuario_id], references: [id])
-
-  @@map("reset_senhas")
+  @@map("produtos")
 }
 
 model estoques {
@@ -78,31 +79,42 @@ model estoques {
   produto_id    Int
   quantidade    Int
   atualizado_em DateTime @default(now())
+  produto       produtos @relation(fields: [produto_id], references: [id])
+  unidade       unidades @relation(fields: [unidade_id], references: [id])
 
-  unidade unidades @relation(fields: [unidade_id], references: [id])
-  produto produtos @relation(fields: [produto_id], references: [id])
+  @@map("estoques")
 }
 
 model lotes {
-  id             Int      @id @default(autoincrement())
-  nome           String
-  tipo           TipoLote
-  unidade_id     Int
-  responsavel_id Int
-  qntd_itens     Int
-  data_criacao   DateTime @default(now())
-  observacoes    String?
-
-  responsavel usuarios @relation("UsuarioResponsavelLote", fields: [responsavel_id], references: [id])
-  unidade     unidades @relation(fields: [unidade_id], references: [id])
-
-  registrosSanitarios     registros_sanitarios[]
+  id                      Int                     @id @default(autoincrement())
+  nome                    String
+  tipo                    TipoLote
+  unidade_id              Int
+  responsavel_id          Int
+  qntd_itens              Int
+  data_criacao            DateTime                @default(now())
+  observacoes             String?
+  responsavel             usuarios                @relation("ResponsavelLote", fields: [responsavel_id], references: [id])
+  unidade                 unidades                @relation(fields: [unidade_id], references: [id])
   producoes               producoes[]
-  rastreabilidade_origem  rastreabilidade_lotes[] @relation("Origem")
-  rastreabilidade_destino rastreabilidade_lotes[] @relation("Destino")
-  produtos_relacionados   produtos[]
+  produtos                produtos[]
+  rastreabilidadesDestino rastreabilidade_lotes[] @relation("RastreabilidadeDestino")
+  rastreabilidadesOrigem  rastreabilidade_lotes[] @relation("RastreabilidadeOrigem")
+  registros_sanitarios    registros_sanitarios[]
 
   @@map("lotes")
+}
+
+model producoes {
+  id             Int      @id @default(autoincrement())
+  lote_id        Int
+  tipo_produto   String
+  quantidade     Float
+  unidade_medida String
+  data_registro  DateTime @default(now())
+  lote           lotes    @relation(fields: [lote_id], references: [id])
+
+  @@map("producoes")
 }
 
 model rastreabilidade_lotes {
@@ -111,9 +123,8 @@ model rastreabilidade_lotes {
   lote_destino_id Int
   descricao       String?
   data_vinculo    DateTime @default(now())
-
-  origem  lotes @relation("Origem", fields: [lote_origem_id], references: [id])
-  destino lotes @relation("Destino", fields: [lote_destino_id], references: [id])
+  lote_destino    lotes    @relation("RastreabilidadeDestino", fields: [lote_destino_id], references: [id])
+  lote_origem     lotes    @relation("RastreabilidadeOrigem", fields: [lote_origem_id], references: [id])
 
   @@map("rastreabilidade_lotes")
 }
@@ -126,36 +137,21 @@ model registros_sanitarios {
   data_aplicacao DateTime              @default(now())
   quantidade     Float?
   observacoes    String?
-
-  lote lotes @relation(fields: [lote_id], references: [id])
+  lote           lotes                 @relation(fields: [lote_id], references: [id])
 
   @@map("registros_sanitarios")
 }
 
-model producoes {
-  id             Int      @id @default(autoincrement())
-  lote_id        Int
-  tipo_produto   String // ex: "LEITE", "SOJA", "MILHO"
-  quantidade     Float
-  unidade_medida String // ex: "L", "kg", "sacas"
-  data_registro  DateTime @default(now())
-
-  lotes lotes @relation(fields: [lote_id], references: [id])
-
-  @@map("producoes")
-}
-
-model produtos {
+model reset_senhas {
   id            Int      @id @default(autoincrement())
-  nome          String
-  data_validade DateTime
-  lote_id       Int
-  unidade_id    Int
-  sku           String
+  usuario_id    Int
+  codigo_reset  String
+  codigo_expira DateTime @default(now())
+  usado         Boolean  @default(false)
+  criado_em     DateTime @default(now())
+  usuario       usuarios @relation(fields: [usuario_id], references: [id])
 
-  unidade unidades   @relation(fields: [unidade_id], references: [id])
-  lotes   lotes      @relation(fields: [lote_id], references: [id])
-  estoque estoques[]
+  @@map("reset_senhas")
 }
 
 enum TipoUnidade {
@@ -164,7 +160,6 @@ enum TipoUnidade {
   LOJA
 }
 
-// adicionar mais tipos de lote
 enum TipoLote {
   GADO
   SOJA

@@ -5,6 +5,7 @@ import { siteConfig } from "../config/site";
 import { metadata, getMetadataFromPath } from './utils/metadata.js'
 import { ThemeProvider } from "@/contexts/theme-provider";
 import { TranslationProvider } from "@/hooks/useTranslation";
+// import { AuthProvider } from "@/contexts/AuthContext";
 
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
@@ -84,11 +85,13 @@ export default function RootLayout({ children }) {
             </head>
             <body className="bg-background antialiased">
                 <TranslationProvider>
+                     {/* <AuthProvider> */}
                     <ThemeProvider>
                         <Transl>
                             {children}
                         </Transl>
                     </ThemeProvider>
+                    {/* </AuthProvider> */}
                 </TranslationProvider>
             </body>
         </html>

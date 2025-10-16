@@ -3,6 +3,7 @@
 @import "../styles/utils.css";
 @import "tw-animate-css";
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:is(.dark *));
 
 body {
   font-family: 'Open Sans', sans-serif;
@@ -72,38 +73,46 @@ body {
     from {
       height: 0;
     }
+
     to {
       height: var(--radix-accordion-content-height);
     }
   }
+
   @keyframes accordion-up {
     from {
       height: var(--radix-accordion-content-height);
     }
+
     to {
       height: 0;
     }
   }
+
   @keyframes appear {
     0% {
       opacity: 0;
       transform: translateY(1rem);
       filter: blur(0.5rem);
     }
+
     50% {
       filter: blur(0);
     }
+
     100% {
       opacity: 1;
       transform: translateY(0);
       filter: blur(0);
     }
   }
+
   @keyframes appear-zoom {
     0% {
       opacity: 0;
       transform: scale(0.5);
     }
+
     100% {
       opacity: 1;
       transform: scale(1);
@@ -166,6 +175,9 @@ body {
 
   --shadow: #00000008;
   --shadow-strong: #00000008;
+
+  --overlay-start: rgba(255, 255, 255, 0.95);
+  --overlay-mid: rgba(255, 255, 255, 0.65);
 }
 
 .dark {
@@ -210,12 +222,16 @@ body {
 
   --shadow: #00000020;
   --shadow-strong: #00000088;
+
+  --overlay-start: rgba(0, 0, 0, 0.95);
+  --overlay-mid: rgba(0, 0, 0, 0.65);
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -238,23 +254,42 @@ body {
   flex-wrap: nowrap;
 }
 
-.marquee__track > * {
-  flex: 0 0 auto; /* fixed width items */
+.marquee__track>* {
+  flex: 0 0 auto;
+  /* fixed width items */
 }
 
 /* Animations */
 @keyframes marquee-left {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
+
 @keyframes marquee-right {
-  from { transform: translateX(-50%); }
-  to   { transform: translateX(0); }
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* classes applied in JSX to control speed/direction */
-.marquee-animate-left { animation: marquee-left linear infinite; animation-duration: 26s; }
-.marquee-animate-right { animation: marquee-right linear infinite; animation-duration: 34s; }
+.marquee-animate-left {
+  animation: marquee-left linear infinite;
+  animation-duration: 26s;
+}
+
+.marquee-animate-right {
+  animation: marquee-right linear infinite;
+  animation-duration: 34s;
+}
 
 /* pause on hover (desktop) */
 .marquee:hover .marquee-animate-left,
@@ -263,56 +298,219 @@ body {
 }
 
 /* small tweak to make the cards visually similar to Launch UI */
-.sp-card {
-  background: rgba(245,246,247,0.7); 
-  border: 1px solid rgba(255,255,255,0.03);
-  box-shadow: 0 6px 22px rgba(255,255,255,0.6);
+/* .sp-card {
+  background: rgba(245, 246, 247, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 0 6px 22px rgba(255, 255, 255, 0.6);
   border-radius: 0.5rem;
   padding: 1rem;
   min-width: 18.5rem;
   max-width: 24rem;
-  color: rgba(0,0,0,0.88);
+  color: rgba(0, 0, 0, 0.88);
 }
-.sp-card .meta { display:flex; gap:0.75rem; align-items:center; margin-bottom:0.4rem;}
-.sp-card .meta img { width:36px; height:36px; border-radius:9999px; object-fit:cover; }
-.sp-card .name { font-weight:600; font-size:0.95rem; }
-.sp-card .handle { font-size:0.78rem; color: rgba(0,0,0,0.65); margin-top: -2px; }
-.sp-card .text { font-size:0.86rem; color: rgba(0,0,0,0.75); line-height:1.25; white-space:pre-wrap; }
+
+.sp-card .meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.sp-card .meta img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.sp-card .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.sp-card .handle {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.65);
+  margin-top: -2px;
+}
+
+.sp-card .text {
+  font-size: 0.86rem;
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.25;
+  white-space: pre-wrap;
+}
 
 @media (prefers-color-scheme: dark) {
   .sp-card {
-    background: rgba(10,11,12,0.7); 
-    border: 1px solid rgba(255,255,255,0.03);
-    box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+    background: rgba(10, 11, 12, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6);
     border-radius: 0.5rem;
     padding: 1rem;
     min-width: 18.5rem;
     max-width: 24rem;
-    color: rgba(255,255,255,0.88);
+    color: rgba(255, 255, 255, 0.88);
   }
-  .sp-card .meta { display:flex; gap:0.75rem; align-items:center; margin-bottom:0.4rem;}
-  .sp-card .meta img { width:36px; height:36px; border-radius:9999px; object-fit:cover; }
-  .sp-card .name { font-weight:600; font-size:0.95rem; }
-  .sp-card .handle { font-size:0.78rem; color: rgba(255,255,255,0.65); margin-top: -2px; }
-  .sp-card .text { font-size:0.86rem; color: rgba(255,255,255,0.75); line-height:1.25; white-space:pre-wrap; }
+
+  .sp-card .meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+
+  .sp-card .meta img {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    object-fit: cover;
+  }
+
+  .sp-card .name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .sp-card .handle {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    margin-top: -2px;
+  }
+
+  .sp-card .text {
+    font-size: 0.86rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.25;
+    white-space: pre-wrap;
+  }
+}
+
+.dark .sp-card {
+  background: rgba(10, 11, 12, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  min-width: 18.5rem;
+  max-width: 24rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.dark .sp-card .meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.dark .sp-card .meta img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.dark .sp-card .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dark .sp-card .handle {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: -2px;
+}
+
+.dark .sp-card .text {
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.25;
+  white-space: pre-wrap;
+} */
+
+:root {
+  --sp-bg: rgba(245, 246, 247, 0.7);
+  --sp-color: rgba(0, 0, 0, 0.88);
+  --sp-handle: rgba(0, 0, 0, 0.65);
+  --sp-text: rgba(0, 0, 0, 0.75);
+  --sp-shadow: 0 6px 22px rgba(255, 255, 255, 0.6);
+}
+
+.dark {
+  --sp-bg: rgba(10, 11, 12, 0.7);
+  --sp-color: rgba(255, 255, 255, 0.88);
+  --sp-handle: rgba(255, 255, 255, 0.65);
+  --sp-text: rgba(255, 255, 255, 0.75);
+  --sp-shadow: 0 6px 22px rgba(0, 0, 0, 0.6);
+}
+
+.sp-card {
+  background: var(--sp-bg);
+  color: var(--sp-color);
+  box-shadow: var(--sp-shadow);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  min-width: 18.5rem;
+  max-width: 24rem;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.sp-card .meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.sp-card .meta img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.sp-card .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+
+.sp-card .handle {
+  font-size: 0.78rem;
+  color: var(--sp-handle);
+  margin-top: -2px;
+}
+
+.sp-card .text {
+  color: var(--sp-text);
+  font-size: 0.86rem;
+  line-height: 1.25;
+  white-space: pre-wrap;
 }
 
 /* responsive: reduce card width on small screens */
 @media (max-width: 640px) {
-  .sp-card { min-width: 16rem; padding: 0.75rem; }
+  .sp-card {
+    min-width: 16rem;
+    padding: 0.75rem;
+  }
 }
 
 
 @layer base {
-  * {@apply border-border outline-ring/50;}
-  body {@apply bg-background text-foreground;}
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
-@import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
 
-:root {
+
+/* :root {
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
@@ -355,9 +553,9 @@ body {
   --border: oklch(0.274 0.006 286.033);
   --input: oklch(0.274 0.006 286.033);
   --ring: oklch(0.442 0.017 285.786);
-}
+} */
 
-@theme inline {
+/* @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -382,23 +580,26 @@ body {
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-}
+} */
 
-@layer base {
+/* @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-}
+} */
 
 html {
   color-scheme: light dark;
 }
+
 html.dark {
   color-scheme: dark;
 }
+
 html.light {
   color-scheme: light;
 }

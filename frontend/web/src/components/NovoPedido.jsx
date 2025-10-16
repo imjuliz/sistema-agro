@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+// import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,7 @@ const formSchema = z.object({
 export default function MyForm() {
 
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    // resolver: zodResolver(formSchema),
     defaultValues: {
       "name_1530877542": ["React"],
       "name_7375090523": new Date()
