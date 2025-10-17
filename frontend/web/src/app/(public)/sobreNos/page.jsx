@@ -26,20 +26,17 @@ const defaultFeatures = [
     {
         icon: Rocket,
         title: "Rastreabilidade Inteligente",
-        description:
-            "Cada lote de produção é monitorado desde o plantio até a venda, garantindo segurança alimentar e transparência total para o consumidor final.",
+        description: "Cada lote de produção é monitorado desde o plantio até a venda, garantindo segurança alimentar e transparência total para o consumidor final.",
     },
     {
         icon: Lightbulb,
         title: "Gestão Integrada de Unidades",
-        description:
-            "A matriz acompanha em tempo real o desempenho de todas as fazendas e lojas, com relatórios consolidados de produção, estoque e finanças.",
+        description: "A matriz acompanha em tempo real o desempenho de todas as fazendas e lojas, com relatórios consolidados de produção, estoque e finanças.",
     },
     {
         icon: Users,
         title: "Inovação com IoT",
-        description:
-            "Integramos sensores e dispositivos físicos para monitorar colheitas e insumos, transformando dados agrícolas em decisões inteligentes.",
+        description: "Integramos sensores e dispositivos físicos para monitorar colheitas e insumos, transformando dados agrícolas em decisões inteligentes.",
     },
 ];
 
@@ -234,7 +231,6 @@ export default function sobreNos({
                                             </ListItem>
                                         </List>
                                     </nav>
-                                    
                                 </Box>
                             </Grid>
                             <Grid size={8}>
