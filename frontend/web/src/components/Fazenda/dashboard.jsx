@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 
 export function SectionCards() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 px-8 max-w-7xl mx-auto w-full">
+    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 px-8 min-w-[20%] mx-auto w-full">
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Lucros</CardDescription>
@@ -37,7 +37,7 @@ export function SectionCards() {
 
 export function SectionCards2() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-8 w-full max-w-7xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-8 min-w-2xl mx-auto">
       {/* Card 1 - Próxima Colheita */}
       <div className="flex flex-col justify-between gap-4 w-full">
         <Card className="flex-1 h-full p-6 min-h-[220px]">
@@ -54,14 +54,14 @@ export function SectionCards2() {
           </CardFooter>
         </Card>
 
-        <Stack spacing={2} direction="row" justifyContent="end">
+        <Stack spacing={2} direction="column" justifyContent="end">
           <Button variant="outlined">OUTLINED</Button>
           <Button variant="outlined">OUTLINED2</Button>
         </Stack>
       </div>
 
       {/* Card 2 - Talhões Ativos */}
-      <div className="flex flex-col justify-between gap-4 w-full">
+      <div className="flex flex-col justify-between gap-4">
         <Card className="flex-1 h-full p-6 min-h-[220px]">
           <CardHeader>
             <CardDescription>Talhões Ativos</CardDescription>
@@ -74,7 +74,7 @@ export function SectionCards2() {
           </CardFooter>
         </Card>
 
-        <Stack spacing={2} direction="row" justifyContent="end">
+        <Stack spacing={2} direction="column" justifyContent="end">
           <Button variant="outlined">OUTLINED</Button>
           <Button variant="outlined">OUTLINED2</Button>
         </Stack>

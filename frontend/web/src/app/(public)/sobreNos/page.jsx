@@ -1,14 +1,26 @@
 "use client";
 import { Rocket, Lightbulb, Users, ArrowRight } from "lucide-react";
-import { LucideIcon } from "lucide-react";
-import img from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowDownRight } from "lucide-react";
 import Footer from "@/components/Home/sections/footer/default";
 import Navbar from "@/components/Home/sections/navbar/default";
-
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+//icons-----
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import EmailIcon from '@mui/icons-material/Email';
+import LocalPhoneIcon from '@mui/icons-material/LocalPhone';
+import { green } from '@mui/material/colors';
+import FmdGoodIcon from '@mui/icons-material/FmdGood';
 // Keep complex objects separate for reusability
 const defaultFeatures = [
     {
@@ -16,23 +28,18 @@ const defaultFeatures = [
         title: "Rastreabilidade Inteligente",
         description:
             "Cada lote de produção é monitorado desde o plantio até a venda, garantindo segurança alimentar e transparência total para o consumidor final.",
-        // link: "/test",
     },
     {
         icon: Lightbulb,
         title: "Gestão Integrada de Unidades",
         description:
             "A matriz acompanha em tempo real o desempenho de todas as fazendas e lojas, com relatórios consolidados de produção, estoque e finanças.",
-        // link: "/test",
-        // learnMoreText: "Learn more",
     },
     {
         icon: Users,
         title: "Inovação com IoT",
         description:
             "Integramos sensores e dispositivos físicos para monitorar colheitas e insumos, transformando dados agrícolas em decisões inteligentes.",
-        // link: "/test",
-        // learnMoreText: "Learn more",
     },
 ];
 
@@ -82,6 +89,11 @@ export default function sobreNos({
     // Stats section
     stats = defaultStats,
 }) {
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text)
+            .then(() => alert(`📋 Copiado: ${text}`))
+            .catch(() => alert("❌ Falha ao copiar. Tente novamente."));
+    };
     return (
         <main className="container mx-auto bg-background ">
             <Navbar />
@@ -100,13 +112,7 @@ export default function sobreNos({
                 <div className="grid gap-8 md:grid-cols-2">
                     <div className="group flex flex-col justify-between gap-6 rounded-lg bg-muted p-6 shadow-sm transition-all duration-300 hover:shadow-md md:p-8">
                         <div className="overflow-hidden rounded-md">
-                            <img
-                                src={visionImageSrc}
-                                alt={visionImageAlt}
-                                width={500}
-                                height={300}
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
+                            <img src={visionImageSrc} alt={visionImageAlt} width={500} height={300} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                         </div>
                         <div className="space-y-3">
                             <Badge variant="outline" className="font-medium">
@@ -116,19 +122,10 @@ export default function sobreNos({
                         </div>
                     </div>
                     <div className="relative overflow-hidden rounded-lg shadow-sm">
-                        <img
-                            src={missionImageSrc}
-                            alt={missionImageAlt}
-                            width={500}
-                            height={300}
-                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                        />
+                        <img src={missionImageSrc} alt={missionImageAlt} width={500} height={300} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
                         <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent">
                             <div className="p-6 text-white md:p-8">
-                                <Badge
-                                    variant="outline"
-                                    className="mb-3 border-white/20 bg-white/10 text-white"
-                                >
+                                <Badge variant="outline" className="mb-3 border-white/20 bg-white/10 text-white">
                                     {missionBadge}
                                 </Badge>
                                 <p className="text-xl font-medium">{missionText}</p>
@@ -149,21 +146,12 @@ export default function sobreNos({
                     </div>
                     <div className="grid gap-8 md:grid-cols-3 md:gap-10">
                         {features.map((item, index) => (
-                            <div
-                                key={index}
-                                className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-primary/20 hover:shadow-sm"
-                            >
+                            <div key={index} className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-primary/20 hover:shadow-sm">
                                 <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 transition-all group-hover:bg-primary/20">
                                     <item.icon className="size-5 text-primary md:size-6" />
                                 </div>
                                 <h3 className="mb-2 text-xl font-semibold">{item.title}</h3>
                                 <p className="mb-4 text-muted-foreground">{item.description}</p>
-                                {/* <Link href={item.link}>
-                                    <div className="mt-auto flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                                        <span>{item.learnMoreText}</span>
-                                        <ArrowRight className="ml-1 size-4" />
-                                    </div>
-                                </Link> */}
                             </div>
                         ))}
                     </div>
@@ -187,13 +175,7 @@ export default function sobreNos({
                         </div>
                         <div className="relative">
                             <div className="relative">
-                                <img
-                                    src={ctaImageSrc}
-                                    alt={ctaImageAlt}
-                                    width={500}
-                                    height={300}
-                                    className="aspect-video w-full rounded-lg object-cover shadow-lg"
-                                />
+                                <img src={ctaImageSrc} alt={ctaImageAlt} width={500} height={300} className="aspect-video w-full rounded-lg object-cover shadow-lg" />
                                 <div className="absolute bottom-4 left-4 rounded-lg bg-background p-4 shadow-md backdrop-blur-sm">
                                     <p className="font-semibold">{ctaImageOverlayText}</p>
                                     <p className="text-sm text-muted-foreground">
@@ -206,14 +188,84 @@ export default function sobreNos({
                 </div>
                 <div className="grid gap-8 md:grid-cols-4">
                     {stats.map((stat, index) => (
-                        <div
-                            key={index}
-                            className="flex flex-col items-center rounded-lg border border-border p-6 text-center"
-                        >
+                        <div key={index} className="flex flex-col items-center rounded-lg border border-border p-6 text-center">
                             <p className="text-3xl font-bold md:text-4xl">{stat.number}</p>
                             <p className="text-sm text-muted-foreground">{stat.label}</p>
                         </div>
                     ))}
+                </div>
+                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-muted/80 to-muted/30 p-6 md:p-10">
+                    <h2 className="mb-3 text-3xl font-bold md:text-4xl">Fale conosco</h2>
+                    <div>
+                        <Grid container spacing={2}>
+                            <Grid size={4}>
+                                <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'transparent' }}>
+                                    <nav aria-label="main mailbox folders">
+                                        <Divider />
+                                        <List>
+                                            <ListItem disablePadding>
+                                                <ListItemButton onClick={() => handleCopy("+55 11 99999-8888")}>
+                                                    <ListItemIcon>
+                                                        <WhatsAppIcon sx={{ color: green[900] }} />
+                                                    </ListItemIcon>
+                                                    <ListItemText primary="Whatsapp:" />
+                                                    <ListItemText sx={{ opacity: 0.5 }} primary="+55 11 99999-8888" />
+                                                </ListItemButton>
+                                            </ListItem>
+
+                                            <ListItem disablePadding>
+                                                <ListItemButton onClick={() => handleCopy("ruralTech@email.com")}>
+                                                    <ListItemIcon>
+                                                        <EmailIcon sx={{ color: green[900] }} />
+                                                    </ListItemIcon>
+                                                    <ListItemText primary="E-mail:" />
+                                                    <ListItemText sx={{ opacity: 0.5 }} primary="ruralTech@email.com" />
+                                                </ListItemButton>
+                                            </ListItem>
+
+                                            <ListItem disablePadding>
+                                                <ListItemButton onClick={() => handleCopy("(11) 4002-8922")}>
+                                                    <ListItemIcon>
+                                                        <LocalPhoneIcon sx={{ color: green[900] }} />
+                                                    </ListItemIcon>
+                                                    <ListItemText primary="Telefone:" />
+                                                    <ListItemText sx={{ opacity: 0.5 }} primary="(11) 4002-8922" />
+                                                </ListItemButton>
+                                            </ListItem>
+                                        </List>
+                                    </nav>
+                                    
+                                </Box>
+                            </Grid>
+                            <Grid size={8}>
+                                <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'transparent' }}>
+                                    <nav aria-label="main mailbox folders">
+                                        <List>
+                                            <ListItem disablePadding>
+                                                <ListItemButton onClick={() => handleCopy("R. Santo André, 680 - Boa Vista, São Caetano do Sul/SP")}>
+                                                    <ListItemIcon>
+                                                        <FmdGoodIcon sx={{ color: green[900] }} />
+                                                    </ListItemIcon>
+                                                    <ListItemText sx={{ whiteSpace: "noWrap" }} primary="Endereço 1:" />
+                                                    <ListItemText sx={{ opacity: 0.5, whiteSpace: "noWrap", marginLeft: 10 }} primary="R. Santo André, 680 - Boa Vista, São Caetano do Sul/SP" />
+                                                </ListItemButton>
+                                            </ListItem>
+
+                                            <ListItem disablePadding>
+                                                <ListItemButton onClick={() => handleCopy("R. Boa Vista, 825 - Boa Vista, São Caetano do Sul/SP")}>
+                                                    <ListItemIcon>
+                                                        <FmdGoodIcon sx={{ color: green[900] }} />
+                                                    </ListItemIcon>
+                                                    <ListItemText sx={{ whiteSpace: "noWrap" }} primary="Endereço 2:" />
+                                                    <ListItemText sx={{ opacity: 0.5, whiteSpace: "noWrap", marginLeft: 10 }} primary="R. Boa Vista, 825 - Boa Vista, São Caetano do Sul/SP" />
+                                                </ListItemButton>
+                                            </ListItem>
+                                        </List>
+                                    </nav>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </div>
                 </div>
             </div>
             <Footer />
