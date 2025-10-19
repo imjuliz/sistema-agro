@@ -18,8 +18,6 @@ import CreateIcon from '@mui/icons-material/Create';
 import { useState } from 'react'
 import { formatDateRange } from 'little-date'
 import { PlusIcon } from 'lucide-react'
-// import {Item,ItemActions,ItemContent,ItemDescription,ItemTitle,} from "@/components/ui/item"
-// DEPOIS (corrigido)
 import {Item, ItemIcon, ItemContent, ItemDescription, ItemTitle} from "@/components/ui/item"
 
 export function SectionCards() {

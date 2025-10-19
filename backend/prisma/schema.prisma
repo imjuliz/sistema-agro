@@ -4,11 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
   url       = env("DATABASE_URL")
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model perfis {
@@ -48,7 +45,6 @@ model unidades {
   criado_em     DateTime    @default(now())
   atualizado_em DateTime    @default(now())
   tipo          TipoUnidade
-  gerente_id    Int
   status        Boolean     @default(true)
   estoques      estoques[]
   lotes         lotes[]
