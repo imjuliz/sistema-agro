@@ -1,8 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive, ChartBarMultiple } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
+import { ChartBarMultiple } from "@/components/chart-area-interactive"
 import { SectionCards } from "@/components/section-cards"
-import data from "./data.json"
 import ContributorsTable from "@/components/ruixen-contributors-table"
 export default function Page() {
   return (

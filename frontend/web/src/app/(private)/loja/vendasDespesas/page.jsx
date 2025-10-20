@@ -14,14 +14,10 @@ export default function Page() {
           <ChartAreaInteractive />
           <div className="px-4 lg:px-6 flex flex-row gap-6">
             <div className="w-1/3"><ChartPieDonut /></div>
-
-            <div className="w-2/3">
-              <ComparisonTable /></div>
+            <div className="w-2/3"><ComparisonTable /></div>
           </div>
-          
-        </div><div className="justify-center W-100%">
-            <FlexiFilterTable/>
-          </div>
+        </div>
+        <div className="justify-center W-100%"><FlexiFilterTable /></div>
       </div>
     </div>
   )
