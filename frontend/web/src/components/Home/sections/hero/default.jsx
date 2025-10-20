@@ -19,7 +19,7 @@ export default function Hero(props) {
     mockup = (
       <Screenshot
         srcLight="/dashboard-light.png"
-        srcDark="/dashboard-dark.png"
+        srcDark="/img/rebanho.jpg"
         alt="Launch UI app screenshot"
         width={1248}
         height={765}

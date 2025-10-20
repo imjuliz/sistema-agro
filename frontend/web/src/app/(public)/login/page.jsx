@@ -1,6 +1,7 @@
 import { GalleryVerticalEnd } from "lucide-react"
 import { LoginForm } from "@/components/login-form"
 import { ThemeToggle } from "@/components/toggleSwitchTema";
+import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 
 export default function LoginPage() {
   return (
@@ -24,7 +25,8 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img src="img/login.png" alt="Image" className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9] dark:greenscale" />
+        {/* <img src="img/login.png" alt="Image" className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9] dark:greenscale" /> */}
+        <StarsBackground />
       </div>
     </div>
   );

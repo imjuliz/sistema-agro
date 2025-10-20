@@ -18,7 +18,7 @@ function StarLayer({
   count = 1000,
   size = 1,
   transition = { repeat: Infinity, duration: 50, ease: 'linear' },
-  starColor = '#99BF0F',
+  starColor = '#fff',
   className,
   ...props
 }) {
@@ -59,7 +59,7 @@ function StarsBackground({
   factor = 0.05,
   speed = 50,
   transition = { stiffness: 50, damping: 20 },
-  starColor = '#99BF0F',
+  starColor = '#fff',
   pointerEvents = true,
   ...props
 }) {

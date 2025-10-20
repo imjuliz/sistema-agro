@@ -9,6 +9,7 @@ import Navbar from "../components/Home/sections/navbar/default";
 import Pricing from "../components/Home/sections/pricing/default";
 import Stats from "../components/Home/sections/stats/default";
 import ThreeDMarqueeDemo from '@/components/Home/sections/socialProof/default'
+import { BentoSection } from "@/components/Home/sections/bentoGrid/default";
 
 export default function LandingPage() {
   return (
@@ -20,6 +21,7 @@ export default function LandingPage() {
       <ThreeDMarqueeDemo />
       {/* <Stats />
       <Pricing /> */}
+      <BentoSection />
       <FAQ />
       <CTA />
       <Footer />
