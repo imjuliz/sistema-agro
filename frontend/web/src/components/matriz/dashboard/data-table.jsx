@@ -24,33 +24,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
-export const schema = z.object({
-  id: z.number(),
-  header: z.string(),
-  type: z.string(),
-  status: z.string(),
-  target: z.string(),
-  limit: z.string(),
-  reviewer: z.string(),
-})
-
+export const schema = z.object({ id: z.number(), header: z.string(), type: z.string(), status: z.string(), target: z.string(), limit: z.string(), reviewer: z.string(),})
 
 import { TrendingUp } from "lucide-react"
 
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-
 
 // Create a separate component for the drag handle
 function DragHandle({id}) {
   const { attributes, listeners } = useSortable({ id, })
 
   return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent">
+    <Button {...attributes} {...listeners} variant="ghost" size="icon" className="text-muted-foreground size-7 hover:bg-transparent">
       <IconGripVertical className="text-muted-foreground size-3" />
       <span className="sr-only">Drag to reorder</span>
     </Button>
@@ -100,18 +85,12 @@ const columns = [
     id: "select",
     header: ({ table }) => (
       <div className="flex items-center justify-center">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all" />
+        <Checkbox checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")} onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)} aria-label="Select all" />
       </div>
     ),
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row" />
+        <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
       </div>
     ),
     enableSorting: false,
@@ -141,9 +120,7 @@ const columns = [
       <Badge variant="outline" className="text-muted-foreground px-1.5">
         {row.original.status === "Done" ? (
           <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
-          <IconLoader />
-        )}
+        ) : (<IconLoader />)}
         {row.original.status}
       </Badge>
     ),
@@ -152,8 +129,7 @@ const columns = [
     accessorKey: "target",
     header: () => <div className="w-full text-right">Target</div>,
     cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
+      <form onSubmit={(e) => {
           e.preventDefault()
           toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
             loading: `Saving ${row.original.header}`,
@@ -164,10 +140,8 @@ const columns = [
         <Label htmlFor={`${row.original.id}-target`} className="sr-only">
           Target
         </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.target}
-          id={`${row.original.id}-target`} />
+        <Input className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
+          defaultValue={row.original.target} id={`${row.original.id}-target`} />
       </form>
     ),
   },
@@ -175,8 +149,7 @@ const columns = [
     accessorKey: "limit",
     header: () => <div className="w-full text-right">Limit</div>,
     cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
+      <form onSubmit={(e) => {
           e.preventDefault()
           toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
             loading: `Saving ${row.original.header}`,
@@ -187,10 +160,8 @@ const columns = [
         <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
           Limit
         </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.limit}
-          id={`${row.original.id}-limit`} />
+        <Input className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
+          defaultValue={row.original.limit} id={`${row.original.id}-limit`} />
       </form>
     ),
   },
@@ -207,10 +178,7 @@ const columns = [
             Reviewer
           </Label>
           <Select>
-            <SelectTrigger
-              className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
-              size="sm"
-              id={`${row.original.id}-reviewer`}>
+            <SelectTrigger className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate" size="sm" id={`${row.original.id}-reviewer`}>
               <SelectValue placeholder="Assign reviewer" />
             </SelectTrigger>
             <SelectContent align="end">
@@ -229,10 +197,7 @@ const columns = [
     cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon">
+          <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
             <IconDotsVertical />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -254,12 +219,7 @@ function DraggableRow({row}) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({ id: row.original.id, })
 
   return (
-    <TableRow
-      data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
-      ref={setNodeRef}
-      className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{ transform: CSS.Transform.toString(transform), transition: transition, }}>
+    <TableRow data-state={row.getIsSelected() && "selected"} data-dragging={isDragging} ref={setNodeRef} className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80" style={{ transform: CSS.Transform.toString(transform), transition: transition, }}>
       {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -278,11 +238,7 @@ export function DataTable({data: initialData}) {
   const [sorting, setSorting] = React.useState([])
   const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10, })
   const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
+  const sensors = useSensors(useSensor(MouseSensor, {}),useSensor(TouchSensor, {}),useSensor(KeyboardSensor, {}))
 
   // grafico 1
   const chart1Data = [
@@ -377,9 +333,7 @@ export function DataTable({data: initialData}) {
   return (
     <Tabs defaultValue="geral" className="w-full flex-col justify-start gap-6">
       <div className="flex items-center justify-between px-4 lg:px-6">
-        <Label htmlFor="view-selector" className="sr-only">
-          View
-        </Label>
+        <Label htmlFor="view-selector" className="sr-only">View</Label>
         <Select defaultValue="geral">
           <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
             <SelectValue placeholder="Select a view" />
@@ -391,8 +345,7 @@ export function DataTable({data: initialData}) {
             <SelectItem value="focus-documents">Focus Documents</SelectItem>
           </SelectContent>
         </Select>
-        <TabsList
-          className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
+        <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="fazendas">
             Fazendas <Badge variant="secondary">3</Badge>
@@ -418,12 +371,7 @@ export function DataTable({data: initialData}) {
                 .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
                 .map((column) => {
                   return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)
-                      }>
+                    <DropdownMenuCheckboxItem key={column.id} className="capitalize" checked={column.getIsVisible()} onCheckedChange={(value) => column.toggleVisibility(!!value)}>
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   );
@@ -438,12 +386,7 @@ export function DataTable({data: initialData}) {
       </div>
       <TabsContent value="geral" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
         <div className="overflow-hidden rounded-lg border">
-          <DndContext
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
-            id={sortableId}>
+          <DndContext collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd} sensors={sensors} id={sortableId}>
             <Table>
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -467,9 +410,7 @@ export function DataTable({data: initialData}) {
                   </SortableContext>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No results.
-                    </TableCell>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">No results.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -486,9 +427,7 @@ export function DataTable({data: initialData}) {
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
                 Linhas por página
               </Label>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => { table.setPageSize(Number(value)) }}>
+              <Select value={`${table.getState().pagination.pageSize}`} onValueChange={(value) => { table.setPageSize(Number(value)) }}>
                 <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                   <SelectValue placeholder={table.getState().pagination.pageSize} />
                 </SelectTrigger>
@@ -598,9 +537,7 @@ export function DataTable({data: initialData}) {
                     <div className="text-muted-foreground">Engagement exceed targets</div>
                   </CardFooter>
                 </Card>
-
               </div>
-
             </div>
 
             {/* grafico de linha */}
@@ -617,9 +554,7 @@ export function DataTable({data: initialData}) {
                       <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" nameKey="visitors" hideLabel />} />
                       <Line dataKey="visitors" type="natural" stroke="var(--color-visitors)" strokeWidth={2}
                         dot={({ payload, ...props }) => {
-                          return (
-                            <Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill} />
-                          )
+                          return (<Dot key={payload.browser} r={5} cx={props.cx} cy={props.cy} fill={payload.fill} stroke={payload.fill} />)
                         }}
                       />
                     </LineChart>
@@ -686,17 +621,8 @@ export function DataTable({data: initialData}) {
                   <ChartContainer config={chart3Config}>
                     <BarChart accessibilityLayer data={chart3Data}>
                       <CartesianGrid vertical={false} />
-                      <XAxis
-                        dataKey="month"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                        tickFormatter={(value) => value.slice(0, 3)}
-                      />
-                      <ChartTooltip
-                        cursor={false}
-                        content={<ChartTooltipContent indicator="dashed" />}
-                      />
+                      <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)}/>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />}/>
                       <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
                       <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
                     </BarChart>
@@ -715,13 +641,9 @@ export function DataTable({data: initialData}) {
           </div>
 
           <div className="w-full flex flex-row justify-between">
-            <div className="w-6/10">
-            
-            </div>
-            <div className="3/10">
-            </div>
+            <div className="w-6/10"></div>
+            <div className="3/10"></div>
           </div>
-
         </div>
 
       </TabsContent>

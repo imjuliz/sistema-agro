@@ -147,8 +147,7 @@ export default function POSModule() {
     });
 
     clearCart();
-    setIsPaymentOpen(false);
-    // Show success message or print receipt
+    setIsPaymentOpen(false);// Show success message or print receipt
   };
 
   return (
@@ -308,8 +307,7 @@ export default function POSModule() {
                       <div className="text-center text-muted-foreground py-8">
                         Cart is empty
                       </div>
-                    ) : (
-                      cart.map((item) => (
+                    ) : (cart.map((item) => (
                         <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">{item.name}</div>

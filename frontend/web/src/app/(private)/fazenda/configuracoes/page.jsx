@@ -7,59 +7,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils"; // Assuming you have this utility
-import {
-  Search,
-  User,
-  Settings as SettingsIcon, // Alias to avoid naming conflict
-  Bell,
-  Link as LinkIcon,
-  Info,
-  Copy,
-  ExternalLink,
-  AlertTriangle,
-  Home,
-  FileText,
-  HelpCircle,
-  Book,
-  Menu,
-  X,
-} from "lucide-react";
+import {Search,User,Settings as SettingsIcon, Bell,Link as LinkIcon,Info,Copy,ExternalLink,AlertTriangle,Home,FileText,HelpCircle,Book,Menu,X,} from "lucide-react";
 import { useState } from "react";
-
-// interface SidebarItem {
-//   category: string;
-//   icon: React.ElementType;
-//   items: string[];
-// }
-
-// interface Settings1Props {
-//   teamName?: string;
-//   teamUrlSlug?: string;
-//   teamId?: string;
-//   userAvatarSrc?: string;
-//   activeSidebarItem?: string;
-//   sidebarItems?: SidebarItem[];
-//   texts?: Record<string, string>;
-//   links?: Record<string, string>;
-// }
 
 const defaultProps = {
   teamName: "SERP AI's projects",
   teamUrlSlug: "serp-ais-projects",
   teamId: "team_edTxn3CaRm3NCYyMOUC0OM5V",
-  userAvatarSrc:
-    "https://imagedelivery.net/Kpcbofvpelk1jdjXmWIr5w/15656e6c-1315-435d-fa59-ec0ce2ac0700/public",
+  userAvatarSrc:"https://imagedelivery.net/Kpcbofvpelk1jdjXmWIr5w/15656e6c-1315-435d-fa59-ec0ce2ac0700/public",
   activeSidebarItem: "General",
   sidebarItems: [
     {
@@ -77,32 +37,24 @@ const defaultProps = {
         "Environment Variables",
       ],
     },
-    {
-      category: "Account",
-      icon: SettingsIcon,
-      items: ["My Notifications"],
-    },
+    {category: "Account",icon: SettingsIcon,items: ["My Notifications"],},
   ],
   texts: {
     settings: "Settings",
     menu: "Menu",
     searchPlaceholder: "Search...",
     teamNameTitle: "Team Name",
-    teamNameDescription:
-      "This is your team's visible name within SERP. For example, the name of your company or department.",
+    teamNameDescription:"This is your team's visible name within SERP. For example, the name of your company or department.",
     teamNameInputHint: "Please use 32 characters at maximum.",
     teamUrlTitle: "Team URL",
-    teamUrlDescription:
-      "This is your team's URL namespace on SERP. Within it, your team can inspect their projects, check out any recent activity, or configure settings to their liking.",
+    teamUrlDescription: "This is your team's URL namespace on SERP. Within it, your team can inspect their projects, check out any recent activity, or configure settings to their liking.",
     teamUrlInputHint: "Please use 48 characters at maximum.",
     teamAvatarTitle: "Team Avatar",
-    teamAvatarDescription:
-      "This is your team's avatar. Click on the avatar to upload a custom one from your files.",
+    teamAvatarDescription: "This is your team's avatar. Click on the avatar to upload a custom one from your files.",
     teamAvatarRecommended: "An avatar is optional but strongly recommended.",
     changeAvatarButton: "Change Avatar",
     previewDeploymentSuffixTitle: "Preview Deployment Suffix",
-    previewDeploymentSuffixDescription:
-      "By default, the URL of every new Preview Deployment ends with .SERP.app. This setting allows you to choose your own custom domain in place of this suffix.",
+    previewDeploymentSuffixDescription:"By default, the URL of every new Preview Deployment ends with .SERP.app. This setting allows you to choose your own custom domain in place of this suffix.",
     proPlanFeature: "This feature is available on the",
     proPlanLink: "Pro plan",
     proPlanPrice: "$100 per month",
@@ -113,26 +65,20 @@ const defaultProps = {
     serpToolbarDescription: "Enable the SERP Toolbar on your Deployments.",
     preProdDeployments: "Pre-Production Deployments",
     prodDeployments: "Production Deployments",
-    toolbarInfo:
-      "To use the toolbar in production your team members need the Chrome extension or to enable the toolbar for that domain in the toolbar menu. Learn more about using the toolbar in production.",
+    toolbarInfo:"To use the toolbar in production your team members need the Chrome extension or to enable the toolbar for that domain in the toolbar menu. Learn more about using the toolbar in production.",
     allowOverride: "Allow this setting to be overridden on the project level.",
     learnMoreToolbar: "Learn more about the SERP Toolbar",
     transferTitle: "Transfer",
-    transferDescription:
-      "Transfer your projects to another team without downtime or workflow interruptions.",
+    transferDescription:"Transfer your projects to another team without downtime or workflow interruptions.",
     learnMoreTransfer: "Learn more about Transferring Projects",
     transferButton: "Transfer",
     leaveTeamTitle: "Leave Team",
-    leaveTeamDescription:
-      "Revoke your access to this Team. Any resources you've added to the Team will remain.",
-    leaveTeamWarning:
-      "To leave this Team, ensure at least one more Member has the Owner role.",
+    leaveTeamDescription:"Revoke your access to this Team. Any resources you've added to the Team will remain.",
+    leaveTeamWarning:"To leave this Team, ensure at least one more Member has the Owner role.",
     deleteTeamTitle: "Delete Team",
-    deleteTeamDescription:
-      "Permanently remove your team and all of its contents from the SERP platform. This action is not reversible — please continue with caution.",
+    deleteTeamDescription:"Permanently remove your team and all of its contents from the SERP platform. This action is not reversible — please continue with caution.",
     deleteTeamWarningTitle: "Warning",
-    deleteTeamWarningDescription:
-      "To delete your account, visit Account Settings.",
+    deleteTeamWarningDescription:"To delete your account, visit Account Settings.",
     deleteTeamButton: "Delete Team",
     footerHome: "Home",
     footerDocs: "Docs",
@@ -175,7 +121,6 @@ export default function Settings1(props) {
       {/* Main content wrapper */}
       <div className="relative flex flex-1 md:flex-row">
         
-
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 pb-28 md:p-8 md:pb-28">
           <h1 className="mb-6 hidden text-3xl font-bold md:mb-8 md:block">
@@ -214,11 +159,7 @@ export default function Settings1(props) {
                   <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
                     SERP.com/
                   </span>
-                  <Input
-                    type="text"
-                    defaultValue={teamUrlSlug}
-                    className="min-w-0 flex-1 rounded-l-none"
-                  />
+                  <Input type="text" defaultValue={teamUrlSlug} className="min-w-0 flex-1 rounded-l-none"/>
                 </div>
                 <Button size="sm">{texts.saveButton}</Button>
               </div>
@@ -277,12 +218,7 @@ export default function Settings1(props) {
             <div className="w-full max-w-md">
               <div className="flex items-center gap-2">
                 <div className="flex flex-1 items-center">
-                  <Input
-                    type="text"
-                    placeholder="my-deployment"
-                    className="min-w-0 flex-1 rounded-r-none"
-                    disabled // This feature requires upgrade
-                  />
+                  <Input type="text" placeholder="my-deployment" className="min-w-0 flex-1 rounded-r-none" disabled />
                   <span className="inline-flex h-10 items-center rounded-r-md border border-l-0 border-input bg-muted px-3 text-sm text-muted-foreground">
                     .SERP.app
                   </span>
@@ -315,12 +251,7 @@ export default function Settings1(props) {
             </p>
             <div className="w-full max-w-md">
               <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  type="text"
-                  value={teamId}
-                  readOnly
-                  className="flex-grow font-mono text-sm"
-                />
+                <Input type="text" value={teamId} readOnly className="flex-grow font-mono text-sm"/>
                 <Button variant="outline" size="icon" aria-label="Copy Team ID">
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -342,10 +273,7 @@ export default function Settings1(props) {
             </p>
             <div className="mb-4 grid w-full max-w-lg grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <Label
-                  htmlFor="pre-prod-toolbar"
-                  className="text-sm font-medium text-muted-foreground"
-                >
+                <Label htmlFor="pre-prod-toolbar" className="text-sm font-medium text-muted-foreground">
                   {texts.preProdDeployments}
                 </Label>
                 <Select defaultValue="on">
@@ -359,10 +287,7 @@ export default function Settings1(props) {
                 </Select>
               </div>
               <div>
-                <Label
-                  htmlFor="prod-toolbar"
-                  className="text-sm font-medium text-muted-foreground"
-                >
+                <Label htmlFor="prod-toolbar" className="text-sm font-medium text-muted-foreground">
                   {texts.prodDeployments}
                 </Label>
                 <Select defaultValue="on">
@@ -380,10 +305,7 @@ export default function Settings1(props) {
               <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>
                 {texts.toolbarInfo?.split("Chrome extension")[0]}
-                <a
-                  href={links.chromeExtension}
-                  className="text-primary underline"
-                >
+                <a href={links.chromeExtension} className="text-primary underline">
                   Chrome extension
                 </a>
                 {
@@ -391,10 +313,7 @@ export default function Settings1(props) {
                     ?.split("Chrome extension")[1]
                     .split("toolbar in production")[0]
                 }
-                <a
-                  href={links.toolbarInProduction}
-                  className="text-primary underline"
-                >
+                <a href={links.toolbarInProduction} className="text-primary underline">
                   toolbar in production
                 </a>
                 .
@@ -430,10 +349,7 @@ export default function Settings1(props) {
             <div className="flex max-w-md items-center justify-end">
               <p className="mr-4 text-sm text-muted-foreground">
                 {texts.learnMoreTransfer?.split("Transferring Projects")[0]}
-                <a
-                  href={links.transferringProjects}
-                  className="text-primary underline"
-                >
+                <a href={links.transferringProjects} className="text-primary underline">
                   Transferring Projects{" "}
                   <ExternalLink className="ml-0.5 inline h-3 w-3" />
                 </a>
@@ -471,15 +387,8 @@ export default function Settings1(props) {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>{texts.deleteTeamWarningTitle}</AlertTitle>
               <AlertDescription>
-                {
-                  texts.deleteTeamWarningDescription?.split(
-                    "Account Settings",
-                  )[0]
-                }
-                <a
-                  href={links.accountSettings}
-                  className="font-medium underline"
-                >
+                {texts.deleteTeamWarningDescription?.split("Account Settings",)[0]}
+                <a href={links.accountSettings} className="font-medium underline">
                   Account Settings
                 </a>
                 .

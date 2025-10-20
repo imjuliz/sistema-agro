@@ -7,30 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-    User,
-    CreditCard,
-    Image as ImageIcon,
-    Bell,
-    Monitor,
-    Info,
-    Copy,
-    ExternalLink,
-    AlertTriangle,
-} from "lucide-react";
+import { User, CreditCard, Image as ImageIcon, Bell, Monitor, Info, Copy, ExternalLink, AlertTriangle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
-
 
 export default function SettingsPage() {
     usePerfilProtegido("gerente_matriz");
@@ -141,14 +124,7 @@ export default function SettingsPage() {
                             const Icon = it.icon;
                             const selected = active === it.key;
                             return (
-                                <button
-                                    key={it.key}
-                                    onClick={() => setActive(it.key)}
-                                    className={`flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm ${selected
-                                        ? "bg-accent text-accent-foreground"
-                                        : "hover:bg-muted/50 text-foreground"
-                                        }`}
-                                >
+                                <button key={it.key} onClick={() => setActive(it.key)} className={`flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm ${selected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50 text-foreground"}`}>
                                     <Icon className="h-4 w-4" />
                                     <span><Transl>{it.label}</Transl></span>
                                 </button>
@@ -164,14 +140,9 @@ export default function SettingsPage() {
                         {active === "Perfil" && (
                             <>
                                 <h2 className="text-lg font-semibold mb-4"><Transl>Perfil</Transl></h2>
-
                                 <div className="flex gap-6">
-
-
                                     <div className="flex-1 gap-6">
-
                                         <div className="grid gap-4">
-
                                             <div className="w-48">
                                                 <div className="flex items-center gap-4">
                                                     <Avatar className="h-20 w-20">
@@ -188,18 +159,8 @@ export default function SettingsPage() {
                                                         {/* mostrar upload somente em modo edição */}
                                                         {profileEditing ? (
                                                             <>
-                                                                <input
-                                                                    ref={fileRef}
-                                                                    type="file"
-                                                                    accept="image/*"
-                                                                    className="hidden"
-                                                                    onChange={handleAvatarChange}
-                                                                />
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => fileRef.current?.click()}
-                                                                >
+                                                                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange}/>
+                                                                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
                                                                     <Transl>Fazer upload</Transl>
                                                                 </Button>
                                                             </>
@@ -207,16 +168,11 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div>
                                                 <Label className={"pb-3"} htmlFor="username"><Transl>Nome de usuário</Transl></Label>
                                                 {profileEditing ? (
                                                     <>
-                                                        <Input
-                                                            id="username"
-                                                            value={username}
-                                                            onChange={(e) => setUsername(e.target.value)}
-                                                        />
+                                                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)}/>
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Nome público exibido no sistema.</Transl>
                                                         </p>
@@ -232,11 +188,7 @@ export default function SettingsPage() {
                                                 <Label className={"pb-3"} htmlFor="nome"><Transl>Nome completo</Transl></Label>
                                                 {profileEditing ? (
                                                     <>
-                                                        <Input
-                                                            id="nome"
-                                                            value={nome}
-                                                            onChange={(e) => setNome(e.target.value)}
-                                                        />
+                                                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)}/>
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Digite seu nome completo.</Transl>
                                                         </p>
@@ -252,10 +204,7 @@ export default function SettingsPage() {
                                                 <Label className={"pb-3"} htmlFor="emailSelect"><Transl>Email</Transl></Label>
                                                 {profileEditing ? (
                                                     <>
-                                                        <Select
-                                                            onValueChange={(v) => setEmailSelect(v)}
-                                                            value={emailSelect}
-                                                        >
+                                                        <Select onValueChange={(v) => setEmailSelect(v)} value={emailSelect}>
                                                             <SelectTrigger id="emailSelect" className="w-full">
                                                                 <SelectValue placeholder={<Transl>Selecione um email</Transl>} />
                                                             </SelectTrigger>
@@ -282,21 +231,13 @@ export default function SettingsPage() {
                                             <div>
                                                 <Label className={"pb-3"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
                                                 {profileEditing ? (
-                                                    <>
-                                                        <Input
-                                                            id="telefone"
-                                                            value={telefone}
-                                                            onChange={(e) => setTelefone(e.target.value)}
-                                                        />
+                                                    <><Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)}/>
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Telefone de contato.</Transl>
                                                         </p>
                                                     </>
 
-                                                ) : (
-                                                    <p className="text-sm text-foreground">{telefone || "Telefone não informado"}</p>
-                                                )}
-
+                                                ) : (<p className="text-sm text-foreground">{telefone || "Telefone não informado"}</p>)}
                                             </div>
 
                                             <div>
@@ -304,29 +245,18 @@ export default function SettingsPage() {
                                                 <p className="text-sm text-muted-foreground mb-2">
                                                     <Transl>Adicione links do site da unidade, blog ou perfis sociais.</Transl>
                                                 </p>
-
                                                 <div className="flex flex-col gap-2">
                                                     {profileEditing ? (
                                                         urls.map((u, i) => (
                                                             <div key={i} className="flex items-center gap-2">
-                                                                <Input
-                                                                    value={u}
-                                                                    onChange={(e) => updateUrl(i, e.target.value)}
-                                                                    className="flex-1"
-                                                                />
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => removeUrl(i)}
-                                                                >
+                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1"/>
+                                                                <Button variant="outline" size="sm" onClick={() => removeUrl(i)}>
                                                                     <Transl>Remover</Transl>
                                                                 </Button>
                                                             </div>
                                                         ))
                                                     ) : (
-                                                        urls.map((u, i) => (
-                                                            <p key={i} className="text-sm text-foreground">{u}</p>
-                                                        ))
+                                                        urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>))
                                                     )}
 
                                                     {profileEditing ? (
@@ -345,9 +275,7 @@ export default function SettingsPage() {
                                                         <Button onClick={saveProfile}><Transl>Salvar</Transl></Button>
                                                         <Button variant="outline" onClick={cancelProfileEdit}><Transl>Cancelar</Transl></Button>
                                                     </div>
-                                                ) : (
-                                                    <Button onClick={() => setProfileEditing(true)}><Transl>Editar perfil</Transl></Button>
-                                                )}
+                                                ) : (<Button onClick={() => setProfileEditing(true)}><Transl>Editar perfil</Transl></Button>)}
                                             </div>
                                         </div>
                                     </div>
@@ -361,10 +289,7 @@ export default function SettingsPage() {
                                 <h2 className="text-lg font-semibold mb-4"><Transl>Empresa</Transl></h2>
                                 {/* Conteúdo principal */}
                                 <div className="flex gap-6">
-
-
                                     <div className="flex-1 gap-6">
-
                                         <div className="grid gap-4">
 
                                             {/* Nome da empresa */}
@@ -376,8 +301,7 @@ export default function SettingsPage() {
                                                 <div className="w-full max-w-md">
                                                     <div className="flex flex-col w-full items-start gap-2">
                                                         {companyEditing ? (
-                                                            <>
-                                                                <p className="text-sm text-muted-foreground mb-2">
+                                                            <><p className="text-sm text-muted-foreground mb-2">
                                                                     <Transl>Nome visível da Matriz ou da Unidade.</Transl>
                                                                 </p>
                                                                 <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="flex-1" />
@@ -386,15 +310,12 @@ export default function SettingsPage() {
                                                                 </p>
                                                                 {/* <Button size="sm" onClick={() => { }}>Salvar</Button> */}
                                                             </>
-                                                        ) : (
-                                                            <p className="text-sm text-foreground">{companyName || "Nome não informado"}</p>
-                                                        )}
+                                                        ) : (<p className="text-sm text-foreground">{companyName || "Nome não informado"}</p>)}
                                                     </div>
 
                                                 </div>
                                             </div>
                                             <Separator className="my-4" />
-
                                             {/* URL da unidade */}
                                             <div>
                                                 <Label className={"pb-3"}>URLs</Label>
@@ -406,24 +327,14 @@ export default function SettingsPage() {
                                                     {companyEditing ? (
                                                         urls.map((u, i) => (
                                                             <div key={i} className="flex items-center gap-2">
-                                                                <Input
-                                                                    value={u}
-                                                                    onChange={(e) => updateUrl(i, e.target.value)}
-                                                                    className="flex-1"
-                                                                />
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => removeUrl(i)}
-                                                                >
+                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1"/>
+                                                                <Button variant="outline" size="sm" onClick={() => removeUrl(i)}>
                                                                     <Transl>Remover</Transl>
                                                                 </Button>
                                                             </div>
                                                         ))
                                                     ) : (
-                                                        urls.map((u, i) => (
-                                                            <p key={i} className="text-sm text-foreground">{u}</p>
-                                                        ))
+                                                        urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>))
                                                     )}
 
                                                     {companyEditing ? (
@@ -453,9 +364,7 @@ export default function SettingsPage() {
                                                                 <AvatarImage src={companyAvatarUrl} alt={<Transl>Team Avatar</Transl>} />
                                                             </>
 
-                                                        ) : (
-                                                            <AvatarFallback />
-                                                        )}
+                                                        ) : (<AvatarFallback />)}
                                                     </Avatar>
                                                     <div>
                                                         {companyEditing ? (
@@ -468,9 +377,7 @@ export default function SettingsPage() {
                                                                     <Transl>Mudar avatar</Transl>
                                                                 </Button>
                                                             </>
-                                                        ) : (
-                                                            <p className="mb-2 text-sm text-muted-foreground"><Transl>Recomendado para identificação visual.</Transl></p>
-                                                        )}
+                                                        ) : (<p className="mb-2 text-sm text-muted-foreground"><Transl>Recomendado para identificação visual.</Transl></p>)}
                                                     </div>
                                                 </div>
                                             </div>
@@ -487,12 +394,7 @@ export default function SettingsPage() {
                                                                 <p className="text-sm text-muted-foreground mb-2">
                                                                     <Transl>Identificador usado em integrações e APIs.</Transl>
                                                                 </p>
-                                                                <Input
-                                                                    type="text"
-                                                                    value={''}
-                                                                    readOnly
-                                                                    className="flex-grow font-mono text-sm"
-                                                                />
+                                                                <Input type="text" value={''} readOnly className="flex-grow font-mono text-sm"/>
                                                                 <Button variant="outline" size="icon" aria-label="Copiar ID da Unidade">
                                                                     <Copy className="h-4 w-4" />
                                                                 </Button>
@@ -501,10 +403,8 @@ export default function SettingsPage() {
                                                                 </p>
                                                             </>
                                                         ) : (
-                                                            <p className="text-sm text-foreground">(id-da-unidade-1234)</p>
-                                                        )}
+                                                            <p className="text-sm text-foreground">(id-da-unidade-1234)</p>)}
                                                     </div>
-
                                                 </div>
                                             </div>
                                             <Separator className="my-4" />
@@ -520,10 +420,7 @@ export default function SettingsPage() {
                                                 <div className="flex max-w-md items-center justify-end">
                                                     <p className="mr-4 text-sm text-muted-foreground">
                                                         <Transl>Saiba mais sobre transferência de unidades</Transl>
-                                                        <a
-                                                            href={''}
-                                                            className="text-primary underline"
-                                                        >
+                                                        <a href={''} className="text-primary underline">
                                                             <Transl>Documentação</Transl>
                                                         </a>
                                                     </p>
@@ -572,7 +469,6 @@ export default function SettingsPage() {
                         {active === "Integracoes" && (
                             <>
                                 <h2 className="text-lg font-semibold mb-4"><Transl>Integrações & IoT</Transl></h2>
-
                                 <div className="grid gap-4">
                                     <div>
                                         <Label className={"pb-3"}><Transl>Habilitar integração IoT</Transl></Label>
@@ -616,7 +512,6 @@ export default function SettingsPage() {
                         {active === "Aparencia" && (
                             <>
                                 <h2 className="text-lg font-semibold mb-4"><Transl>Aparência</Transl></h2>
-
                                 <div className="grid gap-4">
                                     <div>
                                         <Label className="pb-3"><Transl>Tamanho da fonte</Transl></Label>
@@ -660,34 +555,21 @@ export default function SettingsPage() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {languageOptions.map(opt => (
-                                                    <SelectItem key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </SelectItem>
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
 
-
                                     <div>
                                         <Label className="pb-3"><Transl>Tema</Transl></Label>
                                         <div className="flex items-start gap-6 mt-3">
-                                            <button
-                                                onClick={() => setTheme("light")}
-                                                className={`rounded-lg border p-3 ${theme === "light" ? "border-primary" : "border-border"
-                                                    }`}
-                                                aria-pressed={theme === "light"}
-                                            >
+                                            <button onClick={() => setTheme("light")} className={`rounded-lg border p-3 ${theme === "light" ? "border-primary" : "border-border"}`}aria-pressed={theme === "light"}>
                                                 <div className="w-32 h-20 bg-white border rounded" />
                                                 <div className="text-sm mt-2 text-center"><Transl>Claro</Transl></div>
                                             </button>
 
-                                            <button
-                                                onClick={() => setTheme("dark")}
-                                                className={`rounded-lg border p-3 ${theme === "dark" ? "border-primary" : "border-border"
-                                                    }`}
-                                                aria-pressed={theme === "dark"}
-                                            >
+                                            <button onClick={() => setTheme("dark")} className={`rounded-lg border p-3 ${theme === "dark" ? "border-primary" : "border-border"}`}aria-pressed={theme === "dark"}>
                                                 <div className="w-32 h-20 bg-slate-900 border rounded" />
                                                 <div className="text-sm mt-2 text-center"><Transl>Escuro</Transl></div>
                                             </button>
@@ -706,7 +588,6 @@ export default function SettingsPage() {
                         {active === "Notificacoes" && (
                             <>
                                 <h2 className="text-lg font-semibold mb-4"><Transl>Notificações</Transl></h2>
-
                                 <div className="grid gap-4">
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -715,10 +596,7 @@ export default function SettingsPage() {
                                                 <Transl>Receba resumos e alertas por email (ex.: alertas de qualidade de lote).</Transl>
                                             </p>
                                         </div>
-                                        <Switch
-                                            checked={emailNotifications}
-                                            onCheckedChange={(v) => setEmailNotifications(!!v)}
-                                        />
+                                        <Switch checked={emailNotifications} onCheckedChange={(v) => setEmailNotifications(!!v)}/>
                                     </div>
 
                                     <div>
@@ -734,7 +612,7 @@ export default function SettingsPage() {
                             </>
                         )}
 
-                       
+
                     </div>
                 </section>
             </div>
