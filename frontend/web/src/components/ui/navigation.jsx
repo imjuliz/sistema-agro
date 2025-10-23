@@ -18,22 +18,22 @@ import {
 
 export default function Navigation({
   menuItems = [
-    { title: "Para você", content: "components" },
+    // { title: "Para você", content: "components" },
     { title: "Sobre Nós", href: '/sobreNos', isLink: true },
     { title: "Blog", href: '/blog', isLink: true },
   ],
-  components = [
-    {
-      title: "Matriz / Empresa",
-      href: "/paraEmpresa",
-      description:
-        "A modal dialog that interrupts the user with important content and expects a response.",
-    },
-    {
-      title: "Proprietário de fazenda",
-      href: "/paraFazenda",
-      description: "For sighted users to preview content available behind a link.",
-    },
+  // components = [
+  //   {
+  //     title: "Matriz / Empresa",
+  //     href: "/paraEmpresa",
+  //     description:
+  //       "A modal dialog that interrupts the user with important content and expects a response.",
+  //   },
+  //   {
+  //     title: "Proprietário de fazenda",
+  //     href: "/paraFazenda",
+  //     description: "For sighted users to preview content available behind a link.",
+  //   },
     // {
     //   title: "Progress",
     //   href: "/docs/primitives/progress",
@@ -56,7 +56,9 @@ export default function Navigation({
     //   description:
     //     "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.",
     // },
-  ],
+  // ],
+
+  
   // logo = <LaunchUI />,
   // logoTitle = "Launch UI",
   // logoDescription = "Landing page template built with React, Shadcn/ui and Tailwind that you can copy/paste into your project.",

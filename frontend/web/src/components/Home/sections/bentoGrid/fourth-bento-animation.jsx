@@ -8,20 +8,21 @@ import {
   useSpring,
 } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import '@/app/globals.css'
 
 const boxConfigs = [
   {
     title: "Groceries Budget",
-    className: "bg-secondary text-white",
+    className: "bg-[#99BF0F] text-white",
   },
   {
     title: "Dining Out Alert",
-    className: "bg-secondary/40 text-white",
+    className: "bg-[#99BF0F]/40 text-white",
   },
   {
     title: "Save for Vacation",
     className:
-      "bg-secondary/20 border border-secondary border-dashed text-secondary",
+      "bg-[#99BF0F]/20 border border-[#99BF0F] border-dashed text-[#99BF0F]",
   },
 ];
 
@@ -167,15 +168,15 @@ export function FourthBentoAnimation({
 
       {/* Days of the week */}
       <div className="absolute top-4 left-0 right-0 flex justify-between max-w-md mx-auto px-8 text-sm text-gray-500">
-        <span>Tue</span>
-        <span>Wed</span>
-        <span>Thu</span>
-        <span>Fri</span>
-        <span>Sat</span>
+        <span>Ter</span>
+        <span>Qua</span>
+        <span>Qui</span>
+        <span>Sex</span>
+        <span>Sáb</span>
       </div>
 
       <motion.div
-        className="absolute top-10 w-[2px] h-[calc(100%-80px)] bg-gradient-to-b from-black dark:from-accent to-transparent z-10"
+        className="absolute top-10 w-[2px] h-[calc(100%-80px)] bg-gradient-to-b from-[#99BF0F] to-transparent z-10"
         style={{
           x: smoothX,
           translateX: "-50%",
@@ -190,7 +191,7 @@ export function FourthBentoAnimation({
         }}
       />
       <motion.div
-        className="absolute top-14 bg-black dark:bg-accent h-6 z-20 flex items-center justify-center text-xs p-2 rounded-md shadow-[0px_2.2px_6.6px_0px_rgba(18,43,105,0.04),0px_1.1px_2.2px_0px_rgba(18,43,105,0.08),0px_0px_0px_1.1px_rgba(18,43,105,0.08),0px_1.1px_0px_0px_rgba(255,255,255,0.20)_inset,0px_4.4px_6.6px_0px_rgba(255,255,255,0.01)_inset]"
+        className="absolute top-14 bg-[#99BF0F] dark:bg-[#99BF0F] h-6 z-20 flex items-center justify-center text-xs p-2 rounded-md shadow-[0px_2.2px_6.6px_0px_rgba(18,43,105,0.04),0px_1.1px_2.2px_0px_rgba(18,43,105,0.08),0px_0px_0px_1.1px_rgba(18,43,105,0.08),0px_1.1px_0px_0px_rgba(255,255,255,0.20)_inset,0px_4.4px_6.6px_0px_rgba(255,255,255,0.01)_inset]"
         style={{
           x: smoothX,
           translateX: "-50%",

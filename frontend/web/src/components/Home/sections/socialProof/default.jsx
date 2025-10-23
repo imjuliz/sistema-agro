@@ -36,10 +36,13 @@
 // }
 "use client";
 import SocialProofMarquee from "@/components/ui/shadcn-io/3d-marquee/index";
+import { Section } from "@/components/ui/section";
 
 export default function ThreeDMarqueeDemo() {
   return (
-    <div className="mx-auto my-10 max-w-7xl rounded-3xl p-2 ring-1 ring-border">
+    <Section>
+
+      <div className="mx-auto my-10 max-w-7xl rounded-3xl p-2 ring-1 ring-border">
       {/* container relativo que serve de referência para os overlays */}
       <div className="relative overflow-hidden">
         {/* marquee "abaixo" das overlays */}
@@ -76,5 +79,7 @@ export default function ThreeDMarqueeDemo() {
         `}</style>
       </div>
     </div>
+    </Section>
+    
   );
 }
