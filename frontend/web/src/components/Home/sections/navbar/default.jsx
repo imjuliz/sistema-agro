@@ -19,7 +19,7 @@ export default function Navbar({
   // homeUrl = siteConfig.url,
   homeUrl = '/',
   mobileLinks = [
-    { text: "Para você", href: siteConfig.url },
+    // { text: "Para você", href: siteConfig.url },
     { text: "Sobre nós", href: '/sobreNos' },
     { text: "Blog", href: '/blog' },
   ],

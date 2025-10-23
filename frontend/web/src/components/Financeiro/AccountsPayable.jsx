@@ -514,7 +514,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5 open-sans" />
             Filtro de Período
           </CardTitle>
           <CardDescription>
@@ -556,7 +556,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            Exibindo contas de <strong>{getSelectedMonthName()} de {selectedYear}</strong>
+            Exibindo contas de<strong>{getSelectedMonthName()} de {selectedYear}</strong>
             {filteredAccounts.length !== accounts.length && (
               <Badge variant="secondary" className="ml-2">
                 {filteredAccounts.length} de {accounts.length} contas
