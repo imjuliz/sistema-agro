@@ -63,10 +63,13 @@ model produtos {
   unidade_id    Int
   sku           String
   estoques      estoques[]
+   fornecedor_id Int
   lote          lotes      @relation(fields: [lote_id], references: [id])
   unidade       unidades   @relation(fields: [unidade_id], references: [id])
+ 
+    fornecedor     fornecedores  @relation(fields: [fornecedor_id], references: [id])
 
-  @@map("produtos")
+   @@map("produtos")
 }
 
 model estoques {
@@ -74,6 +77,8 @@ model estoques {
   unidade_id    Int
   produto_id    Int
   quantidade    Int
+valorUnitario Int
+  unidade_de_medida UnidadesDeMedida
   atualizado_em DateTime @default(now())
   produto       produtos @relation(fields: [produto_id], references: [id])
   unidade       unidades @relation(fields: [unidade_id], references: [id])
@@ -81,6 +86,7 @@ model estoques {
   @@map("estoques")
 }
 
+ 
 model lotes {
   id                      Int                     @id @default(autoincrement())
   nome                    String
@@ -150,6 +156,65 @@ model reset_senhas {
   @@map("reset_senhas")
 }
 
+//para as unidades de venda
+
+model pedidos {
+  id             Int      @id @default(autoincrement())
+  cliente String
+  data DateTime
+  valorTotal Int
+  status StatusPedidosEnum
+  pagamento PagamentoEnum
+
+}
+
+model fornecedores {
+  id             Int      @id @default(autoincrement())
+  nome String
+  cnpj String
+ produtos  produtos[] // <- um fornecedor tem vários produtos
+ telefone String
+ email String
+
+}
+
+model saidasLoja {
+  id             Int      @id @default(autoincrement())
+  descricao String
+  tipo TipoSaida
+  valor Int
+  data DateTime
+} 
+
+enum TipoSaida {
+  ALUGUEL
+  AGUA
+  SALARIOS
+  ENERGIA
+}
+
+enum PagamentoEnum {
+  DINHEIRO
+  PIX
+  BOLETO
+  CREDITO
+  DEBITO
+}
+
+enum UnidadesDeMedida{
+KG
+UNIDADE
+ARROBA
+TONELADA
+}
+
+
+enum StatusPedidosEnum{
+OK
+RETIRAR
+CANCELADO
+
+}
 enum TipoUnidade {
   MATRIZ
   FAZENDA
