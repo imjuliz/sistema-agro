@@ -1,165 +1,289 @@
 generator client {
-  output = "./generated"
   provider = "prisma-client-js"
+  output   = "./generated"
 }
 
 datasource db {
-  url       = env("DATABASE_URL")
-  provider  = "postgresql"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model perfis {
-  id        Int        @id @default(autoincrement())
-  nome      String     @unique
-  descricao String?
-  usuarios  usuarios[]
+// ============================================
+// TABELAS BASE
+// ============================================
+
+model Perfil {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique @db.VarChar(255)
+  descricao String   @db.Text
+  usuarios  Usuario[]
 
   @@map("perfis")
 }
 
-model usuarios {
-  id                  Int            @id @default(autoincrement())
-  nome                String
-  email               String         @unique
-  senha               String
-  telefone            String?
-  perfil_id           Int
-  unidade_id          Int?
-  status              Boolean        @default(true)
-  criado_em           DateTime       @default(now())
-  atualizado_em       DateTime       @default(now())
-  lotes               lotes[]        @relation("ResponsavelLote")
-  reset_senhas        reset_senhas[]
-  unidadesGerenciadas unidades[]     @relation("GerenteUnidade")
-  perfil              perfis         @relation(fields: [perfil_id], references: [id])
-  unidade             unidades?      @relation(fields: [unidade_id], references: [id])
+model Fornecedor {
+  id                 Int                    @id @default(autoincrement())
+  nomeEmpresa        String                 @map("nome_empresa") @db.VarChar(200)
+  descricaoEmpresa   String                 @map("descricao_empresa") @db.Text
+  material           String                 @db.VarChar(150)
+  cnpjCpf            String                 @unique @map("cnpj_cpf") @db.VarChar(20)
+  contato            String                 @db.VarChar(100)
+  email              String                 @db.VarChar(150)
+  endereco           String                 @db.Text
+  criadoEm           DateTime               @default(now()) @map("criado_em")
+  atualizadoEm       DateTime               @default(now()) @updatedAt @map("atualizado_em")
+  produtos           ProdutoFornecedor[]
 
-  @@map("usuarios")
+  @@map("fornecedores")
 }
 
-model unidades {
-  id            Int         @id @default(autoincrement())
-  nome          String
-  endereco      String?
-  gerente_id    Int
-  criado_em     DateTime    @default(now())
-  atualizado_em DateTime    @default(now())
-  tipo          TipoUnidade
-  status        Boolean     @default(true)
-  estoques      estoques[]
-  lotes         lotes[]
-  produtos      produtos[]
-  gerente       usuarios    @relation("GerenteUnidade", fields: [gerente_id], references: [id])
-  usuarios      usuarios[]
+model Unidade {
+  id             Int       @id @default(autoincrement())
+  gerenteId      Int?      @map("gerente_id")
+  nome           String    @db.VarChar(100)
+  endereco       String    @db.Text
+  tipo           TipoUnidade
+  status         Boolean   @default(true)
+  criadoEm       DateTime  @default(now()) @map("criado_em")
+  atualizadoEm   DateTime  @default(now()) @updatedAt @map("atualizado_em")
+  
+  gerente        Usuario?  @relation("GerenteUnidade", fields: [gerenteId], references: [id], onDelete: SetNull)
+  usuarios       Usuario[] @relation("UsuarioUnidade")
+  produtos       Produto[]
+  estoques       Estoque[]
+  lotes          Lote[]
+  caixas         Caixa[]
+  vendas         Venda[]
 
   @@map("unidades")
 }
 
-model produtos {
-  id            Int        @id @default(autoincrement())
-  nome          String
-  data_validade DateTime
-  lote_id       Int
-  unidade_id    Int
-  sku           String
-  estoques      estoques[]
-  lote          lotes      @relation(fields: [lote_id], references: [id])
-  unidade       unidades   @relation(fields: [unidade_id], references: [id])
+model Usuario {
+  id                  Int          @id @default(autoincrement())
+  perfilId            Int          @map("perfil_id")
+  unidadeId           Int?         @map("unidade_id")
+  nome                String       @db.VarChar(100)
+  email               String       @unique @db.VarChar(100)
+  senha               String       @db.VarChar(255)
+  telefone            String       @db.VarChar(20)
+  status              Boolean      @default(true)
+  criadoEm            DateTime     @default(now()) @map("criado_em")
+  atualizadoEm        DateTime     @default(now()) @updatedAt @map("atualizado_em")
+  
+  perfil              Perfil       @relation(fields: [perfilId], references: [id], onDelete: Restrict)
+  unidade             Unidade?     @relation("UsuarioUnidade", fields: [unidadeId], references: [id], onDelete: SetNull)
+  unidadesGerenciadas Unidade[]    @relation("GerenteUnidade")
+  resetSenhas         ResetSenha[]
+  lotes               Lote[]
+  caixas              Caixa[]
+  vendas              Venda[]
 
-  @@map("produtos")
+  @@map("usuarios")
 }
 
-model estoques {
+model ResetSenha {
   id            Int      @id @default(autoincrement())
-  unidade_id    Int
-  produto_id    Int
-  quantidade    Int
-  atualizado_em DateTime @default(now())
-  produto       produtos @relation(fields: [produto_id], references: [id])
-  unidade       unidades @relation(fields: [unidade_id], references: [id])
-
-  @@map("estoques")
-}
-
-model lotes {
-  id                      Int                     @id @default(autoincrement())
-  nome                    String
-  tipo                    TipoLote
-  unidade_id              Int
-  responsavel_id          Int
-  qntd_itens              Int
-  data_criacao            DateTime                @default(now())
-  observacoes             String?
-  responsavel             usuarios                @relation("ResponsavelLote", fields: [responsavel_id], references: [id])
-  unidade                 unidades                @relation(fields: [unidade_id], references: [id])
-  producoes               producoes[]
-  produtos                produtos[]
-  rastreabilidadesDestino rastreabilidade_lotes[] @relation("RastreabilidadeDestino")
-  rastreabilidadesOrigem  rastreabilidade_lotes[] @relation("RastreabilidadeOrigem")
-  registros_sanitarios    registros_sanitarios[]
-
-  @@map("lotes")
-}
-
-model producoes {
-  id             Int      @id @default(autoincrement())
-  lote_id        Int
-  tipo_produto   String
-  quantidade     Float
-  unidade_medida String
-  data_registro  DateTime @default(now())
-  lote           lotes    @relation(fields: [lote_id], references: [id])
-
-  @@map("producoes")
-}
-
-model rastreabilidade_lotes {
-  id              Int      @id @default(autoincrement())
-  lote_origem_id  Int
-  lote_destino_id Int
-  descricao       String?
-  data_vinculo    DateTime @default(now())
-  lote_destino    lotes    @relation("RastreabilidadeDestino", fields: [lote_destino_id], references: [id])
-  lote_origem     lotes    @relation("RastreabilidadeOrigem", fields: [lote_origem_id], references: [id])
-
-  @@map("rastreabilidade_lotes")
-}
-
-model registros_sanitarios {
-  id             Int                   @id @default(autoincrement())
-  lote_id        Int
-  tipo           TipoRegistroSanitario
-  produto        String
-  data_aplicacao DateTime              @default(now())
-  quantidade     Float?
-  observacoes    String?
-  lote           lotes                 @relation(fields: [lote_id], references: [id])
-
-  @@map("registros_sanitarios")
-}
-
-model reset_senhas {
-  id            Int      @id @default(autoincrement())
-  usuario_id    Int
-  codigo_reset  String
-  codigo_expira DateTime @default(now())
+  usuarioId     Int      @map("usuario_id")
+  codigoReset   String   @map("codigo_reset") @db.VarChar(6)
+  codigoExpira  DateTime @map("codigo_expira")
   usado         Boolean  @default(false)
-  criado_em     DateTime @default(now())
-  usuario       usuarios @relation(fields: [usuario_id], references: [id])
+  criadoEm      DateTime @default(now()) @map("criado_em")
+  
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("reset_senhas")
 }
 
+// ============================================
+// LOTES E PRODUÇÃO
+// ============================================
+
+model Lote {
+  id                    Int                      @id @default(autoincrement())
+  unidadeId             Int                      @map("unidade_id")
+  responsavelId         Int                      @map("responsavel_id")
+  nome                  String                   @db.VarChar(255)
+  tipo                  TipoLote
+  qntdItens             Int                      @map("qntd_itens")
+  observacoes           String?                  @db.Text
+  dataCriacao           DateTime                 @default(now()) @map("data_criacao")
+  
+  unidade               Unidade                  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  responsavel           Usuario                  @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  produtos              Produto[]
+  producoes             Producao[]
+  registrosSanitarios   RegistroSanitario[]
+  rastreabilidadeOrigem RastreabilidadeLote[]    @relation("LoteOrigem")
+  rastreabilidadeDestino RastreabilidadeLote[]   @relation("LoteDestino")
+
+  @@map("lotes")
+}
+
+model Produto {
+  id              Int                 @id @default(autoincrement())
+  unidadeId       Int                 @map("unidade_id")
+  loteId          Int                 @map("lote_id")
+  nome            String              @db.VarChar(150)
+  sku             String              @unique @db.VarChar(50)
+  categoria       String?             @db.VarChar(100)
+  descricao       String?             @db.Text
+  preco           Decimal             @db.Decimal(10, 2)
+  dataFabricacao  DateTime            @map("data_fabricacao")
+  dataValidade    DateTime            @map("data_validade")
+  criadoEm        DateTime            @default(now()) @map("criado_em")
+  atualizadoEm    DateTime            @default(now()) @updatedAt @map("atualizado_em")
+  
+  unidade         Unidade             @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  lote            Lote                @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  estoques        Estoque[]
+  fornecedores    ProdutoFornecedor[]
+  itensVendas     ItemVenda[]
+
+  @@map("produtos")
+}
+
+model Estoque {
+  id             Int      @id @default(autoincrement())
+  unidadeId      Int      @map("unidade_id")
+  produtoId      Int      @map("produto_id")
+  quantidade     Int      @default(0)
+  estoqueMinimo  Int      @map("estoque_minimo")
+  atualizadoEm   DateTime @default(now()) @updatedAt @map("atualizado_em")
+  
+  unidade        Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  produto        Produto  @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@unique([unidadeId, produtoId])
+  @@map("estoques")
+}
+
+model ProdutoFornecedor {
+  id                 Int         @id @default(autoincrement())
+  produtoId          Int         @map("produto_id")
+  fornecedorId       Int         @map("fornecedor_id")
+  precoCusto         Decimal?    @map("preco_custo") @db.Decimal(10, 2)
+  prazoEntregaDias   Int?        @map("prazo_entrega_dias")
+  preferencial       Boolean     @default(false)
+  
+  produto            Produto     @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  fornecedor         Fornecedor  @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+
+  @@unique([produtoId, fornecedorId])
+  @@map("produtos_fornecedores")
+}
+
+model Producao {
+  id             Int      @id @default(autoincrement())
+  loteId         Int      @map("lote_id")
+  tipoProduto    String   @map("tipo_produto") @db.Text
+  quantidade     Float
+  unidadeMedida  String   @map("unidade_medida") @db.VarChar(50)
+  dataRegistro   DateTime @default(now()) @map("data_registro")
+  
+  lote           Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
+
+  @@map("producoes")
+}
+
+model RastreabilidadeLote {
+  id              Int      @id @default(autoincrement())
+  loteOrigemId    Int      @map("lote_origem_id")
+  loteDestinoId   Int      @map("lote_destino_id")
+  descricao       String?  @db.VarChar(255)
+  dataVinculo     DateTime @default(now()) @map("data_vinculo")
+  
+  loteOrigem      Lote     @relation("LoteOrigem", fields: [loteOrigemId], references: [id], onDelete: Cascade)
+  loteDestino     Lote     @relation("LoteDestino", fields: [loteDestinoId], references: [id], onDelete: Cascade)
+
+  @@map("rastreabilidade_lotes")
+}
+
+model RegistroSanitario {
+  id             Int                    @id @default(autoincrement())
+  loteId         Int                    @map("lote_id")
+  tipo           TipoRegistroSanitario
+  produto        String                 @db.VarChar(255)
+  dataAplicacao  DateTime               @default(now()) @map("data_aplicacao")
+  quantidade     Float?
+  observacoes    String?                @db.Text
+  
+  lote           Lote                   @relation(fields: [loteId], references: [id], onDelete: Cascade)
+
+  @@map("registros_sanitarios")
+}
+
+// ============================================
+// VENDAS E CAIXA
+// ============================================
+
+model Caixa {
+  id            Int       @id @default(autoincrement())
+  unidadeId     Int       @map("unidade_id")
+  usuarioId     Int       @map("usuario_id")
+  status        Boolean   @default(false)
+  saldoInicial  Decimal   @default(0) @map("saldo_inicial") @db.Decimal(12, 2)
+  saldoFinal    Decimal?  @map("saldo_final") @db.Decimal(12, 2)
+  abertoEm      DateTime  @map("aberto_em")
+  fechadoEm     DateTime? @map("fechado_em")
+  
+  unidade       Unidade   @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  usuario       Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  vendas        Venda[]
+
+  @@map("caixas")
+}
+
+model Venda {
+  id         Int            @id @default(autoincrement())
+  caixaId    Int            @map("caixa_id")
+  usuarioId  Int            @map("usuario_id")
+  unidadeId  Int            @map("unidade_id")
+  total      Decimal        @db.Decimal(12, 2)
+  pagamento  TipoPagamento
+  criadoEm   DateTime       @default(now()) @map("criado_em")
+  
+  caixa      Caixa          @relation(fields: [caixaId], references: [id], onDelete: Restrict)
+  usuario    Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  unidade    Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  itens      ItemVenda[]
+
+  @@map("vendas")
+}
+
+model ItemVenda {
+  id             Int     @id @default(autoincrement())
+  vendaId        Int     @map("venda_id")
+  produtoId      Int     @map("produto_id")
+  quantidade     Int
+  precoUnitario  Decimal @map("preco_unitario") @db.Decimal(12, 2)
+  desconto       Decimal @default(0) @db.Decimal(12, 2)
+  subtotal       Decimal @db.Decimal(12, 2)
+  
+  venda          Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  produto        Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@map("itens_vendas")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
 enum TipoUnidade {
-  MATRIZ
-  FAZENDA
-  LOJA
+  Matriz
+  Fazenda
+  Loja
+
+  @@map("tipo_unidade")
 }
 
 enum TipoLote {
-  GADO
-  SOJA
-  LEITE
+  Gado
+  Soja
+  Leite
+  Outro
+
+  @@map("tipo_lote")
 }
 
 enum TipoRegistroSanitario {
@@ -167,4 +291,14 @@ enum TipoRegistroSanitario {
   MEDICACAO
   RACAO
   OUTRO
+
+  @@map("tipo_registro_sanitario")
+}
+
+enum TipoPagamento {
+  DINHEIRO
+  CARTAO
+  PIX
+
+  @@map("tipo_pagamento")
 }
