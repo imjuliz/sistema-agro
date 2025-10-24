@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +9,17 @@ import { OrderManagement } from './OrderManagement';
 import { ChatInterface } from './ChatInterface';
 import { ComplaintSystem } from './ComplaintSystem';
 import { ShoppingCart, MessageSquare, AlertTriangle, Search,TrendingUp,Clock,CheckCircle} from 'lucide-react';
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import {
+  Card,
+  CardContent,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import FornecedoresCard from './fornecedores-card';
 
 export function ConsumerDashboard() {
   const [activeTab, setActiveTab] = useState('browse');
@@ -49,13 +59,84 @@ export function ConsumerDashboard() {
         </TabsList>
 
         <TabsContent value="browse" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <StatCard title="Pedidos Ativos" value="7" icon={ShoppingCart} color="text-blue-600"/>
             <StatCard title="Aprovações pendentes" value="3" icon={Clock} color="text-yellow-600"/>
             <StatCard title="Concluído este mês" value="24" icon={CheckCircle} color="text-green-600"/>
-          </div>
+          </div> */}
 
-          <Card>
+          <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Pedidos Ativos</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            7
+          </CardTitle>
+          <CardAction>
+            {/* <Badge variant="outline">
+              <IconTrendingUp />
+              +12.5%
+            </Badge> */}
+            <ShoppingCart />
+          </CardAction>
+        </CardHeader>
+        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Trending up this month <IconTrendingUp className="size-4" />
+          </div>
+          <div className="text-muted-foreground">
+            Visitors for the last 6 months
+          </div>
+        </CardFooter> */}
+      </Card>
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Aprovações pendentes</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            3
+          </CardTitle>
+          <CardAction>
+            {/* <Badge variant="outline">
+              <IconTrendingDown />
+              -20%
+            </Badge> */}
+            <Clock />
+          </CardAction>
+        </CardHeader>
+        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Down 20% this period <IconTrendingDown className="size-4" />
+          </div>
+          <div className="text-muted-foreground">
+            Acquisition needs attention
+          </div>
+        </CardFooter> */}
+      </Card>
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Concluído este mês</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            24
+          </CardTitle>
+          <CardAction>
+            {/* <Badge variant="outline">
+              <IconTrendingUp />
+              +12.5%
+            </Badge> */}
+            <CheckCircle />
+          </CardAction>
+        </CardHeader>
+        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Strong user retention <IconTrendingUp className="size-4" />
+          </div>
+          <div className="text-muted-foreground">Engagement exceed targets</div>
+        </CardFooter> */}
+      </Card>
+      
+    </div>
+
+          {/* <Card>
             <CardHeader>
               <CardTitle>Fornecedores Aprovados</CardTitle>
               <p className="text-muted-foreground">Acesse catálogos de seus fornecedores aprovados</p>
@@ -88,7 +169,8 @@ export function ConsumerDashboard() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
+<FornecedoresCard />
 
           <ProductCatalog userType="consumer" />
         </TabsContent>
