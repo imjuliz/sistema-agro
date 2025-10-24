@@ -3,11 +3,15 @@ generator client {
   output   = "./generated"
 }
 
+//npx prisma db push (enviar para o supabase)
+
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+<<<<<<< Updated upstream
 // ============================================
 // TABELAS BASE
 // ============================================
@@ -17,10 +21,18 @@ model Perfil {
   nome      String   @unique @db.VarChar(255)
   descricao String   @db.Text
   usuarios  Usuario[]
+=======
+model perfis {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique  // "MATRIZ" | "PRODUCAO" | "VENDA"
+  descricao String?
+  usuarios  usuarios[]
+>>>>>>> Stashed changes
 
   @@map("perfis")
 }
 
+<<<<<<< Updated upstream
 model Fornecedor {
   id                 Int                    @id @default(autoincrement())
   nomeEmpresa        String                 @map("nome_empresa") @db.VarChar(200)
@@ -33,10 +45,29 @@ model Fornecedor {
   criadoEm           DateTime               @default(now()) @map("criado_em")
   atualizadoEm       DateTime               @default(now()) @updatedAt @map("atualizado_em")
   produtos           ProdutoFornecedor[]
+=======
+model usuarios {
+  id                  Int            @id @default(autoincrement())
+  nome                String
+  email               String         @unique
+  senha               String
+  telefone            String?
+  perfil_id           Int
+  unidade_id          Int?
+  status              Boolean        @default(true)
+  criado_em           DateTime       @default(now())
+  atualizado_em       DateTime       @default(now())
+  // lotes               lotes[]        @relation("ResponsavelLote")
+  reset_senhas        reset_senhas[]
+  // unidadesGerenciadas unidades[]     @relation("GerenteUnidade")
+  perfil              perfis         @relation(fields: [perfil_id], references: [id])
+  unidade             unidades?      @relation(fields: [unidade_id], references: [id])
+>>>>>>> Stashed changes
 
   @@map("fornecedores")
 }
 
+<<<<<<< Updated upstream
 model Unidade {
   id             Int       @id @default(autoincrement())
   gerenteId      Int?      @map("gerente_id")
@@ -54,10 +85,27 @@ model Unidade {
   lotes          Lote[]
   caixas         Caixa[]
   vendas         Venda[]
+=======
+model unidades {
+  id            Int         @id @default(autoincrement())
+  nome          String
+  endereco      String?
+ // gerente_id    Int
+  criado_em     DateTime    @default(now())
+  atualizado_em DateTime    @default(now())
+  tipo          TipoUnidade
+  status        Boolean     @default(true)
+  estoques      estoques[]
+  lotes         lotes[]
+  produtos      produtos[]
+ // gerente       usuarios    @relation("GerenteUnidade", fields: [gerente_id], references: [id])
+  usuarios      usuarios[]
+>>>>>>> Stashed changes
 
   @@map("unidades")
 }
 
+<<<<<<< Updated upstream
 model Usuario {
   id                  Int          @id @default(autoincrement())
   perfilId            Int          @map("perfil_id")
@@ -77,15 +125,112 @@ model Usuario {
   lotes               Lote[]
   caixas              Caixa[]
   vendas              Venda[]
+=======
+model produtos {
+  id            Int        @id @default(autoincrement())
+  nome          String
+  data_validade DateTime
+  lote_id       Int
+  unidade_id    Int
+  sku           String
+    estoqueId   Int       
+    fornecedor_id Int
+    quantidade Int
+    valorUnitario Int
+
+  estoque     estoques   @relation(fields: [estoqueId], references: [id]) 
+  lote          lotes      @relation(fields: [lote_id], references: [id])
+  unidade       unidades   @relation(fields: [unidade_id], references: [id])
+  fornecedor     fornecedores  @relation(fields: [fornecedor_id], references: [id])
+>>>>>>> Stashed changes
 
   @@map("usuarios")
 }
 
 model ResetSenha {
   id            Int      @id @default(autoincrement())
+<<<<<<< Updated upstream
   usuarioId     Int      @map("usuario_id")
   codigoReset   String   @map("codigo_reset") @db.VarChar(6)
   codigoExpira  DateTime @map("codigo_expira")
+=======
+  nome String
+  unidade_id    Int
+  produto produtos[]
+  // quantidade    Int
+// valorUnitario Int
+  unidade_de_medida UnidadesDeMedida
+  atualizado_em DateTime @default(now())
+    
+  unidade       unidades @relation(fields: [unidade_id], references: [id])
+
+  @@map("estoques")
+}
+
+ 
+model lotes {
+  id                      Int                     @id @default(autoincrement())
+  nome                    String
+  tipo                    TipoLote
+  unidade_id              Int
+  responsavel_id          Int
+  qntd_itens              Int
+  data_criacao            DateTime                @default(now())
+  observacoes             String?
+
+  // responsavel         usuarios                @relation("ResponsavelLote", fields: [responsavel_id], references: [id])
+  producoes               producoes[]
+  produtos                produtos[]
+  rastreabilidadesDestino rastreabilidade_lotes[] @relation("RastreabilidadeDestino")
+  rastreabilidadesOrigem  rastreabilidade_lotes[] @relation("RastreabilidadeOrigem")
+  registros_sanitarios    registros_sanitarios[]
+  unidade             unidades                @relation(fields: [unidade_id], references: [id])
+  @@map("lotes")
+}
+
+model producoes {
+  id             Int      @id @default(autoincrement())
+  lote_id        Int
+  tipo_produto   String
+  quantidade     Float
+  unidade_medida String
+  data_registro  DateTime @default(now())
+  lote           lotes    @relation(fields: [lote_id], references: [id])
+
+  @@map("producoes")
+}
+
+model rastreabilidade_lotes {
+  id              Int      @id @default(autoincrement())
+  lote_origem_id  Int
+  lote_destino_id Int
+  descricao       String?
+  data_vinculo    DateTime @default(now())
+  lote_destino    lotes    @relation("RastreabilidadeDestino", fields: [lote_destino_id], references: [id])
+  lote_origem     lotes    @relation("RastreabilidadeOrigem", fields: [lote_origem_id], references: [id])
+
+  @@map("rastreabilidade_lotes")
+}
+
+model registros_sanitarios {
+  id             Int                   @id @default(autoincrement())
+  lote_id        Int
+  tipo           TipoRegistroSanitario
+  produto        String
+  data_aplicacao DateTime              @default(now())
+  quantidade     Float?
+  observacoes    String?
+  lote           lotes                 @relation(fields: [lote_id], references: [id])
+
+  @@map("registros_sanitarios")
+}
+
+model reset_senhas {
+  id            Int      @id @default(autoincrement())
+  usuario_id    Int
+  codigo_reset  String
+  codigo_expira DateTime @default(now())
+>>>>>>> Stashed changes
   usado         Boolean  @default(false)
   criadoEm      DateTime @default(now()) @map("criado_em")
   
@@ -98,6 +243,7 @@ model ResetSenha {
 // LOTES E PRODUÇÃO
 // ============================================
 
+<<<<<<< Updated upstream
 model Lote {
   id                    Int                      @id @default(autoincrement())
   unidadeId             Int                      @map("unidade_id")
@@ -143,6 +289,9 @@ model Produto {
 }
 
 model Estoque {
+=======
+model pedidosLoja {
+>>>>>>> Stashed changes
   id             Int      @id @default(autoincrement())
   unidadeId      Int      @map("unidade_id")
   produtoId      Int      @map("produto_id")
@@ -182,7 +331,12 @@ model Producao {
   
   lote           Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
 
+<<<<<<< Updated upstream
   @@map("producoes")
+=======
+ @@map("fornecedores")
+
+>>>>>>> Stashed changes
 }
 
 model RastreabilidadeLote {
