@@ -142,6 +142,9 @@ model produtos {
   lote          lotes      @relation(fields: [lote_id], references: [id])
   unidade       unidades   @relation(fields: [unidade_id], references: [id])
   fornecedor     fornecedores  @relation(fields: [fornecedor_id], references: [id])
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   @@map("usuarios")
@@ -150,10 +153,13 @@ model produtos {
 model ResetSenha {
   id            Int      @id @default(autoincrement())
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   usuarioId     Int      @map("usuario_id")
   codigoReset   String   @map("codigo_reset") @db.VarChar(6)
   codigoExpira  DateTime @map("codigo_expira")
 =======
+=======
+>>>>>>> Stashed changes
   nome String
   unidade_id    Int
   produto produtos[]
@@ -244,6 +250,7 @@ model reset_senhas {
 // ============================================
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 model Lote {
   id                    Int                      @id @default(autoincrement())
   unidadeId             Int                      @map("unidade_id")
@@ -292,6 +299,9 @@ model Estoque {
 =======
 model pedidosLoja {
 >>>>>>> Stashed changes
+=======
+model pedidosLoja {
+>>>>>>> Stashed changes
   id             Int      @id @default(autoincrement())
   unidadeId      Int      @map("unidade_id")
   produtoId      Int      @map("produto_id")
@@ -332,7 +342,12 @@ model Producao {
   lote           Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   @@map("producoes")
+=======
+ @@map("fornecedores")
+
+>>>>>>> Stashed changes
 =======
  @@map("fornecedores")
 
