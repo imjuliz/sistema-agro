@@ -139,7 +139,7 @@ model Produto {
   fornecedores    ProdutoFornecedor[]
   itensVendas     ItemVenda[]
 
-  @@map("produtos")
+   @@map("produtos")
 }
 
 model Estoque {
@@ -262,7 +262,7 @@ model ItemVenda {
   venda          Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
   produto        Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
 
-  @@map("itens_vendas")
+  @@map("reset_senhas")
 }
 
 // ============================================

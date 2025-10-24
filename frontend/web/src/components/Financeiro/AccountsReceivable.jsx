@@ -478,7 +478,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5 open-sans" />
             Filtro de Período
           </CardTitle>
           <CardDescription>

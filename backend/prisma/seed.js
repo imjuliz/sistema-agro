@@ -11,6 +11,8 @@ async function main() {
 
     console.log("Dados antigos apagados com sucesso");
 
+    //
+
 
     // 1️. Criar perfis
     await prisma.perfis.createMany({

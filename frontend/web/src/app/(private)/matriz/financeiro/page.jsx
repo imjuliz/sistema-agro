@@ -216,13 +216,13 @@ export default function App() {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="mb-2">Financeiro</h1>
+              <h1 className="mb-2 open-sans">Financeiro</h1>
               <p className="text-muted-foreground">
                 Orçamento da empresa
               </p>
             </div>
             <div className="text-xs text-muted-foreground">
-              💾 Dados salvos automaticamente
+              Dados salvos automaticamente
             </div>
           </div>
         </div>
@@ -244,9 +244,9 @@ export default function App() {
             <TabsTrigger value="cashflow" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />DFC
             </TabsTrigger>
-            <TabsTrigger value="dre" className="flex items-center gap-2">
+            {/* <TabsTrigger value="dre" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />DRE
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
