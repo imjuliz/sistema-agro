@@ -3,7 +3,7 @@
 // Funcionalidades: Filtros (por período, unidade, tipo de produto). Exportação rápida para PDF/Excel. Links de atalho para páginas detalhadas.
 
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/matriz/dashboard/data-table"
+import { DataTable } from "@/components/fazenda/parceiros"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { ChartAreaGradient } from "@/components/data-table";
@@ -30,7 +30,6 @@ export default function Page() {
           <DataTable data={data} />
           <div className="flex flex-row gap-6 items-start justify-between px-4 lg:px-6 mt-10">
             <div className="flex-1">
-              {/* <ChartAreaGradient /> */}
             </div>
             <div className="w-full">
               <Calendar />
