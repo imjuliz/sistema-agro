@@ -16,7 +16,7 @@ datasource db {
 
 model Perfil {
   id        Int      @id @default(autoincrement())
-  nome      String   @unique @db.VarChar(255)
+  nome      String   @unique @db.VarChar(255) // "MATRIZ" | "PRODUCAO" | "VENDA"
   descricao String   @db.Text
   usuarios  Usuario[]
 
@@ -25,6 +25,7 @@ model Perfil {
 
 model Fornecedor {
   id                 Int                    @id @default(autoincrement())
+ unidadeId           Int?         @map("unidade_id")
   nomeEmpresa        String                 @map("nome_empresa") @db.VarChar(200)
   descricaoEmpresa   String                 @map("descricao_empresa") @db.Text
   material           String                 @db.VarChar(150)
@@ -35,6 +36,8 @@ model Fornecedor {
   criadoEm           DateTime               @default(now()) @map("criado_em")
   atualizadoEm       DateTime               @default(now()) @updatedAt @map("atualizado_em")
   produtos           ProdutoFornecedor[]
+
+  unidade             Unidade?     @relation("UsuarioUnidade", fields: [unidadeId], references: [id], onDelete: SetNull)
 
   @@map("fornecedores")
 }
@@ -267,6 +270,17 @@ model ItemVenda {
   @@map("itens_vendas")
 }
 
+model Saidas {
+  id             Int     @id @default(autoincrement())
+  unidadeId Int
+  descricao String
+  tipo TipoSaida
+  valor itens
+  data DateTime
+    usuario    Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+}
+
 // ============================================
 // ENUMS
 // ============================================
@@ -303,4 +317,12 @@ enum TipoPagamento {
   PIX
 
   @@map("tipo_pagamento")
+}
+
+enum TipoSaida {
+  ALUGUEL
+  AGUA
+  ENERGIA
+  MANUTENCAO
+  SALARIOS
 }
