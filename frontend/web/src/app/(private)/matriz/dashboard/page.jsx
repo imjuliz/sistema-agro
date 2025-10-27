@@ -3,7 +3,7 @@
 // Funcionalidades: Filtros (por período, unidade, tipo de produto). Exportação rápida para PDF/Excel. Links de atalho para páginas detalhadas.
 
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/fazenda/parceiros"
+import { DataTable } from "@/components/Fazenda/parceiros"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { ChartAreaGradient } from "@/components/data-table";
