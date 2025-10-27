@@ -1,66 +1,51 @@
 "use client"
 import React, { useEffect, useMemo, useState } from "react";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-    CardFooter,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell,
-} from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-    Sheet,
-    SheetTrigger,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetFooter
-} from "@/components/ui/sheet";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, MoreHorizontal, Download, Upload, Trash, Edit, MapPin, Wifi, Sliders, Command as CommandIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, List, Grid, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, TrendingUp } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 
-import {
-    Plus,
-    MoreHorizontal,
-    Download,
-    Upload,
-    Trash,
-    Edit,
-    MapPin,
-    Wifi,
-    Sliders,
-    Command as CommandIcon,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    List,
-    Grid,
-    DownloadIcon,
-    FileTextIcon,
-    FileSpreadsheetIcon
-} from "lucide-react";
+// ---------------------------------------------------------------------
+// grafico "Lojas com melhor desempenho"
+// ---------------------------------------------------------------------
+export const descriptionLojaDesempenho = "Lojas com melhor desempenho"
+
+const LojasDesempenho = [
+    { month: "January", desktop: 186, mobile: 80 },
+    { month: "February", desktop: 305, mobile: 200 },
+    { month: "March", desktop: 237, mobile: 120 },
+    { month: "April", desktop: 73, mobile: 190 },
+    { month: "May", desktop: 209, mobile: 130 },
+    { month: "June", desktop: 214, mobile: 140 },
+]
+
+const chartConfigLojasDesempenho = {
+    desktop: {
+        label: "Desktop",
+        color: "var(--chart-2)",
+    },
+    mobile: {
+        label: "Mobile",
+        color: "var(--chart-2)",
+    },
+    label: {
+        color: "var(--background)",
+    },
+}
+
+
 
 /* sample data */
 const sampleUnits = Array.from({ length: 12 }).map((_, i) => {
@@ -124,10 +109,9 @@ export default function UnitManagementPageFull() {
     const [page, setPage] = useState(1);
     const { saved, setSaved } = useSavedFilters();
 
-    // filtros avançados: tipos e status e local
     const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // por default mostra todos
-    const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true });
-    const [locationQuery, setLocationQuery] = useState('');
+        const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true });
+        const [locationQuery, setLocationQuery] = useState('');
 
     useEffect(() => {
         setLoading(true);
@@ -249,7 +233,7 @@ export default function UnitManagementPageFull() {
                         )}
 
                         {/* METRICS */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-4 gap-4">
                             <Card>
                                 <CardHeader><CardTitle>Total de Unidades</CardTitle></CardHeader>
                                 <CardContent>
@@ -270,6 +254,13 @@ export default function UnitManagementPageFull() {
                                 <CardContent>
                                     <div className="text-3xl font-bold">{units.filter(u => u.type === 'Loja' && u.status === 'Ativa').length}</div>
                                     <div className="text-sm text-muted-foreground mt-1">Vendas e estoque</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader><CardTitle>Matrizes ativas</CardTitle></CardHeader>
+                                <CardContent>
+                                    <div className="text-3xl font-bold">{units.filter(u => u.type === 'Matriz' && u.status === 'Ativa').length}</div>
+                                    <div className="text-sm text-muted-foreground mt-1">Sedes</div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -359,11 +350,11 @@ export default function UnitManagementPageFull() {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
                                         <span className="text-sm">Ordenar Por</span>
                                         <div className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded bg-neutral-800 text-neutral-300 text-xs">1</div>
                                     </Button>
-                                    
+
                                     <div className="flex items-center gap-2 ml-3">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -384,7 +375,7 @@ export default function UnitManagementPageFull() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                   
+
                                 </div>
                             </div>
 
@@ -424,7 +415,7 @@ export default function UnitManagementPageFull() {
                                                     <TableCell>
                                                         <div className='flex items-center gap-2'>
                                                             <div>{u.manager}</div>
-                                                            </div>
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Badge variant={u.status === 'Ativa' ? 'secondary' : 'destructive'}>{u.status}</Badge>
@@ -539,6 +530,79 @@ export default function UnitManagementPageFull() {
                             </Card>
                         </div>
 
+
+                        <div className="flex flex-row gap-8">
+                            <div className="w-full">
+                                {/* LOJA */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Lojas com melhor desempenho</CardTitle>
+                                        <CardDescription>January - June 2024</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ChartContainer config={chartConfigLojasDesempenho}>
+                                            <BarChart
+                                                accessibilityLayer
+                                                data={LojasDesempenho}
+                                                layout="vertical"
+                                                margin={{
+                                                    right: 16,
+                                                }}
+                                            >
+                                                <CartesianGrid horizontal={false} />
+                                                <YAxis
+                                                    dataKey="month"
+                                                    type="category"
+                                                    tickLine={false}
+                                                    tickMargin={10}
+                                                    axisLine={false}
+                                                    tickFormatter={(value) => value.slice(0, 3)}
+                                                    hide
+                                                />
+                                                <XAxis dataKey="desktop" type="number" hide />
+                                                <ChartTooltip
+                                                    cursor={false}
+                                                    content={<ChartTooltipContent indicator="line" />}
+                                                />
+                                                <Bar
+                                                    dataKey="desktop"
+                                                    layout="vertical"
+                                                    fill="var(--color-desktop)"
+                                                    radius={4}
+                                                >
+                                                    <LabelList
+                                                        dataKey="month"
+                                                        position="insideLeft"
+                                                        offset={8}
+                                                        className="fill-(--color-label)"
+                                                        fontSize={12}
+                                                    />
+                                                    <LabelList
+                                                        dataKey="desktop"
+                                                        position="right"
+                                                        offset={8}
+                                                        className="fill-foreground"
+                                                        fontSize={12}
+                                                    />
+                                                </Bar>
+                                            </BarChart>
+                                        </ChartContainer>
+                                    </CardContent>
+                                    <CardFooter className="flex-col items-start gap-2 text-sm">
+                                        <div className="flex gap-2 leading-none font-medium">
+                                            Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                                        </div>
+                                        <div className="text-muted-foreground leading-none">Vendas totais, Margem de lucro, Giro de estoque ou Satisfação do cliente? (a decidir)
+                                        </div>
+                                    </CardFooter>
+                                </Card>
+                            </div>
+
+                            <div className="w-full">
+                                
+                            </div>
+
+                        </div>
                     </div>
                 </main>
             </div>
