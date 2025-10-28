@@ -281,7 +281,7 @@ export function EquipeTab() {
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm">
                     <Edit className="size-4 mr-2" />
-                    Edit
+                    Editar
                   </Button>
                   <Button variant="ghost" size="sm">
                     <MoreHorizontal className="size-4" />
@@ -291,7 +291,7 @@ export function EquipeTab() {
 
               <div className="grid grid-cols-2 gap-6 mb-4">
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Contact Information</div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Contatos</div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="size-4 text-muted-foreground" />
@@ -304,7 +304,7 @@ export function EquipeTab() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Quick Actions</div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm">
                       <Mail className="size-4 mr-2" />
@@ -312,11 +312,11 @@ export function EquipeTab() {
                     </Button>
                     <Button variant="outline" size="sm">
                       <Phone className="size-4 mr-2" />
-                      Call
+                      Ligar
                     </Button>
                     <Button variant="outline" size="sm">
                       <MessageSquare className="size-4 mr-2" />
-                      Message
+                      Mensagem
                     </Button>
                   </div>
                 </div>
@@ -332,12 +332,12 @@ export function EquipeTab() {
               )}
 
               <div className="flex items-center gap-2 pt-4 border-t">
-                <Button size="sm">Log Activity</Button>
+                {/* <Button size="sm">Log Activity</Button> */}
                 <Button variant="outline" size="sm">
                   <Calendar className="size-4 mr-2" />
-                  Schedule Meeting
+                  Marcar reunião
                 </Button>
-                <Button variant="outline" size="sm">Add Note</Button>
+                <Button size="sm">Adicionar nota</Button>
               </div>
             </CardContent>
           </Card>
