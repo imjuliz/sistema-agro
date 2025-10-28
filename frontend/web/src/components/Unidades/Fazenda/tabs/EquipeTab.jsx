@@ -161,15 +161,15 @@ export function EquipeTab() {
             <CardTitle className="text-base">Ações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="ml-3 relative">
+            <div className="flex flex-col items-start gap-3">
+              <div className="relative w-full">
                 <Input placeholder="Buscar por nome ou email" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
               </div>
 
               {/* FILTROS AVANÇADOS: usa Popover para menu parecido com dropdown */}
-              <Popover>
+              <Popover >
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 w-full">
                     <Sliders className="h-4 w-4" />Filtros avançados
                   </Button>
                 </PopoverTrigger>
@@ -236,8 +236,8 @@ export function EquipeTab() {
                   </div>
                 </PopoverContent>
               </Popover>
-              <div>
-                <Button size="sm"><Plus />Convidar</Button>
+              <div className='w-full'>
+                <Button className='w-full' size="sm"><Plus />Convidar</Button>
               </div>
             </div>
 
