@@ -4,8 +4,6 @@
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 export default function PlanejarSafra() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <KanbanBoard />
-    </div>
+    <div className="min-h-screen bg-gray-50"><KanbanBoard /></div>
   );
 }

@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, TableDemo,ChartLineMultiple, TableDemo2 } from "@/components/Fazenda/plantio"
-import { TweetGrid } from "@/components/ui/tweet-grid";
 export default function Page() {
   return (
     <div className="flex flex-1 flex-col p-10">

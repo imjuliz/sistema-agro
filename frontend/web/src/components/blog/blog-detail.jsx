@@ -5,13 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-    CalendarIcon,
-    ClockIcon,
-    TwitterIcon,
-    FacebookIcon,
-    LinkedinIcon,
-} from "lucide-react";
+import {CalendarIcon,ClockIcon,TwitterIcon,FacebookIcon,LinkedinIcon,} from "lucide-react";
 import React, { useState } from "react";
 import { Heart, ThumbsDown, MessageCircle, LogIn } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,18 +21,9 @@ const defaultAuthor = {
 };
 
 const defaultRelatedArticles = [
-    {
-        title: "The Rise of Serverless Architecture",
-        href: "#",
-    },
-    {
-        title: "Building Accessible Web Applications",
-        href: "#",
-    },
-    {
-        title: "The Future of State Management",
-        href: "#",
-    },
+    {title: "The Rise of Serverless Architecture",href: "#",},
+    {title: "Building Accessible Web Applications",href: "#",},
+    {title: "The Future of State Management",href: "#",},
 ];
 
 const defaultContent = (

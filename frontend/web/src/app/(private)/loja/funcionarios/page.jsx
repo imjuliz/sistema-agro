@@ -1,5 +1,4 @@
 import { DataTable } from "@/components/loja/dashboard/data-table"
-import { SiteHeader } from "@/components/site-header"
 import data from "./data.json"
 // Para tradução
 import { useTranslation } from "@/hooks/useTranslation";

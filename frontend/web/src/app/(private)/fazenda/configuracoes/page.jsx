@@ -123,26 +123,18 @@ export default function Settings1(props) {
         
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 pb-28 md:p-8 md:pb-28">
-          <h1 className="mb-6 hidden text-3xl font-bold md:mb-8 md:block">
-            {texts.settings}
-          </h1>
+          <h1 className="mb-6 hidden text-3xl font-bold md:mb-8 md:block">{texts.settings}</h1>
 
           {/* Team Name Section */}
           <div className="mb-8">
-            <h2 className="mb-2 text-xl font-semibold">
-              {texts.teamNameTitle}
-            </h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.teamNameDescription}
-            </p>
+            <h2 className="mb-2 text-xl font-semibold">{texts.teamNameTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.teamNameDescription}</p>
             <div className="w-full max-w-md">
               <div className="flex items-center gap-2">
                 <Input type="text" defaultValue={teamName} className="flex-1" />
                 <Button size="sm">{texts.saveButton}</Button>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {texts.teamNameInputHint}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{texts.teamNameInputHint}</p>
             </div>
           </div>
           <Separator className="my-8" />
@@ -150,9 +142,7 @@ export default function Settings1(props) {
           {/* Team URL Section */}
           <div className="mb-8">
             <h2 className="mb-2 text-xl font-semibold">{texts.teamUrlTitle}</h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.teamUrlDescription}
-            </p>
+            <p className="mb-4 text-muted-foreground">{texts.teamUrlDescription}</p>
             <div className="w-full max-w-md">
               <div className="flex items-center gap-2">
                 <div className="flex flex-1 items-center">
@@ -163,18 +153,14 @@ export default function Settings1(props) {
                 </div>
                 <Button size="sm">{texts.saveButton}</Button>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {texts.teamUrlInputHint}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{texts.teamUrlInputHint}</p>
             </div>
           </div>
           <Separator className="my-8" />
 
           {/* Team Avatar Section */}
           <div className="mb-8">
-            <h2 className="mb-2 text-xl font-semibold">
-              {texts.teamAvatarTitle}
-            </h2>
+            <h2 className="mb-2 text-xl font-semibold">{texts.teamAvatarTitle}</h2>
             <p className="mb-4 text-muted-foreground">
               {texts.teamAvatarDescription?.split("Click on")[0]}
               <br className="md:hidden" />
@@ -183,21 +169,11 @@ export default function Settings1(props) {
             <div className="flex flex-wrap items-center gap-4">
               <Avatar className="h-16 w-16 cursor-pointer border-2 border-muted hover:border-primary">
                 <AvatarImage src={userAvatarSrc} alt="Team Avatar" />
-                <AvatarFallback>
-                  {teamName
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
-                </AvatarFallback>
+                <AvatarFallback>{teamName ?.split(" ") .map((n) => n[0]) .join("") .toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="mb-2 text-sm text-muted-foreground">
-                  {texts.teamAvatarRecommended}
-                </p>
-                <Button size="sm" variant="outline">
-                  {texts.changeAvatarButton}
-                </Button>
+                <p className="mb-2 text-sm text-muted-foreground">{texts.teamAvatarRecommended}</p>
+                <Button size="sm" variant="outline">{texts.changeAvatarButton}</Button>
               </div>
             </div>
           </div>
@@ -205,9 +181,7 @@ export default function Settings1(props) {
 
           {/* Preview Deployment Suffix Section */}
           <div className="mb-8">
-            <h2 className="mb-2 text-xl font-semibold">
-              {texts.previewDeploymentSuffixTitle}
-            </h2>
+            <h2 className="mb-2 text-xl font-semibold">{texts.previewDeploymentSuffixTitle}</h2>
             <p className="mb-4 text-muted-foreground">
               {texts.previewDeploymentSuffixDescription?.split(".SERP.app")[0]}
               <code className="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground">
@@ -223,20 +197,15 @@ export default function Settings1(props) {
                     .SERP.app
                   </span>
                 </div>
-                <Button size="sm" variant="secondary">
-                  {texts.upgradeButton}
-                </Button>
+                <Button size="sm" variant="secondary">{texts.upgradeButton}</Button>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
                 {texts.proPlanFeature}{" "}
                 <a href={links.proPlan} className="text-primary underline">
-                  {texts.proPlanLink}{" "}
-                  <ExternalLink className="ml-0.5 inline h-3 w-3" />
+                  {texts.proPlanLink}{" "}<ExternalLink className="ml-0.5 inline h-3 w-3" />
                 </a>{" "}
                 for an additional{" "}
-                <span className="font-semibold text-foreground">
-                  {texts.proPlanPrice}
-                </span>
+                <span className="font-semibold text-foreground">{texts.proPlanPrice}</span>
                 .
               </p>
             </div>
@@ -246,9 +215,7 @@ export default function Settings1(props) {
           {/* Team ID Section */}
           <div className="mb-8">
             <h2 className="mb-2 text-xl font-semibold">{texts.teamIdTitle}</h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.teamIdDescription}
-            </p>
+            <p className="mb-4 text-muted-foreground">{texts.teamIdDescription}</p>
             <div className="w-full max-w-md">
               <div className="flex flex-wrap items-center gap-2">
                 <Input type="text" value={teamId} readOnly className="flex-grow font-mono text-sm"/>
@@ -256,21 +223,15 @@ export default function Settings1(props) {
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {texts.teamIdHint}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{texts.teamIdHint}</p>
             </div>
           </div>
           <Separator className="my-8" />
 
           {/* SERP Toolbar Section */}
           <div className="mb-8">
-            <h2 className="mb-2 text-xl font-semibold">
-              {texts.serpToolbarTitle}
-            </h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.serpToolbarDescription}
-            </p>
+            <h2 className="mb-2 text-xl font-semibold">{texts.serpToolbarTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.serpToolbarDescription}</p>
             <div className="mb-4 grid w-full max-w-lg grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <Label htmlFor="pre-prod-toolbar" className="text-sm font-medium text-muted-foreground">
@@ -305,25 +266,19 @@ export default function Settings1(props) {
               <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>
                 {texts.toolbarInfo?.split("Chrome extension")[0]}
-                <a href={links.chromeExtension} className="text-primary underline">
-                  Chrome extension
-                </a>
+                <a href={links.chromeExtension} className="text-primary underline">Chrome extension</a>
                 {
                   texts.toolbarInfo
                     ?.split("Chrome extension")[1]
                     .split("toolbar in production")[0]
                 }
-                <a href={links.toolbarInProduction} className="text-primary underline">
-                  toolbar in production
-                </a>
+                <a href={links.toolbarInProduction} className="text-primary underline">toolbar in production</a>
                 .
               </span>
             </div>
             <div className="mb-4 flex items-center space-x-2">
               <Switch id="allow-override" defaultChecked={true} />
-              <Label htmlFor="allow-override" className="text-sm">
-                {texts.allowOverride}
-              </Label>
+              <Label htmlFor="allow-override" className="text-sm">{texts.allowOverride}</Label>
             </div>
             <div className="flex max-w-lg items-center justify-end">
               <p className="mr-4 text-sm text-muted-foreground">
@@ -340,57 +295,38 @@ export default function Settings1(props) {
 
           {/* Transfer Section */}
           <div className="mb-8">
-            <h2 className="mb-2 text-xl font-semibold">
-              {texts.transferTitle}
-            </h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.transferDescription}
-            </p>
+            <h2 className="mb-2 text-xl font-semibold">{texts.transferTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.transferDescription}</p>
             <div className="flex max-w-md items-center justify-end">
               <p className="mr-4 text-sm text-muted-foreground">
                 {texts.learnMoreTransfer?.split("Transferring Projects")[0]}
                 <a href={links.transferringProjects} className="text-primary underline">
-                  Transferring Projects{" "}
-                  <ExternalLink className="ml-0.5 inline h-3 w-3" />
+                  Transferring Projects{" "}<ExternalLink className="ml-0.5 inline h-3 w-3" />
                 </a>
               </p>
-              <Button size="sm" variant="secondary">
-                {texts.transferButton}
-              </Button>
+              <Button size="sm" variant="secondary">{texts.transferButton}</Button>
             </div>
           </div>
           <Separator className="my-8" />
 
           {/* Leave Team Section */}
           <div className="mb-8">
-            <h2 className="mb-2 text-xl font-semibold">
-              {texts.leaveTeamTitle}
-            </h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.leaveTeamDescription}
-            </p>
-            <p className="max-w-md text-sm text-muted-foreground">
-              {texts.leaveTeamWarning}
-            </p>
+            <h2 className="mb-2 text-xl font-semibold">{texts.leaveTeamTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.leaveTeamDescription}</p>
+            <p className="max-w-md text-sm text-muted-foreground">{texts.leaveTeamWarning}</p>
           </div>
           <Separator className="my-8" />
 
           {/* Delete Team Section */}
           <div>
-            <h2 className="mb-2 text-xl font-semibold text-destructive">
-              {texts.deleteTeamTitle}
-            </h2>
-            <p className="mb-4 text-muted-foreground">
-              {texts.deleteTeamDescription}
-            </p>
+            <h2 className="mb-2 text-xl font-semibold text-destructive">{texts.deleteTeamTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.deleteTeamDescription}</p>
             <Alert variant="destructive" className="mb-4 max-w-md">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>{texts.deleteTeamWarningTitle}</AlertTitle>
               <AlertDescription>
                 {texts.deleteTeamWarningDescription?.split("Account Settings",)[0]}
-                <a href={links.accountSettings} className="font-medium underline">
-                  Account Settings
-                </a>
+                <a href={links.accountSettings} className="font-medium underline">Account Settings</a>
                 .
               </AlertDescription>
             </Alert>
@@ -403,21 +339,11 @@ export default function Settings1(props) {
       <footer className="left-0 right-0 z-40 flex flex-col border-t bg-background px-4 py-2 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-8 md:text-sm">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 overflow-x-auto pb-1 md:pb-0">
           <span>▲</span>
-          <a href={links.home} className="hover:text-foreground">
-            {texts.footerHome}
-          </a>
-          <a href={links.docs} className="hover:text-foreground">
-            {texts.footerDocs}
-          </a>
-          <a href={links.guides} className="hover:text-foreground md:block">
-            {texts.footerGuides}
-          </a>
-          <a href={links.help} className="hover:text-foreground md:block">
-            {texts.footerHelp}
-          </a>
-          <a href={links.contact} className="hover:text-foreground md:block">
-            {texts.footerContact}
-          </a>
+          <a href={links.home} className="hover:text-foreground">{texts.footerHome}</a>
+          <a href={links.docs} className="hover:text-foreground">{texts.footerDocs}</a>
+          <a href={links.guides} className="hover:text-foreground md:block">{texts.footerGuides}</a>
+          <a href={links.help} className="hover:text-foreground md:block">{texts.footerHelp}</a>
+          <a href={links.contact} className="hover:text-foreground md:block">{texts.footerContact}</a>
           <span className="hidden shrink-0 sm:inline-block">
             © {new Date().getFullYear()} SERP Inc.
           </span>
@@ -439,10 +365,7 @@ export default function Settings1(props) {
             <span className="hidden sm:inline">{texts.footerStatus}</span>
             <span className="sm:hidden">{texts.footerStatusMobile}</span>
           </span>
-          {/* Theme toggle - more visible on mobile */}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <SettingsIcon className="h-4 w-4" />
-          </Button>
+          <Button variant="ghost" size="icon" className="md:hidden"><SettingsIcon className="h-4 w-4" /></Button>
         </div>
       </footer>
     </div>

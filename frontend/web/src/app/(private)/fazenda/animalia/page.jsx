@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
-import { SectionCards, TableDemo,ChartLineMultiple, TableDemo2, ChartPieDonut } from "@/components/Fazenda/animalia"
-import { TweetGrid } from "@/components/ui/tweet-grid";
+import { SectionCards, TableDemo, TableDemo2, ChartPieDonut } from "@/components/Fazenda/animalia"
 export default function Page() {
   return (
     <div className="flex flex-1 flex-col p-10">

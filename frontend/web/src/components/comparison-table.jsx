@@ -21,10 +21,7 @@ export default function ComparisonTable() {
   const [search, setSearch] = React.useState("")
   const [category, setCategory] = React.useState("all")
 
-  const toggleSelect = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 2 ? [...prev, id] : prev)
-  }
+  const toggleSelect = (id) => {setSelected((prev) =>prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 2 ? [...prev, id] : prev)}
 
   const resetSelection = () => setSelected([])
 
@@ -37,7 +34,7 @@ export default function ComparisonTable() {
   const comparedItems = defaultData.filter((item) => selected.includes(item.id))
 
   return (
-    <Card className="w-full  mx-auto">
+    <Card className="w-full  mx-auto h-full">
       <CardContent className="p-3">
         <h2 className="text-xl font-semibold mb-4">Tabela de Saídas</h2>
 
@@ -45,9 +42,7 @@ export default function ComparisonTable() {
         <div className="flex items-center gap-3 mb-4">
           <Input placeholder="Pesquisar categoria..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by category" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tudo</SelectItem>
               <SelectItem value="Laptop">Laptop</SelectItem>
@@ -56,9 +51,7 @@ export default function ComparisonTable() {
               <SelectItem value="Monitor">Monitor</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={resetSelection}>
-            Reset
-          </Button>
+          <Button variant="outline" onClick={resetSelection}>Reset</Button>
         </div>
 
         {/* Table */}
@@ -80,11 +73,7 @@ export default function ComparisonTable() {
                 <TableCell className="p-2">{item.rating}</TableCell>
                 <TableCell className="p-2">{item.stock}</TableCell>
                 <TableCell className="p-2">
-                  <Button
-                    variant={selected.includes(item.id) ? "destructive" : "outline"}
-                    size="sm"
-                    className={selected.includes(item.id) ? "text-white" : ""}
-                    onClick={() => toggleSelect(item.id)}>
+                  <Button variant={selected.includes(item.id) ? "destructive" : "outline"} size="sm" className={selected.includes(item.id) ? "text-white" : ""} onClick={() => toggleSelect(item.id)}>
                     {selected.includes(item.id) ? "Remove" : "Compare"}
                   </Button>
                 </TableCell>
@@ -103,44 +92,26 @@ export default function ComparisonTable() {
               <div className="font-semibold">{comparedItems[1].category}</div>
 
               <div>Price ($)</div>
-              <div
-                className={cn(
-                  comparedItems[0].price < comparedItems[1].price && "text-green-600 dark:text-green-400"
-                )}>
+              <div className={cn(comparedItems[0].price < comparedItems[1].price && "text-green-600 dark:text-green-400")}>
                 {comparedItems[0].price}
               </div>
-              <div
-                className={cn(
-                  comparedItems[1].price < comparedItems[0].price && "text-green-600 dark:text-green-400"
-                )}>
+              <div className={cn( comparedItems[1].price < comparedItems[0].price && "text-green-600 dark:text-green-400")}>
                 {comparedItems[1].price}
               </div>
 
               <div>Rating</div>
-              <div
-                className={cn(
-                  comparedItems[0].rating > comparedItems[1].rating && "text-green-600 dark:text-green-400"
-                )}>
+              <div className={cn( comparedItems[0].rating > comparedItems[1].rating && "text-green-600 dark:text-green-400")}>
                 {comparedItems[0].rating}
               </div>
-              <div
-                className={cn(
-                  comparedItems[1].rating > comparedItems[0].rating && "text-green-600 dark:text-green-400"
-                )}>
+              <div className={cn( comparedItems[1].rating > comparedItems[0].rating && "text-green-600 dark:text-green-400")}>
                 {comparedItems[1].rating}
               </div>
 
               <div>Stock</div>
-              <div
-                className={cn(
-                  comparedItems[0].stock > comparedItems[1].stock && "text-green-600 dark:text-green-400"
-                )}>
+              <div className={cn(comparedItems[0].stock > comparedItems[1].stock && "text-green-600 dark:text-green-400")}>
                 {comparedItems[0].stock}
               </div>
-              <div
-                className={cn(
-                  comparedItems[1].stock > comparedItems[0].stock && "text-green-600 dark:text-green-400"
-                )}>
+              <div className={cn( comparedItems[1].stock > comparedItems[0].stock && "text-green-600 dark:text-green-400")}>
                 {comparedItems[1].stock}
               </div>
             </div>

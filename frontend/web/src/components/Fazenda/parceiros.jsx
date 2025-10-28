@@ -26,6 +26,7 @@ import { Card, CardAction, CardDescription,  CardHeader, CardTitle } from "@/com
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { SortableContext } from "@dnd-kit/sortable";
+import { TableCellViewer } from "@/components/TableCellViewer";
 export const schema = z.object({ id: z.number(), header: z.string(), type: z.string(), status: z.string(), target: z.string(), limit: z.string(), reviewer: z.string(), })
 
 

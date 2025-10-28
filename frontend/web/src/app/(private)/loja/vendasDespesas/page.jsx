@@ -1,8 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive, ChartBarMultiple, ChartPieDonut } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import ContributorsTable from "@/components/ruixen-contributors-table"
+import { ChartAreaInteractive, ChartPieDonut } from "@/components/chart-area-interactive"
 import ComparisonTable from "@/components/comparison-table"
 import FlexiFilterTable from "@/components/flexi-filter-table"
 export default function Page() {
