@@ -203,6 +203,21 @@ model RastreabilidadeLote {
   @@map("rastreabilidade_lotes")
 }
 
+model AtividadesLote {
+    id              Int      @id @default(autoincrement())
+descricao String
+tipo AtividadesEnum
+loteId Int
+// talhaoId Int
+data DateTime
+responsavelId String
+
+lote        Lote     @relation("Atividades", fields: [loteId], references: [id], onDelete: Cascade)
+// talhao T
+  responsavel           Usuario                  @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+
+}
+
 model RegistroSanitario {
   id             Int                    @id @default(autoincrement())
   loteId         Int                    @map("lote_id")
@@ -325,4 +340,10 @@ enum TipoSaida {
   ENERGIA
   MANUTENCAO
   SALARIOS
+}
+
+enum AtividadesEnum {
+  PLANTIO
+  ADUBACAO
+  FERTILIZACAO
 }
