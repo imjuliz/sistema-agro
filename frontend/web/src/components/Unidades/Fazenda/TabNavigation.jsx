@@ -3,15 +3,17 @@ import { Badge } from '@/components/ui/badge';
 const tabs = [
   { id: 'overview', label: 'Overview', count: null },
   { id: 'jobs', label: 'Jobs', count: 12 },
-  { id: 'candidates', label: 'Candidates', count: 47 },
-  { id: 'contacts', label: 'Contacts', count: 8 },
-  { id: 'activities', label: 'Activities', count: 23 },
-  { id: 'history', label: 'History', count: null },
+  { id: 'estoque', label: 'Estoque', count: 47 },
+  { id: 'equipe', label: 'Equipe', count: 8 },
+  { id: 'atividades', label: 'Atividades', count: 23 },
+  { id: 'financeiro', label: 'Financeiro', count: null },
 ];
 
 export function TabNavigation({ activeTab, onTabChange }) {
   return (
-    <div className="bg-card border-b px-6 sticky top-[73px] z-10">
+    
+    <>
+    <div className="bg-card border-b px-6">
       <div className="flex items-center gap-8">
         {tabs.map((tab) => (
           <button
@@ -33,5 +35,7 @@ export function TabNavigation({ activeTab, onTabChange }) {
         ))}
       </div>
     </div>
+    </>
+    
   );
 }

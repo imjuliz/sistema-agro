@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, TrendingUp, TrendingDown, DollarSign, Award, AlertCircle } from 'lucide-react';
 
-const historyEvents = [
+const financas = [
   {
     id: 1,
     type: 'milestone',
@@ -95,7 +95,7 @@ const getImpactBadge = (impact) => {
   }
 };
 
-export function HistoryTab() {
+export function FinanceiroTab() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -143,59 +143,59 @@ export function HistoryTab() {
       </div>
 
       <div className="space-y-4">
-        {historyEvents.map((event) => (
-          <Card key={event.id}>
+        {financas.map((financa) => (
+          <Card key={financa.id}>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className={`p-2 rounded-lg ${getEventColor(event.type, event.impact)}`}>
-                  {getEventIcon(event.type)}
+                <div className={`p-2 rounded-lg ${getEventColor(financa.type, financa.impact)}`}>
+                  {getEventIcon(financa.type)}
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="font-medium">{event.title}</h3>
+                      <h3 className="font-medium">{financa.title}</h3>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                         <Calendar className="size-3" />
-                        <span>{event.date}</span>
+                        <span>{financa.date}</span>
                         <span>•</span>
-                        <span>{event.user}</span>
+                        <span>{financa.user}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
-                        {event.type}
+                        {financa.type}
                       </Badge>
-                      <Badge variant={getImpactBadge(event.impact)} className="text-xs">
-                        {event.impact}
+                      <Badge variant={getImpactBadge(financa.impact)} className="text-xs">
+                        {financa.impact}
                       </Badge>
                     </div>
                   </div>
                   
                   <p className="text-sm text-muted-foreground mb-3">
-                    {event.description}
+                    {financa.description}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 text-sm">
-                      {event.value && (
-                        <div className="font-medium text-green-600">{event.value}</div>
+                      {financa.value && (
+                        <div className="font-medium text-green-600">{financa.value}</div>
                       )}
-                      {event.fee && (
-                        <div className="font-medium text-blue-600">Fee: {event.fee}</div>
+                      {financa.fee && (
+                        <div className="font-medium text-blue-600">Fee: {financa.fee}</div>
                       )}
-                      {event.metrics && (
+                      {financa.metrics && (
                         <div className="flex items-center gap-2">
-                          <span>Filled: {event.metrics.filled}</span>
+                          <span>Filled: {financa.metrics.filled}</span>
                           <span>•</span>
-                          <span>Success: {event.metrics.successRate}</span>
+                          <span>Success: {financa.metrics.successRate}</span>
                         </div>
                       )}
                     </div>
                     <Avatar className="size-6">
                       <AvatarImage src="/api/placeholder/24/24" />
                       <AvatarFallback className="text-xs">
-                        {event.user === 'System' ? 'SY' : event.user.split(' ').map(n => n[0]).join('')}
+                        {financa.user === 'System' ? 'SY' : financa.user.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                   </div>

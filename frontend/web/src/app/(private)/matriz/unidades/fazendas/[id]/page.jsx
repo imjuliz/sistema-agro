@@ -68,7 +68,7 @@ export default function FazendaDetalhe(props) {
 
   return (
     <div className="min-h-screen bg-background">
-      <CompanyHeader />
+      <CompanyHeader onLogActivity={() => setShowLogActivity(true)}/>
       <ActionBar 
         onAddJob={() => setShowAddJob(true)}
         onLogActivity={() => setShowLogActivity(true)}
@@ -76,10 +76,10 @@ export default function FazendaDetalhe(props) {
       />
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="flex gap-6 px-6 pb-6">
-        <LeftPanel />
+      <div className="flex mt-10 gap-6 px-6 pb-6">
+        {/* <LeftPanel /> */}
         <CenterPanel activeTab={activeTab} />
-        <RightPanel onLogActivity={() => setShowLogActivity(true)} />
+        {/* <RightPanel onLogActivity={() => setShowLogActivity(true)} /> */}
       </div>
 
       {/* Modals */}

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MapPin, Mail, Phone, Calendar, Star, Eye, MessageSquare, MoreHorizontal } from 'lucide-react';
 
-const candidates = [
+const estoque = [
   {
     id: 1,
     name: 'Jennifer Martinez',
@@ -82,39 +82,39 @@ const getStatusColor = (status) => {
   }
 };
 
-export function CandidatesTab() {
+export function EstoqueTab() {
   return (
     <div className="space-y-4">
-      {candidates.map((candidate) => (
-        <Card key={candidate.id}>
+      {estoque.map((est) => (
+        <Card key={est.id}>
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start gap-4">
                 <Avatar className="size-12">
-                  <AvatarImage src={candidate.avatar} alt={candidate.name} />
-                  <AvatarFallback>{candidate.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  <AvatarImage src={est.avatar} alt={est.name} />
+                  <AvatarFallback>{est.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-lg">{candidate.name}</h3>
-                    <Badge variant={getStatusColor(candidate.status)}>
-                      {candidate.status}
+                    <h3 className="font-medium text-lg">{est.name}</h3>
+                    <Badge variant={getStatusColor(est.status)}>
+                      {est.status}
                     </Badge>
-                    {candidate.rating && (
+                    {est.rating && (
                       <div className="flex items-center gap-1">
                         <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{candidate.rating}</span>
+                        <span className="text-sm font-medium">{est.rating}</span>
                       </div>
                     )}
                   </div>
-                  <div className="text-muted-foreground mb-2">{candidate.title}</div>
+                  <div className="text-muted-foreground mb-2">{est.title}</div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <MapPin className="size-3" />
-                      <span>{candidate.location}</span>
+                      <span>{est.location}</span>
                     </div>
-                    <span>{candidate.experience} experience</span>
-                    <span>Applied: {candidate.lastActivity}</span>
+                    <span>{est.experience} experience</span>
+                    <span>Applied: {est.lastActivity}</span>
                   </div>
                 </div>
               </div>
@@ -136,11 +136,11 @@ export function CandidatesTab() {
             <div className="grid grid-cols-3 gap-6 mb-4">
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Applied For</div>
-                <div className="text-sm">{candidate.appliedFor}</div>
+                <div className="text-sm">{est.appliedFor}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Current Stage</div>
-                <div className="text-sm">{candidate.stage}</div>
+                <div className="text-sm">{est.stage}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Contact</div>
@@ -158,7 +158,7 @@ export function CandidatesTab() {
             <div className="mb-4">
               <div className="text-sm font-medium text-muted-foreground mb-2">Key Skills</div>
               <div className="flex flex-wrap gap-2">
-                {candidate.skills.map((skill, index) => (
+                {est.skills.map((skill, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {skill}
                   </Badge>

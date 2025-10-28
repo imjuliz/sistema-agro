@@ -6,27 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Bell, Paperclip, Clock, Plus, Send } from 'lucide-react';
 import { useState } from 'react';
 
-const reminders = [
-  {
-    id: 1,
-    title: 'Follow up on Senior Developer role',
-    time: '2:00 PM today',
-    priority: 'high'
-  },
-  {
-    id: 2,
-    title: 'Call Sarah Johnson about new requirements',
-    time: 'Tomorrow 10:00 AM',
-    priority: 'medium'
-  },
-  {
-    id: 3,
-    title: 'Send candidate shortlist',
-    time: 'Dec 15, 3:00 PM',
-    priority: 'low'
-  }
-];
-
 const attachments = [
   { id: 1, name: 'Company_Profile_2024.pdf', size: '2.4 MB', type: 'pdf' },
   { id: 2, name: 'Job_Requirements.docx', size: '1.2 MB', type: 'doc' },
@@ -48,7 +27,7 @@ export function RightPanel({ onLogActivity }) {
   return (
     <div className="w-80 space-y-6">
       {/* Quick Activity Log */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="text-base">Quick Log Activity</CardTitle>
         </CardHeader>
@@ -81,41 +60,9 @@ export function RightPanel({ onLogActivity }) {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      {/* Reminders */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Reminders</CardTitle>
-          <Bell className="size-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {reminders.map((reminder) => (
-            <div key={reminder.id} className="p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{reminder.title}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Clock className="size-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">{reminder.time}</span>
-                  </div>
-                </div>
-                <Badge 
-                  variant={reminder.priority === 'high' ? 'destructive' : 
-                          reminder.priority === 'medium' ? 'default' : 'secondary'}
-                  className="text-xs"
-                >
-                  {reminder.priority}
-                </Badge>
-              </div>
-            </div>
-          ))}
-          <Button variant="outline" size="sm" className="w-full">
-            <Plus className="size-4 mr-2" />
-            Add Reminder
-          </Button>
-        </CardContent>
-      </Card>
+      
 
       {/* Attachments */}
       <Card>

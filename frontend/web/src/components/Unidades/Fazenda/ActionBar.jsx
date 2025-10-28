@@ -4,13 +4,14 @@ import { Input } from '@/components/ui/input';
 
 export function ActionBar({ onAddJob, onLogActivity, onAddContact }) {
   return (
-    <div className="bg-card border-b px-6 py-3 sticky top-0 z-10">
+   <>
+   {/* <div className="bg-card border-b px-6 py-3 sticky top-0 z-10">
       <div className="flex items-center justify-between">
-        {/* Primary Actions */}
+        {/* Primary Actions 
         <div className="flex items-center gap-3">
           <Button onClick={onAddJob} size="sm">
             <Plus className="size-4 mr-2" />
-            Add Job
+            Editar informações
           </Button>
           <Button onClick={onLogActivity} variant="outline" size="sm">
             <MessageSquare className="size-4 mr-2" />
@@ -22,7 +23,7 @@ export function ActionBar({ onAddJob, onLogActivity, onAddContact }) {
           </Button>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Filters 
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
@@ -40,6 +41,7 @@ export function ActionBar({ onAddJob, onLogActivity, onAddContact }) {
           </Button>
         </div>
       </div>
-    </div>
+    </div> */}
+   </> 
   );
 }

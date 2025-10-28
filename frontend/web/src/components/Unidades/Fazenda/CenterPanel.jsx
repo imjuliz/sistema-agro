@@ -1,9 +1,9 @@
 import { OverviewTab } from './tabs/OverviewTab';
 import { JobsTab } from './tabs/JobsTab';
-import { CandidatesTab } from './tabs/CandidatesTab';
-import { ContactsTab } from './tabs/ContactsTab';
-import { ActivitiesTab } from './tabs/ActivitiesTab';
-import { HistoryTab } from './tabs/HistoryTab';
+import { EstoqueTab } from './tabs/EstoqueTab';
+import { EquipeTab } from './tabs/EquipeTab';
+import { AtividadesTab } from './tabs/AtividadesTab';
+import { FinanceiroTab } from './tabs/FinanceiroTab';
 
 export function CenterPanel({ activeTab }) {
   const renderTabContent = () => {
@@ -12,14 +12,14 @@ export function CenterPanel({ activeTab }) {
         return <OverviewTab />;
       case 'jobs':
         return <JobsTab />;
-      case 'candidates':
-        return <CandidatesTab />;
-      case 'contacts':
-        return <ContactsTab />;
-      case 'activities':
-        return <ActivitiesTab />;
-      case 'history':
-        return <HistoryTab />;
+      case 'estoque':
+        return <EstoqueTab />;
+      case 'equipe':
+        return <EquipeTab />;
+      case 'atividades':
+        return <AtividadesTab />;
+      case 'financeiro':
+        return <FinanceiroTab />;
       default:
         return <OverviewTab />;
     }

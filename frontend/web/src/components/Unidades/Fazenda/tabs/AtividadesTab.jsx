@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Phone, Mail, MessageSquare, Calendar, FileText, Users, Clock } from 'lucide-react';
 
-const activities = [
+const atividades = [
   {
     id: 1,
     type: 'call',
@@ -93,61 +93,61 @@ const getOutcomeColor = (outcome) => {
   }
 };
 
-export function ActivitiesTab() {
+export function AtividadesTab() {
   return (
     <div className="space-y-4">
-      {activities.map((activity) => (
-        <Card key={activity.id}>
+      {atividades.map((atvd) => (
+        <Card key={atvd.id}>
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
-                {getActivityIcon(activity.type)}
+              <div className={`p-2 rounded-lg ${getActivityColor(atvd.type)}`}>
+                {getActivityIcon(atvd.type)}
               </div>
               
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="font-medium">{activity.title}</h3>
+                    <h3 className="font-medium">{atvd.title}</h3>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <span>{activity.user}</span>
+                      <span>{atvd.user}</span>
                       <span>•</span>
-                      <span>{activity.contact}</span>
+                      <span>{atvd.contact}</span>
                       <span>•</span>
                       <div className="flex items-center gap-1">
                         <Clock className="size-3" />
-                        <span>{activity.time}</span>
+                        <span>{atvd.time}</span>
                       </div>
-                      {activity.duration && (
+                      {atvd.duration && (
                         <>
                           <span>•</span>
-                          <span>{activity.duration}</span>
+                          <span>{atvd.duration}</span>
                         </>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {activity.type}
+                      {atvd.type}
                     </Badge>
-                    <Badge variant={getOutcomeColor(activity.outcome)} className="text-xs">
-                      {activity.outcome}
+                    <Badge variant={getOutcomeColor(atvd.outcome)} className="text-xs">
+                      {atvd.outcome}
                     </Badge>
                   </div>
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-3">
-                  {activity.description}
+                  {atvd.description}
                 </p>
                 
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-muted-foreground">
-                    Related to: <span className="font-medium">{activity.relatedTo}</span>
+                    Related to: <span className="font-medium">{atvd.relatedTo}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Avatar className="size-6">
                       <AvatarImage src="/api/placeholder/24/24" />
                       <AvatarFallback className="text-xs">
-                        {activity.user.split(' ').map(n => n[0]).join('')}
+                        {atvd.user.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                   </div>

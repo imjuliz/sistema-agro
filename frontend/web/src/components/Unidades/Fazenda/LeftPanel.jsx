@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, Mail, MessageSquare, MoreHorizontal, Building2, Users, Calendar, DollarSign } from 'lucide-react';
+import { Phone, Mail, MessageSquare, MoreHorizontal, Building2, Users, Calendar, DollarSign, Bell, Clock, Plus } from 'lucide-react';
 
 const contacts = [
   {
@@ -34,34 +34,55 @@ const contacts = [
   }
 ];
 
+const reminders = [
+  {
+    id: 1,
+    title: 'Follow up on Senior Developer role',
+    time: '2:00 PM today',
+    priority: 'high'
+  },
+  {
+    id: 2,
+    title: 'Call Sarah Johnson about new requirements',
+    time: 'Tomorrow 10:00 AM',
+    priority: 'medium'
+  },
+  {
+    id: 3,
+    title: 'Send candidate shortlist',
+    time: 'Dec 15, 3:00 PM',
+    priority: 'low'
+  }
+];
+
 export function LeftPanel() {
   return (
     <div className="w-80 space-y-6">
       {/* Company Details */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Company Details</CardTitle>
+          <CardTitle className="text-base">Informações da unidade</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
             <Building2 className="size-4 text-muted-foreground" />
             <div>
-              <div className="text-sm font-medium">Industry</div>
-              <div className="text-sm text-muted-foreground">Software Technology</div>
+              <div className="text-sm font-medium">Culturas atuais</div>
+              <div className="text-sm text-muted-foreground">Foco produtivo (ex.: Milho, soja)</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Users className="size-4 text-muted-foreground" />
             <div>
               <div className="text-sm font-medium">Company Size</div>
-              <div className="text-sm text-muted-foreground">500-1000 employees</div>
+              <div className="text-sm text-muted-foreground">500-1000 funcionarios</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="size-4 text-muted-foreground" />
             <div>
-              <div className="text-sm font-medium">Client Since</div>
-              <div className="text-sm text-muted-foreground">March 2023</div>
+              <div className="text-sm font-medium">Criado em</div>
+              <div className="text-sm text-muted-foreground">Março de 2023</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -77,7 +98,7 @@ export function LeftPanel() {
       {/* Key Contacts */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Key Contacts</CardTitle>
+          <CardTitle className="text-base">Contatos principais</CardTitle>
           <Button variant="ghost" size="sm">
             <MoreHorizontal className="size-4" />
           </Button>
@@ -111,6 +132,40 @@ export function LeftPanel() {
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Reminders */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Reminders</CardTitle>
+          <Bell className="size-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {reminders.map((reminder) => (
+            <div key={reminder.id} className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="text-sm font-medium">{reminder.title}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Clock className="size-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{reminder.time}</span>
+                  </div>
+                </div>
+                <Badge
+                  variant={reminder.priority === 'high' ? 'destructive' :
+                    reminder.priority === 'medium' ? 'default' : 'secondary'}
+                  className="text-xs"
+                >
+                  {reminder.priority}
+                </Badge>
+              </div>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" className="w-full">
+            <Plus className="size-4 mr-2" />
+            Add Reminder
+          </Button>
         </CardContent>
       </Card>
     </div>
