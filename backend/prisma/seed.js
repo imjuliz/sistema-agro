@@ -1,9 +1,10 @@
+import bcrypt from "bcryptjs";
 // arquivo para popular o banco com dados iniciais
 import { configDotenv } from "dotenv";
 configDotenv();
 import prisma from "./client.js";
 import pkg from "./generated/index.js";
-const { tipo_unidade } = pkg;
+const { TipoUnidade } = pkg;
 
 async function main() {
     try {
@@ -12,7 +13,7 @@ async function main() {
         await prisma.$connect();
         console.log("✅ Conexão com banco estabelecida com sucesso");
 
-        // Limpar dados antigos
+    // Limpar dados antigos
         console.log("🧹 Limpando dados antigos...");
         await prisma.usuario.deleteMany({});
         await prisma.unidade.deleteMany({});
@@ -39,12 +40,12 @@ async function main() {
     // 2️. Criar unidades
     console.log("🏢 Criando unidades do sistema...");
     const unidadesData = [
-        { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 123, Zona Rural, São Paulo - SP", tipo: tipo_unidade.Fazenda, gerenteId: null, status: true },
-        { nome: "Fazenda Beta", endereco: "Estrada do Campo, s/n, Zona Rural, Campinas - SP", tipo: tipo_unidade.Fazenda, gerenteId: null, status: true },
-        { nome: "Loja Central", endereco: "Av. Principal, 456, Centro, São Paulo - SP, CEP: 01310-100", tipo: tipo_unidade.Loja, gerenteId: null, status: true },
-        { nome: "Loja Norte", endereco: "Rua das Flores, 789, Zona Norte, São Paulo - SP, CEP: 02456-000", tipo: tipo_unidade.Loja, gerenteId: null, status: true },
-        { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000, Centro, São Paulo - SP, CEP: 01310-200", tipo: tipo_unidade.Matriz, gerenteId: null, status: true },
-        { nome: "Matriz Campinas", endereco: "Rua Corporativa, 200, Distrito Industrial, Campinas - SP, CEP: 13050-000", tipo: tipo_unidade.Matriz, gerenteId: null, status: true},
+        { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 123, Zona Rural, São Paulo - SP", tipo: pkg.TipoUnidade.Fazenda, gerenteId: null, status: true },
+        { nome: "Fazenda Beta", endereco: "Estrada do Campo, s/n, Zona Rural, Campinas - SP", tipo: pkg.TipoUnidade.Fazenda, gerenteId: null, status: true },
+        { nome: "Loja Central", endereco: "Av. Principal, 456, Centro, São Paulo - SP, CEP: 01310-100", tipo: pkg.TipoUnidade.Loja, gerenteId: null, status: true },
+        { nome: "Loja Norte", endereco: "Rua das Flores, 789, Zona Norte, São Paulo - SP, CEP: 02456-000", tipo: pkg.TipoUnidade.Loja, gerenteId: null, status: true },
+        { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000, Centro, São Paulo - SP, CEP: 01310-200", tipo: pkg.TipoUnidade.Matriz, gerenteId: null, status: true },
+        { nome: "Matriz Campinas", endereco: "Rua Corporativa, 200, Distrito Industrial, Campinas - SP, CEP: 13050-000", tipo: pkg.TipoUnidade.Matriz, gerenteId: null, status: true},
     ];
 
     const unidadesCriadas = await prisma.unidade.createMany({
@@ -55,9 +56,9 @@ async function main() {
 
     console.log("🎉 Seed executado com sucesso! Banco de dados populado com dados iniciais.");
 
-    // // 3️. Buscar IDs de perfis e unidades
-    // const perfis = await prisma.perfis.findMany();
-    // const unidades = await prisma.unidades.findMany();
+    // 3️. Buscar IDs de perfis e unidades
+    const perfis = await prisma.perfil.findMany();
+    const unidades = await prisma.unidade.findMany();
 
     // const perfilMap = Object.fromEntries(perfis.map(p => [p.nome, p.id]));
     // const unidadeMap = Object.fromEntries(unidades.map(u => [u.nome, u.id]));

@@ -18,8 +18,6 @@ export default function App() {
             <h1 className="text-3xl font-medium mb-2">Painel de Gerenciamento de Estoque</h1>
             <p className="text-muted-foreground">Rede de Varejo para Plantio</p>
           </div>
-
-          {/* Legend */}
           <Card className="mb-6 ">
             <CardHeader>
               <CardTitle>Legenda do Status do Estoque</CardTitle>
@@ -42,7 +40,6 @@ export default function App() {
             </CardContent>
           </Card>
 
-          {/* View Toggle */}
           <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="store">Store Level</TabsTrigger>
@@ -50,17 +47,9 @@ export default function App() {
               <TabsTrigger value="setup">Display Setup</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="store">
-              <StoreLevelView />
-            </TabsContent>
-
-            <TabsContent value="brand">
-              <BrandLevelView />
-            </TabsContent>
-
-            <TabsContent value="setup">
-              <SetupView />
-            </TabsContent>
+            <TabsContent value="store"><StoreLevelView /></TabsContent>
+            <TabsContent value="brand"><BrandLevelView /></TabsContent>
+            <TabsContent value="setup"><SetupView /></TabsContent>
           </Tabs>
         </div>
       </div>

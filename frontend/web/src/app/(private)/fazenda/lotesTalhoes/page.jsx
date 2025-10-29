@@ -1,14 +1,12 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, TableDemo,ChartLineMultiple, TableDemo2 } from "@/components/Fazenda/plantio"
-import { TweetGrid } from "@/components/ui/tweet-grid";
 export default function Page() {
   return (
     <div className="flex flex-1 flex-col p-10">
       <h1 className="text-2xl font-semibold mb-6 ml-10">Dashboard</h1>
       <div className="flex justify-between items-start gap-8 w-full">
         <div className="flex-1"><SectionCards /></div>
-        {/* <div className="flex-[0.4] flex justify-center"><ChartPieDonut /></div> */}
       </div>
       <div className="flex justify-between gap-8 w-full">
         <div className="flex-1"><TableDemo/></div>
@@ -20,5 +18,3 @@ export default function Page() {
     </div>
   )
 }
-
-// Gestão de Lotes e Talhões: Cadastro de talhões (área de plantio). Criação de lotes vinculados a um talhão e período. Status automático do lote: Próprio para consumo, Consumo com alerta, Impróprio para venda. Histórico de rastreabilidade (todas as atividades registradas no lote).

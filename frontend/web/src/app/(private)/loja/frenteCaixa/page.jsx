@@ -6,12 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, Receipt, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, Receipt, Trash2 } from 'lucide-react';
 
 const products = [
   { id: 'PROD-001', name: 'Wireless Headphones', price: 89.99, stock: 45, category: 'Electronics', barcode: '123456789012', image: '/api/placeholder/80/80' },
@@ -32,36 +31,9 @@ const customers = [
 ];
 
 const recentSales = [
-  {
-    id: 'TXN-001',
-    date: '2024-01-26 14:23',
-    customer: 'John Smith',
-    items: 3,
-    total: 234.97,
-    paymentMethod: 'Credit Card',
-    cashier: 'Alice Wilson',
-    status: 'completed'
-  },
-  {
-    id: 'TXN-002',
-    date: '2024-01-26 14:18',
-    customer: 'Walk-in Customer',
-    items: 1,
-    total: 89.99,
-    paymentMethod: 'Cash',
-    cashier: 'Bob Johnson',
-    status: 'completed'
-  },
-  {
-    id: 'TXN-003',
-    date: '2024-01-26 14:12',
-    customer: 'Sarah Johnson',
-    items: 2,
-    total: 159.98,
-    paymentMethod: 'Debit Card',
-    cashier: 'Alice Wilson',
-    status: 'completed'
-  }
+  {id: 'TXN-001',date: '2024-01-26 14:23',customer: 'John Smith',items: 3,total: 234.97,paymentMethod: 'Credit Card',cashier: 'Alice Wilson',status: 'completed'},
+  {id: 'TXN-002',date: '2024-01-26 14:18',customer: 'Walk-in Customer',items: 1,total: 89.99,paymentMethod: 'Cash',cashier: 'Bob Johnson',status: 'completed'},
+  {id: 'TXN-003',date: '2024-01-26 14:12',customer: 'Sarah Johnson',items: 2,total: 159.98,paymentMethod: 'Debit Card',cashier: 'Alice Wilson',status: 'completed'}
 ];
 
 const dailyStats = {
@@ -85,7 +57,6 @@ export default function POSModule() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountReceived, setAmountReceived] = useState(0);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-
   const categories = ['all', ...new Set(products.map(p => p.category))];
 
   const filteredProducts = products.filter(product => {
@@ -99,39 +70,25 @@ export default function POSModule() {
     const existingItem = cart.find(item => item.id === product.id);
     if (existingItem) {
       setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item
+        item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item
       ));
     } else {
-      setCart([...cart, {
-        id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price
-      }]);
+      setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}]);
     }
   };
 
   const updateQuantity = (id, newQuantity) => {
     if (newQuantity <= 0) { setCart(cart.filter(item => item.id !== id)); }
-    else {
-      setCart(cart.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity, total: newQuantity * item.price } : item
-      ));
-    }
+    else {setCart(cart.map(item =>item.id === id ? { ...item, quantity: newQuantity, total: newQuantity * item.price } : item));}
   };
 
   const removeFromCart = (id) => { setCart(cart.filter(item => item.id !== id)); };
-
   const getSubtotal = () => { return cart.reduce((sum, item) => sum + item.total, 0); };
-
   const getDiscountAmount = () => { return getSubtotal() * (discountPercent / 100); };
-
   const getTax = () => { return (getSubtotal() - getDiscountAmount()) * 0.08; }; // 8% tax
-
   const getTotal = () => { return getSubtotal() - getDiscountAmount() + getTax(); };
-
   const getChange = () => { return paymentMethod === 'cash' ? Math.max(0, amountReceived - getTotal()) : 0; };
-
   const clearCart = () => { setCart([]); setSelectedCustomer(null); setDiscountPercent(0); setAmountReceived(0); };
-
   const processSale = () => {
     // In a real implementation, this would process the payment and update inventory
     console.log('Processing sale:', {
@@ -147,7 +104,7 @@ export default function POSModule() {
     });
 
     clearCart();
-    setIsPaymentOpen(false);// Show success message or print receipt
+    setIsPaymentOpen(false);
   };
 
   return (
@@ -161,9 +118,7 @@ export default function POSModule() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${dailyStats.totalSales.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              {dailyStats.totalTransactions} transactions
-            </p>
+            <p className="text-xs text-muted-foreground">{dailyStats.totalTransactions} transactions</p>
           </CardContent>
         </Card>
 
@@ -174,9 +129,7 @@ export default function POSModule() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${dailyStats.averageTransaction.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              Per transaction
-            </p>
+            <p className="text-xs text-muted-foreground">Per transaction</p>
           </CardContent>
         </Card>
 
@@ -188,12 +141,10 @@ export default function POSModule() {
           <CardContent>
             <div className="text-sm">
               <div className="flex justify-between">
-                <span>Cash:</span>
-                <span>${dailyStats.cashSales.toFixed(2)}</span>
+                <span>Cash:</span><span>${dailyStats.cashSales.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Card:</span>
-                <span>${dailyStats.cardSales.toFixed(2)}</span>
+                <span>Card:</span><span>${dailyStats.cardSales.toFixed(2)}</span>
               </div>
             </div>
           </CardContent>
@@ -206,9 +157,7 @@ export default function POSModule() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">{dailyStats.topProduct}</div>
-            <p className="text-xs text-muted-foreground">
-              Best selling today
-            </p>
+            <p className="text-xs text-muted-foreground">Best selling today</p>
           </CardContent>
         </Card>
       </div>
@@ -237,14 +186,10 @@ export default function POSModule() {
                       <Input placeholder="Pesquise produtos com o leitor de código de barras..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                     </div>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
+                      <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Categories</SelectItem>
-                        {categories.slice(1).map((category) => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
+                        {categories.slice(1).map((category) => (<SelectItem key={category} value={category}>{category}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -280,9 +225,7 @@ export default function POSModule() {
                     <CardTitle>Shopping Cart</CardTitle>
                     <CardDescription>{cart.length} items</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={clearCart}>
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <Button variant="outline" size="sm" onClick={clearCart}><Trash2 className="size-4" /></Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Customer Selection */}
@@ -304,9 +247,7 @@ export default function POSModule() {
                   {/* Cart Items */}
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {cart.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-8">
-                        Cart is empty
-                      </div>
+                      <div className="text-center text-muted-foreground py-8">Cart is empty</div>
                     ) : (cart.map((item) => (
                         <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                           <div className="flex-1 min-w-0">
@@ -336,9 +277,7 @@ export default function POSModule() {
                       <Label>Discount %</Label>
                       <div className="flex gap-2">
                         <Input type="number" value={discountPercent} onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)} placeholder="0" min="0" max="100" />
-                        <Button variant="outline" size="sm">
-                          <Percent className="size-4" />
-                        </Button>
+                        <Button variant="outline" size="sm"><Percent className="size-4" /></Button>
                       </div>
                     </div>
                   )}
@@ -347,31 +286,26 @@ export default function POSModule() {
                   {cart.length > 0 && (
                     <div className="space-y-2 pt-4 border-t">
                       <div className="flex justify-between text-sm">
-                        <span>Subtotal:</span>
-                        <span>${getSubtotal().toFixed(2)}</span>
+                        <span>Subtotal:</span><span>${getSubtotal().toFixed(2)}</span>
                       </div>
                       {discountPercent > 0 && (
                         <div className="flex justify-between text-sm text-green-600">
-                          <span>Discount ({discountPercent}%):</span>
-                          <span>-${getDiscountAmount().toFixed(2)}</span>
+                          <span>Discount ({discountPercent}%):</span><span>-${getDiscountAmount().toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between text-sm">
-                        <span>Tax (8%):</span>
-                        <span>${getTax().toFixed(2)}</span>
+                        <span>Tax (8%):</span><span>${getTax().toFixed(2)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-medium">
-                        <span>Total:</span>
-                        <span>${getTotal().toFixed(2)}</span>
+                        <span>Total:</span><span>${getTotal().toFixed(2)}</span>
                       </div>
                     </div>
                   )}
 
                   {/* Checkout Button */}
                   <Button className="w-full" disabled={cart.length === 0} onClick={() => setIsPaymentOpen(true)}>
-                    <CreditCard className="size-4 mr-2" />
-                    Checkout
+                    <CreditCard className="size-4 mr-2" />Checkout
                   </Button>
                 </CardContent>
               </Card>
@@ -383,26 +317,18 @@ export default function POSModule() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Select Customer</DialogTitle>
-                <DialogDescription>
-                  Choose an existing customer or continue as walk-in
-                </DialogDescription>
+                <DialogDescription>Choose an existing customer or continue as walk-in</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <Input placeholder="Search customers..." />
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {customers.map((customer) => (
-                    <div key={customer.id} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted"
-                      onClick={() => {
-                        setSelectedCustomer(customer);
-                        setIsCustomerSelectOpen(false);
-                      }}>
+                    <div key={customer.id} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => {setSelectedCustomer(customer);setIsCustomerSelectOpen(false);}}>
                       <div>
                         <div className="font-medium">{customer.name}</div>
                         <div className="text-sm text-muted-foreground">{customer.email}</div>
                       </div>
-                      <div className="text-sm">
-                        <Badge variant="outline">{customer.loyaltyPoints} pts</Badge>
-                      </div>
+                      <div className="text-sm"><Badge variant="outline">{customer.loyaltyPoints} pts</Badge></div>
                     </div>
                   ))}
                 </div>
@@ -415,17 +341,13 @@ export default function POSModule() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Process Payment</DialogTitle>
-                <DialogDescription>
-                  Complete the transaction
-                </DialogDescription>
+                <DialogDescription>Complete the transaction</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Payment Method</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
                       <SelectItem value="credit">Credit Card</SelectItem>
@@ -437,25 +359,21 @@ export default function POSModule() {
 
                 {paymentMethod === 'cash' && (
                   <div className="space-y-2">
-                    <Label>Amount Received</Label>
-                    <Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)} placeholder="0.00" step="0.01" />
+                    <Label>Amount Received</Label><Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)} placeholder="0.00" step="0.01" />
                   </div>
                 )}
 
                 <div className="space-y-2 p-4 bg-muted rounded">
                   <div className="flex justify-between">
-                    <span>Total Amount:</span>
-                    <span className="font-bold">${getTotal().toFixed(2)}</span>
+                    <span>Total Amount:</span><span className="font-bold">${getTotal().toFixed(2)}</span>
                   </div>
                   {paymentMethod === 'cash' && amountReceived > 0 && (
                     <>
                       <div className="flex justify-between">
-                        <span>Amount Received:</span>
-                        <span>${amountReceived.toFixed(2)}</span>
+                        <span>Amount Received:</span><span>${amountReceived.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Change:</span>
-                        <span className="font-bold text-green-600">${getChange().toFixed(2)}</span>
+                        <span>Change:</span><span className="font-bold text-green-600">${getChange().toFixed(2)}</span>
                       </div>
                     </>
                   )}
@@ -564,9 +482,7 @@ export default function POSModule() {
         <TabsContent value="reports" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Daily Summary</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Daily Summary</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
@@ -624,20 +540,16 @@ export default function POSModule() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Wireless Headphones</span>
-                    <span>12 sold</span>
+                    <span>Wireless Headphones</span><span>12 sold</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Coffee Mug</span>
-                    <span>8 sold</span>
+                    <span>Coffee Mug</span><span>8 sold</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>USB Cable</span>
-                    <span>6 sold</span>
+                    <span>USB Cable</span><span>6 sold</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Water Bottle</span>
-                    <span>5 sold</span>
+                    <span>Water Bottle</span><span>5 sold</span>
                   </div>
                 </div>
               </CardContent>

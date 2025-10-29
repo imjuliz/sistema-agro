@@ -125,13 +125,13 @@ const chartConfig2 = { entrada: { label: "Entrada", color: "#738C16", }, saida: 
 
 export function ChartBarMultiple() {
   return (
-    <Card className={"h-180 w-500"}>
+    <Card className={"h-full w-full"}>
       <CardHeader>
         <CardTitle className={'text-2xl'}>Entradas e Saídas</CardTitle>
         <CardDescription>Janeiro - Junho</CardDescription>
       </CardHeader>
       <CardContent className={'h-full'}>
-        <ChartContainer config={chartConfig2} className={'h-full pb-20 w-480'}>
+        <ChartContainer config={chartConfig2} className={'h-full pb-20 w-full'}>
           <BarChart accessibilityLayer data={chartData2}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} />
@@ -165,7 +165,7 @@ const chartConfig3 = {
 
 export function ChartPieDonut() {
   return (
-    <Card className="flex flex-col w-150 h-126.5">
+    <Card className="flex flex-col w-full h-full">
       <CardHeader className="items-center pb-0">
         <CardTitle>Despesas do Mês</CardTitle>
         <CardDescription>January - June 2024</CardDescription>

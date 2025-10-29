@@ -13,8 +13,7 @@ export default function Page() {
             <ChartBarMultiple />
           </div>
           <h1 className="text-2xl font-semibold ml-10">Estoque</h1>
-          <div className="flex justify-center W-100%">
-            <ContributorsTable /></div>
+          <div className="flex justify-center W-100%"><ContributorsTable /></div>
         </div>
       </div>
     </div>

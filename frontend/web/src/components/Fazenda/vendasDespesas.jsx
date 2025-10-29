@@ -1,6 +1,7 @@
 "use client"
 import * as React from 'react';
 import { useState } from "react";
+import { Pie, PieChart } from "recharts"
 import { ChevronLeft, ChevronRight } from "lucide-react";
 //ui
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +9,7 @@ import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, C
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 //mui
 import { BarChart } from "@mui/x-charts";
 
@@ -100,8 +102,7 @@ export function TableDemo2() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {lotes
-                        .filter((lote) =>
+                    {lotes .filter((lote) =>
                             (!categoria || lote.tipo === categoria) &&
                             (!status || lote.status === status) &&
                             (!busca || lote.animal.toLowerCase().includes(busca.toLowerCase()))
@@ -220,8 +221,7 @@ export function EnvioLotes() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {clientes
-                        .filter((cliente) =>
+                    {clientes .filter((cliente) =>
                             (!categoria || cliente.tipo === categoria) &&
                             (!status || cliente.status === status) &&
                             (!busca || cliente.cliente.toLowerCase().includes(busca.toLowerCase()))
@@ -234,6 +234,191 @@ export function EnvioLotes() {
                                 <TableCell>{cliente.qtd}</TableCell>
                                 <TableCell> {cliente.contrato}</TableCell>
                                 <TableCell> {cliente.status}</TableCell>
+                            </TableRow>
+                        ))}
+                </TableBody>
+            </Table>
+        </div>
+    );
+}
+
+//grafico bolinha
+const chartData2 = [
+  { browser: "Insumos", visitors: 275, fill: "var(--color-insumos)" },
+  { browser: "Salário", visitors: 200, fill: "var(--color-salario)" },
+  { browser: "Máquinas", visitors: 187, fill: "var(--color-maquinas)" },
+  { browser: "Alimentação", visitors: 173, fill: "var(--color-alimentacao)" },
+  { browser: "Medicamentos", visitors: 90, fill: "var(--color-medicamentos)" },
+  { browser: "Veterinário", visitors: 210, fill: "var(--color-vet)" },
+  { browser: "Impostos", visitors: 118, fill: "var(--color-impostos)" },
+  { browser: "Infraestrutura", visitors: 150, fill: "var(--color-infraestrutura)" },
+]
+
+const chartConfig2 = {
+  visitors: { label: "Visitors", },
+  insumos: { label: "Insumos", color: "var(--chart-1)", },
+  salario: { label: "Salário", color: "var(--chart-2)", },
+  maquinas: { label: "Máquinas", color: "var(--chart-3)", },
+  alimentacao: { label: "Alimentação", color: "var(--chart-4)", },
+  medicamentos: { label: "Medicamentos", color: "var(--chart-5)", },
+  vet: { label: "Veterinário", color: "#818C5A", },
+  impostos: { label: "Impostos", color: "#61674D", },
+  infraestrutura: { label: "Infraestrutura", color: "#B9BFA5", },
+}
+
+export function GraficoPizza() {
+  return (
+    <Card className="flex flex-col w-full h-full">
+      <CardHeader className="items-center pb-0">
+        <CardTitle>Despesas</CardTitle>
+        <CardDescription>750</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 pb-4 flex justify-center items-center">
+        <ChartContainer config={chartConfig2} className="w-[90%] h-[90%] flex justify-center items-center">
+          <PieChart width={300} height={300}>
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <Pie data={chartData2} dataKey="visitors" nameKey="browser" innerRadius={80} outerRadius={120} />
+          </PieChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  )
+}
+
+//tabela saídas
+const saidas = [
+    { id: 1, descricao: "Compra dos medicamentos", tipo:"medicamentos", valor: "410,00", data: "16/10/2025"},
+    { id: 2, descricao: "Manutenção do maquinário", tipo:"Máquinas",  valor: "980,00", data: "16/10/2025"},
+    { id: 3, descricao: "Compra dos fertilizantes", tipo:"Insumos", valor: "1090,00", data: "14/10/2025"},
+    { id: 4, descricao: "Abastecimento do trator", tipo:"Combustível",  valor: "350,00", data: "15/10/2025"},
+    { id: 5, descricao: "Pagamento de mão de obra", tipo:"Serviços", valor: "1.500,00", data: "17/10/2025" },
+    { id: 6, descricao: "Compra de ração animal", tipo:"Alimentação", valor: "750,00", data: "17/10/2025" },
+    { id: 7, descricao: "Reparo no sistema de irrigação", tipo:"Manutenção", valor: "480,50", data: "18/10/2025"},
+    { id: 8, descricao: "Compra de sementes", tipo:"Insumos", valor: "620,00", data: "18/10/2025" }
+];
+
+export function TabelaSaidas() {
+    const [categoria, setCategoria] = useState("");
+    const [status, setStatus] = useState("");
+    const [busca, setBusca] = useState("");
+
+    return (
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-xl font-semibold">Estoque</h2>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Ordenar por</SelectLabel>
+                                <SelectItem value="id">Id</SelectItem>
+                                <SelectItem value="medicamentos">Medicamentos</SelectItem>
+                                <SelectItem value="maquinas">Máquinas</SelectItem>
+                                <SelectItem value="insumos">Insumos</SelectItem>
+                                <SelectItem value="valor">Valor</SelectItem>
+                                <SelectItem value="data">Data</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
+            </div>
+            <Table>
+                <TableHeader>
+                    <TableRow className="bg-gray-100 dark:bg-gray-800">
+                        <TableHead className="w-[80px] font-semibold">ID</TableHead>
+                        <TableHead className="font-semibold">Descrição</TableHead>
+                        <TableHead className="font-semibold">Tipo</TableHead>
+                        <TableHead className="font-semibold">Valor Total</TableHead>
+                        <TableHead className="font-semibold">Data</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {saidas .filter((saida) =>
+                            (!categoria || saida.tipo === categoria) &&
+                            (!status || saida.status === status) &&
+                            (!busca || saida.descricao.toLowerCase().includes(busca.toLowerCase()))
+                        )
+                        .map((saida) => (
+                            <TableRow key={saida.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <TableCell className="font-medium">{saida.id}</TableCell>
+                                <TableCell>{saida.descricao}</TableCell>
+                                <TableCell>{saida.tipo}</TableCell>
+                                <TableCell>R$ {saida.valor}</TableCell>
+                                <TableCell> {saida.data}</TableCell>
+                            </TableRow>
+                        ))}
+                </TableBody>
+            </Table>
+        </div>
+    );
+}
+
+//tabela Venda Sob Demanda
+const pedidos = [
+    { id: 1, cliente: "S.M. Supermercado", data: "16/10/2025", valor: "567,00", status: "OK", pagamento: "Débito" },
+    { id: 2, cliente: "Assai Atacadista", data: "16/10/2025", valor: "1090,00", status: "OK", pagamento: "Crédito" },
+    { id: 3, cliente: "Atacadão", data: "14/10/2025", valor: "2.162,00", status: "Pendente", pagamento: "Boleto" },
+    { id: 4, cliente: "Mercado Extra", data: "15/10/2025", valor: "850,50", status: "OK", pagamento: "PIX" },
+    { id: 5, cliente: "Restaurante Bom Sabor", data: "17/10/2025", valor: "320,00", status: "Pendente", pagamento: "Boleto" },
+    { id: 6, cliente: "Carrefour", data: "17/10/2025", valor: "1.500,00", status: "OK", pagamento: "Crédito" },
+    { id: 7, cliente: "Padaria Central", data: "18/10/2025", valor: "250,80", status: "OK", pagamento: "Débito" },
+    { id: 8, cliente: "S.M. Supermercado", data: "18/10/2025", valor: "710,00", status: "Pendente", pagamento: "Boleto" }
+];
+
+export function TabelaSobDemanda() {
+    const [categoria, setCategoria] = useState("");
+    const [status, setStatus] = useState("");
+    const [busca, setBusca] = useState("");
+
+    return (
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-xl font-semibold">Estoque</h2>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Ordenar por</SelectLabel>
+                                <SelectItem value="id">Id do pedido</SelectItem>
+                                <SelectItem value="cliente">Cliente</SelectItem>
+                                <SelectItem value="data">Data</SelectItem>
+                                <SelectItem value="valor">Valor total</SelectItem>
+                                <SelectItem value="status">Status</SelectItem>
+                                <SelectItem value="pagamento">Pagamento</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
+            </div>
+            <Table>
+                <TableHeader>
+                    <TableRow className="bg-gray-100 dark:bg-gray-800">
+                        <TableHead className="w-[80px] font-semibold">ID</TableHead>
+                        <TableHead className="font-semibold">Cliente</TableHead>
+                        <TableHead className="font-semibold">Data</TableHead>
+                        <TableHead className="font-semibold">Valor Total</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Pagamento</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {pedidos .filter((pedido) =>
+                            (!categoria || pedido.tipo === categoria) &&
+                            (!status || pedido.status === status) &&
+                            (!busca || pedido.cliente.toLowerCase().includes(busca.toLowerCase()))
+                        )
+                        .map((pedido) => (
+                            <TableRow key={pedido.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <TableCell className="font-medium">{pedido.id}</TableCell>
+                                <TableCell>{pedido.cliente}</TableCell>
+                                <TableCell>{pedido.data}</TableCell>
+                                <TableCell>R$ {pedido.valor}</TableCell>
+                                <TableCell> {pedido.status}</TableCell>
+                                <TableCell> {pedido.pagamento}</TableCell>
                             </TableRow>
                         ))}
                 </TableBody>
