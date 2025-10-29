@@ -8,6 +8,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// npx prisma db push — envia o schema.prisma para o banco
+
 // ============================================
 // TABELAS BASE
 // ============================================
@@ -35,49 +37,54 @@ model Fornecedor {
   atualizadoEm     DateTime            @default(now()) @updatedAt @map("atualizado_em")
   produtos         ProdutoFornecedor[]
 
-  unidade Unidade? @relation("UsuarioUnidade", fields: [unidadeId], references: [id], onDelete: SetNull)
+  Unidade Unidade? @relation(fields: [unidadeId], references: [id])
 
   @@map("fornecedores")
 }
 
 model Unidade {
-  id           Int          @id @default(autoincrement())
-  gerenteId    Int?         @map("gerente_id")
-  nome         String       @db.VarChar(100)
-  endereco     String
-  status       Boolean      @default(true)
-  criadoEm     DateTime     @default(now()) @map("criado_em")
-  atualizadoEm DateTime     @default(now()) @updatedAt @map("atualizado_em")
-  tipo         tipo_unidade
-  caixas       Caixa[]
-  estoques     Estoque[]
-  lotes        Lote[]
-  produtos     Produto[]
-  gerente      Usuario?     @relation("GerenteUnidade", fields: [gerenteId], references: [id])
-  usuarios     Usuario[]    @relation("UsuarioUnidade")
-  vendas       Venda[]
+  id           Int         @id @default(autoincrement())
+  gerenteId    Int?        @map("gerente_id")
+  nome         String      @db.VarChar(100)
+  endereco     String      @db.Text
+  tipo         TipoUnidade
+  status       Boolean     @default(true)
+  criadoEm     DateTime    @default(now()) @map("criado_em")
+  atualizadoEm DateTime    @default(now()) @updatedAt @map("atualizado_em")
+
+  gerente    Usuario?     @relation("GerenteUnidade", fields: [gerenteId], references: [id], onDelete: SetNull)
+  usuarios   Usuario[]    @relation("UsuarioUnidade")
+  produtos   Produto[]
+  estoques   Estoque[]
+  lotes      Lote[]
+  caixas     Caixa[]
+  vendas     Venda[]
+  Fornecedor Fornecedor[]
 
   @@map("unidades")
 }
 
 model Usuario {
-  id                  Int          @id @default(autoincrement())
-  perfilId            Int          @map("perfil_id")
-  unidadeId           Int?         @map("unidade_id")
-  nome                String       @db.VarChar(100)
-  email               String       @unique @db.VarChar(100)
-  senha               String       @db.VarChar(255)
-  telefone            String       @db.VarChar(20)
-  status              Boolean      @default(true)
-  criadoEm            DateTime     @default(now()) @map("criado_em")
-  atualizadoEm        DateTime     @default(now()) @updatedAt @map("atualizado_em")
-  caixas              Caixa[]
+  id           Int      @id @default(autoincrement())
+  perfilId     Int      @map("perfil_id")
+  unidadeId    Int?     @map("unidade_id")
+  nome         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(100)
+  senha        String   @db.VarChar(255)
+  telefone     String   @db.VarChar(20)
+  status       Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
+
+  perfil              Perfil           @relation(fields: [perfilId], references: [id], onDelete: Restrict)
+  unidade             Unidade?         @relation("UsuarioUnidade", fields: [unidadeId], references: [id], onDelete: SetNull)
+  unidadesGerenciadas Unidade[]        @relation("GerenteUnidade")
+  resetSenhas         ResetSenha[]
   lotes               Lote[]
-  reset_senhas        ResetSenha[]
-  unidadesGerenciadas Unidade[]    @relation("GerenteUnidade")
-  perfil              Perfil       @relation(fields: [perfilId], references: [id])
-  unidade             Unidade?     @relation("UsuarioUnidade", fields: [unidadeId], references: [id])
+  caixas              Caixa[]
   vendas              Venda[]
+  saidas              Saidas[]
+  AtividadesLote      AtividadesLote[]
 
   @@map("usuarios")
 }
@@ -89,49 +96,57 @@ model ResetSenha {
   codigoExpira DateTime @map("codigo_expira")
   usado        Boolean  @default(false)
   criadoEm     DateTime @default(now()) @map("criado_em")
-  usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("reset_senhas")
 }
 
+// ============================================
+// LOTES E PRODUÇÃO
+// ============================================
+
 model Lote {
-  id                     Int                   @id @default(autoincrement())
-  unidadeId              Int                   @map("unidade_id")
-  responsavelId          Int                   @map("responsavel_id")
-  nome                   String                @db.VarChar(255)
-  qntdItens              Int                   @map("qntd_itens")
-  observacoes            String?
-  dataCriacao            DateTime              @default(now()) @map("data_criacao")
-  tipo                   tipo_lote
-  responsavel            Usuario               @relation(fields: [responsavelId], references: [id])
-  unidade                Unidade               @relation(fields: [unidadeId], references: [id])
-  producoes              Producao[]
+  id            Int      @id @default(autoincrement())
+  unidadeId     Int      @map("unidade_id")
+  responsavelId Int      @map("responsavel_id")
+  nome          String   @db.VarChar(255)
+  tipo          TipoLote
+  qntdItens     Int      @map("qntd_itens")
+  observacoes   String?  @db.Text
+  dataCriacao   DateTime @default(now()) @map("data_criacao")
+
+  unidade                Unidade               @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  responsavel            Usuario               @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
   produtos               Produto[]
-  rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
-  rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
+  producoes              Producao[]
   registrosSanitarios    RegistroSanitario[]
+  rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
+  rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
+  AtividadesLote         AtividadesLote[]
 
   @@map("lotes")
 }
 
 model Produto {
-  id             Int                 @id @default(autoincrement())
-  unidadeId      Int                 @map("unidade_id")
-  loteId         Int                 @map("lote_id")
-  nome           String              @db.VarChar(150)
-  sku            String              @unique @db.VarChar(50)
-  categoria      String?             @db.VarChar(100)
-  descricao      String?
-  preco          Decimal             @db.Decimal(10, 2)
-  dataFabricacao DateTime            @map("data_fabricacao")
-  dataValidade   DateTime            @map("data_validade")
-  criadoEm       DateTime            @default(now()) @map("criado_em")
-  atualizadoEm   DateTime            @default(now()) @updatedAt @map("atualizado_em")
-  estoques       Estoque[]
-  itensVendas    ItemVenda[]
-  lote           Lote                @relation(fields: [loteId], references: [id])
-  unidade        Unidade             @relation(fields: [unidadeId], references: [id])
-  fornecedores   ProdutoFornecedor[]
+  id             Int      @id @default(autoincrement())
+  unidadeId      Int      @map("unidade_id")
+  loteId         Int      @map("lote_id")
+  nome           String   @db.VarChar(150)
+  sku            String   @unique @db.VarChar(50)
+  categoria      String?  @db.VarChar(100)
+  descricao      String?  @db.Text
+  preco          Decimal  @db.Decimal(10, 2)
+  dataFabricacao DateTime @map("data_fabricacao")
+  dataValidade   DateTime @map("data_validade")
+  criadoEm       DateTime @default(now()) @map("criado_em")
+  atualizadoEm   DateTime @default(now()) @updatedAt @map("atualizado_em")
+
+  unidade      Unidade             @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  lote         Lote                @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  estoques     Estoque[]
+  fornecedores ProdutoFornecedor[]
+  itensVendas  ItemVenda[]
 
   @@map("produtos")
 }
@@ -143,22 +158,24 @@ model Estoque {
   quantidade    Int      @default(0)
   estoqueMinimo Int      @map("estoque_minimo")
   atualizadoEm  DateTime @default(now()) @updatedAt @map("atualizado_em")
-  produto       Produto  @relation(fields: [produtoId], references: [id])
-  unidade       Unidade  @relation(fields: [unidadeId], references: [id])
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
 
   @@unique([unidadeId, produtoId])
   @@map("estoques")
 }
 
 model ProdutoFornecedor {
-  id               Int        @id @default(autoincrement())
-  produtoId        Int        @map("produto_id")
-  fornecedorId     Int        @map("fornecedor_id")
-  precoCusto       Decimal?   @map("preco_custo") @db.Decimal(10, 2)
-  prazoEntregaDias Int?       @map("prazo_entrega_dias")
-  preferencial     Boolean    @default(false)
-  fornecedor       Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
-  produto          Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  id               Int      @id @default(autoincrement())
+  produtoId        Int      @map("produto_id")
+  fornecedorId     Int      @map("fornecedor_id")
+  precoCusto       Decimal? @map("preco_custo") @db.Decimal(10, 2)
+  prazoEntregaDias Int?     @map("prazo_entrega_dias")
+  preferencial     Boolean  @default(false)
+
+  produto    Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  fornecedor Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
 
   @@unique([produtoId, fornecedorId])
   @@map("produtos_fornecedores")
@@ -167,11 +184,12 @@ model ProdutoFornecedor {
 model Producao {
   id            Int      @id @default(autoincrement())
   loteId        Int      @map("lote_id")
-  tipoProduto   String   @map("tipo_produto")
+  tipoProduto   String   @map("tipo_produto") @db.Text
   quantidade    Float
   unidadeMedida String   @map("unidade_medida") @db.VarChar(50)
   dataRegistro  DateTime @default(now()) @map("data_registro")
-  lote          Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
+
+  lote Lote @relation(fields: [loteId], references: [id], onDelete: Cascade)
 
   @@map("producoes")
 }
@@ -182,8 +200,9 @@ model RastreabilidadeLote {
   loteDestinoId Int      @map("lote_destino_id")
   descricao     String?  @db.VarChar(255)
   dataVinculo   DateTime @default(now()) @map("data_vinculo")
-  loteDestino   Lote     @relation("LoteDestino", fields: [loteDestinoId], references: [id], onDelete: Cascade)
-  loteOrigem    Lote     @relation("LoteOrigem", fields: [loteOrigemId], references: [id], onDelete: Cascade)
+
+  loteOrigem  Lote @relation("LoteOrigem", fields: [loteOrigemId], references: [id], onDelete: Cascade)
+  loteDestino Lote @relation("LoteDestino", fields: [loteDestinoId], references: [id], onDelete: Cascade)
 
   @@map("rastreabilidade_lotes")
 }
@@ -195,25 +214,29 @@ model AtividadesLote {
   loteId        Int
   // talhaoId Int
   data          DateTime
-  responsavelId String
-
-  lote        Lote    @relation("Atividades", fields: [loteId], references: [id], onDelete: Cascade)
+  responsavelId Int
   // talhao T
-  responsavel Usuario @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  responsavel   Usuario        @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  Lote          Lote           @relation(fields: [loteId], references: [id])
 }
 
 model RegistroSanitario {
-  id            Int                     @id @default(autoincrement())
-  loteId        Int                     @map("lote_id")
-  produto       String                  @db.VarChar(255)
-  dataAplicacao DateTime                @default(now()) @map("data_aplicacao")
+  id            Int                   @id @default(autoincrement())
+  loteId        Int                   @map("lote_id")
+  tipo          TipoRegistroSanitario
+  produto       String                @db.VarChar(255)
+  dataAplicacao DateTime              @default(now()) @map("data_aplicacao")
   quantidade    Float?
-  observacoes   String?
-  tipo          tipo_registro_sanitario
-  lote          Lote                    @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  observacoes   String?               @db.Text
+
+  lote Lote @relation(fields: [loteId], references: [id], onDelete: Cascade)
 
   @@map("registros_sanitarios")
 }
+
+// ============================================
+// VENDAS E CAIXA
+// ============================================
 
 model Caixa {
   id           Int       @id @default(autoincrement())
@@ -224,25 +247,27 @@ model Caixa {
   saldoFinal   Decimal?  @map("saldo_final") @db.Decimal(12, 2)
   abertoEm     DateTime  @map("aberto_em")
   fechadoEm    DateTime? @map("fechado_em")
-  unidade      Unidade   @relation(fields: [unidadeId], references: [id])
-  usuario      Usuario   @relation(fields: [usuarioId], references: [id])
-  vendas       Venda[]
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  vendas  Venda[]
 
   @@map("caixas")
 }
 
 model Venda {
-  id        Int            @id @default(autoincrement())
-  caixaId   Int            @map("caixa_id")
-  usuarioId Int            @map("usuario_id")
-  unidadeId Int            @map("unidade_id")
-  total     Decimal        @db.Decimal(12, 2)
-  criadoEm  DateTime       @default(now()) @map("criado_em")
-  pagamento tipo_pagamento
-  itens     ItemVenda[]
-  caixa     Caixa          @relation(fields: [caixaId], references: [id])
-  unidade   Unidade        @relation(fields: [unidadeId], references: [id])
-  usuario   Usuario        @relation(fields: [usuarioId], references: [id])
+  id        Int           @id @default(autoincrement())
+  caixaId   Int           @map("caixa_id")
+  usuarioId Int           @map("usuario_id")
+  unidadeId Int           @map("unidade_id")
+  total     Decimal       @db.Decimal(12, 2)
+  pagamento TipoPagamento
+  criadoEm  DateTime      @default(now()) @map("criado_em")
+
+  caixa   Caixa       @relation(fields: [caixaId], references: [id], onDelete: Restrict)
+  usuario Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  unidade Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  itens   ItemVenda[]
 
   @@map("vendas")
 }
@@ -255,48 +280,72 @@ model ItemVenda {
   precoUnitario Decimal @map("preco_unitario") @db.Decimal(12, 2)
   desconto      Decimal @default(0) @db.Decimal(12, 2)
   subtotal      Decimal @db.Decimal(12, 2)
-  produto       Produto @relation(fields: [produtoId], references: [id])
-  venda         Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+
+  venda   Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
 
   @@map("itens_vendas")
 }
 
 model Saidas {
-  id            Int       @id @default(autoincrement())
-  unidadeId     Int
-  descricao     String
-  tipo          tipo_saida
-  valor         itens
-  data          DateTime
-  usuario       Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  id        Int       @id @default(autoincrement())
+  usuarioId Int
+  unidadeId Int
+  descricao String
+  tipo      TipoSaida
+  valor     Decimal   @db.Decimal(12, 2)
+  data      DateTime
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 }
 
 // ============================================
 // ENUMS
 // ============================================
 
-enum tipo_unidade {
+enum TipoUnidade {
   Matriz
   Fazenda
   Loja
+
+  @@map("tipo_unidade")
 }
 
-enum tipo_lote {
+enum TipoLote {
   Gado
   Soja
   Leite
   Outro
+
+  @@map("tipo_lote")
 }
 
-enum tipo_registro_sanitario {
+enum TipoRegistroSanitario {
   VACINA
   MEDICACAO
   RACAO
   OUTRO
+
+  @@map("tipo_registro_sanitario")
 }
 
-enum tipo_pagamento {
+enum TipoPagamento {
   DINHEIRO
   CARTAO
   PIX
+
+  @@map("tipo_pagamento")
+}
+
+enum TipoSaida {
+  ALUGUEL
+  AGUA
+  ENERGIA
+  MANUTENCAO
+  SALARIOS
+}
+
+enum AtividadesEnum {
+  PLANTIO
+  ADUBACAO
+  FERTILIZACAO
 }
