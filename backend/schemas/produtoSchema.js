@@ -16,12 +16,3 @@ export const produtoSchema = z.object({
   criadoEm: z.date().optional(),
   atualizadoEm: z.date().optional(),
 });
-
-// Se quiser validar criação e atualização separadamente:
-export const createProdutoSchema = produtoSchema.omit({
-  id: true,
-  criadoEm: true,
-  atualizadoEm: true,
-});
-
-export const updateProdutoSchema = produtoSchema.partial();
