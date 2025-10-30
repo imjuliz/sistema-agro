@@ -70,7 +70,7 @@ export default function Fornecedores(){
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      {/* <header className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1>SCP Dashboard</h1>
@@ -82,7 +82,7 @@ export default function Fornecedores(){
             Switch Role
           </Button>
         </div>
-      </header>
+      </header> */}
 
       <main className="container mx-auto p-6">
         {currentRole === 'supplier' && <SupplierDashboard />}

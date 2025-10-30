@@ -3,7 +3,6 @@
 //Funcionalidades: Registro de atividades (plantio, colheita, vacinação etc.). Planejamento de safra. Controle de estoque agrícola. Rastreabilidade: visualizar ciclo completo do produto.
 
 "use client"
-
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -157,7 +156,7 @@ export default function FazendasPage() {
                 </header>
 
                 {/* METRICS */}
-                <div className="grid grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-4 gap-4 mb-8">
                     <Card>
                         <CardHeader><CardTitle>Total de Fazendas</CardTitle></CardHeader>
                         <CardContent>
@@ -192,11 +191,11 @@ export default function FazendasPage() {
                 </div>
 
                 {/* Filters + cards */}
-                <Card>
+                <Card className={"mb-8"}>
                     <CardHeader>
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
+                        <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
                             <div className="flex items-center gap-3">
-                                <div className="ml-3 relative">
+                                <div className="relative">
                                     <Input placeholder="Buscar unidades, cidade ou responsável" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
                                 </div>
 
@@ -216,7 +215,7 @@ export default function FazendasPage() {
 
                                         <div className="space-y-3">
                                             {/* TIPO */}
-                                            <div>
+                                            {/* <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Tipo</div>
                                                 <div className="grid grid-cols-1 gap-1">
                                                     {["Matriz", "Fazenda", "Loja"].map(t => (
@@ -231,7 +230,7 @@ export default function FazendasPage() {
                                                 </div>
                                             </div>
 
-                                            <Separator />
+                                            <Separator /> */}
                                             {/* STATUS */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Status</div>
@@ -255,6 +254,13 @@ export default function FazendasPage() {
                                             {/* RESPONSAVEL - ainda nn funciona */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Responsável</div>
+                                                <Input placeholder="Filtrar por responsável" value={locationQuery} onChange={(e) => { setLocationQuery(e.target.value); setPage(1); }} />
+                                            </div>
+
+                                            <Separator />
+                                            {/* Area */}
+                                            <div>
+                                                <div className="text-xs text-muted-foreground mb-1">Área</div>
                                                 <Input placeholder="Filtrar por responsável" value={locationQuery} onChange={(e) => { setLocationQuery(e.target.value); setPage(1); }} />
                                             </div>
 
@@ -354,7 +360,7 @@ export default function FazendasPage() {
 
                 </Card>
 
-                <div className=''>
+                <div className='mb-8'>
                     <Card>
                         <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
                         <CardContent>
@@ -375,49 +381,14 @@ export default function FazendasPage() {
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={chartConfigFazendasProdutivas}>
-                                    <BarChart
-                                        accessibilityLayer
-                                        data={FazendasProdutivas}
-                                        layout="vertical"
-                                        margin={{
-                                            right: 16,
-                                        }}
-                                    >
+                                    <BarChart accessibilityLayer data={FazendasProdutivas} layout="vertical" margin={{ right: 16, }}>
                                         <CartesianGrid horizontal={false} />
-                                        <YAxis
-                                            dataKey="month"
-                                            type="category"
-                                            tickLine={false}
-                                            tickMargin={10}
-                                            axisLine={false}
-                                            tickFormatter={(value) => value.slice(0, 3)}
-                                            hide
-                                        />
+                                        <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} hide/>
                                         <XAxis dataKey="desktop" type="number" hide />
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent indicator="line" />}
-                                        />
-                                        <Bar
-                                            dataKey="desktop"
-                                            layout="vertical"
-                                            fill="var(--color-desktop)"
-                                            radius={4}
-                                        >
-                                            <LabelList
-                                                dataKey="month"
-                                                position="insideLeft"
-                                                offset={8}
-                                                className="fill-(--color-label)"
-                                                fontSize={12}
-                                            />
-                                            <LabelList
-                                                dataKey="desktop"
-                                                position="right"
-                                                offset={8}
-                                                className="fill-foreground"
-                                                fontSize={12}
-                                            />
+                                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                                        <Bar dataKey="desktop" layout="vertical" fill="var(--color-desktop)" radius={4} >
+                                            <LabelList dataKey="month" position="insideLeft" offset={8} className="fill-(--color-label)" fontSize={12} />
+                                            <LabelList dataKey="desktop" position="right" offset={8} className="fill-foreground" fontSize={12} />
                                         </Bar>
                                     </BarChart>
                                 </ChartContainer>
@@ -439,33 +410,11 @@ export default function FazendasPage() {
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={chartConfigProducaoSemanal}>
-                                    <LineChart
-                                        accessibilityLayer
-                                        data={ProducaoSemanal}
-                                        margin={{
-                                            left: 12,
-                                            right: 12,
-                                        }}
-                                    >
+                                    <LineChart accessibilityLayer data={ProducaoSemanal} margin={{ left: 12, right: 12, }} >
                                         <CartesianGrid vertical={false} />
-                                        <XAxis
-                                            dataKey="week"
-                                            tickLine={false}
-                                            axisLine={false}
-                                            tickMargin={8}
-                                            tickFormatter={(value) => value.slice(0, 3)}
-                                        />
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent hideLabel />}
-                                        />
-                                        <Line
-                                            dataKey="desktop"
-                                            type="natural"
-                                            stroke="var(--color-desktop)"
-                                            strokeWidth={2}
-                                            dot={false}
-                                        />
+                                        <XAxis dataKey="week" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                                        <Line dataKey="desktop" type="natural" stroke="var(--color-desktop)" strokeWidth={2} dot={false} />
                                     </LineChart>
                                 </ChartContainer>
                             </CardContent>
