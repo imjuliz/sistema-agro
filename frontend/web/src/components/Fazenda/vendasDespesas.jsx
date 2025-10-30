@@ -23,6 +23,7 @@ export function SectionCards() {
                 </CardHeader>
                 <CardFooter>17/10</CardFooter>
             </Card>
+
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Lucro</CardDescription>
@@ -32,6 +33,7 @@ export function SectionCards() {
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">R$18.090,00</CardTitle>
                 </CardHeader>
             </Card>
+
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Próximo envio</CardDescription>
@@ -41,6 +43,7 @@ export function SectionCards() {
                     <div className="text-muted-foreground">Lojas Agrofeliz</div>
                 </CardFooter>
             </Card>
+
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Lojas parceiras</CardDescription>
@@ -190,7 +193,7 @@ export function EnvioLotes() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Estoque</h2>
+                    <h2 className="text-xl font-semibold">Envio de Lotes Recorrentes</h2>
                     <Select onValueChange={setCategoria}>
                         <SelectTrigger className="w-[150px]">
                             <SelectValue placeholder="Ordenar por" />
@@ -306,7 +309,7 @@ export function TabelaSaidas() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Estoque</h2>
+                    <h2 className="text-xl font-semibold">Saídas</h2>
                     <Select onValueChange={setCategoria}>
                         <SelectTrigger className="w-[150px]"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
                         <SelectContent>
@@ -376,7 +379,7 @@ export function TabelaSobDemanda() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Estoque</h2>
+                    <h2 className="text-xl font-semibold">Vendas Sob Demanda</h2>
                     <Select onValueChange={setCategoria}>
                         <SelectTrigger className="w-[150px]"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
                         <SelectContent>
