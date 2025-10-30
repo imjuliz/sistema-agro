@@ -54,7 +54,6 @@ model Unidade {
 
   gerente    Usuario?     @relation("GerenteUnidade", fields: [gerenteId], references: [id], onDelete: SetNull)
   usuarios   Usuario[]    @relation("UsuarioUnidade")
-  produtos   Produto[]
   estoques   Estoque[]
   lotes      Lote[]
   caixas     Caixa[]
@@ -114,7 +113,8 @@ model Lote {
   tipo          TipoLote
   qntdItens     Int      @map("qntd_itens")
   observacoes   String?  @db.Text
-  dataCriacao   DateTime @default(now()) @map("data_criacao")
+  dataFabricacao DateTime @map("data_fabricacao")
+  dataValidade   DateTime @map("data_validade")
 
   unidade                Unidade               @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
   responsavel            Usuario               @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
@@ -130,25 +130,20 @@ model Lote {
 
 model Produto {
   id             Int      @id @default(autoincrement())
-  unidadeId      Int      @map("unidade_id")
   loteId         Int      @map("lote_id")
   nome           String   @db.VarChar(150)
-  sku            String   @unique @db.VarChar(50)
-  categoria      String?  @db.VarChar(100)
+  sku            String   @unique @default(uuid()) @db.VarChar(50)
+  categoria      TipoCategoria
   descricao      String?  @db.Text
   preco          Decimal  @db.Decimal(10, 2)
-  dataFabricacao DateTime @map("data_fabricacao")
-  dataValidade   DateTime @map("data_validade")
   criadoEm       DateTime @default(now()) @map("criado_em")
   atualizadoEm   DateTime @default(now()) @updatedAt @map("atualizado_em")
 
-  unidade      Unidade             @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
   lote         Lote                @relation(fields: [loteId], references: [id], onDelete: Restrict)
   estoques     Estoque[]
   fornecedores ProdutoFornecedor[]
   itensVendas  ItemVenda[]
 
-  @@map("produtos")
   @@map("produtos")
 }
 
@@ -351,17 +346,7 @@ enum AtividadesEnum {
   FERTILIZACAO
 }
 
-
-enum TipoSaida {
-  ALUGUEL
-  AGUA
-  ENERGIA
-  MANUTENCAO
-  SALARIOS
-}
-
-enum AtividadesEnum {
+enum TipoCategoria {
+  ANIMALIA
   PLANTIO
-  ADUBACAO
-  FERTILIZACAO
 }

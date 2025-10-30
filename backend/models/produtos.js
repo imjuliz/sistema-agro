@@ -2,7 +2,7 @@ import prisma from '../prisma/client.js';
 
 export async function getProdutos() {
     try {
-        const produtos = await prisma.produtos.findMany();
+        const produtos = await prisma.produto.findMany();
         return {
             sucesso: true,
             produtos,
@@ -18,7 +18,7 @@ export async function getProdutos() {
 
 export async function getProdutoPorId(id) {
     try {
-        const produto = await prisma.produtos.findUnique({
+        const produto = await prisma.produto.findUnique({
             where: { id: id }
         });
         return {
@@ -38,7 +38,16 @@ export async function getProdutoPorId(id) {
 
 export async function createProduto(data) {
     try {
-        const produto = await prisma.produtos.create({ data });
+        const produto = await prisma.produto.create({ 
+            data: {
+                loteId: data.loteId,
+                nome: data.nome,
+                categoria: data.categoria,
+                descricao: data.descricao,
+                preco: data.preco,
+                criadoEm: new Date()
+            }
+        });
         return {
             sucesso: true,
             produto,
@@ -55,7 +64,7 @@ export async function createProduto(data) {
 
 export async function deleteProduto(id) {
     try {
-        const produto = await prisma.produtos.delete({
+        const produto = await prisma.produto.delete({
             where: { id }
         });
         return {

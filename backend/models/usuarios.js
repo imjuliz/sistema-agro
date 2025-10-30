@@ -4,7 +4,7 @@ import prisma from '../prisma/client.js';
 
 export const listarFuncionarios = async (unidadeId) =>{ // TESTAR
     try {
-    const funcionarios = await prisma.Usuario.findMany({
+    const funcionarios = await prisma.usuario.findMany({
         where: { unidadeId: Number(unidadeId) },
         
     })
@@ -24,7 +24,7 @@ export const listarFuncionarios = async (unidadeId) =>{ // TESTAR
 
 export const listarAdmins = async (unidadeId) =>{
     try{
-        const admins = await prisma.Usuario.findMany({
+        const admins = await prisma.usuario.findMany({
             where:{
                 unidadeId: Number(unidadeId),
                 perfilId: 3 //os administradores (os que podem acessar o sistema) terão o perfilId. Os funcionarios normais não.
