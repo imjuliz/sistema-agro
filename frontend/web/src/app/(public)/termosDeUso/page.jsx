@@ -1,5 +1,4 @@
 //uma página de termos de uso com indice para rapida navegação
-
 import Footer from "@/components/Home/sections/footer/default";
 import Navbar from "@/components/Home/sections/navbar/default";
 
@@ -59,46 +58,16 @@ export default function TermosDeUso() {
     ];
 
     const indice = [
-        {
-            'href': 'termos',
-            'titulo': 'Aceitação dos Termos'
-        },
-        {
-            'href': 'definicoes',
-            'titulo': 'Definições'
-        },
-        {
-            'href': 'funcionalidade',
-            'titulo': 'Funcionalidade do Sistema'
-        },
-        {
-            'href': 'obrigacoes',
-            'titulo': 'Obrigações do Usuário'
-        },
-        {
-            'href': 'propriedade',
-            'titulo': 'Propriedade Intelectual'
-        },
-        {
-            'href': 'privacidade',
-            'titulo': 'Privacidade e Proteção de Dados'
-        },
-        {
-            'href': 'limitacao',
-            'titulo': 'Limitação de Responsabilidade'
-        },
-        {
-            'href': 'modificacoes',
-            'titulo': 'Modificações nos Termos e no Sistema'
-        },
-        {
-            'href': 'cancelamento',
-            'titulo': 'Cancelamento e Encerramento de Conta'
-        },
-        {
-            'href': 'disposicoes',
-            'titulo': 'Disposições Gerais'
-        },
+        {'href': 'termos','titulo': 'Aceitação dos Termos'},
+        {'href': 'definicoes','titulo': 'Definições'},
+        {'href': 'funcionalidade','titulo': 'Funcionalidade do Sistema'},
+        {'href': 'obrigacoes','titulo': 'Obrigações do Usuário'},
+        {'href': 'propriedade','titulo': 'Propriedade Intelectual'},
+        {'href': 'privacidade','titulo': 'Privacidade e Proteção de Dados'},
+        {'href': 'limitacao','titulo': 'Limitação de Responsabilidade'},
+        {'href': 'modificacoes','titulo': 'Modificações nos Termos e no Sistema'},
+        {'href': 'cancelamento','titulo': 'Cancelamento e Encerramento de Conta'},
+        {'href': 'disposicoes','titulo': 'Disposições Gerais'},
     ]
     return (
         <>
@@ -190,7 +159,6 @@ export default function TermosDeUso() {
                         </div>
                     </div>
                 </div>
-
             </main>
             <Footer />
         </>

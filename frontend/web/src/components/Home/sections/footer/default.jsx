@@ -15,17 +15,8 @@ export default function FooterSection(props) {
         links: [
           { text: "Sobre Nós", href: '/sobreNos' },
           { text: "Blog", href: '/blog' },
-          // { text: "Documentation", href: siteConfig.url },
         ],
       },
-      // {
-      //   title: "Company",
-      //   links: [
-      //     { text: "About", href: siteConfig.url },
-      //     { text: "Careers", href: siteConfig.url },
-      //     { text: "Blog", href: siteConfig.url },
-      //   ],
-      // },
       {
         title: "Contatos",
         links: [
@@ -59,11 +50,7 @@ export default function FooterSection(props) {
               <FooterColumn key={index}>
                 <h3 className="text-md pt-1 font-semibold">{column.title}</h3>
                 {column.links.map((link, linkIndex) => (
-                  <a
-                    key={linkIndex}
-                    href={link.href}
-                    className="text-muted-foreground text-sm"
-                  >
+                  <a key={linkIndex} href={link.href} className="text-muted-foreground text-sm">
                     {link.text}
                   </a>
                 ))}

@@ -128,10 +128,6 @@ const atividades = [
 ];
 
 export function TableDemo() {
-    const [categoria, setCategoria] = useState("");
-    const [status, setStatus] = useState("");
-    const [busca, setBusca] = useState("");
-
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
@@ -185,42 +181,38 @@ const produtos = [
     { value: "grapes", label: "Milho" }, { value: "pineapple", label: "Trigo" },
 ];
 const tipos = [{ value: 'colheita', label: 'Colheita' }, { value: 'producao', label: 'Produção' },]
+
 export function ChartLineMultiple() {
     return (
         <Card className="h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4 ">
-                        <div className="flex items-center gap-4 flex-wrap font-bold ">
-                            <Select> 
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Tipos" />
-                                </SelectTrigger> 
-                                <SelectContent>  
-                                    <SelectGroup>  
-                                        <SelectLabel>Tipos</SelectLabel>  
-                                        {tipos.map((tipo) => (
-                                            <SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>
-                                        ))}  
-                                    </SelectGroup>  
-                                </SelectContent>  
-                            </Select>
-                            <h3 className='text-gray-500'>de</h3>
-                            <Select> 
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Produtos" />
-                                </SelectTrigger>  
-                                <SelectContent> 
-                                    <SelectGroup> 
-                                        <SelectLabel>Produtos</SelectLabel> 
-                                        {produtos.map((produto) => (
-                                            <SelectItem key={produto.value} value={produto.value}>{produto.label}</SelectItem>
-                                        ))} 
-                                    </SelectGroup>  
-                                </SelectContent> 
-                            </Select>
-                        </div>
-                       
+                <div className="flex items-center gap-4 flex-wrap font-bold ">
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Tipos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Tipos</SelectLabel>
+                                {tipos.map((tipo) => (<SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <h3 className='text-gray-500'>de</h3>
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Produtos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Produtos</SelectLabel>
+                                {produtos.map((produto) => (<SelectItem key={produto.value} value={produto.value}>{produto.label}</SelectItem>))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
-             <CardDescription>January - June 2024</CardDescription>
+            <CardDescription>January - June 2024</CardDescription>
             <CardContent>
                 <ChartContainer config={chartConfig2}>
                     <LineChart accessibilityLayer data={chartData2} margin={{ left: 12, right: 12 }}>
@@ -250,7 +242,6 @@ const lotes = [
 
 export function TableDemo2() {
     const [categoria, setCategoria] = useState("");
-    const [status, setStatus] = useState("");
     const [busca, setBusca] = useState("");
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
@@ -270,7 +261,6 @@ export function TableDemo2() {
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-
                     <Select onValueChange={setCategoria}>
                         <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
