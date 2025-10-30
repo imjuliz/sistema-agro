@@ -1,9 +1,9 @@
-import prisma from "../prisma/client";
+import { getEstoques, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque } from "../models/estoque.js";
+import { estoqueSchema } from "../schemas/estoqueSchema.js";
 
-
-export async function getEstoques() {
+export async function getEstoquesController (req, res) {
     try {
-        const estoques = await prisma.estoque.findMany();
+        const estoques = await getEstoques();
         return {
             sucesso: true,
             estoques,
@@ -18,35 +18,28 @@ export async function getEstoques() {
     }
 };
 
-export async function getEstoquePorId(id) {
+export async function getEstoquePorIdController (req, res) {
     try {
-        const estoque = await prisma.estoque.findUnique({
-            where: { id }
-        });
+        const { id } = req.params;
+        const estoque = await getEstoquePorId(id);
         return {
             sucesso: true,
             estoque,
             message: "Estoque listado com sucesso."
-        }
+        };
     } catch (error) {
         return {
             sucesso: false,
             erro: "Erro ao listar estoque por id.",
             detalhes: error.message // opcional, para debug
-        }
+        };
     }
 };
 
-export async function createEstoque(data) {
+export async function createEstoqueController (req, res) {
     try {
-        const novoEstoque = await prisma.estoque.create({
-            data: {
-                unidadeId: data.unidadeId,
-                produtoId: data.produtoId,
-                quantidade: data.quantidade,
-                estoqueMinimo: data.estoqueMinimo
-            }
-        });
+        const { data } = estoqueSchema.parse(req.body);
+        const novoEstoque = await createEstoque(data);
         return {
             sucesso: true,
             novoEstoque,
@@ -57,24 +50,17 @@ export async function createEstoque(data) {
             sucesso: false,
             erro: "Erro ao criar estoque.",
             detalhes: error.message // opcional, para debug
-        }
+        };
     }
 };
 
-export async function updateEstoque(id, data) {
+export async function updateEstoqueController (req, res) {
     try {
-        const estoqueAtualizado = await prisma.estoque.update({
-            where: { id },
-            data: {
-                unidadeId: data.unidadeId,
-                produtoId: data.produtoId,
-                quantidade: data.quantidade,
-                estoqueMinimo: data.estoqueMinimo
-            }
-        });
+        const { id } = req.params;
+        const { data } = await updateEstoque(id, data);
         return {
             sucesso: true,
-            estoqueAtualizado,
+            data,
             message: "Estoque atualizado com sucesso."
         };
     } catch (error) {
@@ -82,15 +68,14 @@ export async function updateEstoque(id, data) {
             sucesso: false,
             erro: "Erro ao atualizar estoque.",
             detalhes: error.message // opcional, para debug
-        }
+        };
     }
 };
 
-export async function deleteEstoque(id) {
+export async function deleteEstoqueController (req, res) {
     try {
-        await prisma.estoque.delete({
-            where: { id }
-        });
+        const { id } = req.params;
+        await deleteEstoque(id);
         return {
             sucesso: true,
             message: "Estoque deletado com sucesso."
@@ -100,6 +85,6 @@ export async function deleteEstoque(id) {
             sucesso: false,
             erro: "Erro ao deletar estoque.",
             detalhes: error.message // opcional, para debug
-        }
+        };
     }
-};
+}
