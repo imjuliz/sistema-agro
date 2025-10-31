@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 
 const tabs = [
   { id: 'overview', label: 'Overview', count: null },
-  { id: 'jobs', label: 'Jobs', count: 12 },
+  // { id: 'jobs', label: 'Jobs', count: 12 },
   { id: 'estoque', label: 'Estoque', count: 47 },
   { id: 'equipe', label: 'Equipe', count: 8 },
   { id: 'atividades', label: 'Atividades', count: 23 },
