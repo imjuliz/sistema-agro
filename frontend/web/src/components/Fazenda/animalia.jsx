@@ -1,11 +1,13 @@
 "use client"
 import * as React from 'react';
+import { useState } from "react";
 import { Pie, PieChart} from "recharts"
 //ui
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-import { Select} from "@/components/ui/select"
 import { Table, TableBody, TableCaption, TableCell,  TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 //mui
 
 export function SectionCards() {
@@ -89,10 +91,30 @@ const atividades = [
 
 
 export function TableDemo() {
+      const [categoria, setCategoria] = useState("");
+        const [busca, setBusca] = useState("");
+    
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-xl font-semibold">Atividades</h2>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Ordenar por</SelectLabel>
+                                <SelectItem value="id">Id</SelectItem>
+                                <SelectItem value="tipo">Tipo</SelectItem>
+                                <SelectItem value="data">Data</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
+            </div>
             <Table>
-                <TableCaption>Atividades Agrícolas</TableCaption>
+                <TableCaption>Atividades Animais</TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>
@@ -120,7 +142,7 @@ export function TableDemo() {
     )
 }
 
-//tabela de lotes(vegetais)
+//tabela de lotes(animais)
 const lotes = [
   { id: 1, animal: "Nelore", tipo: "Bovinos", preco: "450", unMedida: "arroba", status: "Em desenvolvimento", finalidade: "Corte", qtd: "500" },
   { id: 2, animal: "Merina", tipo: "Ovinos", preco: "360", unMedida: "arroba", status: "Em reprodução", finalidade: "Lã", qtd: "275" },
@@ -133,9 +155,60 @@ const lotes = [
 ];
 
 export function TableDemo2() {
+        const [categoria, setCategoria] = useState("");
+        const [busca, setBusca] = useState("");
+    
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full">
+         <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-xl font-semibold">Lotes de Animais</h2>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Tipo</SelectLabel>
+                                <SelectItem value="bovinos">Bovinos</SelectItem>
+                                <SelectItem value="suinos">Suínos</SelectItem>
+                                <SelectItem value="aves">Aves</SelectItem>
+                                <SelectItem value="ovinos">Ovinos</SelectItem>
+                                <SelectItem value="caprinos">Caprinos</SelectItem>
+                                <SelectItem value="equinos">Equinos</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Status</SelectLabel>
+                                <SelectItem value="ativo">Ativo</SelectItem>
+                                <SelectItem value="reproducao">Em reprodução</SelectItem>
+                                <SelectItem value="engorda">Em engorda</SelectItem>
+                                <SelectItem value="tratamento">Em tratamento</SelectItem>
+                                <SelectItem value="pronto">Pronto para abate</SelectItem>
+                                <SelectItem value="abatido">Abatido</SelectItem>
+                                <SelectItem value="vendido">Vendido</SelectItem>
+                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Preço" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Preço</SelectLabel>
+                                <SelectItem value="id">Id</SelectItem>
+                                <SelectItem value="tipo">Tipo</SelectItem>
+                                <SelectItem value="data">Data</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
+            </div>
             <Table>
+                 <TableCaption>Lotes de Animais</TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>

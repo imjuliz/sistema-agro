@@ -1,14 +1,3 @@
-// import OnboardingCompanyFarm from '@/components/UsageSelection/UsageSelection'
-
-// export default function Teste() {
-
-//     return (
-//         <>
-//             <OnboardingCompanyFarm />;
-//         </>
-//     )
-// }
-
 "use client";
 
 import { useState } from "react";
@@ -60,12 +49,8 @@ export default function Page() {
 
     // Mark current step as completed and move to next
     const newSteps = steps.map((step, index) => {
-      if (index === currentStep) {
-        return { ...step, completed: true, current: false };
-      }
-      if (index === currentStep + 1) {
-        return { ...step, current: true };
-      }
+      if (index === currentStep) {return { ...step, completed: true, current: false };}
+      if (index === currentStep + 1) {return { ...step, current: true };}
       return step;
     });
 
@@ -84,17 +69,7 @@ export default function Page() {
       <div className="border-onboarding-option-border fixed right-0 bottom-0 left-0 border-t p-4 lg:hidden">
         <div className="flex items-center justify-center gap-2 ">
           {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className={cn(
-                "h-2 w-2 rounded-full transition-colors ",
-                step.completed
-                  ? "bg-accent"
-                  : step.current
-                    ? "bg-primary"
-                    : "bg-onboarding-option-border"
-              )}
-            />
+            <div key={step.id} className={cn( "h-2 w-2 rounded-full transition-colors ",step.completed? "bg-accent": step.current? "bg-primary": "bg-onboarding-option-border")}/>
           ))}
         </div>
         <div className="mt-2 text-center">

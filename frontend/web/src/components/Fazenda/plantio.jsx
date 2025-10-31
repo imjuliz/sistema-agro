@@ -1,13 +1,15 @@
 "use client"
 import * as React from 'react';
-import {CartesianGrid, Line, LineChart, XAxis } from "recharts"
+import { useState } from "react";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import { IconTrendingDown } from "@tabler/icons-react"
 //ui
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, } from "@/components/ui/select"
-import { Table, TableBody, TableCaption, TableCell,  TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 //mui
 import Button from '@mui/material/Button';
 import { BarChart } from '@mui/x-charts/BarChart';
@@ -27,17 +29,18 @@ export function SectionCards() {
                     <Select />
                 </CardFooter>
             </Card>
+
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Próxima colheita</CardDescription>
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">Milho - 25/10</CardTitle>
                 </CardHeader>
             </Card>
+
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Quantidade colhida</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">
-                        12T
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">12T
                         <Select>
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
                             <SelectContent>
@@ -52,11 +55,11 @@ export function SectionCards() {
                     </CardTitle>
                 </CardHeader>
             </Card>
+
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Produção média por cultura</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">
-                        10T/ha
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">10T/ha
                         <Select>
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
                             <SelectContent>
@@ -78,9 +81,7 @@ export function SectionCards() {
 //grafico de barras
 export function GraficoDeBarras() {
     return (
-        <BarChart xAxis={[{ data: ['Vegetais', 'Frutas', 'Animália'], scaleType: 'band' }]}
-            series={[{ data: [4, 3, 5], color: '#99BF0F' }, { data: [1, 6, 3], color: '#738C16' },]}
-            height={650} barLabel="value" margin={{ left: 0 }} yAxis={[{ width: 50 }]} />
+        <BarChart xAxis={[{ data: ['Vegetais', 'Frutas', 'Animália'], scaleType: 'band' }]} series={[{ data: [4, 3, 5], color: '#99BF0F' }, { data: [1, 6, 3], color: '#738C16' },]} height={650} barLabel="value" margin={{ left: 0 }} yAxis={[{ width: 50 }]} />
     );
 }
 
@@ -95,6 +96,7 @@ export function ItemVariant() {
                 </ItemContent>
                 <ItemActions><Button variant="outline" size="sm">Open</Button></ItemActions>
             </Item>
+
             <Item variant="outline">
                 <ItemContent>
                     <ItemTitle>Outline Variant</ItemTitle>
@@ -102,6 +104,7 @@ export function ItemVariant() {
                 </ItemContent>
                 <ItemActions><Button variant="outline" size="sm">Open</Button></ItemActions>
             </Item>
+
             <Item variant="muted">
                 <ItemContent>
                     <ItemTitle>Muted Variant</ItemTitle>
@@ -113,21 +116,25 @@ export function ItemVariant() {
     )
 }
 
-
 const atividades = [
-  { id: 1, descricao: "Plantio de soja", tipo: "Plantio", lote: "Lote A", talhao: "Talhão 1", data: "2025-10-01", responsavel: "Carlos Silva" },
-  { id: 2, descricao: "Colheita de milho", tipo: "Colheita", lote: "Lote B", talhao: "Talhão 3", data: "2025-10-05", responsavel: "Ana Souza" },
-  { id: 3, descricao: "Aplicação de fertilizante NPK", tipo: "Fertilização", lote: "Lote C", talhao: "Talhão 2", data: "2025-10-08", responsavel: "João Lima" },
-  { id: 4, descricao: "Controle de pragas com inseticida", tipo: "Defensivo", lote: "Lote A", talhao: "Talhão 1", data: "2025-10-10", responsavel: "Marcos Rocha" },
-  { id: 5, descricao: "Irrigação por aspersão", tipo: "Irrigação", lote: "Lote D", talhao: "Talhão 4", data: "2025-10-12", responsavel: "Fernanda Costa" },
-  { id: 6, descricao: "Plantio de feijão", tipo: "Plantio", lote: "Lote E", talhao: "Talhão 5", data: "2025-10-15", responsavel: "Ricardo Alves" },
-  { id: 7, descricao: "Colheita de trigo", tipo: "Colheita", lote: "Lote F", talhao: "Talhão 6", data: "2025-10-18", responsavel: "Luciana Martins" },
-  { id: 8, descricao: "Aplicação de herbicida", tipo: "Defensivo", lote: "Lote B", talhao: "Talhão 3", data: "2025-10-20", responsavel: "Paulo Mendes" }
+    { id: 1, descricao: "Plantio de soja", tipo: "Plantio", lote: "Lote A", talhao: "Talhão 1", data: "2025-10-01", responsavel: "Carlos Silva" },
+    { id: 2, descricao: "Colheita de milho", tipo: "Colheita", lote: "Lote B", talhao: "Talhão 3", data: "2025-10-05", responsavel: "Ana Souza" },
+    { id: 3, descricao: "Aplicação de fertilizante NPK", tipo: "Fertilização", lote: "Lote C", talhao: "Talhão 2", data: "2025-10-08", responsavel: "João Lima" },
+    { id: 4, descricao: "Controle de pragas com inseticida", tipo: "Defensivo", lote: "Lote A", talhao: "Talhão 1", data: "2025-10-10", responsavel: "Marcos Rocha" },
+    { id: 5, descricao: "Irrigação por aspersão", tipo: "Irrigação", lote: "Lote D", talhao: "Talhão 4", data: "2025-10-12", responsavel: "Fernanda Costa" },
+    { id: 6, descricao: "Plantio de feijão", tipo: "Plantio", lote: "Lote E", talhao: "Talhão 5", data: "2025-10-15", responsavel: "Ricardo Alves" },
+    { id: 7, descricao: "Colheita de trigo", tipo: "Colheita", lote: "Lote F", talhao: "Talhão 6", data: "2025-10-18", responsavel: "Luciana Martins" },
+    { id: 8, descricao: "Aplicação de herbicida", tipo: "Defensivo", lote: "Lote B", talhao: "Talhão 3", data: "2025-10-20", responsavel: "Paulo Mendes" }
 ];
 
 export function TableDemo() {
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-xl font-semibold">Atividades Agrícolas</h2>
+                </div>
+            </div>
             <Table>
                 <TableCaption>Atividades Agrícolas</TableCaption>
                 <TableHeader>
@@ -168,39 +175,44 @@ const chartData2 = [
     { month: "Maio", desktop: 209, mobile: 130 },
     { month: "Junho", desktop: 214, mobile: 140 },
 ]
-const chartConfig2 = {
-    desktop: { label: "Desktop", color: "var(--chart-1)", },mobile: { label: "Mobile", color: "var(--chart-2)", },
-}
+const chartConfig2 = { desktop: { label: "Desktop", color: "var(--chart-1)", }, mobile: { label: "Mobile", color: "var(--chart-2)", }, }
 const produtos = [
-    { value: "apple", label: "Maçã" },{ value: "banana", label: "Banana" },{ value: "blueberry", label: "Cenoura" },
-    { value: "grapes", label: "Milho" },{ value: "pineapple", label: "Trigo" },
+    { value: "apple", label: "Maçã" }, { value: "banana", label: "Banana" }, { value: "blueberry", label: "Cenoura" },
+    { value: "grapes", label: "Milho" }, { value: "pineapple", label: "Trigo" },
 ];
-const tipos =[{value:'colheita', label:'Colheita'},{value:'producao', label:'Produção'},]
+const tipos = [{ value: 'colheita', label: 'Colheita' }, { value: 'producao', label: 'Produção' },]
+
 export function ChartLineMultiple() {
     return (
-        <Card className="h-full">
-            <CardHeader>
-                <CardTitle>Line Chart - Multiple</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
-                <CardDescription><Select>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Produto</SelectLabel>
-                            {produtos.map((produto) => (<SelectItem key={produto.value} value={produto.value}>{produto.label}</SelectItem>))}
-                        </SelectGroup>
-                    </SelectContent>
-                </Select></CardDescription>
-                 <CardDescription><Select>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Produto</SelectLabel>
-                            {tipos.map((tipo) => (<SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>))}
-                        </SelectGroup>
-                    </SelectContent>
-                </Select></CardDescription>
-            </CardHeader>
+        <Card className="h-full p-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-4 ">
+                <div className="flex items-center gap-4 flex-wrap font-bold ">
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Tipos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Tipos</SelectLabel>
+                                {tipos.map((tipo) => (<SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <h3 className='text-gray-500'>de</h3>
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Produtos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Produtos</SelectLabel>
+                                {produtos.map((produto) => (<SelectItem key={produto.value} value={produto.value}>{produto.label}</SelectItem>))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <CardDescription>January - June 2024</CardDescription>
             <CardContent>
                 <ChartContainer config={chartConfig2}>
                     <LineChart accessibilityLayer data={chartData2} margin={{ left: 12, right: 12 }}>
@@ -218,20 +230,66 @@ export function ChartLineMultiple() {
 
 //tabela de lotes(vegetais)
 const lotes = [
-  { id: 1, nome: "Beterraba", tipo: "Legume", talhao: "16", plantio: '16/10', validade: '15/12', status: 'Em desenvolvimento', qtd: '600', unMedida: 'un', preco: '1,20' },
-  { id: 2, nome: "Maçã", tipo: "Fruta", talhao: "05", plantio: '10/01', validade: '10/06', status: 'Em desenvolvimento', qtd: '1200', unMedida: 'kg', preco: '4,50' },
-  { id: 3, nome: "Cenoura", tipo: "Raiz", talhao: "12", plantio: '05/09', validade: '05/12', status: 'Pronto para colheita', qtd: '850', unMedida: 'kg', preco: '3,80' },
-  { id: 4, nome: "Alface", tipo: "Hortaliça", talhao: "03", plantio: '01/10', validade: '20/11', status: 'Pronto para colheita', qtd: '3000', unMedida: 'un', preco: '2,50' },
-  { id: 5, nome: "Milho", tipo: "Grão", talhao: "20", plantio: '15/05', validade: '15/09', status: 'Colhido', qtd: '5000', unMedida: 'kg', preco: '2,00' },
-  { id: 6, nome: "Abóbrinha", tipo: "Legume", talhao: "07", plantio: '20/08', validade: '10/11', status: 'Em desenvolvimento', qtd: '400', unMedida: 'kg', preco: '3,20' },
-  { id: 7, nome: "Acelga", tipo: "Hortaliça", talhao: "04", plantio: '03/10', validade: '30/11', status: 'Pronto para colheita', qtd: '1500', unMedida: 'un', preco: '3,00' },
-  { id: 8, nome: "Tomate", tipo: "Fruta", talhao: "11", plantio: '10/07', validade: '10/10', status: 'Colhido', qtd: '2500', unMedida: 'kg', preco: '5,50' },
+    { id: 1, nome: "Beterraba", tipo: "Legume", talhao: "16", plantio: '16/10', validade: '15/12', status: 'Em desenvolvimento', qtd: '600', unMedida: 'un', preco: '1,20' },
+    { id: 2, nome: "Maçã", tipo: "Fruta", talhao: "05", plantio: '10/01', validade: '10/06', status: 'Em desenvolvimento', qtd: '1200', unMedida: 'kg', preco: '4,50' },
+    { id: 3, nome: "Cenoura", tipo: "Raiz", talhao: "12", plantio: '05/09', validade: '05/12', status: 'Pronto para colheita', qtd: '850', unMedida: 'kg', preco: '3,80' },
+    { id: 4, nome: "Alface", tipo: "Hortaliça", talhao: "03", plantio: '01/10', validade: '20/11', status: 'Pronto para colheita', qtd: '3000', unMedida: 'un', preco: '2,50' },
+    { id: 5, nome: "Milho", tipo: "Grão", talhao: "20", plantio: '15/05', validade: '15/09', status: 'Colhido', qtd: '5000', unMedida: 'kg', preco: '2,00' },
+    { id: 6, nome: "Abóbrinha", tipo: "Legume", talhao: "07", plantio: '20/08', validade: '10/11', status: 'Em desenvolvimento', qtd: '400', unMedida: 'kg', preco: '3,20' },
+    { id: 7, nome: "Acelga", tipo: "Hortaliça", talhao: "04", plantio: '03/10', validade: '30/11', status: 'Pronto para colheita', qtd: '1500', unMedida: 'un', preco: '3,00' },
+    { id: 8, nome: "Tomate", tipo: "Fruta", talhao: "11", plantio: '10/07', validade: '10/10', status: 'Colhido', qtd: '2500', unMedida: 'kg', preco: '5,50' },
 ];
 
 export function TableDemo2() {
+    const [categoria, setCategoria] = useState("");
+    const [busca, setBusca] = useState("");
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-xl font-semibold">Lotes de Vegetais</h2>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Tipo</SelectLabel>
+                                <SelectItem value="legume">Legume</SelectItem>
+                                <SelectItem value="fruta">Fruta</SelectItem>
+                                <SelectItem value="raiz">Raiz</SelectItem>
+                                <SelectItem value="hortalica">Hortaliça</SelectItem>
+                                <SelectItem value="grao">Grão</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Status</SelectLabel>
+                                <SelectItem value="emPreparo">Em preparo</SelectItem>
+                                <SelectItem value="semeado">Semeado</SelectItem>
+                                <SelectItem value="desenvolvimento">Em Desenvolvimento</SelectItem>
+                                <SelectItem value="colhido">Colhido</SelectItem>
+                                <SelectItem value="vendido">Vendido</SelectItem>
+                                <SelectItem value="descartado">Descartado</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={setCategoria}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Preço" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Preço</SelectLabel>
+                                <SelectItem value="maior">Maior preço</SelectItem>
+                                <SelectItem value="menor">Menor preço</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
+            </div>
             <Table>
+                <TableCaption>Lotes Vegetais</TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>

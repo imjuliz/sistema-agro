@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 // import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Search, Filter, Plus, Edit, Trash2, ShoppingCart,Package,Star,DollarSign} from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, ShoppingCart, Package, Star, DollarSign } from 'lucide-react';
 
 export function ProductCatalog({ userType }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +76,7 @@ export function ProductCatalog({ userType }) {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -128,7 +128,7 @@ export function ProductCatalog({ userType }) {
               Cancelar
             </Button>
             <Button onClick={() => setShowAddProduct(false)} className="flex-1">
-             Adicionar
+              Adicionar
             </Button>
           </div>
         </div>
@@ -138,8 +138,8 @@ export function ProductCatalog({ userType }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3>{userType === 'supplier' ? 'Product Catalog Management' : 'Browse Products'}</h3>
+      <div className="flex items-center justify-between mb-0">
+        <h2 className="text-lg font-semibold mb-3">{userType === 'supplier' ? 'Product Catalog Management' : 'Produtos'}</h2>
         {userType === 'supplier' && (
           <Button onClick={() => setShowAddProduct(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -151,7 +151,7 @@ export function ProductCatalog({ userType }) {
       <div className="flex gap-4 items-center">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10"/>
+          <Input placeholder="Buscar produto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-48">
@@ -161,7 +161,7 @@ export function ProductCatalog({ userType }) {
           <SelectContent>
             {categories.map((category) => (
               <SelectItem key={category} value={category}>
-                {category === 'all' ? 'All Categories' : category}
+                {category === 'all' ? 'Todas categorias' : category}
               </SelectItem>
             ))}
           </SelectContent>
@@ -170,7 +170,7 @@ export function ProductCatalog({ userType }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
+          <Card key={product.id} className="overflow-hidden justify-between">
             <div className="aspect-video relative">
               {/* <ImageWithFallback
                 src={product.image}
@@ -183,8 +183,8 @@ export function ProductCatalog({ userType }) {
                 </Badge>
               </div>
             </div>
-            
-            <CardContent className="p-4">
+
+            <CardContent className="pt-4 ">
               <div className="space-y-3">
                 <div>
                   <h4 className="line-clamp-2">{product.name}</h4>
@@ -208,9 +208,9 @@ export function ProductCatalog({ userType }) {
                     <span className="text-lg">${product.price}</span>
                     <span className="text-sm text-muted-foreground ml-1">{product.unit}</span>
                   </div>
-                  {userType === 'consumer' && (
+                  {/* {userType === 'consumer' && (
                     <span className="text-xs text-muted-foreground">Min: {product.minOrder}</span>
-                  )}
+                  )} */}
                 </div>
 
                 <div className="flex gap-2">
@@ -225,10 +225,11 @@ export function ProductCatalog({ userType }) {
                       </Button>
                     </>
                   ) : (
-                    <Button className="flex-1" size="sm" disabled={product.stock === 0}>
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    </Button>
+                    <></>
+                    // <Button className="flex-1" size="sm" disabled={product.stock === 0}>
+                    //   <ShoppingCart className="h-4 w-4 mr-2" />
+                    //   {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    // </Button>
                   )}
                 </div>
               </div>

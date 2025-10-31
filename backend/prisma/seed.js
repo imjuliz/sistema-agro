@@ -1,21 +1,33 @@
-// arquivo para popular o banco com dados iniciais
-import prisma from "./client.js";
 import bcrypt from "bcryptjs";
+// arquivo para popular o banco com dados iniciais
+import { configDotenv } from "dotenv";
+configDotenv();
+import prisma from "./client.js";
+import pkg from "./generated/index.js";
+const { TipoUnidade } = pkg;
 
 async function main() {
+    try {
+        // Validar conexão com o banco
+        console.log("🔗 Conectando ao banco de dados...");
+        await prisma.$connect();
+        console.log("✅ Conexão com banco estabelecida com sucesso");
 
     // Limpar dados antigos
-    await prisma.usuarios.deleteMany({});
-    await prisma.unidades.deleteMany({});
-    await prisma.perfis.deleteMany({});
+        console.log("🧹 Limpando dados antigos...");
+        await prisma.usuario.deleteMany({});
+        await prisma.unidade.deleteMany({});
+        await prisma.perfil.deleteMany({});
 
-    console.log("Dados antigos apagados com sucesso");
-
-    //
-
+        console.log("✅ Dados antigos apagados com sucesso");
+    } catch (error) {
+        console.error("❌ Erro ao conectar ou limpar dados:", error);
+        throw error;
+    }
 
     // 1️. Criar perfis
-    await prisma.perfis.createMany({
+    console.log("👥 Criando perfis de usuário...");
+    const perfisResult = await prisma.perfil.createMany({
         data: [
             { nome: "gerente_matriz", descricao: "Gerente da matriz ou administração central" },
             { nome: "gerente_fazenda", descricao: "Gerente responsável pela fazenda" },
@@ -23,16 +35,17 @@ async function main() {
         ],
         skipDuplicates: true,
     });
-    console.log("Perfis criados com sucesso");
+    console.log(`✅ ${perfisResult.count} perfis criados com sucesso`);
 
     // 2️. Criar unidades
+    console.log("🏢 Criando unidades do sistema...");
     const unidadesData = [
-        { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 123, Zona Rural, São Paulo - SP", tipo: "Fazenda", gerenteId: null, status: true },
-        { nome: "Fazenda Beta", endereco: "Estrada do Campo, s/n, Zona Rural, Campinas - SP", tipo: "Fazenda", gerenteId: null, status: true },
-        { nome: "Loja Central", endereco: "Av. Principal, 456, Centro, São Paulo - SP, CEP: 01310-100", tipo: "Loja", gerenteId: null, status: true },
-        { nome: "Loja Norte", endereco: "Rua das Flores, 789, Zona Norte, São Paulo - SP, CEP: 02456-000", tipo: "Loja", gerenteId: null, status: true },
-        { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000, Centro, São Paulo - SP, CEP: 01310-200", tipo: "Matriz", gerenteId: null, status: true },
-        { nome: "Matriz Campinas", endereco: "Rua Corporativa, 200, Distrito Industrial, Campinas - SP, CEP: 13050-000", tipo: "Matriz", gerenteId: null, status: true},
+        { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 123, Zona Rural, São Paulo - SP", tipo: pkg.TipoUnidade.Fazenda, gerenteId: null, status: true },
+        { nome: "Fazenda Beta", endereco: "Estrada do Campo, s/n, Zona Rural, Campinas - SP", tipo: pkg.TipoUnidade.Fazenda, gerenteId: null, status: true },
+        { nome: "Loja Central", endereco: "Av. Principal, 456, Centro, São Paulo - SP, CEP: 01310-100", tipo: pkg.TipoUnidade.Loja, gerenteId: null, status: true },
+        { nome: "Loja Norte", endereco: "Rua das Flores, 789, Zona Norte, São Paulo - SP, CEP: 02456-000", tipo: pkg.TipoUnidade.Loja, gerenteId: null, status: true },
+        { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000, Centro, São Paulo - SP, CEP: 01310-200", tipo: pkg.TipoUnidade.Matriz, gerenteId: null, status: true },
+        { nome: "Matriz Campinas", endereco: "Rua Corporativa, 200, Distrito Industrial, Campinas - SP, CEP: 13050-000", tipo: pkg.TipoUnidade.Matriz, gerenteId: null, status: true},
     ];
 
     const unidadesCriadas = await prisma.unidade.createMany({
@@ -41,9 +54,11 @@ async function main() {
     });
     console.log(`✅ ${unidadesCriadas.count} unidades criadas com sucesso`);
 
+    console.log("🎉 Seed executado com sucesso! Banco de dados populado com dados iniciais.");
+
     // 3️. Buscar IDs de perfis e unidades
-    const perfis = await prisma.perfis.findMany();
-    const unidades = await prisma.unidades.findMany();
+    const perfis = await prisma.perfil.findMany();
+    const unidades = await prisma.unidade.findMany();
 
     const perfilMap = Object.fromEntries(perfis.map(p => [p.nome, p.id]));
     const unidadeMap = Object.fromEntries(unidades.map(u => [u.nome, u.id]));
@@ -79,7 +94,12 @@ async function main() {
     }
 
 main()
-    .catch(console.error)
+    .catch((error) => {
+        console.error("❌ Erro durante execução do seed:", error);
+        process.exit(1);
+    })
     .finally(async () => {
+        console.log("🔌 Desconectando do banco de dados...");
         await prisma.$disconnect();
+        console.log("✅ Desconectado com sucesso");
     });

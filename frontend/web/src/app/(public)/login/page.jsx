@@ -14,20 +14,13 @@ export default function LoginPage() {
                 <img src="/img/logoRuralTech.svg" className='w-80 h-20 dark:brightness-[0.9]' alt="RuralTech Logo"/>
               </div>
             </a>
-            <div className="flex-1"></div>
-            <ThemeToggle />
-          </div>
+            <div className="flex-1"></div><ThemeToggle /></div>
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
-            <LoginForm />
-          </div>
+          <div className="w-full max-w-xs"><LoginForm /></div>
         </div>
       </div>
-      <div className="bg-muted relative hidden lg:block">
-        {/* <img src="img/login.png" alt="Image" className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9] dark:greenscale" /> */}
-        <StarsBackground />
-      </div>
+      <div className="bg-muted relative hidden lg:block"><StarsBackground /></div>
     </div>
   );
 }

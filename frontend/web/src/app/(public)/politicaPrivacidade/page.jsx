@@ -1,6 +1,5 @@
 //uma página de termos de uso com indice para rapida navegação
 import Footer from "@/components/Home/sections/footer/default";
-import Glow from "@/components/ui/glow";
 import Navbar from "@/components/Home/sections/navbar/default";
 
 export default function PoliticaDePrivacidade() {
@@ -118,7 +117,6 @@ export default function PoliticaDePrivacidade() {
                                 <b>Email:</b> lorena.carmo@senaisp.edu.br <br></br>
                                 <b>Telefone:</b> (11) 96034-4627
                             </p>
-
                         </div>
 
                         <div className="indice hidden md:block md:sticky  md:top-4 md:self-start">
@@ -137,11 +135,7 @@ export default function PoliticaDePrivacidade() {
                         </div>
                     </div>
                 </div>
-
-
-
             </main>
-            
             <Footer />
         </>
     )
