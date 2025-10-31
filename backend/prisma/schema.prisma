@@ -304,6 +304,7 @@ model Saidas {
 model Contratos {
   id        Int       @id @default(autoincrement())
   fornecedor_id Int
+  produto_id Int
   loja_id Int
   dataInicio DateTime
   dataFim DateTime
@@ -314,7 +315,7 @@ model Contratos {
 
   fornecedor Unidade @relation(fields: [fornecedor_id], references: [id], onDelete: Restrict)
 loja Unidade @relation(fields: [loja_id], references: [id], onDelete: Restrict)
-  
+  produto Produto @relation(fields: [produto_id], references: [id], onDelete: Restrict)
 
 }
 
