@@ -69,12 +69,8 @@ export default function POSModule() {
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
     if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item
-      ));
-    } else {
-      setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}]);
-    }
+      setCart(cart.map(item =>item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item));
+    } else {setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}]);}
   };
 
   const updateQuantity = (id, newQuantity) => {
@@ -233,14 +229,9 @@ export default function POSModule() {
                     <Label>Customer</Label>
                     <div className="flex gap-2">
                       <Button variant="outline" className="flex-1 justify-start" onClick={() => setIsCustomerSelectOpen(true)}>
-                        <User className="size-4 mr-2" />
-                        {selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}
+                        <User className="size-4 mr-2" />{selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}
                       </Button>
-                      {selectedCustomer && (
-                        <Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>
-                          Clear
-                        </Button>
-                      )}
+                      {selectedCustomer && (<Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Clear</Button>)}
                     </div>
                   </div>
 
@@ -255,15 +246,12 @@ export default function POSModule() {
                             <div className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                              <Minus className="size-3" />
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus className="size-3" />
                             </Button>
                             <span className="w-8 text-center">{item.quantity}</span>
-                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                              <Plus className="size-3" />
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus className="size-3" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => removeFromCart(item.id)}>
-                              <Trash2 className="size-3" />
+                            <Button variant="outline" size="sm" onClick={() => removeFromCart(item.id)}><Trash2 className="size-3" />
                             </Button>
                           </div>
                         </div>
@@ -380,12 +368,8 @@ export default function POSModule() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setIsPaymentOpen(false)} className="flex-1">
-                    Cancel
-                  </Button>
-                  <Button onClick={processSale} className="flex-1" disabled={paymentMethod === 'cash' && amountReceived < getTotal()}>
-                    Complete Sale
-                  </Button>
+                  <Button variant="outline" onClick={() => setIsPaymentOpen(false)} className="flex-1">Cancel</Button>
+                  <Button onClick={processSale} className="flex-1" disabled={paymentMethod === 'cash' && amountReceived < getTotal()}>Complete Sale</Button>
                 </div>
               </div>
             </DialogContent>
@@ -437,7 +421,6 @@ export default function POSModule() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="customers" className="space-y-4">
           <Card>
             <CardHeader>
@@ -478,7 +461,6 @@ export default function POSModule() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="reports" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
@@ -504,7 +486,6 @@ export default function POSModule() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Payment Methods</CardTitle>
@@ -532,7 +513,6 @@ export default function POSModule() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Top Products</CardTitle>
@@ -555,7 +535,6 @@ export default function POSModule() {
               </CardContent>
             </Card>
           </div>
-
           <Card>
             <CardHeader>
               <CardTitle>Generate Reports</CardTitle>

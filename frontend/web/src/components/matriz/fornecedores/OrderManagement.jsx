@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export function OrderManagement({ userType }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedPedidos, setSelectedPedidos] = useState(null);
+  const [searchPedidos, setSearchPedidos] = useState('');
+  const [selectedPedidosCategory, setSelectedPedidosCategory] = useState('all');
+  const categoriesPedidos = ['all', 'Pendente', 'A caminho', 'Entregue', 'Cancelado',];
 
   const orders = [
     {
@@ -72,193 +76,175 @@ export function OrderManagement({ userType }) {
     }
   ];
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Pendente': return <Clock className="h-4 w-4" />;
-      case 'Entregue': return <CheckCircle className="h-4 w-4" />;
-      case 'A caminho': return <Truck className="h-4 w-4" />;
-      case 'Cancelado': return <XCircle className="h-4 w-4" />;
-      default: return <Package className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusVariant = (status) => {
-    switch (status) {
-      case 'Pendente': return 'outline';
-      case 'Entregue': return 'default';
-      case 'A caminho': return 'secondary';
-      case 'Cancelado': return 'destructive';
-      default: return 'secondary';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'Alta': return 'text-red-600';
-      case 'Normal': return 'text-blue-600';
-      case 'Baixa': return 'text-gray-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const filteredOrders = orders.filter(order => {
-    if (activeTab === 'all') return true;
-    return order.status === activeTab;
-  });
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const categories = ['all', 'Pendente', 'A caminho', 'Entregue', 'Cancelado',];
-
-  const OrderDetails = ({ order }) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Eye className="h-4 w-4 mr-1" />Visualizar
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Detalhes - {order.id}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Consumidor/Fornecedor</Label>
-              <p className='mt-3'>{order.customer}</p>
-            </div>
-            <div>
-              <Label>Status</Label>
-              <div className="flex items-center gap-2 mt-3">
-                <Badge variant={getStatusVariant(order.status)}>
-                  {getStatusIcon(order.status)}
-                  {order.status}
-                </Badge>
-              </div>
-            </div>
-            <div className='mt-3'>
-              <Label>Data do Pedido</Label>
-              <p className='mt-3'>{new Date(order.date).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <Label>Entrega Estimada</Label>
-              <p className='mt-3'>{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
-            </div>
-          </div>
-
-          <div>
-            <Label>Itens Comprados</Label>
-            <div className="mt-2 space-y-2">
-              {order.items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                  <div>
-                    <p>{item.name}</p>
-                    <p className="text-sm text-muted-foreground">Quantidade: {item.quantity}</p>
-                  </div>
-                  <div className="text-right">
-                    <p>R$ {item.price.toFixed(2)} cada</p>
-                    <p className="text-sm">R$ {(item.quantity * item.price).toFixed(2)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <div className="flex justify-between items-center">
-                <span>Total:</span>
-                <span className="text-lg">R$ {order.total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-
-          {order.notes && (
-            <div>
-              <Label>Order Notes</Label>
-              <p className="mt-1 p-3 bg-muted rounded-lg">{order.notes}</p>
-            </div>
-          )}
-
-          {userType === 'supplier' && order.status === 'Pendente' && (
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1">
-                <XCircle className="h-4 w-4 mr-2" />
-                Rejeitar Pedido
-              </Button>
-              <Button className="flex-1">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Confirmar Pedido
-              </Button>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
+  // decide qual filtro de status usar: select tem prioridade; se select === 'all' usamos activeTab
+   const statusFilter = selectedPedidosCategory !== 'all' ? selectedPedidosCategory : activeTab;
+ 
+   // memoize filtro por performance
+   const filteredOrders = useMemo(() => {
+     const q = (searchPedidos || '').trim().toLowerCase();
+ 
+     return orders.filter(order => {
+       // filtro por status
+       if (statusFilter && statusFilter !== 'all') {
+         if (order.status !== statusFilter) return false;
+       }
+ 
+       // filtro por busca
+       if (!q) return true;
+ 
+       const inId = order.id.toLowerCase().includes(q);
+       const inCustomer = order.customer.toLowerCase().includes(q);
+       const inStatus = order.status.toLowerCase().includes(q);
+       const inDate = (order.date || '').toLowerCase().includes(q);
+       const inItems = (order.items || []).some(i => (i.name || '').toLowerCase().includes(q));
+ 
+       return inId || inCustomer || inStatus || inDate || inItems;
+     });
+   }, [orders, searchPedidos, selectedPedidosCategory, activeTab, statusFilter]);
+ 
+   const getStatusIcon = (status) => {
+     switch (status) {
+       case 'Pendente': return <Clock className="h-4 w-4" />;
+       case 'Entregue': return <CheckCircle className="h-4 w-4" />;
+       case 'A caminho': return <Truck className="h-4 w-4" />;
+       case 'Cancelado': return <XCircle className="h-4 w-4" />;
+       default: return <Package className="h-4 w-4" />;
+     }
+   };
+ 
+   const getStatusVariant = (status) => {
+     switch (status) {
+       case 'Pendente': return 'outline';
+       case 'Entregue': return 'default';
+       case 'A caminho': return 'secondary';
+       case 'Cancelado': return 'destructive';
+       default: return 'secondary';
+     }
+   };
+ 
+   const getPriorityColor = (priority) => {
+     switch (priority) {
+       case 'Alta': return 'text-red-600';
+       case 'Normal': return 'text-blue-600';
+       case 'Baixa': return 'text-gray-600';
+       default: return 'text-gray-600';
+     }
+   };
+ 
+ const OrderDetails = ({ order }) => (
+     <Dialog>
+       <DialogTrigger asChild>
+         <Button variant="outline" size="sm">
+           <Eye className="h-4 w-4 mr-1" />Visualizar
+         </Button>
+       </DialogTrigger>
+       <DialogContent className="max-w-2xl">
+         <DialogHeader>
+           <DialogTitle>Detalhes - {order.id}</DialogTitle>
+         </DialogHeader>
+         <div className="space-y-6">
+           <div className="grid grid-cols-2 gap-4">
+             <div>
+               <Label>Consumidor/Fornecedor</Label>
+               <p className='mt-3'>{order.customer}</p>
+             </div>
+             <div>
+               <Label>Status</Label>
+               <div className="flex items-center gap-2 mt-3">
+                 <Badge variant={getStatusVariant(order.status)}>
+                   {getStatusIcon(order.status)}
+                   {order.status}
+                 </Badge>
+               </div>
+             </div>
+             <div className='mt-3'>
+               <Label>Data do Pedido</Label>
+               <p className='mt-3'>{new Date(order.date).toLocaleDateString()}</p>
+             </div>
+             <div>
+               <Label>Entrega Estimada</Label>
+               <p className='mt-3'>{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
+             </div>
+           </div>
+ 
+           <div>
+             <Label>Itens Comprados</Label>
+             <div className="mt-2 space-y-2">
+               {order.items.map((item, index) => (
+                 <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                   <div>
+                     <p>{item.name}</p>
+                     <p className="text-sm text-muted-foreground">Quantidade: {item.quantity}</p>
+                   </div>
+                   <div className="text-right">
+                     <p>R$ {item.price.toFixed(2)} cada</p>
+                     <p className="text-sm">R$ {(item.quantity * item.price).toFixed(2)}</p>
+                   </div>
+                 </div>
+               ))}
+             </div>
+             <div className="mt-4 p-3 bg-muted rounded-lg">
+               <div className="flex justify-between items-center">
+                 <span>Total:</span>
+                 <span className="text-lg">R$ {order.total.toFixed(2)}</span>
+               </div>
+             </div>
+           </div>
+ 
+           {order.notes && (
+             <div>
+               <Label>Order Notes</Label>
+               <p className="mt-1 p-3 bg-muted rounded-lg">{order.notes}</p>
+             </div>
+           )}
+ 
+           {userType === 'supplier' && order.status === 'Pendente' && (
+             <div className="flex gap-2">
+               <Button variant="outline" className="flex-1">
+                 <XCircle className="h-4 w-4 mr-2" />
+                 Rejeitar Pedido
+               </Button>
+               <Button className="flex-1">
+                 <CheckCircle className="h-4 w-4 mr-2" />
+                 Confirmar Pedido
+               </Button>
+             </div>
+           )}
+         </div>
+       </DialogContent>
+     </Dialog>
+   );
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-0">
         <h2 className="text-lg font-semibold mb-3">{userType === 'supplier' ? 'Order Management' : 'Pedidos'}</h2>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all">Todos os Pedidos</TabsTrigger>
-          <TabsTrigger value="Pendente">Pendentes</TabsTrigger>
-          <TabsTrigger value="Entregue">Entregues</TabsTrigger>
-          <TabsTrigger value="A caminho">Entregues</TabsTrigger>
-          <TabsTrigger value="Cancelado">Cancelados</TabsTrigger>
-        </TabsList>
-
-
-
-
-
-
-        {/*
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-TERMINAR DE FAZER ESSE COMPONENTE
-*/}
-        <div className="flex gap-4 items-center">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input placeholder="Buscar pedido..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-48">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category === 'all' ? 'Todas categorias' : category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex gap-4 items-center">
+        <div className="flex-1 relative">
+          {/* BARRA DE PESQUISA*/}
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input placeholder="Buscar pedido..." value={searchPedidos} onChange={(e) => setSearchPedidos(e.target.value)} className="pl-10" />
         </div>
+        {/* SELECT DE PEDIDOS POR STATUS */}
+        <Select value={selectedPedidosCategory} onValueChange={(val) => setSelectedPedidosCategory(val)}>
+          <SelectTrigger className="w-48">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {categoriesPedidos.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category === 'all' ? 'Todos os pedidos' : category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-
-
-
-
-
-
+      {/* LISTAGEM DE PEDIDOS */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsContent value={activeTab} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-3">
             {filteredOrders.map((order) => (
@@ -298,7 +284,7 @@ TERMINAR DE FAZER ESSE COMPONENTE
                         {userType === 'supplier' && order.status === 'Pendente' && (
                           <Button size="sm">
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Processo
+                            Processar
                           </Button>
                         )}
                       </div>
@@ -312,11 +298,11 @@ TERMINAR DE FAZER ESSE COMPONENTE
           {filteredOrders.length === 0 && (
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h4>Nenhum pedido encontrado</h4>
+              <h4 className="text-muted-foreground">Nenhum pedido encontrado</h4>
               <p className="text-muted-foreground">
-                {activeTab === 'all'
-                  ? 'No orders have been placed yet'
-                  : `No ${activeTab} orders found`
+                {statusFilter === 'all'
+                  ? ''
+                  : `Nenhum pedido ${statusFilter} encontrado`
                 }
               </p>
             </div>
