@@ -5,16 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductCatalog } from './ProductCatalog';
-import { OrderManagement } from './OrderManagement';
+// import { OrderManagement } from './OrderManagement';
 import { ChatInterface } from './ChatInterface';
 import { ComplaintSystem } from './ComplaintSystem';
 import { ShoppingCart, MessageSquare, AlertTriangle, Search, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { Card, CardContent, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card"
 import FornecedoresCard from './fornecedores-card';
+import { OrderManagement } from './OrderManagement';
 
 export function ConsumerDashboard() {
-  const [activeTab, setActiveTab] = useState('browse');
 
   const StatCard = ({ title, value, icon: Icon, color = 'text-muted-foreground' }) => (
     <Card>
@@ -31,45 +31,24 @@ export function ConsumerDashboard() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* <div className="flex items-center justify-between">
-        <div>
-          <h2>Dashboard do Consumidor</h2>
-          <p className="text-muted-foreground">Pesquise fornecedores e gerencie seus pedidos</p>
-        </div>
-       </div> */}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="browse">Ache Produtos</TabsTrigger>
-          <TabsTrigger value="orders">Meus Pedidos</TabsTrigger>
-          <TabsTrigger value="chat">Mensagens</TabsTrigger>
-          <TabsTrigger value="complaints">Ajuda</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="browse" className="space-y-6">
-          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatCard title="Pedidos Ativos" value="7" icon={ShoppingCart} color="text-blue-600"/>
-            <StatCard title="Aprovações pendentes" value="3" icon={Clock} color="text-yellow-600"/>
-            <StatCard title="Concluído este mês" value="24" icon={CheckCircle} color="text-green-600"/>
-          </div> */}
-
-          <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-            <Card className="@container/card">
-              <CardHeader>
-                <CardDescription>Contratos Ativos</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  7
-                </CardTitle>
-                <CardAction>
-                  {/* <Badge variant="outline">
+    <div className="space-y-6 flex flex-col gap-12">
+      {/* cards / kpis / indicadores */}
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>Contratos Ativos</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              7
+            </CardTitle>
+            <CardAction>
+              {/* <Badge variant="outline">
               <IconTrendingUp />
               +12.5%
             </Badge> */}
-                  <ShoppingCart />
-                </CardAction>
-              </CardHeader>
-              {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
+              <ShoppingCart />
+            </CardAction>
+          </CardHeader>
+          {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Trending up this month <IconTrendingUp className="size-4" />
           </div>
@@ -77,22 +56,22 @@ export function ConsumerDashboard() {
             Visitors for the last 6 months
           </div>
         </CardFooter> */}
-            </Card>
-            <Card className="@container/card">
-              <CardHeader>
-                <CardDescription>Contratos pendentes</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  3
-                </CardTitle>
-                <CardAction>
-                  {/* <Badge variant="outline">
+        </Card>
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>Contratos pendentes</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              3
+            </CardTitle>
+            <CardAction>
+              {/* <Badge variant="outline">
               <IconTrendingDown />
               -20%
             </Badge> */}
-                  <Clock />
-                </CardAction>
-              </CardHeader>
-              {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
+              <Clock />
+            </CardAction>
+          </CardHeader>
+          {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Down 20% this period <IconTrendingDown className="size-4" />
           </div>
@@ -100,47 +79,37 @@ export function ConsumerDashboard() {
             Acquisition needs attention
           </div>
         </CardFooter> */}
-            </Card>
-            <Card className="@container/card">
-              <CardHeader>
-                <CardDescription>Concluído este mês</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                  24
-                </CardTitle>
-                <CardAction>
-                  {/* <Badge variant="outline">
+        </Card>
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              24
+            </CardTitle>
+            <CardAction>
+              {/* <Badge variant="outline">
               <IconTrendingUp />
               +12.5%
             </Badge> */}
-                  <CheckCircle />
-                </CardAction>
-              </CardHeader>
-              {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
+              <CheckCircle />
+            </CardAction>
+          </CardHeader>
+          {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Strong user retention <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">Engagement exceed targets</div>
         </CardFooter> */}
-            </Card>
-          </div>
+        </Card>
+      </div>
 
-          <FornecedoresCard />
-
-          <ProductCatalog userType="consumer" />
-        </TabsContent>
-
-        <TabsContent value="orders">
-          <OrderManagement userType="consumer" />
-        </TabsContent>
-
-        <TabsContent value="chat">
-          <ChatInterface userType="consumer" />
-        </TabsContent>
-
-        <TabsContent value="complaints">
-          <ComplaintSystem userType="consumer" />
-        </TabsContent>
-      </Tabs>
+      {/* card de fornecedores */}
+      <FornecedoresCard />
+      {/* produtos */}
+      <ProductCatalog />
+      {/* produtos */}
+      <OrderManagement />
+      
     </div>
   );
 }

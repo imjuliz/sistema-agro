@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,16 +9,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-// import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Search, Filter, Plus, Edit, Trash2, ShoppingCart, Package, Star, DollarSign } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Clock, CheckCircle, XCircle, Truck, Eye, MessageSquare, Calendar, DollarSign, Search, Filter, Plus, Edit, Trash2, ShoppingCart, Package, Star, } from 'lucide-react';
 
 export function ProductCatalog({ userType }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  /* produtos */
+  const [searchProducts, setSearchProducts] = useState('');
+  const [selectedProductCategory, setSelectedProductCategory] = useState('all');
   const [showAddProduct, setShowAddProduct] = useState(false);
 
-  const categories = ['all', 'Produtos Frescos', 'Carne e Aves', 'Seafood', 'Dairy', 'Produtos de panificação', 'Beverages'];
+  const categoriesProducts = ['all', 'Produtos Frescos', 'Carne e Aves', 'Seafood', 'Dairy', 'Produtos de panificação', 'Beverages'];
 
+  /* produtos */
   const products = [
     {
       id: 1,
@@ -75,9 +77,9 @@ export function ProductCatalog({ userType }) {
   ];
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchProducts.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchProducts.toLowerCase());
+    const matchesCategory = selectedProductCategory === 'all' || product.category === selectedProductCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -99,7 +101,7 @@ export function ProductCatalog({ userType }) {
                 <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories.slice(1).map((category) => (
+                {categoriesProducts.slice(1).map((category) => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
               </SelectContent>
@@ -151,15 +153,15 @@ export function ProductCatalog({ userType }) {
       <div className="flex gap-4 items-center">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input placeholder="Buscar produto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          <Input placeholder="Buscar produto..." value={searchProducts} onChange={(e) => setSearchProducts(e.target.value)} className="pl-10" />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <Select value={selectedProductCategory} onValueChange={setSelectedProductCategory}>
           <SelectTrigger className="w-48">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((category) => (
+            {categoriesProducts.map((category) => (
               <SelectItem key={category} value={category}>
                 {category === 'all' ? 'Todas categorias' : category}
               </SelectItem>
@@ -179,7 +181,7 @@ export function ProductCatalog({ userType }) {
               /> */}
               <div className="absolute top-2 right-2">
                 <Badge variant={product.stock > 20 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'}>
-                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                  {product.stock > 0 ? `${product.stock} no estoque` : 'Out of stock'}
                 </Badge>
               </div>
             </div>
@@ -208,9 +210,6 @@ export function ProductCatalog({ userType }) {
                     <span className="text-lg">${product.price}</span>
                     <span className="text-sm text-muted-foreground ml-1">{product.unit}</span>
                   </div>
-                  {/* {userType === 'consumer' && (
-                    <span className="text-xs text-muted-foreground">Min: {product.minOrder}</span>
-                  )} */}
                 </div>
 
                 <div className="flex gap-2">
@@ -247,6 +246,8 @@ export function ProductCatalog({ userType }) {
       )}
 
       <AddProductForm />
+
+     
     </div>
   );
 }

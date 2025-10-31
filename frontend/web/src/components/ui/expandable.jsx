@@ -256,7 +256,7 @@ const ExpandableCard = React.forwardRef((
   {
     children,
     className = "",
-    collapsedSize = { width: "100%", height: 211 },
+    collapsedSize = { width: "100%", height: undefined },
     expandedSize = { width: "100%", height: undefined },
     hoverToExpand = false,
     expandDelay = 0,
@@ -375,7 +375,7 @@ ExpandableTrigger.displayName = "ExpandableTrigger"
 const ExpandableCardHeader = React.forwardRef(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 py-6 px-4 ", className)}
+    className={cn("flex flex-col space-y-1.5 pb-6 px-4 ", className)}
     {...props}>
     <motion.div layout className="flex justify-between items-start">
       {children}
@@ -388,7 +388,7 @@ ExpandableCardHeader.displayName = "ExpandableCardHeader"
 const ExpandableCardContent = React.forwardRef(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("p-6 pt-0 px-4 overflow-hidden flex-grow", className)}
+    className={cn(" px-4 overflow-hidden flex-grow", className)}
     {...props}>
     <motion.div layout>{children}</motion.div>
   </div>
