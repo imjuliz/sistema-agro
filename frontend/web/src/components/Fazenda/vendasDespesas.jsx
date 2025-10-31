@@ -165,8 +165,6 @@ export function GraficoDeBarras() {
                     </button>
                 </div>
             </div>
-
-            {/* Gráfico de Barras por mês */}
             <BarChart xAxis={[{ data: meses, scaleType: "band" }]} series={dadosSeries} height={650} barLabel="value" margin={{ left: 0 }} yAxis={[{ width: 50 }]}/>
         </div>
     );
@@ -211,7 +209,6 @@ export function EnvioLotes() {
                 </div>
                 <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
             </div>
-            {/* Tabela */}
             <Table>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">

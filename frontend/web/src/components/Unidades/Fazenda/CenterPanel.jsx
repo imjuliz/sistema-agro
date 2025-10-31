@@ -10,8 +10,8 @@ export function CenterPanel({ activeTab }) {
     switch (activeTab) {
       case 'overview':
         return <OverviewTab />;
-      case 'jobs':
-        return <JobsTab />;
+      // case 'jobs':
+      //   return <JobsTab />;
       case 'estoque':
         return <EstoqueTab />;
       case 'equipe':

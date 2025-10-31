@@ -92,7 +92,6 @@ const atividades = [
 
 export function TableDemo() {
       const [categoria, setCategoria] = useState("");
-        const [status, setStatus] = useState("");
         const [busca, setBusca] = useState("");
     
     return (
@@ -116,7 +115,6 @@ export function TableDemo() {
             </div>
             <Table>
                 <TableCaption>Atividades Animais</TableCaption>
-                
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>
@@ -158,7 +156,6 @@ const lotes = [
 
 export function TableDemo2() {
         const [categoria, setCategoria] = useState("");
-        const [status, setStatus] = useState("");
         const [busca, setBusca] = useState("");
     
     return (
@@ -180,7 +177,6 @@ export function TableDemo2() {
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-
                     <Select onValueChange={setCategoria}>
                         <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
@@ -209,7 +205,6 @@ export function TableDemo2() {
                         </SelectContent>
                     </Select>
                 </div>
-                
                 <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
             </div>
             <Table>

@@ -1,8 +1,13 @@
+'use client'
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, Mail, Phone, Calendar, Star, Eye, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { MapPin, Mail, Phone, Calendar, Star, Eye, MessageSquare, MoreHorizontal, Building2, Users, DollarSign } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
+import { InventoryProvider } from '@/contexts/InventoryContext';
 
 const estoque = [
   {
@@ -83,9 +88,61 @@ const getStatusColor = (status) => {
 };
 
 export function EstoqueTab() {
+  const [activeView, setActiveView] = useState('store');
   return (
-    <div className="space-y-4">
-      {estoque.map((est) => (
+    <div className="flex gap-6">
+
+      <div className="w-80 space-y-6">
+        {/* Company Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Legenda do Status do Estoque</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-green-500 rounded"></div>
+              <div>
+                <div className="text-sm font-medium">Acima do Mínimo</div>
+                <div className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+              <div>
+                <div className="text-sm font-medium">No Mínimo / Perto do Mínimo</div>
+                <div className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-red-500 rounded"></div>
+              <div>
+                <div className="text-sm font-medium">Abaixo do Mínimo</div>
+                <div className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className=" flex-1 min-w-0 space-y-6">
+        <InventoryProvider>
+          <StoreLevelView />
+        </InventoryProvider>
+
+      </div>
+
+      {/* 
+        <div className="min-h-screen bg-background p-6">
+          <div className="max-w-7xl mx-auto">
+
+
+            <StoreLevelView />
+          </div>
+        </div>
+      </InventoryProvider> */}
+
+
+
+      {/* {estoque.map((est) => (
         <Card key={est.id}>
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
@@ -177,7 +234,7 @@ export function EstoqueTab() {
             </div>
           </CardContent>
         </Card>
-      ))}
+      ))} */}
     </div>
   );
 }

@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Package, Clock, CheckCircle, XCircle, Truck, Eye,MessageSquare,Calendar,DollarSign} from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Truck, Eye, MessageSquare, Calendar, DollarSign, Search, Filter } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function OrderManagement({ userType }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -23,7 +25,7 @@ export function OrderManagement({ userType }) {
         { name: 'Organic Mixed Greens', quantity: 5, price: 8.50 }
       ],
       total: 542.30,
-      status: 'pending',
+      status: 'Pendente',
       date: '2024-01-15',
       estimatedDelivery: '2024-01-17',
       notes: 'Please ensure cold chain delivery',
@@ -37,7 +39,7 @@ export function OrderManagement({ userType }) {
         { name: 'Artisan Sourdough Bread', quantity: 24, price: 6.75 }
       ],
       total: 446.85,
-      status: 'confirmed',
+      status: 'Entregue',
       date: '2024-01-14',
       estimatedDelivery: '2024-01-16',
       notes: 'Regular delivery time is fine',
@@ -48,7 +50,7 @@ export function OrderManagement({ userType }) {
       customer: userType === 'supplier' ? 'Metro Bistro' : 'Ocean Fresh Seafood',
       items: [{ name: 'Organic Mixed Greens', quantity: 10, price: 8.50 }],
       total: 85.00,
-      status: 'delivered',
+      status: 'A caminho',
       date: '2024-01-12',
       estimatedDelivery: '2024-01-14',
       notes: '',
@@ -62,7 +64,7 @@ export function OrderManagement({ userType }) {
         { name: 'Premium Ribeye Steaks', quantity: 8, price: 24.99 }
       ],
       total: 280.92,
-      status: 'cancelled',
+      status: 'Cancelado',
       date: '2024-01-10',
       estimatedDelivery: '2024-01-12',
       notes: 'Customer requested cancellation due to event postponement',
@@ -72,29 +74,29 @@ export function OrderManagement({ userType }) {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'confirmed': return <CheckCircle className="h-4 w-4" />;
-      case 'delivered': return <Truck className="h-4 w-4" />;
-      case 'cancelled': return <XCircle className="h-4 w-4" />;
+      case 'Pendente': return <Clock className="h-4 w-4" />;
+      case 'Entregue': return <CheckCircle className="h-4 w-4" />;
+      case 'A caminho': return <Truck className="h-4 w-4" />;
+      case 'Cancelado': return <XCircle className="h-4 w-4" />;
       default: return <Package className="h-4 w-4" />;
     }
   };
 
   const getStatusVariant = (status) => {
     switch (status) {
-      case 'pending': return 'secondary';
-      case 'confirmed': return 'default';
-      case 'delivered': return 'outline';
-      case 'cancelled': return 'destructive';
+      case 'Pendente': return 'outline';
+      case 'Entregue': return 'default';
+      case 'A caminho': return 'secondary';
+      case 'Cancelado': return 'destructive';
       default: return 'secondary';
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'alta': return 'text-red-600';
-      case 'normal': return 'text-blue-600';
-      case 'baixa': return 'text-gray-600';
+      case 'Alta': return 'text-red-600';
+      case 'Normal': return 'text-blue-600';
+      case 'Baixa': return 'text-gray-600';
       default: return 'text-gray-600';
     }
   };
@@ -103,6 +105,10 @@ export function OrderManagement({ userType }) {
     if (activeTab === 'all') return true;
     return order.status === activeTab;
   });
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const categories = ['all', 'Pendente', 'A caminho', 'Entregue', 'Cancelado',];
 
   const OrderDetails = ({ order }) => (
     <Dialog>
@@ -119,24 +125,24 @@ export function OrderManagement({ userType }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Consumidor/Fornecedor</Label>
-              <p>{order.customer}</p>
+              <p className='mt-3'>{order.customer}</p>
             </div>
             <div>
               <Label>Status</Label>
-              <div className="flex items-center gap-2">
-                {getStatusIcon(order.status)}
+              <div className="flex items-center gap-2 mt-3">
                 <Badge variant={getStatusVariant(order.status)}>
+                  {getStatusIcon(order.status)}
                   {order.status}
                 </Badge>
               </div>
             </div>
-            <div>
+            <div className='mt-3'>
               <Label>Data do Pedido</Label>
-              <p>{new Date(order.date).toLocaleDateString()}</p>
+              <p className='mt-3'>{new Date(order.date).toLocaleDateString()}</p>
             </div>
             <div>
               <Label>Entrega Estimada</Label>
-              <p>{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
+              <p className='mt-3'>{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
             </div>
           </div>
 
@@ -150,8 +156,8 @@ export function OrderManagement({ userType }) {
                     <p className="text-sm text-muted-foreground">Quantidade: {item.quantity}</p>
                   </div>
                   <div className="text-right">
-                    <p>${item.price.toFixed(2)} cada</p>
-                    <p className="text-sm">${(item.quantity * item.price).toFixed(2)}</p>
+                    <p>R$ {item.price.toFixed(2)} cada</p>
+                    <p className="text-sm">R$ {(item.quantity * item.price).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
@@ -159,7 +165,7 @@ export function OrderManagement({ userType }) {
             <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex justify-between items-center">
                 <span>Total:</span>
-                <span className="text-lg">${order.total.toFixed(2)}</span>
+                <span className="text-lg">R$ {order.total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -171,7 +177,7 @@ export function OrderManagement({ userType }) {
             </div>
           )}
 
-          {userType === 'supplier' && order.status === 'pending' && (
+          {userType === 'supplier' && order.status === 'Pendente' && (
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1">
                 <XCircle className="h-4 w-4 mr-2" />
@@ -190,32 +196,76 @@ export function OrderManagement({ userType }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3>{userType === 'supplier' ? 'Order Management' : 'My Orders'}</h3>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Calendar className="h-4 w-4 mr-2" />
-            Pedidos de Exportação
-          </Button>
-        </div>
+      <div className="flex items-center justify-between mb-0">
+        <h2 className="text-lg font-semibold mb-3">{userType === 'supplier' ? 'Order Management' : 'Pedidos'}</h2>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">Todos os Pedidos</TabsTrigger>
-          <TabsTrigger value="pending">Pendentes</TabsTrigger>
-          <TabsTrigger value="confirmed">Confirmados</TabsTrigger>
-          <TabsTrigger value="delivered">Entregues</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelados</TabsTrigger>
+          <TabsTrigger value="Pendente">Pendentes</TabsTrigger>
+          <TabsTrigger value="Entregue">Entregues</TabsTrigger>
+          <TabsTrigger value="A caminho">Entregues</TabsTrigger>
+          <TabsTrigger value="Cancelado">Cancelados</TabsTrigger>
         </TabsList>
 
+
+
+
+
+
+        {/*
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+TERMINAR DE FAZER ESSE COMPONENTE
+*/}
+        <div className="flex gap-4 items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input placeholder="Buscar pedido..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-48">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category === 'all' ? 'Todas categorias' : category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+
+
+
+
+
+
         <TabsContent value={activeTab} className="space-y-4">
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-3">
             {filteredOrders.map((order) => (
               <Card key={order.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
+                <CardContent className="px-6">
+                  <div className="flex items-start justify-between gap-6 flex-col">
+                    <div className="space-y-2 w-full">
                       <div className="flex items-center gap-4">
                         <h4>{order.id}</h4>
                         <Badge variant={getStatusVariant(order.status)} className="flex items-center gap-1">
@@ -223,36 +273,29 @@ export function OrderManagement({ userType }) {
                           {order.status}
                         </Badge>
                         <span className={`text-sm ${getPriorityColor(order.priority)}`}>
-                          {order.priority} prioridade
+                          Prioridade {order.priority}
                         </span>
                       </div>
-                      
+
                       <p className="text-muted-foreground">
-                        {userType === 'supplier' ? 'Customer:' : 'Supplier:'} {order.customer}
+                        {userType === 'supplier' ? 'Customer:' : 'Fornecedor:'} {order.customer}
                       </p>
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Encomendado: {new Date(order.date).toLocaleDateString()}</span>
-                        <span>•</span>
-                        <span>Entrega: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>
-                        <span>•</span>
-                        <span>{order.items.length} itens</span>
-                      </div>
+
                     </div>
 
                     <div className="text-right space-y-2">
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-lg">${order.total.toFixed(2)}</span>
+                        <span className="text-lg">R$ {order.total.toFixed(2)}</span>
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <OrderDetails order={order} />
                         <Button variant="outline" size="sm">
                           <MessageSquare className="h-4 w-4 mr-1" />
                           Bate-papo
                         </Button>
-                        {userType === 'supplier' && order.status === 'pending' && (
+                        {userType === 'supplier' && order.status === 'Pendente' && (
                           <Button size="sm">
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Processo
@@ -271,7 +314,7 @@ export function OrderManagement({ userType }) {
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h4>Nenhum pedido encontrado</h4>
               <p className="text-muted-foreground">
-                {activeTab === 'all' 
+                {activeTab === 'all'
                   ? 'No orders have been placed yet'
                   : `No ${activeTab} orders found`
                 }
