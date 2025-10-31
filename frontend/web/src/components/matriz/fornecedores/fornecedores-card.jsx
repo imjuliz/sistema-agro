@@ -13,47 +13,101 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 
 export default function FornecedoresCard() {
     const suppliers = [
-        { name: 'Animals', category: 'Animais', status: 'ativa', products: 156 },
-        { name: 'Nature Co.', category: 'Insumos', status: 'ativa', products: 89 },
-        { name: 'PetFood', category: 'Rações', status: 'ativa', products: 67 },
-        { name: 'EcoMundo', category: 'Plantas', status: 'ativa', products: 134 }
+        { name: 'Animals', category: 'Animais', status: 'Ativa', products: 156 },
+        { name: 'Nature Co.', category: 'Insumos', status: 'Ativa', products: 89 },
+        { name: 'PetFood', category: 'Rações', status: 'Ativa', products: 67 },
+        { name: 'EcoMundo', category: 'Plantas', status: 'Ativa', products: 134 }
     ];
 
-    const badgeVariantFor = (status) => {
-        // status strings em sua base: 'ativa' ou 'inativa' (ajuste se necessário)
-        return status === 'ativa' ? 'default' : 'secondary';
+    // Estado da busca (funciona em tempo real)
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Estado aplicado que efetivamente filtra a lista (só muda ao clicar "Aplicar")
+    const [appliedStatusFilters, setAppliedStatusFilters] = useState({ Ativa: true, Inativa: false });
+
+    // Estado local do popover (alterações temporárias até o usuário clicar "Aplicar")
+    const [localStatusFilters, setLocalStatusFilters] = useState({ Ativa: true, Inativa: false });
+
+    // Controle do popover (para fechar ao aplicar/limpar)
+    const [popoverOpen, setPopoverOpen] = useState(false);
+
+    // Página (preservei setPage usado no seu exemplo original; ajuste se não precisar)
+    const [page, setPage] = useState(1);
+
+    // Toggle local (apenas altera localStatusFilters)
+    const toggleLocalStatus = (statusKey) => {
+        setLocalStatusFilters(prev => ({ ...prev, [statusKey]: !prev[statusKey] }));
     };
 
-    const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true });
+    // Aplicar filtros (quando usuário clica "Aplicar")
+    const applyFilters = () => {
+        setAppliedStatusFilters({ ...localStatusFilters });
+        setPage(1);
+        setPopoverOpen(false); // fecha o popover
+    };
+
+    // Limpar filtros (volta ao padrão: somente Ativa=true)
+    const clearFilters = () => {
+        const defaultFilters = { Ativa: true, Inativa: false };
+        setLocalStatusFilters(defaultFilters);
+        setAppliedStatusFilters(defaultFilters);
+        setPage(1);
+        setPopoverOpen(false);
+        // OBS: não limpei o campo de busca aqui; se quiser que "Limpar" também limpe a busca, adicione: setSearchTerm('')
+    };
+
+    // Filtra fornecedores com base no searchTerm (em tempo real) e nos filtros aplicados (appliedStatusFilters)
+    const filteredSuppliers = useMemo(() => {
+        const q = (searchTerm || '').trim().toLowerCase();
+
+        return suppliers.filter(s => {
+            // filtro por status aplicado
+            const statusOk = appliedStatusFilters[s.status] ?? false;
+            if (!statusOk) return false;
+
+            // filtro por busca (nome ou categoria)
+            if (!q) return true;
+            const inName = (s.name || '').toLowerCase().includes(q);
+            const inCategory = (s.category || '').toLowerCase().includes(q);
+            return inName || inCategory;
+        });
+    }, [suppliers, searchTerm, appliedStatusFilters]);
+
+    // Para exibir quantos resultados *prováveis* se aplicarmos os filtros locais (útil dentro do popover)
+    const previewCount = useMemo(() => {
+        const q = (searchTerm || '').trim().toLowerCase();
+        return suppliers.filter(s => {
+            const statusOk = localStatusFilters[s.status] ?? false;
+            if (!statusOk) return false;
+            if (!q) return true;
+            return (s.name || '').toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q);
+        }).length;
+    }, [suppliers, searchTerm, localStatusFilters]);
 
     return (
         <div>
             <header className="mb-4">
 
                 <h2 className="text-lg font-semibold mb-3">Fornecedores</h2>
-                {/* <p className="text-sm text-muted-foreground">
-                    Acesse catálogos de seus fornecedores aprovados
-                </p> */}
-
                 <div className="flex flex-row gap-8">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        {/* <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /> */}
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        <Input placeholder="Buscar por nome ou CNPJ..." className="pl-10" />
+                        <Input placeholder="Buscar por nome ou CNPJ..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                     </div>
-                    {/* FILTROS AVANÇADOS: usa Popover para menu parecido com dropdown */}
-                    <Popover>
+                    {/* FILTROS AVANÇADOS */}
+                    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" size="sm" className="flex items-center gap-2">
                                 <Sliders className="h-4 w-4" />Filtros avançados
                             </Button>
                         </PopoverTrigger>
+
                         <PopoverContent side="bottom" align="start" className="w-[360px] p-3">
                             {/* header com ações rápidas */}
                             <div className="flex items-center justify-between mb-2">
                                 <div className="font-semibold">Filtros Avançados</div>
-                                <div className="text-sm text-neutral-400">X resultados</div>
+                                <div className="text-sm text-neutral-400">{previewCount} resultados</div>
                             </div>
 
                             <div className="space-y-3">
@@ -61,43 +115,35 @@ export default function FornecedoresCard() {
                                 <div>
                                     <div className="text-xs text-muted-foreground mb-1">Status</div>
                                     <div className="flex gap-2">
-                                        {["Ativa", "Inativa"].map(s => (
-                                            <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
-                                                <Checkbox checked={!!statusFilters[s]} onCheckedChange={() => { toggleStatus(s); setPage(1); }} />
-                                                <div className="text-sm">{s}</div>
-                                            </label>
-                                        ))}
+                                        {/* Ativa: disponível e interativo */}
+                                        <label className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
+                                            <Checkbox
+                                                checked={!!localStatusFilters['Ativa']}
+                                                onCheckedChange={() => { toggleLocalStatus('Ativa'); setPage(1); }}
+                                            />
+                                            <div className="text-sm">Ativa</div>
+                                        </label>
+
+                                        {/* Inativa: mantida visível mas desabilitada conforme requisito */}
+                                        <label className="flex items-center gap-2 px-2 py-1 rounded text-muted-foreground ">
+                                            <Checkbox
+                                                checked={!!localStatusFilters['Inativa']}
+                                                onCheckedChange={() => { toggleLocalStatus('Inativa'); setPage(1); }}
+                                            />
+                                            <div className="text-sm">Inativa</div>
+                                        </label>
                                     </div>
                                 </div>
-                                <Separator />
-
-                                {/* LOCALIZAÇÃO */}
-                                <div>
-                                    <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                                    <Input placeholder="Filtrar por cidade / estado" />
-                                </div>
-                                <Separator />
-                                {/* RESPONSAVEL - ainda nn funciona */}
-                                <div>
-                                    <div className="text-xs text-muted-foreground mb-1">Responsável</div>
-                                    <Input placeholder="Filtrar por responsável" />
-                                </div>
 
                                 <Separator />
-                                {/* Area */}
-                                <div>
-                                    <div className="text-xs text-muted-foreground mb-1">Área</div>
-                                    <Input placeholder="Filtrar por responsável" />
-                                </div>
 
                                 {/* APLICAR / RESET */}
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <Button size="sm" onClick={() => { setPage(1); /* já aplica por react */ }}>Aplicar</Button>
-                                        <Button size="sm" variant="ghost">Limpar</Button>
+                                        <Button size="sm" onClick={applyFilters}>Aplicar</Button>
+                                        <Button size="sm" variant="ghost" onClick={clearFilters}>Limpar</Button>
                                     </div>
                                 </div>
-
                             </div>
                         </PopoverContent>
                     </Popover>
@@ -135,103 +181,15 @@ export default function FornecedoresCard() {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {/* {suppliers.map((supplier, idx) => (
-                    <Expandable key={idx} expandDirection="both" expandBehavior="replace">
-                        {({ isExpanded }) => (
-                            <ExpandableTrigger>
-                                <ExpandableCard
-                                    className="w-full relative cursor-pointer hover:shadow-md transition-shadow"
-                                    collapsedSize={{ width: "100%", height: 160 }}
-                                    expandedSize={{ width: "100%", height: 380 }}
-                                    hoverToExpand={false}
-                                >
-                                    <ExpandableCardHeader className="p-4">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-md bg-gray-100 flex items-center justify-center">
-                                                    <Users className="w-5 h-5 text-gray-600" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-medium">{supplier.name}</h3>
-                                                    <p className="text-xs text-muted-foreground">{supplier.category}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col items-end gap-2">
-                                                <Badge variant={badgeVariantFor(supplier.status)}>
-                                                    {supplier.status}
-                                                </Badge>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {supplier.products} produtos
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </ExpandableCardHeader>
-
-                                    <ExpandableCardContent className="p-4">
-                                        <div className="flex items-start gap-4">
-                                            <div className="flex-1">
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                                    {isExpanded
-                                                        ? `Catálogo completo de ${supplier.name}. Encontre produtos, especificações e preços.`
-                                                        : `Acesse o catálogo de ${supplier.name} (${supplier.products} produtos).`}
-                                                </p>
-
-                                                <ExpandableContent preset="fade" keepMounted={false}>
-                                                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-4">
-                                                        <li>- Categoria: <strong>{supplier.category}</strong></li>
-                                                        <li>- Produtos disponíveis: <strong>{supplier.products}</strong></li>
-                                                        <li>- Status do fornecedor: <strong>{supplier.status}</strong></li>
-                                                    </ul>
-                                                </ExpandableContent>
-                                            </div>
-
-                                            <div className="w-28 flex-shrink-0 flex flex-col items-end">
-                                                <Button
-                                                    size="sm"
-                                                    className="mb-2 w-full"
-                                                    disabled={supplier.status !== 'ativa'}
-                                                >
-                                                    <ShoppingCart className="w-4 h-4 mr-2" />
-                                                    {supplier.status === 'ativa' ? 'Ver catálogo' : 'Aguardando aprovação'}
-                                                </Button>
-
-                                                <Button variant="ghost" size="sm" className="w-full">
-                                                    Detalhes
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </ExpandableCardContent>
-
-                                    <ExpandableContent preset="slide-up">
-                                        <ExpandableCardFooter className="p-3">
-                                            <div className="flex justify-between text-xs text-muted-foreground w-full">
-                                                <span>Última atualização: —</span>
-                                                <span>Política de compras disponível</span>
-                                            </div>
-                                        </ExpandableCardFooter>
-                                    </ExpandableContent>
-                                </ExpandableCard>
-                            </ExpandableTrigger>
-                        )}
-                    </Expandable>
-                ))} */}
-
-
                 {suppliers.map((supplier, idx) => (
                     <Expandable key={idx} expandDirection="both" expandBehavior="replace" onExpandStart={() => console.log("Expanding product card...")} onExpandEnd={() => console.log("Product card expanded!")}>
                         {({ isExpanded }) => (
                             <ExpandableTrigger>
-                                <ExpandableCard
-                                    className="w-full relative"
+                                <ExpandableCard className="w-full relative"
                                     // collapsedSize={{ width: 300, height: 220 }}
-                                    collapsedSize={{ width: "100%", height: 220 }}
+                                    collapsedSize={{ width: "100%", height: "h-fit" }}
                                     // expandedSize={{ width: 300, height: 520 }}
-                                    expandedSize={{ width: "100%", height: 520 }}
-                                    hoverToExpand={false}
-                                    expandDelay={500}
-                                    collapseDelay={700}
-                                >
+                                    expandedSize={{ width: "100%", height: "h-fit" }} hoverToExpand={false} expandDelay={500} collapseDelay={700}>
                                     <ExpandableCardHeader>
                                         <div className="flex justify-between items-center">
                                             <Badge variant="secondary" className="bg-[#99BF0F]/10 text-[#99BF0F]/80 dark:bg-[#99BF0F]/30">{supplier.status}</Badge>
@@ -257,12 +215,12 @@ export default function FornecedoresCard() {
                                             </div>
                                         </div>
                                         <ExpandableContent preset="fade" keepMounted={false} animateIn={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { type: "spring", stiffness: 300, damping: 20 }, }}>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-xs">Descrição da empresa abcdefghijklmnopqrstuvwxyz</p>
+                                            {/* <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-xs">Descrição da empresa abcdefghijklmnopqrstuvwxyz</p> */}
                                             <div className="space-y-4">
                                                 {[
-                                                    { icon: Tags, text: "Categoria:" },
                                                     { icon: Package, text: "Produtos disponíveis: " },
-                                                    { icon: CircleDot, text: "Status do fornecedor:" },
+                                                    { icon: CircleDot, text: "Vencimento do contrato: " },
+                                                    { icon: CircleDot, text: "CNPJ: " },
                                                 ].map((feature, index) => (
                                                     <div key={index} className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                                         <feature.icon className="w-4 h-4 mr-2" />
@@ -273,14 +231,14 @@ export default function FornecedoresCard() {
                                             </div>
                                         </ExpandableContent>
                                     </ExpandableCardContent>
-                                    <ExpandableContent preset="slide-up">
+                                    {/* <ExpandableContent preset="slide-up">
                                         <ExpandableCardFooter>
                                             <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 w-full">
                                                 <span>Free shipping</span>
                                                 <span>30-day return policy</span>
                                             </div>
                                         </ExpandableCardFooter>
-                                    </ExpandableContent>
+                                    </ExpandableContent> */}
                                 </ExpandableCard>
                             </ExpandableTrigger>
                         )}

@@ -10,7 +10,7 @@ import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SupplierDashboard } from '@/components/matriz/fornecedores/SupplierDashboard';
+// import { SupplierDashboard } from '@/components/matriz/fornecedores/SupplierDashboard';
 import { ConsumerDashboard } from '@/components/matriz/fornecedores/ConsumerDashboard';
 // icon
 import { Store, Building2 } from 'lucide-react';
@@ -85,7 +85,6 @@ export default function Fornecedores(){
       </header> */}
 
       <main className="container mx-auto p-6">
-        {currentRole === 'supplier' && <SupplierDashboard />}
         {currentRole === 'consumer' && <ConsumerDashboard />}
       </main>
     </div>
