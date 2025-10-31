@@ -59,6 +59,7 @@ model Unidade {
   caixas     Caixa[]
   vendas     Venda[]
   Fornecedor Fornecedor[]
+  Plantio    Plantio[]
 
   @@map("unidades")
 }
@@ -124,6 +125,8 @@ model Lote {
   rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
   rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
   AtividadesLote         AtividadesLote[]
+  Animalia               Animalia[]
+  Plantio                Plantio[]
 
   @@map("lotes")
 }
@@ -294,6 +297,41 @@ model Saidas {
   usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 }
 
+model Plantio {
+  id                 Int @id @default(autoincrement())
+  LoteId             Int @map("lote_id")
+  UnidadeId          Int @map("unidade_id")
+  dataPlantio        DateTime  @map("data_plantio")       // quando foi plantado
+  dataColheita       DateTime? @map("data_colheita")      // quando foi colhido (pode ser nulo até colher)
+  quantidadePlantada Int    @map("quantidade_plantada")   // quantidade de mudas ou sementes plantadas
+  quantidadeColhida  Int?   @map("quantidade_colhida")    // quantidade colhida (pode ser nulo até colher)
+  status             String    @default("em_andamento")   // em_andamento | colhido | perdido
+  observacoes        String?   @db.Text                   // notas ou observações do plantio
+
+  criadoEm           DateTime  @default(now()) @map("criado_em")
+  atualizadoEm       DateTime  @default(now()) @updatedAt @map("atualizado_em")
+
+  Lote    Lote    @relation(fields: [LoteId], references: [id], onDelete: Restrict)
+  Unidade Unidade @relation(fields: [UnidadeId], references: [id], onDelete: Restrict)
+}
+
+model Animalia {
+  id           Int      @id @default(autoincrement())
+  loteId       Int      @map("lote_id")
+  quantidade   Int
+  funcao       TipoFuncao
+  especie      String   @db.VarChar(100)
+  raca         String   @db.VarChar(100)
+  idade        Int
+  peso         Float
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
+
+  lote Lote @relation(fields: [loteId], references: [id], onDelete: Restrict)
+
+  @@map("animalia")
+}
+
 // ============================================
 // ENUMS
 // ============================================
@@ -349,4 +387,10 @@ enum AtividadesEnum {
 enum TipoCategoria {
   ANIMALIA
   PLANTIO
+}
+
+enum TipoFuncao {
+  REPRODUCAO
+  ABATE
+  PRODUCAO
 }
