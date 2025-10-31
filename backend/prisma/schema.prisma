@@ -168,7 +168,10 @@ model Estoque {
 
 model ProdutoFornecedor {
   id               Int      @id @default(autoincrement())
+  id_contrato Int
   produtoId        Int      @map("produto_id")
+  quantidade Int
+  unidade_medida UnidadesDeMedida
   fornecedorId     Int      @map("fornecedor_id")
   precoCusto       Decimal? @map("preco_custo") @db.Decimal(10, 2)
   prazoEntregaDias Int?     @map("prazo_entrega_dias")
@@ -298,6 +301,23 @@ model Saidas {
   usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 }
 
+model Contratos {
+  id        Int       @id @default(autoincrement())
+  fornecedor_id Int
+  loja_id Int
+  dataInicio DateTime
+  dataFim DateTime
+  status StatusContrato
+  frequencia_entregas FrequenciaEnum
+  frequencia_pagamento FrequenciaEnum
+  valorTotal Int
+
+  fornecedor Unidade @relation(fields: [fornecedor_id], references: [id], onDelete: Restrict)
+loja Unidade @relation(fields: [loja_id], references: [id], onDelete: Restrict)
+  
+
+}
+
 // ============================================
 // ENUMS
 // ============================================
@@ -342,10 +362,35 @@ enum TipoSaida {
   ENERGIA
   MANUTENCAO
   SALARIOS
+  ESTOQUE
 }
 
 enum AtividadesEnum {
   PLANTIO
   ADUBACAO
   FERTILIZACAO
+}
+
+enum StatusContrato{
+  ATIVO
+  INATIVO
+}
+
+enum FrequenciaEnum{
+  SEMANALMENTE
+  QUINZENAL
+  MENSALMENTE
+}
+
+enum UnidadesDeMedida {
+  KG
+  G
+  T
+  LOTE
+  UNIDADE
+  SACA
+  CABEÇA
+  ARROBA
+  LITRO
+  
 }
