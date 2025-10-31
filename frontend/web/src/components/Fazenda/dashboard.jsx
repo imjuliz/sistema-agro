@@ -103,9 +103,7 @@ export function SectionCards3() {
             <CardTitle className="text-2xl font-semibold">Milho - 25/10</CardTitle>
           </CardHeader>
           <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="flex gap-2 font-medium">
-              Lucros subiram em 20% <IconTrendingUp className="size-4" />
-            </div>
+            <div className="flex gap-2 font-medium">Lucros subiram em 20% <IconTrendingUp className="size-4" /></div>
             <div className="text-muted-foreground">Bom</div>
           </CardFooter>
         </Card>
@@ -185,7 +183,6 @@ export function GraficoDeBarras() {
   );
 }
 
-
 const formatDateRange2 = (from, to) => {
   const options = { hour: '2-digit', minute: '2-digit' };
   return `${from.toLocaleTimeString('pt-BR', options)} - ${to.toLocaleTimeString('pt-BR', options)}`;
@@ -205,8 +202,7 @@ export const CalendarEventListDemo = () => {
     <div>
       <Card className='w-full py-2'>
         <CardContent className='px-4'>
-          <Calendar mode='single' selected={date} onSelect={setDate} className='w-full bg-transparent p-0' required
-            modifiersClassNames={{ today: 'bg-[#738C16] text-white rounded-xl ', selected: 'rounded-xl text-white ' }} />
+          <Calendar mode='single' selected={date} onSelect={setDate} className='w-full bg-transparent p-0' required modifiersClassNames={{ today: 'bg-[#738C16] text-white rounded-xl ', selected: 'rounded-xl text-white ' }} />
         </CardContent>
         <CardFooter className='flex flex-col items-start gap-3 border-t px-4 !pt-4'>
           <div className='flex w-full items-center justify-between px-1'>
@@ -246,18 +242,14 @@ export function ItemVariant() {
       <Item variant="outline">
         <ItemContent>
           <ItemTitle>Outline Variant</ItemTitle>
-          <ItemDescription>
-            Outlined style with clear borders and transparent background.
-          </ItemDescription>
+          <ItemDescription>Outlined style with clear borders and transparent background.</ItemDescription>
         </ItemContent>
         <ItemActions><Button variant="outline" size="sm">Open</Button></ItemActions>
       </Item>
       <Item variant="muted">
         <ItemContent>
           <ItemTitle>Muted Variant</ItemTitle>
-          <ItemDescription>
-            Subdued appearance with muted colors for secondary content.
-          </ItemDescription>
+          <ItemDescription>Subdued appearance with muted colors for secondary content.</ItemDescription>
         </ItemContent>
         <ItemActions>
           <Button variant="outline" size="sm">Open</Button>
@@ -267,8 +259,7 @@ export function ItemVariant() {
   )
 }
 
-
-import {Table,TableBody,TableCaption,TableCell,TableFooter,TableHead,TableHeader,TableRow,} from "@/components/ui/table"
+import {Table,TableBody,TableCaption,TableCell,TableHead,TableHeader,TableRow,} from "@/components/ui/table"
 
 const admins = [
   { id: 1, nome: "Mariana Souza", email: "mariana@fazenda.com", telefone: "(11) 99999-1234" },
