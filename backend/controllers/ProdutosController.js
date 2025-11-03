@@ -1,4 +1,4 @@
-import { getProdutos, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
+import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
 import { produtoSchema } from "../schemas/produtoSchema.js";
 
 export async function getProdutosController(req, res) {
@@ -17,6 +17,24 @@ export async function getProdutosController(req, res) {
         };
     }
 };
+
+export async function getProdutosPelaCategoriaController(req, res) {
+    try {
+        const { categoria_animalia } = req.params;
+        const produto_animalia = await getProdutosPelaCategoria(categoria_animalia);
+        return {
+            sucesso: true,
+            produto_animalia,
+            message: "Produtos de animalia listados com sucesso."
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar produtos de animalia.",
+            detalhes: error.message // opcional, para debug
+        }
+    }
+}
 
 export async function getProdutoPorIdController(req, res) {
     try {
@@ -49,25 +67,6 @@ export async function createProdutoController(req, res) {
         return {
             sucesso: false,
             erro: "Erro ao criar produto.",
-            detalhes: error.message // opcional, para debug
-        };
-    }
-};
-
-export async function updateProdutoController(req, res) {
-    try {
-        const { id } = req.params;
-        const { data } = produtoSchema.partial().parse(req.body);
-        const produto = await updateProduto(id, data);
-        return {
-            sucesso: true,
-            produto,
-            message: "Produto atualizado com sucesso."
-        };
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao atualizar produto.",
             detalhes: error.message // opcional, para debug
         };
     }

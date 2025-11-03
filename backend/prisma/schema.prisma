@@ -15,9 +15,10 @@ datasource db {
 // ============================================
 
 model Perfil {
-  id        Int       @id @default(autoincrement())
-  nome      String    @unique @db.VarChar(255) // "MATRIZ" | "PRODUCAO" | "VENDA"
-  descricao String    @db.Text
+  id        Int         @id @default(autoincrement())
+  nome      String      @unique @db.VarChar(255) // "MATRIZ" | "PRODUCAO" | "VENDA"
+  descricao String      @db.Text
+  funcao    TipoPerfil  @default(MATRIZ)
   usuarios  Usuario[]
 
   @@map("perfis")
@@ -25,7 +26,7 @@ model Perfil {
 
 model Fornecedor {
   id               Int                 @id @default(autoincrement())
-  unidadeId        Int?                @map("unidade_id")
+  
   nomeEmpresa      String              @map("nome_empresa") @db.VarChar(200)
   descricaoEmpresa String              @map("descricao_empresa") @db.Text
   material         String              @db.VarChar(150)
@@ -36,8 +37,6 @@ model Fornecedor {
   criadoEm         DateTime            @default(now()) @map("criado_em")
   atualizadoEm     DateTime            @default(now()) @updatedAt @map("atualizado_em")
   produtos         ProdutoFornecedor[]
-
-  Unidade Unidade? @relation(fields: [unidadeId], references: [id])
 
   @@map("fornecedores")
 }
@@ -58,8 +57,6 @@ model Unidade {
   lotes      Lote[]
   caixas     Caixa[]
   vendas     Venda[]
-  Fornecedor Fornecedor[]
-  Plantio    Plantio[]
 
   @@map("unidades")
 }
@@ -85,6 +82,8 @@ model Usuario {
   vendas              Venda[]
   saidas              Saidas[]
   AtividadesLote      AtividadesLote[]
+  AtvdPlantio         atvdPlantio[]
+  AtvdAnimalia        atvdAnimalia[]
 
   @@map("usuarios")
 }
@@ -125,8 +124,8 @@ model Lote {
   rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
   rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
   AtividadesLote         AtividadesLote[]
-  Animalia               Animalia[]
-  Plantio                Plantio[]
+  AtvdAnimalia           atvdAnimalia[]
+  atvdPlantio            atvdPlantio[]
 
   @@map("lotes")
 }
@@ -297,39 +296,32 @@ model Saidas {
   usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 }
 
-model Plantio {
-  id                 Int @id @default(autoincrement())
-  LoteId             Int @map("lote_id")
-  UnidadeId          Int @map("unidade_id")
-  dataPlantio        DateTime  @map("data_plantio")       // quando foi plantado
-  dataColheita       DateTime? @map("data_colheita")      // quando foi colhido (pode ser nulo até colher)
-  quantidadePlantada Int    @map("quantidade_plantada")   // quantidade de mudas ou sementes plantadas
-  quantidadeColhida  Int?   @map("quantidade_colhida")    // quantidade colhida (pode ser nulo até colher)
-  status             String    @default("em_andamento")   // em_andamento | colhido | perdido
-  observacoes        String?   @db.Text                   // notas ou observações do plantio
+model atvdPlantio{
+  id               Int       @id @default(autoincrement())
+  descricao        String  
+  tipo             TipoPlantio 
+  loteId           Int 
+  data             DateTime
+  responsavelId    Int
 
-  criadoEm           DateTime  @default(now()) @map("criado_em")
-  atualizadoEm       DateTime  @default(now()) @updatedAt @map("atualizado_em")
+  responsavel      Usuario  @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  lote             Lote     @relation(fields: [loteId], references: [id])
 
-  Lote    Lote    @relation(fields: [LoteId], references: [id], onDelete: Restrict)
-  Unidade Unidade @relation(fields: [UnidadeId], references: [id], onDelete: Restrict)
+  @@map("atvd_plantio")
 }
 
-model Animalia {
-  id           Int      @id @default(autoincrement())
-  loteId       Int      @map("lote_id")
-  quantidade   Int
-  funcao       TipoFuncao
-  especie      String   @db.VarChar(100)
-  raca         String   @db.VarChar(100)
-  idade        Int
-  peso         Float
-  criadoEm     DateTime @default(now()) @map("criado_em")
-  atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
+model atvdAnimalia{
+  id               Int      @id @default(autoincrement())
+  descricao        String 
+  tipo             TipoAnimalia
+  loteId           Int
+  data             DateTime
+  responsavelId    Int
 
-  lote Lote @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  responsavel      Usuario  @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  lote             Lote     @relation(fields: [loteId], references: [id])
 
-  @@map("animalia")
+@@map("atvd_animalia")
 }
 
 // ============================================
@@ -389,8 +381,20 @@ enum TipoCategoria {
   PLANTIO
 }
 
-enum TipoFuncao {
-  REPRODUCAO
-  ABATE
+enum TipoAnimalia {
+  VETERINARIO
+  ALIMENTACAO
+  COLHEITA
+}
+
+enum TipoPerfil {
+  MATRIZ
+  PRODUCAO
+  VENDA
+}
+
+enum TipoPlantio {
+  CULTIVO
+  COLHEITA
   PRODUCAO
 }
