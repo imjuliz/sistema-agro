@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TrendingUp, TrendingDown, Users, Briefcase, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Briefcase, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees } from 'lucide-react';
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Pie, PieChart } from "recharts"
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, } from "@/components/ui/chart"
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 
 const recentActivities = [
   {
@@ -147,21 +147,10 @@ export const columns = [
   {
     id: "select",
     header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
+      <></>
     ),
     cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
+      <></>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -190,10 +179,9 @@ export const columns = [
   },
   {
     accessorKey: "observacao",
-    header: () => <div className="text-right">Observação</div>,
-    cell: ({ row }) => {
-      <div className="capitalize">{row.getValue("observacao")}</div>
-    },
+    header: () => <div className="">Observação</div>,
+    cell: ({ row }) => (<div className="capitalize">{row.getValue("observacao")}</div>
+    ),
   },
   {
     id: "actions",
@@ -229,8 +217,8 @@ export const columns = [
 // grafico de Uso do Solo e Cultivo
 // --------------------------------------------------------------------------------
 const cultivos = [
-  { cultura: "milho", area: 70, fill: "var(--color-chrome)" },
-  { cultura: "soja", area: 50, fill: "var(--color-safari)" },
+  { cultura: "milho", area: 70, fill: "var(--chart-1)" },
+  { cultura: "soja", area: 50, fill: "var(--chart-2)" },
 ]
 const cultivosConfig = {
   area: {
@@ -290,8 +278,8 @@ export function OverviewTab() {
             <div className="flex items-center gap-3">
               <Users className="size-4 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Company Size</div>
-                <div className="text-sm text-muted-foreground">500-1000 funcionarios</div>
+                <div className="text-sm font-medium">Tamanho da empresa</div>
+                <div className="text-sm text-muted-foreground">500-1000 funcionários</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -304,8 +292,8 @@ export function OverviewTab() {
             <div className="flex items-center gap-3">
               <DollarSign className="size-4 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Contract Value</div>
-                <div className="text-sm text-muted-foreground">$150K/year</div>
+                <div className="text-sm font-medium">Valor do contrato</div>
+                <div className="text-sm text-muted-foreground">R$1500/mês</div>
               </div>
             </div>
           </CardContent>
@@ -392,11 +380,11 @@ export function OverviewTab() {
         {/* Key Metrics */}
         <div className="grid grid-cols-3 gap-6">
           {/* <div className="grid grid-cols-4 gap-4"> */}
-          <Card>
+          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Briefcase className="size-5 text-blue-600" />
+                <div className="p-2 rounded-lg">
+                  <LandPlot className="size-10" />
                 </div>
                 <div>
                   <div className="text-2xl font-medium">150 ha</div>
@@ -405,12 +393,11 @@ export function OverviewTab() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
+          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Users className="size-5 text-green-600" />
+                <div className="p-2 rounded-lg">
+                  <Tractor className="size-10" />
                 </div>
                 <div>
                   <div className="text-2xl font-medium">120 ha</div>
@@ -420,11 +407,11 @@ export function OverviewTab() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Calendar className="size-5 text-purple-600" />
+                <div className="p-2 rounded-lg">
+                  <Trees className="size-10 " />
                 </div>
                 <div>
                   <div className="text-2xl font-medium">30 ha</div>
@@ -543,6 +530,9 @@ export function OverviewTab() {
                 className="mx-auto aspect-square max-h-[300px]"
               >
                 <PieChart>
+                  <ChartTooltip
+                    content={<ChartTooltipContent nameKey="cultura" hideLabel />}
+                  />
                   <Pie data={cultivos} dataKey="area" />
                   <ChartLegend
                     content={<ChartLegendContent nameKey="cultura" />}

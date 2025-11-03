@@ -154,14 +154,14 @@ export function EquipeTab() {
 
   return (
     <div className="flex gap-6 ">
-      <div className="w-80 space-y-6">
-        {/* Company Details */}
-        <Card>
+      
+      <div className=" flex-1 min-w-0 space-y-4">
+         <Card>
           <CardHeader>
             <CardTitle className="text-base">Ações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-row items-start gap-3">
               <div className="relative w-full">
                 <Input placeholder="Buscar por nome ou email" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
               </div>
@@ -169,7 +169,7 @@ export function EquipeTab() {
               {/* FILTROS AVANÇADOS: usa Popover para menu parecido com dropdown */}
               <Popover >
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2 w-full">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 px-3">
                     <Sliders className="h-4 w-4" />Filtros avançados
                   </Button>
                 </PopoverTrigger>
@@ -236,7 +236,7 @@ export function EquipeTab() {
                   </div>
                 </PopoverContent>
               </Popover>
-              <div className='w-full'>
+              <div className=''>
                 <Button className='w-full' size="sm"><Plus />Convidar</Button>
               </div>
             </div>
@@ -244,12 +244,9 @@ export function EquipeTab() {
 
           </CardContent>
         </Card>
-      </div>
 
-
-      <div className=" flex-1 min-w-0 space-y-4">
         {equipe.map((eqp) => (
-          <Card key={eqp.id}>
+          <Card key={eqp.id} className={"p-0"}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4">
