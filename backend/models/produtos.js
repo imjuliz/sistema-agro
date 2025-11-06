@@ -18,9 +18,7 @@ export async function getProdutos() {
 
 export async function getProdutoPorId(id) {
     try {
-        const produto = await prisma.produtos.findUnique({
-            where: { id: id }
-        });
+        const produto = await prisma.produtos.findUnique({ where: { id: id } });
         return {
             sucesso: true,
             produto,
@@ -33,7 +31,7 @@ export async function getProdutoPorId(id) {
             message: "Erro ao encontrar produto.",
             detalhes: error.message // opcional, para debug
         }
-    }  
+    }
 };
 
 export async function createProduto(data) {
@@ -55,9 +53,7 @@ export async function createProduto(data) {
 
 export async function deleteProduto(id) {
     try {
-        const produto = await prisma.produtos.delete({
-            where: { id }
-        });
+        const produto = await prisma.produtos.delete({ where: { id } });
         return {
             sucesso: true,
             produto,
