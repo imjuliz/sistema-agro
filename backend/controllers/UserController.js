@@ -11,15 +11,11 @@ export async function cadastrarSeController(req, res) {
     const { nome, email, senha } = userShema.partial().parse(req.body);
     const id = req.usuario.id
 
-    if (!nome || !email || !senha) {
-      return res.status(400).json({ error: "Preencha todos os campos obrigatórios" });
-    }
+    if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
 
     // Verifica se email já existe
     const existingUser = await getUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: "Email já cadastrado" });
-    }
+    if (existingUser) { return res.status(400).json({ error: "Email já cadastrado" }); }
 
     const user = await cadastrarSe({ nome, email, senha });
 
@@ -36,25 +32,14 @@ export const updateUsuarioController = async (req, res) => {
   const { nomeCompleto, email, funcao, setor, unidade, periodo } = userShema.partial().parse(req.body);
   try {
     // Validação dos campos obrigatórios
-    if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) {
-      return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' });
-    }
+    if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) { return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' }); }
 
-    const unidadeData = { 
-      nomeCompleto,
-      email,
-      funcao,
-      setor,
-      unidade,
-      periodo
-    };
+    const unidadeData = { nomeCompleto, email, funcao, setor, unidade, periodo };
 
     const result = await updateUsuario(id, unidadeData);
 
     return res.status(200).json({ sucesso: true, mensagem: 'Usuário atualizado com sucesso', result });
-  } catch (error) {
-    return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' });
-  }
+  } catch (error) { return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' }); }
 }
 
 export const deletarUsuarioController = async (req, res) => {
@@ -63,26 +48,20 @@ export const deletarUsuarioController = async (req, res) => {
   try {
     const resultado = await deletarUsuario(userId)
 
-    if (!resultado.sucesso) {
-      return res.status(400).json(resultado)
-    }
+    if (!resultado.sucesso) { return res.status(400).json(resultado) }
 
     return res.status(200).json({ sucesso: true, mensagem: 'Usuário deletado com sucesso' })
-  } catch (err) {
-    return res.status(500).json({ sucesso: false, erro: 'Erro interno do servidor' })
-  }
+  } catch (err) { return res.status(500).json({ sucesso: false, erro: 'Erro interno do servidor' }) }
 }
 
 export const loginController = async (req, res) => {
   const { email, senha } = userSchema.partial().parse(req.body);
   try {
     // Validações básicas
-    if (!email || !senha) {
-      return res.status(400).json({ error: "Email e senha são obrigatórios" });
-    }
+    if (!email || !senha) { return res.status(400).json({ error: "Email e senha são obrigatórios" }); }
 
     // Salva em response a resposta do login
-    const response =  await login(email, senha)
+    const response = await login(email, senha)
 
     res
       .status(200)
@@ -160,9 +139,7 @@ export const esqSenhaController = async (req, res) => {
       process.env.SMTP_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URI
     );
-    oAuth2Client.setCredentials({
-      refresh_token: process.env.SMTP_REFRESH_TOKEN,
-    });
+    oAuth2Client.setCredentials({ refresh_token: process.env.SMTP_REFRESH_TOKEN, });
     const accessToken = await oAuth2Client.getAccessToken();
 
     const transport = nodemailer.createTransport({

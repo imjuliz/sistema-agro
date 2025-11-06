@@ -34,7 +34,5 @@ export default function Page() {
     <BlogPage />
     <Footer />
     </>
-    
   )
-  
 }
