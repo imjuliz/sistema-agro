@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 export function CompanyHeader({ onLogActivity }) {
   return (
     <div className="bg-card  ">
-      <div className="flex items-center border-b px-6 py-4 justify-between">
+      <div className="flex flex-wrap gap-7 items-center border-b px-6 py-4 justify-between">
         {/* Company Info */}
         <div className="flex items-center gap-4">
           <Avatar className="size-12">
