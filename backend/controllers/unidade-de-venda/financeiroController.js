@@ -1,4 +1,4 @@
-import { calcularLucro, listarSaidas, somarDiaria, somarSaidas } from '../../models/unidade-de-venda/vendas_despesas'
+import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas } from '../../models/unidade-de-venda/vendas_despesas'
 export const contarChamadosController = async (req, res) => {
     try {
         const total = await contarTodosChamados();
@@ -63,4 +63,15 @@ export const calcularLucroController = async (req, res) => { //funcao assincrona
     console.error(error);
     return res.status(500).json({ error: 'Erro ao calcular lucro do último mês.' });
   }
+}
+
+export const listarVendasController = async(req, res) =>{
+    try{
+        const unidadeId = req.user?.unidadeId;
+        const vendas = await listarVendas(unidadeId);
+        res.status(200).json(vendas);
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({erro: 'Erro ao listar vendas.'})
+    }
 }
