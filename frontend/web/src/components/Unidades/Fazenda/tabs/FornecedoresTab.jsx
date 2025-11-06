@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 // import { SupplierDashboard } from '@/components/matriz/fornecedores/SupplierDashboard';
-import { ConsumerDashboard } from '@/components/matriz/fornecedores/ConsumerDashboard';
+import { ConsumerDashboard } from '@/components/fornecedores/ConsumerDashboard';
 // icon
 import { Store, Building2 } from 'lucide-react';
 

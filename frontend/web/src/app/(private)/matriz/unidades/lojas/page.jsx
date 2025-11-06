@@ -313,11 +313,11 @@ export default function FazendasPage() {
                                 {/* Grid of cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {paged.map(u => (
-                                        <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`}>
+                                        <Link key={u.id} href={`/matriz/unidades/lojas/${u.id}`}>
                                             <div className="bg-card border border-neutral-800 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar><AvatarFallback>F</AvatarFallback></Avatar>
+                                                        <Avatar><AvatarFallback>L</AvatarFallback></Avatar>
                                                         <div>
                                                             <div className="font-medium text-lg">{u.name}</div>
                                                             <div className="text-sm text-muted-foreground">{u.id}</div>

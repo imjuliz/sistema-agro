@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useInventory } from '@/contexts/InventoryContext';
 import { Button } from '../ui/button';
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 function getStockStatus(current, minimum) {
   const difference = current - minimum;
@@ -94,7 +95,7 @@ export function StoreLevelView() {
   // const warningStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'warning').length;
   // const criticalStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'critical').length;
 
-  
+
 
   return (
     <div className="space-y-6">
@@ -161,13 +162,13 @@ export function StoreLevelView() {
               />
             </div>
             <div>
-              <label className="block mb-2">Lojas</label>
+              <label className="block mb-2">Fornecedores</label>
               <Select value={selectedStore} onValueChange={(val) => setSelectedStore(val)}>
                 <SelectTrigger className={'w-full'}>
                   <SelectValue placeholder="Selecionar loja" />
                 </SelectTrigger>
                 <SelectContent className={'w-full'}>
-                  <SelectItem value="all">Todas as lojas</SelectItem>
+                  <SelectItem value="all">Todos os fornecedores</SelectItem>
                   {stores.map(store => (
                     <SelectItem key={store} value={store} className={'w-full'}>{store}</SelectItem>
                   ))}
@@ -272,36 +273,37 @@ export function StoreLevelView() {
             </div> */}
 
             <div className="flex items-center gap-3">
-              <div className="text-sm">Linhas por pág.</div>
-              <select
-                className="bg-neutral-900 border border-neutral-800 text-neutral-200 rounded px-2 py-1 text-sm" value={perPage} onChange={(e) => { const v = Number(e.target.value); setPerPage(v); setPage(1); }}
-              >
-                <option value={5}>5</option>
-                <option value={6}>6</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
+              <Label className="text-sm font-medium">Linhas por pág.</Label>
+              <Select value={perPage} onChange={(e) => { const v = Number(e.target.value); setPerPage(v); setPage(1); }} >
+                <SelectContent>
+                  <SelectItem value={5}>5</SelectItem>
+                  <SelectItem value={6}>6</SelectItem>
+                  <SelectItem value={10}>10</SelectItem>
+                  <SelectItem value={20}>20</SelectItem>
+                </SelectContent>
+
+              </Select>
 
               <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredItems.length / perPage) || 1)}</div>
 
               <div className="inline-flex items-center gap-1 border-l border-neutral-800 pl-3">
-              <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
+                <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
 
-              <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-              <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
 
-              <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
+                <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
           </CardFooter>
         </CardContent>
       </Card>

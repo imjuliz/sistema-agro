@@ -644,20 +644,8 @@ export function FinanceiroTab() {
               className="mx-auto aspect-square max-h-[250px]"
             >
               <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                  data={despesasPorCategoria}
-                  dataKey="visitors"
-                  nameKey="browser"
-                  innerRadius={60}
-                  strokeWidth={5}
-                  activeIndex={0}
-                  activeShape={({
-                    outerRadius = 0,
-                    ...props
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie data={despesasPorCategoria} dataKey="visitors" nameKey="browser" innerRadius={60} strokeWidth={5} activeIndex={0} activeShape={({ outerRadius = 0, ...props
                   }) => (
                     <Sector {...props} outerRadius={outerRadius + 10} />
                   )}
