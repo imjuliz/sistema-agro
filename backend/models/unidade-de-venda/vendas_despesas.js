@@ -2,10 +2,10 @@ import prisma from '../../prisma/client.js';
 
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId) =>{
-    try{
+export const listarSaidas = async (unidadeId) => {
+    try {
         const saidas = await prisma.Saidas.findMany({
-            where: {unidadeId: Number(unidadeId)},
+            where: { unidadeId: Number(unidadeId) },
         })
         return ({
             sucesso: true,
@@ -25,31 +25,31 @@ export const listarSaidas = async (unidadeId) =>{
 
 // Função que soma as vendas do dia atual
 export const somarDiaria = async (unidadeId) => {
-  const result = await prisma.$queryRaw`
+    const result = await prisma.$queryRaw`
     SELECT COALESCE(SUM(valor), 0) AS total
     FROM "Vendas"
     WHERE DATE("criado_em") = CURRENT_DATE
       AND "unidadeId" = ${unidadeId}
   `;
 
-  // Prisma retorna um array de objetos, então pegamos o primeiro
-  return result[0]?.total ?? 0;
+    // Prisma retorna um array de objetos, então pegamos o primeiro
+    return result[0]?.total ?? 0;
 };
 
-export const somarSaidas = async (unidadeId) =>{
+export const somarSaidas = async (unidadeId) => {
     const result = await prisma.$queryRaw`
     SELECT COALESCE (SUM(valor), 0) AS total
     from "Saídas"
     where date("data") = CURRENT_DATE
     and "unidadeId" = ${unidadeId}`;
 
-return result[0]?.total ?? 0;
+    return result[0]?.total ?? 0;
 
 }
 
-export const calcularLucro = async (unidadeId) =>{
+export const calcularLucro = async (unidadeId) => {
 
-  const result = await prisma.$queryRaw`
+    const result = await prisma.$queryRaw`
 
     SELECT
       COALESCE((SELECT SUM(valor)
@@ -75,7 +75,26 @@ export const calcularLucro = async (unidadeId) =>{
       ) AS lucro;
   `;
 
-  return result[0];
+    return result[0];
+}
+
+export const listarVendas = async (unidadeId) => {
+    try {
+        const vendas = await prisma.Venda.findMany({
+            where: { unidadeId: Number(unidadeId) },
+        })
+        return ({
+            sucesso: true,
+            estoque,
+            message: "Vendas listadas com sucesso!!"
+        })
+    } catch (error) {
+        return ({
+            sucesso: false,
+            erro: "Erro ao listar vendas",
+            detalhes: error.message
+        })
+    }
 }
 
 

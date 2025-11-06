@@ -153,4 +153,8 @@ export async function listarSaidasPorUnidade(unidadeId) {
   }
 }
 
+export const reporEstoque= async(unidadeId)=>{
+
+}
+
 

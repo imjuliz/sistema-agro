@@ -155,12 +155,12 @@ export function EquipeTab() {
   return (
     <div className="flex gap-6 ">
       
-      <div className=" flex-1 min-w-0 space-y-4">
-         <Card>
-          <CardHeader>
+      <div className="flex-1 min-w-0 space-y-4">
+         <div>
+          {/* <CardHeader>
             <CardTitle className="text-base">Ações</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </CardHeader> */}
+          <div className="space-y-4">
             <div className="flex flex-row items-start gap-3">
               <div className="relative w-full">
                 <Input placeholder="Buscar por nome ou email" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
@@ -242,8 +242,8 @@ export function EquipeTab() {
             </div>
 
 
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {equipe.map((eqp) => (
           <Card key={eqp.id} className={"p-0"}>
@@ -286,7 +286,7 @@ export function EquipeTab() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 mb-4">
+              <div className="flex flex-wrap gap-6 mb-4">
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-2">Contatos</div>
                   <div className="space-y-2">

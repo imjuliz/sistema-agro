@@ -149,15 +149,15 @@ export default function FazendasPage() {
                         <h1 className="text-2xl font-bold">Unidades — Fazendas</h1>
                         <p className="text-sm text-muted-foreground">Visão dedicada para a Matriz: resumo e detalhes de fazendas</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                         <Button onClick={() => { setQuery(""); setLocationFilter(""); setPage(1); }}>Limpar filtros</Button>
                         <Button variant="secondary" onClick={() => window.print()}>Imprimir</Button>
-                    </div>
+                    </div> */}
                 </header>
 
                 {/* METRICS */}
                 <div className="grid grid-cols-4 gap-4 mb-8">
-                    <Card>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
                         <CardHeader><CardTitle>Total de Fazendas</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.total}</div>
@@ -165,7 +165,7 @@ export default function FazendasPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
                         <CardHeader><CardTitle>Ativas</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.active}</div>
@@ -173,7 +173,7 @@ export default function FazendasPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
                         <CardHeader><CardTitle>Inativas</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.inactive}</div>
@@ -181,7 +181,7 @@ export default function FazendasPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
                         <CardHeader><CardTitle>IoT (média)</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.avgIot}%</div>
@@ -193,6 +193,7 @@ export default function FazendasPage() {
                 {/* Filters + cards */}
                 <Card className={"mb-8"}>
                     <CardHeader>
+                        <CardTitle className={"mb-4"}>Lista de Fazendas</CardTitle>
                         <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
@@ -410,7 +411,7 @@ export default function FazendasPage() {
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={chartConfigProducaoSemanal}>
-                                    <LineChart accessibilityLayer data={ProducaoSemanal} margin={{ left: 12, right: 12, }} >
+                                    <LineChart accessibilityLayer data={ProducaoSemanal} margin={{ left: 20, right: 20, }} >
                                         <CartesianGrid vertical={false} />
                                         <XAxis dataKey="week" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
                                         <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />

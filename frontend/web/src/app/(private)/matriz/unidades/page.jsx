@@ -45,8 +45,6 @@ const chartConfigLojasDesempenho = {
     },
 }
 
-
-
 /* sample data */
 const sampleUnits = Array.from({ length: 12 }).map((_, i) => {
     const types = ["Matriz", "Fazenda", "Loja"];
@@ -494,11 +492,8 @@ export default function UnitManagementPageFull() {
 
                                     <div className="flex items-center gap-3">
                                         <div className="text-sm">Linhas por pág.</div>
-                                        <select
-                                            className="bg-neutral-900 border border-neutral-800 text-neutral-200 rounded px-2 py-1 text-sm"
-                                            value={perPage}
-                                            onChange={(e) => { const v = Number(e.target.value); setPerPage(v); setPage(1); }}
-                                        >
+                                        <select className="bg-neutral-900 border border-neutral-800 text-neutral-200 rounded px-2 py-1 text-sm"
+                                            value={perPage} onChange={(e) => { const v = Number(e.target.value); setPerPage(v); setPage(1); }} >
                                             <option value={5}>5</option>
                                             <option value={6}>6</option>
                                             <option value={10}>10</option>
@@ -541,67 +536,25 @@ export default function UnitManagementPageFull() {
                                     </CardHeader>
                                     <CardContent>
                                         <ChartContainer config={chartConfigLojasDesempenho}>
-                                            <BarChart
-                                                accessibilityLayer
-                                                data={LojasDesempenho}
-                                                layout="vertical"
-                                                margin={{
-                                                    right: 16,
-                                                }}
-                                            >
+                                            <BarChart accessibilityLayer data={LojasDesempenho} layout="vertical" margin={{ right: 16, }} >
                                                 <CartesianGrid horizontal={false} />
-                                                <YAxis
-                                                    dataKey="month"
-                                                    type="category"
-                                                    tickLine={false}
-                                                    tickMargin={10}
-                                                    axisLine={false}
-                                                    tickFormatter={(value) => value.slice(0, 3)}
-                                                    hide
-                                                />
+                                                <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} hide />
                                                 <XAxis dataKey="desktop" type="number" hide />
-                                                <ChartTooltip
-                                                    cursor={false}
-                                                    content={<ChartTooltipContent indicator="line" />}
-                                                />
-                                                <Bar
-                                                    dataKey="desktop"
-                                                    layout="vertical"
-                                                    fill="var(--color-desktop)"
-                                                    radius={4}
-                                                >
-                                                    <LabelList
-                                                        dataKey="month"
-                                                        position="insideLeft"
-                                                        offset={8}
-                                                        className="fill-(--color-label)"
-                                                        fontSize={12}
-                                                    />
-                                                    <LabelList
-                                                        dataKey="desktop"
-                                                        position="right"
-                                                        offset={8}
-                                                        className="fill-foreground"
-                                                        fontSize={12}
-                                                    />
+                                                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                                                <Bar dataKey="desktop" layout="vertical" fill="var(--color-desktop)" radius={4} >
+                                                    <LabelList dataKey="month" position="insideLeft" offset={8} className="fill-(--color-label)" fontSize={12} />
+                                                    <LabelList dataKey="desktop" position="right" offset={8} className="fill-foreground" fontSize={12} />
                                                 </Bar>
                                             </BarChart>
                                         </ChartContainer>
                                     </CardContent>
                                     <CardFooter className="flex-col items-start gap-2 text-sm">
-                                        <div className="flex gap-2 leading-none font-medium">
-                                            Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                                        </div>
+                                        <div className="flex gap-2 leading-none font-medium">Trending up by 5.2% this month <TrendingUp className="h-4 w-4" /></div>
                                         <div className="text-muted-foreground leading-none">Vendas totais, Margem de lucro, Giro de estoque ou Satisfação do cliente? (a decidir)
                                         </div>
                                     </CardFooter>
                                 </Card>
                             </div>
-
-                            <div className="w-full">
-                                
-                            </div>
-
                         </div>
                     </div>
                 </main>
