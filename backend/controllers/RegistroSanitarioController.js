@@ -38,7 +38,7 @@ export async function getRegistroSanitarioPorIdController (req, res) {
 
 export async function createRegistroSanitarioController (req, res) {
     try {
-        const { data } = registroSanitarioSchema.parse(req.body);
+        const data = registroSanitarioSchema.parse(req.body);
         const registro = await createRegistroSanitario(data);
         return {
             sucesso: true,

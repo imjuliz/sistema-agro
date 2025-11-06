@@ -56,7 +56,7 @@ export async function getProdutoPorIdController(req, res) {
 
 export async function createProdutoController(req, res) {
     try {
-        const { data } = produtoSchema.parse(req.body);
+        const data = produtoSchema.parse(req.body);
         const produto = await createProduto(data);
         return {
             sucesso: true,

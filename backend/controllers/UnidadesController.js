@@ -38,7 +38,7 @@ export async function getUnidadePorIdController(req, res) {
 
 export async function createUnidadeController(req, res) {
     try {
-        const { data } = unidadeSchema.parse(req.body);
+        const data = unidadeSchema.parse(req.body);
         const unidade = await createUnidade(data);
         return {
             sucesso: true,
@@ -57,7 +57,7 @@ export async function createUnidadeController(req, res) {
 export async function updateUnidadeController(req, res) {
 try {
     const { id } = req.params;
-    const { data } = unidadeSchema.parse(req.body);
+    const data = unidadeSchema.parse(req.body);
     const unidade = await updateUnidade(id, data);
     return {
         sucesso: true,

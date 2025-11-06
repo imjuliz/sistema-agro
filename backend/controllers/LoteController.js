@@ -55,7 +55,7 @@ export async function getLotePorIdController(req, res) {
 };
 
 export async function createLoteController(req, res) {
-    const { data } = loteSchema.parse(req.body);
+    const data = loteSchema.parse(req.body);
     try {
         const lote = await createLote(data);
         return {
@@ -75,7 +75,7 @@ export async function createLoteController(req, res) {
 export async function updateLoteController(req, res) {
     const { id } = req.params;
     try {
-        const { data } = loteSchema.parse(req.body);
+        const data = loteSchema.parse(req.body);
         const loteAtualizado = await updateLote(id, data);
         return {
             sucesso: true,

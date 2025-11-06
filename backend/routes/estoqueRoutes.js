@@ -1,10 +1,11 @@
 import { getEstoquesController, getEstoquePorIdController, createEstoqueController, updateEstoqueController, deleteEstoqueController } from "../controllers/EstoqueController.js";
 import express from "express";
+import { auth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getEstoquesController); 
-router.get("/:id", getEstoquePorIdController);
-router.post("/", createEstoqueController);
-router.put("/:id", updateEstoqueController);
-router.delete("/:id", deleteEstoqueController);
+router.get("/", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getEstoquesController); 
+router.get("/:id", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getEstoquePorIdController);
+router.post("/", auth(["gerente_fazenda", "gerente_loja"]), createEstoqueController);
+router.put("/:id", auth(["gerente_fazenda", "gerente_loja"]), updateEstoqueController);
+router.delete("/:id", auth(["gerente_fazenda", "gerente_loja"]), deleteEstoqueController);

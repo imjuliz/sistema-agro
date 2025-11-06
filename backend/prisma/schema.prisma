@@ -57,6 +57,8 @@ model Unidade {
   lotes      Lote[]
   caixas     Caixa[]
   vendas     Venda[]
+  Plantios   Plantios[]
+  Animais    Animais[]
 
   @@map("unidades")
 }
@@ -298,7 +300,7 @@ model Saidas {
 
 model atvdPlantio{
   id               Int       @id @default(autoincrement())
-  descricao        String  
+  descricao        String    @db.Text
   tipo             TipoPlantio 
   loteId           Int 
   data             DateTime
@@ -311,8 +313,8 @@ model atvdPlantio{
 }
 
 model atvdAnimalia{
-  id               Int      @id @default(autoincrement())
-  descricao        String 
+  id               Int          @id @default(autoincrement())
+  descricao        String       @db.Text
   tipo             TipoAnimalia
   loteId           Int
   data             DateTime
@@ -322,6 +324,31 @@ model atvdAnimalia{
   lote             Lote     @relation(fields: [loteId], references: [id])
 
 @@map("atvd_animalia")
+}
+
+model Animais {
+  id               Int      @id @default(autoincrement())
+  animal           String   @db.VarChar(100) // qual animal foi criado
+  raca             String   @db.VarChar(100) // raça do animal
+  quantidade       Int
+  tipo             TipoAnimais // abate, venda, reprodução
+  unidadeId        Int
+
+  unidade          Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+
+  @@map("animais")
+}
+
+model Plantios {
+  id               Int      @id @default(autoincrement())
+  categoria        String   @db.VarChar(100) @unique  // qual semente foi plantada (milho, soja, feijão)
+  areaHectares     Float    @map("area_hectares") // área plantada em hectares  
+  tipo             TipoPlantio // cultivo, colheita, produção
+  unidadeId        Int
+
+  unidade          Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+
+  @@map("plantios")
 }
 
 // ============================================
@@ -398,3 +425,10 @@ enum TipoPlantio {
   COLHEITA
   PRODUCAO
 }
+
+enum TipoAnimais {
+  ABATE
+  VENDA
+  REPRODUCAO
+}
+

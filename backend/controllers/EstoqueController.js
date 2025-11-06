@@ -38,7 +38,7 @@ export async function getEstoquePorIdController (req, res) {
 
 export async function createEstoqueController (req, res) {
     try {
-        const { data } = estoqueSchema.parse(req.body);
+        const data = estoqueSchema.parse(req.body);
         const novoEstoque = await createEstoque(data);
         return {
             sucesso: true,
@@ -57,7 +57,7 @@ export async function createEstoqueController (req, res) {
 export async function updateEstoqueController (req, res) {
     try {
         const { id } = req.params;
-        const { data } = await updateEstoque(id, data);
+        const data = await updateEstoque(id, data);
         return {
             sucesso: true,
             data,
