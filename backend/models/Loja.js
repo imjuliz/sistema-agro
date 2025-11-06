@@ -117,24 +117,6 @@ export const listarProdutos = async (unidadeId) => {
     }
 }
 
-//contagem da qtd de vendas dos ultimos 6 meses
-export async function contarVendasUltimos6MesesPorUnidade(unidadeId) {
-    const dataAtual = new Date();
-    const dataLimite = new Date();
-    dataLimite.setMonth(dataLimite.getMonth() - 6);
-
-    const totalVendas = await prisma.venda.count({
-        where: {
-            unidadeId,
-            criadoEm: {
-                gte: dataLimite,
-                lte: dataAtual,
-            },
-        },
-    });
-
-    return totalVendas;
-}
 
 //agrupado por mês
 export async function contarVendasPorMesUltimos6Meses(unidadeId) {

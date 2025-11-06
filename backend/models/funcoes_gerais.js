@@ -23,7 +23,7 @@ export const mostrarEstoque = async (unidadeId) =>{
 //******************NÃO FORAM TESTADAS******************\\
 
 //SOMA A QUANTIDADE DE ITENS NO ESTOQUE
-export const somarQuantidadeTotal = async (unidadeId) => {
+export const somarQtdTotalEstoque = async (unidadeId) => {
   try {
     const resultado = await prisma.estoque.aggregate({
       _sum: {quantidade: true,},
