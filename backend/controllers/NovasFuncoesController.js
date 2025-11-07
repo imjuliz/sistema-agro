@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client.js";
+import prisma from "../prisma/client.js";
 import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja";
 import { calcularFornecedores } from "../models/fornecedores";
 import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/funcoes_gerais";
