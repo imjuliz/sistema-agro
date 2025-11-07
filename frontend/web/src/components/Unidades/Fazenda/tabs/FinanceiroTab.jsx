@@ -4,7 +4,7 @@ import { CartesianGrid, Line, LineChart, XAxis, Pie, PieChart, Sector, Label, Ba
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, TrendingUp, TrendingDown, DollarSign, Award, AlertCircle, ChevronDown, ArrowUpDown, MoreHorizontal, BarChart3, Calculator, CreditCard, Wallet, Filter, } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, DollarSign, Award, AlertCircle, ChevronDown, ArrowUpDown, MoreHorizontal, BarChart3, Calculator, CreditCard, Wallet, Filter, Receipt, BanknoteArrowDown, BanknoteArrowUp, Crosshair, Package } from 'lucide-react';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, } from "@/components/ui/chart"
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
@@ -118,20 +118,20 @@ const getImpactBadge = (impact) => {
 // grafico de Receitas e Despesas por mês
 // --------------------------------------------------------------------------------------------
 const receitasDespesas = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
+  { month: "Janeiro", receitas: 186, despesas: 80 },
+  { month: "Fevereiro", receitas: 305, despesas: 200 },
+  { month: "Março", receitas: 237, despesas: 120 },
+  { month: "Abril", receitas: 73, despesas: 190 },
+  { month: "Maio", receitas: 209, despesas: 130 },
+  { month: "Junho", receitas: 214, despesas: 140 },
 ]
 const receitasDespesasConfig = {
-  desktop: {
-    label: "Desktop",
+  receitas: {
+    label: "Receitas",
     color: "var(--chart-1)",
   },
-  mobile: {
-    label: "Mobile",
+  despesas: {
+    label: "Despesas",
     color: "var(--chart-2)",
   },
 }
@@ -176,12 +176,12 @@ const despesasPorCategoriaConfig = {
 // grafico de Fontes de receita
 // --------------------------------------------------------------------------------------------
 const fontesReceita = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
+  { month: "Janeiro", desktop: 186, mobile: 80 },
+  { month: "Fevereiro", desktop: 305, mobile: 200 },
+  { month: "Março", desktop: 237, mobile: 120 },
+  { month: "Abril", desktop: 73, mobile: 190 },
+  { month: "Maio", desktop: 209, mobile: 130 },
+  { month: "Junho", desktop: 214, mobile: 140 },
 ]
 const fontesReceitaConfig = {
   desktop: {
@@ -240,21 +240,10 @@ export const columns = [
   {
     id: "select",
     header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
+      <></>
     ),
     cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
+      <></>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -275,17 +264,19 @@ export const columns = [
   },
   {
     accessorKey: "valor",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Valor (R$)
-          <ArrowUpDown />
-        </Button>
-      )
-    },
+    header: "Valor (R$)"
+    // header: ({ column }) => {
+    //    return (
+    //      <Button
+    //        variant="ghost"
+    //        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //      >
+    //        Valor (R$)
+    //        <ArrowUpDown /> 
+    //      </Button> 
+    //    )
+    // }
+    ,
     cell: ({ row }) => <div className="lowercase">{row.getValue("valor")}</div>,
   },
   {
@@ -552,11 +543,11 @@ export function FinanceiroTab() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <Card>
+        <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <TrendingUp className="size-5 text-green-600" />
+              <div className="p-2 rounded-lg">
+                <BanknoteArrowUp className="size-10" />
               </div>
               <div>
                 <div className="text-2xl font-medium">47</div>
@@ -566,11 +557,11 @@ export function FinanceiroTab() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <DollarSign className="size-5 text-blue-600" />
+              <div className="p-2 rounded-lg">
+                <BanknoteArrowDown className="size-10" />
               </div>
               <div>
                 <div className="text-2xl font-medium">$890K</div>
@@ -580,11 +571,11 @@ export function FinanceiroTab() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Award className="size-5 text-purple-600" />
+              <div className="p-2">
+                <Package className="size-10" />
               </div>
               <div>
                 <div className="text-2xl font-medium">94%</div>
@@ -594,11 +585,11 @@ export function FinanceiroTab() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Award className="size-5 text-purple-600" />
+              <div className="p-2">
+                <Crosshair className="size-10" />
               </div>
               <div>
                 <div className="text-2xl font-medium">94%</div>
@@ -609,169 +600,100 @@ export function FinanceiroTab() {
         </Card>
       </div>
 
-      {/* Receitas e Despesas por mês */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Receitas e Despesas por mês</CardTitle>
-          <CardDescription>January - June 2024</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={receitasDespesasConfig}>
-            <LineChart
-              accessibilityLayer
-              data={receitasDespesas}
-              margin={{
-                left: 12,
-                right: 12,
-              }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => value.slice(0, 3)}
-              />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Line
-                dataKey="desktop"
-                type="monotone"
-                stroke="var(--color-desktop)"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                dataKey="mobile"
-                type="monotone"
-                stroke="var(--color-mobile)"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ChartContainer>
-        </CardContent>
-        <CardFooter>
-          <div className="flex w-full items-start gap-2 text-sm">
-            <div className="grid gap-2">
-              <div className="flex items-center gap-2 leading-none font-medium">
-                Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-              </div>
-              <div className="text-muted-foreground flex items-center gap-2 leading-none">
-                Showing total visitors for the last 6 months
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+        {/* Receitas e Despesas por mês */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Receitas e Despesas por mês</CardTitle>
+            <CardDescription>Janeiro - Mês Atual AnoAtual</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={receitasDespesasConfig}>
+              <LineChart accessibilityLayer data={receitasDespesas} margin={{ left: 12, right: 12, }} >
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Line dataKey="receitas" type="monotone" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+                <Line dataKey="despesas" type="monotone" stroke="var(--chart-4)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+          <CardFooter>
+            <div className="flex w-full items-start gap-2 text-sm">
+              <div className="grid gap-2">
+                <div className="flex items-center gap-2 leading-none font-medium">
+                  Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                </div>
+                <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                  Showing total visitors for the last 6 months
+                </div>
               </div>
             </div>
-          </div>
-        </CardFooter>
-      </Card>
+          </CardFooter>
+        </Card>
 
-      {/* Distribuição de despesas por categoria */}
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0">
-          <CardTitle>Distribuição de despesas por categoria</CardTitle>
-          <CardDescription>January - June 2024</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 pb-0">
-          <ChartContainer
-            config={despesasPorCategoriaConfig}
-            className="mx-auto aspect-square max-h-[250px]"
-          >
-            <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Pie
-                data={despesasPorCategoria}
-                dataKey="visitors"
-                nameKey="browser"
-                innerRadius={60}
-                strokeWidth={5}
-                activeIndex={0}
-                activeShape={({
-                  outerRadius = 0,
-                  ...props
-                }) => (
-                  <Sector {...props} outerRadius={outerRadius + 10} />
-                )}
-              />
-            </PieChart>
-          </ChartContainer>
-        </CardContent>
-        <CardFooter className="flex-col gap-2 text-sm">
-          <div className="flex items-center gap-2 leading-none font-medium">
-            Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-          </div>
-          <div className="text-muted-foreground leading-none">
-            Showing total visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </Card>
-
-      {/* Fontes de receita */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Fontes de receita</CardTitle>
-          <CardDescription>January - June 2024</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={fontesReceitaConfig}>
-            <BarChart
-              accessibilityLayer
-              data={fontesReceita}
-              layout="vertical"
-              margin={{
-                right: 16,
-              }}
+        {/* Distribuição de despesas por categoria */}
+        <Card className="flex flex-col">
+          <CardHeader className="items-center pb-0">
+            <CardTitle>Distribuição de despesas por categoria</CardTitle>
+            <CardDescription>January - June 2024</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 pb-0">
+            <ChartContainer
+              config={despesasPorCategoriaConfig}
+              className="mx-auto aspect-square max-h-[250px]"
             >
-              <CartesianGrid horizontal={false} />
-              <YAxis
-                dataKey="month"
-                type="category"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={(value) => value.slice(0, 3)}
-                hide
-              />
-              <XAxis dataKey="desktop" type="number" hide />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
-              />
-              <Bar
-                dataKey="desktop"
-                layout="vertical"
-                fill="var(--color-desktop)"
-                radius={4}
-              >
-                <LabelList
-                  dataKey="month"
-                  position="insideLeft"
-                  offset={8}
-                  className="fill-(--color-label)"
-                  fontSize={12}
+              <PieChart>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie data={despesasPorCategoria} dataKey="visitors" nameKey="browser" innerRadius={60} strokeWidth={5} activeIndex={0} activeShape={({ outerRadius = 0, ...props
+                  }) => (
+                    <Sector {...props} outerRadius={outerRadius + 10} />
+                  )}
                 />
-                <LabelList
-                  dataKey="desktop"
-                  position="right"
-                  offset={8}
-                  className="fill-foreground"
-                  fontSize={12}
-                />
-              </Bar>
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-        <CardFooter className="flex-col items-start gap-2 text-sm">
-          <div className="flex gap-2 leading-none font-medium">
-            Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-          </div>
-          <div className="text-muted-foreground leading-none">
-            Showing total visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </Card>
+              </PieChart>
+            </ChartContainer>
+          </CardContent>
+          <CardFooter className="flex-col gap-2 text-sm">
+            <div className="flex items-center gap-2 leading-none font-medium">
+              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+            </div>
+            <div className="text-muted-foreground leading-none">
+              Showing total visitors for the last 6 months
+            </div>
+          </CardFooter>
+        </Card>
+
+        {/* Fontes de receita */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Fontes de receita</CardTitle>
+            <CardDescription>January - June 2024</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={fontesReceitaConfig}>
+              <BarChart accessibilityLayer data={fontesReceita} layout="vertical" margin={{ right: 16, }}>
+                <CartesianGrid horizontal={false} />
+                <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} hide />
+                <XAxis dataKey="desktop" type="number" hide />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                <Bar dataKey="desktop" layout="vertical" fill="var(--color-desktop)" radius={4}>
+                  <LabelList dataKey="month" position="insideLeft" offset={8} className="fill-(--color-label)" fontSize={12} />
+                  <LabelList dataKey="desktop" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+          <CardFooter className="flex-col items-start gap-2 text-sm">
+            <div className="flex gap-2 leading-none font-medium">
+              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+            </div>
+            <div className="text-muted-foreground leading-none">
+              Showing total visitors for the last 6 months
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+
 
 
       {/* tabela Detalhamento de custos e receitas */}

@@ -15,8 +15,6 @@ router.post("/codigo", codigoController);
 
 router.put("/updateSenha/:codigo", updateSenhaController);
 
-router.get("/teste", (req, res) => {
-  res.json({ message: "Rota /auth/teste funcionando!" });
-});
+router.get("/teste", (req, res) => {res.json({ message: "Rota /auth/teste funcionando!" });});
 
 export default router;

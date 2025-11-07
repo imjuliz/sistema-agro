@@ -97,7 +97,7 @@ export function AtividadesTab() {
   return (
     <div className="space-y-4">
       {atividades.map((atvd) => (
-        <Card key={atvd.id}>
+        <Card key={atvd.id} className={"p-0"}>
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className={`p-2 rounded-lg ${getActivityColor(atvd.type)}`}>
