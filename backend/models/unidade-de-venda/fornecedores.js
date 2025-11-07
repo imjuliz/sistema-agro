@@ -2,9 +2,7 @@ import prisma from '../../prisma/client.js';
 
 export const listarFornecedores = async (unidadeId) =>{
     try{
-        const fornecedores = await prisma.Fornecedor.findMany({
-            where:{ unidadeId: Number(unidadeId)},
-        })
+        const fornecedores = await prisma.Fornecedor.findMany({where:{ unidadeId: Number(unidadeId)},})
         return ({
             sucesso: true,
             fornecedores,

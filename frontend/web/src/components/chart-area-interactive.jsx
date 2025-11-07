@@ -1,5 +1,4 @@
 "use client"
-
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis, Bar, BarChart } from "recharts"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -110,21 +109,21 @@ export function ChartAreaInteractive() {
 //grafico de barras
 export const description2 = "A multiple bar chart"
 const chartData2 = [
-  { month: "Janeiro", entrada: 186, saida: 80 }, { month: "Fevereiro", entrada: 305, saida: 200 }, { month: "Março", entrada: 237, saida: 120 },
-  { month: "Abril", entrada: 73, saida: 190 }, { month: "Maio", entrada: 209, saida: 130 }, { month: "Junho", entrada: 214, saida: 140 },
+  { month: "Janeiro", entrada: 86, saida: 80 }, { month: "Fevereiro", entrada: 50, saida: 100 }, { month: "Março", entrada: 100, saida: 20 },
+  { month: "Abril", entrada: 73, saida: 90 }, { month: "Maio", entrada: 39, saida: 30 }, { month: "Junho", entrada: 14, saida: 40 },
 ]
 
 const chartConfig2 = { entrada: { label: "Entrada", color: "#738C16", }, saida: { label: "Saída", color: "#99BF0F", }, }
 
 export function ChartBarMultiple() {
   return (
-    <Card className={"h-full w-full"}>
+    <Card className={"h-[60%] w-full"}>
       <CardHeader>
         <CardTitle className={'text-2xl'}>Entradas e Saídas</CardTitle>
         <CardDescription>Janeiro - Junho</CardDescription>
       </CardHeader>
-      <CardContent className={'h-full'}>
-        <ChartContainer config={chartConfig2} className={'h-full pb-20 w-full'}>
+      <CardContent className={'h-[85%]'}>
+        <ChartContainer config={chartConfig2} className={'h-full  w-full'}>
           <BarChart accessibilityLayer data={chartData2}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} />

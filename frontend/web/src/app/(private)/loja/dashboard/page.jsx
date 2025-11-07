@@ -9,11 +9,8 @@ export default function Page() {
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <SectionCards />
-          <div className="px-4 lg:px-6">
-            <ChartBarMultiple />
-          </div>
-          <h1 className="text-2xl font-semibold ml-10">Estoque</h1>
-          <div className="flex justify-center W-100%"><ContributorsTable /></div>
+          <div className="px-0 lg:px-6"><ChartBarMultiple /></div>
+          <div className="flex justify-center -mt-90"><ContributorsTable /></div>
         </div>
       </div>
     </div>

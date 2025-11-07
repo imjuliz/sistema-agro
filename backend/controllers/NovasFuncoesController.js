@@ -1,5 +1,5 @@
 import prisma from "../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja.js";
+import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos, contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja.js";
 import { calcularFornecedores } from "../models/unidade-de-venda/fornecedores.js";
 import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/unidade-de-venda/estoque.js";
 
@@ -9,12 +9,8 @@ export const mostrarSaldoFController = async (req, res) => {
     const unidadeId = req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Usuário não possui unidade vinculada à sessão."
-      });
+      return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." });
     }
-
     const resultado = await mostrarSaldoF(Number(unidadeId));
 
     return res.status(200).json({
@@ -39,12 +35,8 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
     const unidadeId = req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Usuário não possui unidade vinculada à sessão."
-      });
+      return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." });
     }
-
     const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
 
     return res.status(200).json({
@@ -69,10 +61,7 @@ export const listarProdutosController = async (req, res) => {
     const unidadeId = req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Usuário não possui unidade vinculada à sessão."
-      });
+      return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});
     }
 
     const resultado = await listarProdutos(Number(unidadeId));
