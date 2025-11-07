@@ -1,9 +1,8 @@
 "use client"
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis, Bar, BarChart } from "recharts"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, } from "@/components/ui/chart";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem, } from "@/components/ui/toggle-group"
 import { Pie, PieChart } from "recharts"
@@ -93,8 +92,7 @@ export function ChartAreaInteractive() {
             <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32}
               tickFormatter={(value) => {
                 const date = new Date(value)
-                return date.toLocaleDateString("en-US", { month: "short", day: "numeric", });
-              }} />
+                return date.toLocaleDateString("en-US", { month: "short", day: "numeric", });}} />
             <ChartTooltip cursor={false} content={
               <ChartTooltipContent labelFormatter={(value) => { return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", }); }} indicator="dot" />}
             />
@@ -147,12 +145,9 @@ const chartData3 = [
 ]
 
 const chartConfig3 = {
-  visitors: { label: "Visitors", },
-  chrome: { label: "Chrome", color: "var(--chart-1)", },
-  safari: { label: "Safari", color: "var(--chart-2)", },
-  firefox: { label: "Firefox", color: "var(--chart-3)", },
-  edge: { label: "Edge", color: "var(--chart-4)", },
-  other: { label: "Other", color: "var(--chart-5)", },
+  visitors: { label: "Visitors", },chrome: { label: "Chrome", color: "var(--chart-1)", },
+  safari: { label: "Safari", color: "var(--chart-2)", },firefox: { label: "Firefox", color: "var(--chart-3)", },
+  edge: { label: "Edge", color: "var(--chart-4)", },other: { label: "Other", color: "var(--chart-5)", },
 }
 
 export function ChartPieDonut() {
