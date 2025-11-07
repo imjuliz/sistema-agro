@@ -1,4 +1,4 @@
-import { getLote,getLotePorAnimaliaId, getlotePorId, createLote, updateLote, deleteLote } from "../models/lote.js";
+import { getLote, getLoteAtividade, getLotePorAnimaliaId, getlotePorId, createLote, updateLote, deleteLote, getLoteAtividade } from "../models/lote.js";
 import { loteSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -17,6 +17,29 @@ export async function getLoteController(req, res) {
         }
     }
 };
+
+export async function getLoteAtividadeController(req, res) {
+    const { atividade } = req.query;                                             
+    try {
+        // Validações 
+        if (atividade === true ) {
+            const lotes_ativos = await getLoteAtividade(atividade = true);
+        } else {
+            const lotes_inativos = await getLoteAtividade(atividade = false);
+        }
+        return {
+            sucesso: true,
+            lotes_ativos,
+            message: "Lotes ativos listados com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar lotes ativos.",
+            detalhes: error.message // opcional, para debug
+        }
+    }
+}
 
 export async function getLotePorAnimaliaIdController(req, res) {
     const { tipo } = req.params;

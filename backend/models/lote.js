@@ -17,9 +17,26 @@ export async function getLote() {
     }
 };
 
+export async function getLoteAtividade(atividade) { //testar para ver se funciona
+    try {
+        const lotes_ativos = await prisma.lote.findMany({ where: { atividade } });
+        return {
+            sucesso: true,
+            lotes_ativos,
+            message: "Lotes ativos listados com sucesso!!"
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            message: "Erro ao listar lotes ativos!!",
+            error: error.message
+        }
+    }
+};
+ 
 export async function getLotePorAnimaliaId() {
     try {
-        const lote_animalia = await prisma.lote.findMany({ where: { tipo: "Gado" } });
+        const lote_animalia = await prisma.lote.findMany({ where: { tipo: "Gado" || "Leite" } });
         return {
             sucesso: true,
             lote_animalia,
