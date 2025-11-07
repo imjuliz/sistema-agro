@@ -1,7 +1,7 @@
 import prisma from "../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja";
-import { calcularFornecedores } from "../models/fornecedores";
-import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/funcoes_gerais";
+import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja.js";
+import { calcularFornecedores } from "../models/unidade-de-venda/fornecedores.js";
+import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/unidade-de-venda/estoque.js";
 
 //SALDO FINAL
 export const mostrarSaldoFController = async (req, res) => {
