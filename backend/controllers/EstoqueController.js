@@ -1,5 +1,15 @@
 import { es } from "zod/v4/locales";
-import { getEstoques, getEstoqueAcimaMinimo, getEstoqueAbaixoMinimo, getValorEstoque, getEstoqueProximoValorMin, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque } from "../models/estoque.js";
+import {
+  getEstoques,
+  getEstoqueAcimaMinimo,
+  getEstoqueAbaixoMinimo,
+  getValorEstoque,
+  getEstoqueProximoValorMin,
+  getEstoquePorId,
+  createEstoque,
+  updateEstoque,
+  deleteEstoque,
+} from "../models/estoque.js";
 import { getProdutos } from "../models/produtos.js";
 import { estoqueSchema } from "../schemas/estoqueSchema.js";
 
@@ -18,7 +28,7 @@ export async function getEstoquesController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}
 
 export async function getEstoqueAcimaMinimoController(req, res) {
   try {
@@ -37,13 +47,13 @@ export async function getEstoqueAcimaMinimoController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}
 
 export async function getEstoqueAbaixoMinimoController(req, res) {
   const { quantidade, estoqueMinimo } = req.query;
   try {
     const valor_abaixo_minimo = estoqueMinimo - quantidade;
-    const itens_abaixo_minimo = Math.abs(valor_abaixo_minimo);  // Math.abs() retorna o valor positivo
+    const itens_abaixo_minimo = Math.abs(valor_abaixo_minimo); // Math.abs() retorna o valor positivo
     const estoque = await getEstoqueAbaixoMinimo(itens_abaixo_minimo);
     return {
       sucesso: true,
@@ -57,27 +67,27 @@ export async function getEstoqueAbaixoMinimoController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}
 
 export async function getValorEstoqueController(req, res) {
-    const { quantidade } = req.params;
-    try {
-        const produto = await getProdutos();
-        const valor_estoque = quantidade * produto.preco;
-        const estoque = await getValorEstoque(valor_estoque);
-        return {
-            sucesso: true,
-            estoque,
-            message: "Estoque listado com sucesso.",
-        } 
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao listar valor do estoque.",
-            detalhes: error.message, // opcional, para debug
-        }
-    }
-};
+  const { quantidade } = req.params;
+  try {
+    const produto = await getProdutos();
+    const valor_estoque = quantidade * produto.preco;
+    const estoque = await getValorEstoque(valor_estoque);
+    return {
+      sucesso: true,
+      estoque,
+      message: "Estoque listado com sucesso.",
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar valor do estoque.",
+      detalhes: error.message, // opcional, para debug
+    };
+  }
+}
 
 export async function getEstoqueProximoValorMinController(req, res) {
   const { quantidade } = req.params;
@@ -87,13 +97,13 @@ export async function getEstoqueProximoValorMinController(req, res) {
       sucesso: true,
       estoque,
       message: "Estoque listado com sucesso.",
-    }
+    };
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoque próximo do minimo.",
       detalhes: error.message, // opcional, para debug
-    }
+    };
   }
 }
 
@@ -113,7 +123,7 @@ export async function getEstoquePorIdController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}
 
 export async function createEstoqueController(req, res) {
   try {
@@ -131,7 +141,7 @@ export async function createEstoqueController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}
 
 export async function updateEstoqueController(req, res) {
   try {
@@ -149,7 +159,7 @@ export async function updateEstoqueController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}
 
 export async function deleteEstoqueController(req, res) {
   try {
@@ -166,4 +176,4 @@ export async function deleteEstoqueController(req, res) {
       detalhes: error.message, // opcional, para debug
     };
   }
-};
+}

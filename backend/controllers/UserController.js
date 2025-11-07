@@ -1,18 +1,28 @@
-import { cadastrarSe, getUserByEmail, updateUsuario, deletarUsuario, login, esqSenha, codigo, updateSenha } from "../models/User.js";
+import {
+  cadastrarSe,
+  getUserByEmail,
+  updateUsuario,
+  deletarUsuario,
+  login,
+  esqSenha,
+  codigo,
+  updateSenha,
+} from "../models/User.js";
 import { userSchema } from "../schemas/userSchema.js";
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
-
 
 // const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 export async function cadastrarSeController(req, res) {
   try {
     const { nome, email, senha } = userShema.partial().parse(req.body);
-    const id = req.usuario.id
+    const id = req.usuario.id;
 
     if (!nome || !email || !senha) {
-      return res.status(400).json({ error: "Preencha todos os campos obrigatórios" });
+      return res
+        .status(400)
+        .json({ error: "Preencha todos os campos obrigatórios" });
     }
 
     // Verifica se email já existe
@@ -24,7 +34,6 @@ export async function cadastrarSeController(req, res) {
     const user = await cadastrarSe({ nome, email, senha });
 
     res.status(201).json({ message: "Usuário criado com sucesso", user });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -33,45 +42,64 @@ export async function cadastrarSeController(req, res) {
 
 export const updateUsuarioController = async (req, res) => {
   const { id } = req.params.id;
-  const { nomeCompleto, email, funcao, setor, unidade, periodo } = userShema.partial().parse(req.body);
+  const { nomeCompleto, email, funcao, setor, unidade, periodo } = userShema
+    .partial()
+    .parse(req.body);
   try {
     // Validação dos campos obrigatórios
     if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) {
-      return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' });
+      return res
+        .status(400)
+        .json({
+          sucesso: false,
+          erro: "Preencha todos os campos obrigatórios",
+        });
     }
 
-    const unidadeData = { 
+    const unidadeData = {
       nomeCompleto,
       email,
       funcao,
       setor,
       unidade,
-      periodo
+      periodo,
     };
 
     const result = await updateUsuario(id, unidadeData);
 
-    return res.status(200).json({ sucesso: true, mensagem: 'Usuário atualizado com sucesso', result });
+    return res
+      .status(200)
+      .json({
+        sucesso: true,
+        mensagem: "Usuário atualizado com sucesso",
+        result,
+      });
   } catch (error) {
-    return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' });
+    return res
+      .status(500)
+      .json({ sucesso: false, erro: "Erro ao atualizar usuário" });
   }
-}
+};
 
 export const deletarUsuarioController = async (req, res) => {
-  const { userId } = req.params
+  const { userId } = req.params;
 
   try {
-    const resultado = await deletarUsuario(userId)
+    const resultado = await deletarUsuario(userId);
 
     if (!resultado.sucesso) {
-      return res.status(400).json(resultado)
+      return res.status(400).json(resultado);
     }
 
-    return res.status(200).json({ sucesso: true, mensagem: 'Usuário deletado com sucesso' })
+    return res
+      .status(200)
+      .json({ sucesso: true, mensagem: "Usuário deletado com sucesso" });
   } catch (err) {
-    return res.status(500).json({ sucesso: false, erro: 'Erro interno do servidor' })
+    return res
+      .status(500)
+      .json({ sucesso: false, erro: "Erro interno do servidor" });
   }
-}
+};
 
 export const loginController = async (req, res) => {
   const { email, senha } = userSchema.partial().parse(req.body);
@@ -82,7 +110,7 @@ export const loginController = async (req, res) => {
     }
 
     // Salva em response a resposta do login
-    const response =  await login(email, senha)
+    const response = await login(email, senha);
 
     res
       .status(200)
@@ -146,7 +174,7 @@ export const loginController = async (req, res) => {
 //     return res.json({ message: "Logout realizado com sucesso" });
 //   });
 // };
-// -------------------------------------------- 
+// --------------------------------------------
 
 export const esqSenhaController = async (req, res) => {
   const { email } = userSchema.partial().parse(req.body);
@@ -203,7 +231,9 @@ export const codigoController = async (req, res) => {
   const { codigo_reset } = req.body;
   try {
     const criarCodigo = await codigo(codigo_reset);
-    res.status(200).json({ message: "Código verificado com sucesso", criarCodigo });
+    res
+      .status(200)
+      .json({ message: "Código verificado com sucesso", criarCodigo });
   } catch (error) {
     console.error("Erro ao buscar codigo:", error);
     res.status(500).json({ error: "Erro ao buscar codigo" });

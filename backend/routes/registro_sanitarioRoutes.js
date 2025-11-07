@@ -1,4 +1,9 @@
-import { getRegistroSanitarioController, getRegistroSanitarioPorIdController, createRegistroSanitarioController, deleteRegistroSanitarioController } from "../controllers/RegistroSanitarioController.js";
+import {
+  getRegistroSanitarioController,
+  getRegistroSanitarioPorIdController,
+  createRegistroSanitarioController,
+  deleteRegistroSanitarioController,
+} from "../controllers/RegistroSanitarioController.js";
 import express from "express";
 
 const router = express.Router();
