@@ -150,3 +150,139 @@
 // export function useAuth() {
 //   return useContext(AuthContext);
 // }
+
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+const AuthContext = createContext();
+
+const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
+const LOGIN_ENDPOINT = `${BACKEND_BASE}auth/login`;
+const REFRESH_ENDPOINT = `${BACKEND_BASE}auth/refresh`;
+const LOGOUT_ENDPOINT = `${BACKEND_BASE}auth/logout`;
+
+export function AuthProvider({ children }) {
+  const [accessToken, setAccessToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Tenta obter novo accessToken ao montar (o refresh cookie pode existir)
+  useEffect(() => {
+    let mounted = true;
+    async function tryRefresh() {
+      try {
+        const res = await fetch(REFRESH_ENDPOINT, {
+          method: 'POST',
+          credentials: 'include', // importante: envia cookie HttpOnly
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) {
+          setAccessToken(null);
+          setUser(null);
+        } else {
+          const data = await res.json();
+          // backend retorna { accessToken, maybe userData }
+          if (mounted) {
+            setAccessToken(data.accessToken ?? null);
+            if (data.usuario) setUser(data.usuario);
+          }
+        }
+      } catch (err) {
+        console.error('refresh on mount failed', err);
+        setAccessToken(null);
+        setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    tryRefresh();
+    return () => { mounted = false; };
+  }, []);
+
+  // login: envia credenciais, backend seta cookie HttpOnly e retorna accessToken
+  const login = useCallback(async ({ email, senha }) => {
+    const res = await fetch(LOGIN_ENDPOINT, {
+      method: 'POST',
+      credentials: 'include', // para receber/armazenar cookie HttpOnly
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return { success: false, error: data.error || data.mensagem || 'Erro ao autenticar' };
+    }
+
+    // supondo que o backend retorne accessToken e usuario
+    setAccessToken(data.data?.accessToken ?? data.accessToken ?? null);
+    if (data.data?.usuario) setUser(data.data.usuario);
+    // opcional: se backend retornar perfil em data
+    return { success: true, data };
+  }, []);
+
+  // logout: chama endpoint que revoga sessao e limpa cookie
+  const logout = useCallback(async () => {
+    try {
+      await fetch(LOGOUT_ENDPOINT, { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      console.warn('logout failed', err);
+    } finally {
+      setAccessToken(null);
+      setUser(null);
+    }
+  }, []);
+
+  // fetchWithAuth: envia Authorization + tenta refresh se 401
+  const fetchWithAuth = useCallback(async (input, init = {}) => {
+    const initCopy = {
+      ...init,
+      credentials: 'include', // garante envio do cookie de refresh quando necessário
+      headers: {
+        ...(init.headers || {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    };
+
+    let res = await fetch(input, initCopy);
+    if (res.status === 401) {
+      // tentar refresh token
+      const refreshRes = await fetch(REFRESH_ENDPOINT, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!refreshRes.ok) {
+        // não foi possível renovar -> logout
+        setAccessToken(null);
+        setUser(null);
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+      const refreshData = await refreshRes.json();
+      const newAccessToken = refreshData.accessToken;
+      setAccessToken(newAccessToken);
+
+      // repetir requisição original com novo token
+      const retryInit = {
+        ...init,
+        credentials: 'include',
+        headers: {
+          ...(init.headers || {}),
+          Authorization: `Bearer ${newAccessToken}`,
+        },
+      };
+      res = await fetch(input, retryInit);
+    }
+    return res;
+  }, [accessToken]);
+
+  return (
+    <AuthContext.Provider value={{ accessToken, user, loading, login, logout, fetchWithAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}

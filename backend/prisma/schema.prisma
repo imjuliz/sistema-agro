@@ -61,6 +61,9 @@ model Unidade {
   vendas     Venda[]
   Fornecedor Fornecedor[]
 
+  contratosComoFornecedor Contratos[] @relation("ContratoFornecedor")
+  contratosComoLoja       Contratos[] @relation("ContratoLoja")
+
   @@map("unidades")
 }
 
@@ -73,6 +76,9 @@ model Usuario {
   senha        String   @db.VarChar(255)
   telefone     String   @db.VarChar(20)
   status       Boolean  @default(true)
+  tokenVersion   Int       @default(0) // mecanismo simples para invalidar todos os access tokens do usuário ao incrementá-lo (ex.: troca de senha, força logout em massa)
+  failedAttempts Int       @default(0) // contador para políticas de lockout (bloquear após N tentativas falhas)
+  lockoutUntil   DateTime? //tempo até quando o usuário fica bloqueado (mitigar brute force).
   criadoEm     DateTime @default(now()) @map("criado_em")
   atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
 
@@ -85,8 +91,28 @@ model Usuario {
   vendas              Venda[]
   saidas              Saidas[]
   AtividadesLote      AtividadesLote[]
+  sessoes        Sessao[]
 
   @@map("usuarios")
+}
+
+model Sessao {
+  id               String   @id @default(cuid())
+  usuarioId        Int
+  usuario          Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  refreshTokenHash String   @db.VarChar(128)
+  userAgent        String?  @db.VarChar(512)
+  ip               String?  @db.VarChar(45)
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+  revoked          Boolean  @default(false)
+  replacedById     String?  // referencia outra Sessao.id (quando rotacionar)
+  
+  @@map("sessoes")
+  @@index([refreshTokenHash])
+  @@index([usuarioId])
+  @@index([expiresAt])
+  @@unique([refreshTokenHash])
 }
 
 model ResetSenha {
@@ -147,6 +173,9 @@ model Produto {
   estoques     Estoque[]
   fornecedores ProdutoFornecedor[]
   itensVendas  ItemVenda[]
+
+  // lado inverso: contratos que envolvem este produto
+  contratos Contratos[] @relation("ContratoProduto")
 
   @@map("produtos")
 }
@@ -313,9 +342,14 @@ model Contratos {
   frequencia_pagamento FrequenciaEnum
   valorTotal Int
 
-  fornecedor Unidade @relation(fields: [fornecedor_id], references: [id], onDelete: Restrict)
-loja Unidade @relation(fields: [loja_id], references: [id], onDelete: Restrict)
-  produto Produto @relation(fields: [produto_id], references: [id], onDelete: Restrict)
+// aqui ambos apontam para Unidade, mas com nomes de relação distintos
+  fornecedor Unidade @relation("ContratoFornecedor", fields: [fornecedor_id], references: [id], onDelete: Restrict)
+  loja       Unidade @relation("ContratoLoja",       fields: [loja_id],       references: [id], onDelete: Restrict)
+
+  // produto com nome de relação para casar com Produto.contratos
+  produto Produto @relation("ContratoProduto", fields: [produto_id], references: [id], onDelete: Restrict)
+
+    @@map("contratos")
 
 }
 
