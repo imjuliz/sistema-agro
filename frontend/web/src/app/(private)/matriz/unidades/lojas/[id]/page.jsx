@@ -46,15 +46,15 @@
 import React, { useState } from 'react';
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CompanyHeader } from '@/components/Unidades/Fazenda/CompanyHeader';
-import { ActionBar } from '@/components/Unidades/Fazenda/ActionBar';
-import { TabNavigation } from '@/components/Unidades/Fazenda/TabNavigation';
-import { LeftPanel } from '@/components/Unidades/Fazenda/LeftPanel';
-import { CenterPanel } from '@/components/Unidades/Fazenda/CenterPanel';
-import { RightPanel } from '@/components/Unidades/Fazenda/RightPanel';
-import { AddJobModal } from '@/components/Unidades/Fazenda/AddJobModal';
-import { LogActivityModal } from '@/components/Unidades/Fazenda/LogActivityModal';
-import { AddContactModal } from '@/components/Unidades/Fazenda/AddContactModal';
+import { CompanyHeader } from '@/components/matriz/Unidades/Fazenda/CompanyHeader';
+import { ActionBar } from '@/components/matriz/Unidades/Fazenda/ActionBar';
+import { TabNavigation } from '@/components/matriz/Unidades/Fazenda/TabNavigation';
+import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
+import { CenterPanel } from '@/components/matriz/Unidades/Fazenda/CenterPanel';
+import { RightPanel } from '@/components/matriz/Unidades/Fazenda/RightPanel';
+import { AddJobModal } from '@/components/matriz/Unidades/Fazenda/AddJobModal';
+import { LogActivityModal } from '@/components/matriz/Unidades/Fazenda/LogActivityModal';
+import { AddContactModal } from '@/components/matriz/Unidades/Fazenda/AddContactModal';
 
 export default function FazendaDetalhe(props) {
   // garantir que params seja resolvido (evita o erro)
