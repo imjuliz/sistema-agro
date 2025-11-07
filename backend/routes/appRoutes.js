@@ -16,9 +16,9 @@ import {calcularFornecedoresController,
 router.post('/translate', translateText)
 
 // rotas usadas para loja --------------------------------------------------------------------------------
-router.get("/estoque/somar", autenticarSessao, somarQtdTotalEstoqueController);
+router.get("/estoqueSomar", autenticarSessao, somarQtdTotalEstoqueController);
 router.get("/estoque/listar", autenticarSessao, listarEstoqueController);
-router.get("/saldo/liquido", autenticarSessao, calcularSaldoLiquidoController);
+router.get("/saldoLiquido", autenticarSessao, calcularSaldoLiquidoController);
 router.get("/saldo-final", autenticarSessao, mostrarSaldoFController);
 router.get("/saidas/listar", autenticarSessao, listarSaidasPorUnidadeController);
 router.get("/usuarios/listar", autenticarSessao, listarUsuariosPorUnidadeController);
