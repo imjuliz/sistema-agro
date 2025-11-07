@@ -1,10 +1,11 @@
 "use client"
+import ReactDOM from "react-dom";
 import React, { useState, useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, Pie, PieChart, Sector, Label, Bar, BarChart, LabelList, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, TrendingUp, TrendingDown, DollarSign, Award, AlertCircle, ChevronDown, ArrowUpDown, MoreHorizontal, BarChart3, Calculator, CreditCard, Wallet, Filter, Receipt, BanknoteArrowDown, BanknoteArrowUp, Crosshair, Package } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, DollarSign, Award, AlertCircle, ChevronDown, ArrowUpDown, MoreHorizontal, BarChart3, Calculator, CreditCard, Wallet, Filter, Receipt, BanknoteArrowDown, BanknoteArrowUp, Crosshair, Package, Loader, X, Download, Trash2 } from 'lucide-react';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, } from "@/components/ui/chart"
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
@@ -17,8 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CategoryManager, Category } from '@/components/Financeiro/CategoryManager';
 import { AccountsPayable, AccountPayable } from '@/components/Financeiro/AccountsPayable';
 import { AccountsReceivable, AccountReceivable } from '@/components/Financeiro/AccountsReceivable';
-import { CashFlow } from '@/components/Financeiro/CashFlow';
-import { IncomeStatement } from '@/components/Financeiro/IncomeStatement';
+import { DataTableActionBar, DataTableActionBarAction, DataTableActionBarSelection } from "@/components/Tabelas/DataTableActionBar";
+import { DataTablePagination } from "@/components/Tabelas/DataTablePagination";
 
 const financas = [
   {
@@ -240,10 +241,19 @@ export const columns = [
   {
     id: "select",
     header: ({ table }) => (
-      <></>
+      <Checkbox
+        checked={table.getIsAllRowsSelected()}
+        indeterminate={table.getIsSomeRowsSelected()}
+        onCheckedChange={(v) => table.toggleAllRowsSelected(!!v)}
+        aria-label="Select all"
+      />
     ),
     cell: ({ row }) => (
-      <></>
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(v) => row.toggleSelected(!!v)}
+        aria-label={`Select row ${row.id}`}
+      />
     ),
     enableSorting: false,
     enableHiding: false,
@@ -332,19 +342,29 @@ export function FinanceiroTab() {
   const table = useReactTable({
     data,
     columns,
+    // onSortingChange: setSorting,
+    // onColumnFiltersChange: setColumnFilters,
+    // getCoreRowModel: getCoreRowModel(),
+    // getPaginationRowModel: getPaginationRowModel(),
+    // getSortedRowModel: getSortedRowModel(),
+    // getFilteredRowModel: getFilteredRowModel(),
+    // onColumnVisibilityChange: setColumnVisibility,
+    // onRowSelectionChange: setRowSelection,
+
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      // pagination: { pageSize },
     },
   })
 
@@ -646,9 +666,9 @@ export function FinanceiroTab() {
               <PieChart>
                 <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                 <Pie data={despesasPorCategoria} dataKey="visitors" nameKey="browser" innerRadius={60} strokeWidth={5} activeIndex={0} activeShape={({ outerRadius = 0, ...props
-                  }) => (
-                    <Sector {...props} outerRadius={outerRadius + 10} />
-                  )}
+                }) => (
+                  <Sector {...props} outerRadius={outerRadius + 10} />
+                )}
                 />
               </PieChart>
             </ChartContainer>
@@ -699,7 +719,7 @@ export function FinanceiroTab() {
       {/* tabela Detalhamento de custos e receitas */}
       <div className="w-full">
         <div className="flex items-center py-4">
-          <h3>Detalhamento de custos e receitas</h3>
+          <h3 className='font-bold'>Detalhamento de custos e receitas</h3>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -727,8 +747,8 @@ export function FinanceiroTab() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="overflow-hidden rounded-md border">
-          <Table>
+        <div className="overflow-hidden rounded-md border bg-card">
+          <Table >
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -775,8 +795,32 @@ export function FinanceiroTab() {
                 </TableRow>
               )}
             </TableBody>
+            <TableFooter>
+              <DataTablePagination table={table} pageSizeOptions={[5, 10, 20, 50]} />
+            </TableFooter>
           </Table>
+
         </div>
+
+        {/* --- action bar: aparece quando TODOS os rows filtrados estão selecionados --- */}
+        <DataTableActionBar table={table}>
+          <DataTableActionBarSelection table={table} />
+
+          <DataTableActionBarAction tooltip="Exportar selecionados" onClick={() => {
+            const selected = table.getFilteredSelectedRowModel().rows.map(r => r.original);
+            console.log("Export selected", selected);
+          }}>
+            <Download />
+          </DataTableActionBarAction>
+
+          {/* <DataTableActionBarAction tooltip="Deletar todos selecionados" onClick={() => {
+            const selectedIds = table.getFilteredSelectedRowModel().rows.map(r => r.original.id);
+            console.log("Delete selected", selectedIds);
+            // remova do data/state conforme necessário
+          }}>
+            <Trash2/>
+          </DataTableActionBarAction> */}
+        </DataTableActionBar>
       </div>
 
 
@@ -799,70 +843,6 @@ export function FinanceiroTab() {
           <AccountsReceivable accounts={accountsReceivable} categories={categories} onAccountsChange={setAccountsReceivable} />
         </TabsContent>
       </Tabs>
-
-      {/* <div className="space-y-4">
-        {financas.map((financa) => (
-          <Card key={financa.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className={`p-2 rounded-lg ${getEventColor(financa.type, financa.impact)}`}>
-                  {getEventIcon(financa.type)}
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-medium">{financa.title}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <Calendar className="size-3" />
-                        <span>{financa.date}</span>
-                        <span>•</span>
-                        <span>{financa.user}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {financa.type}
-                      </Badge>
-                      <Badge variant={getImpactBadge(financa.impact)} className="text-xs">
-                        {financa.impact}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {financa.description}
-                  </p>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm">
-                      {financa.value && (
-                        <div className="font-medium text-green-600">{financa.value}</div>
-                      )}
-                      {financa.fee && (
-                        <div className="font-medium text-blue-600">Fee: {financa.fee}</div>
-                      )}
-                      {financa.metrics && (
-                        <div className="flex items-center gap-2">
-                          <span>Filled: {financa.metrics.filled}</span>
-                          <span>•</span>
-                          <span>Success: {financa.metrics.successRate}</span>
-                        </div>
-                      )}
-                    </div>
-                    <Avatar className="size-6">
-                      <AvatarImage src="/api/placeholder/24/24" />
-                      <AvatarFallback className="text-xs">
-                        {financa.user === 'System' ? 'SY' : financa.user.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div> */}
     </div>
   );
 }
