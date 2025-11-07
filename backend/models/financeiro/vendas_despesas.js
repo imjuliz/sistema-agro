@@ -1,9 +1,103 @@
-import prisma from '../prisma/client'
+import prisma from '../../prisma/client.js';
 
-//**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
+//aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-//DASHBOARD ------------------------------------------------------------------------------------------------------------------
+export const listarSaidas = async (unidadeId) => {
+    try {
+        const saidas = await prisma.Saidas.findMany({
+            where: { unidadeId: Number(unidadeId) },
+        })
+        return ({
+            sucesso: true,
+            saidas,
+            message: "Saidas listadas com sucesso!!"
+        })
+    }
 
+    catch (error) {
+        return {
+            sucesso: false,
+            erro: "erro ao listar saidas",
+            detalhes: error.message
+        }
+    }
+}
+
+// Função que soma as vendas do dia atual
+export const somarDiaria = async (unidadeId) => {
+    const result = await prisma.$queryRaw`
+    SELECT COALESCE(SUM(valor), 0) AS total
+    FROM "Vendas"
+    WHERE DATE("criado_em") = CURRENT_DATE
+      AND "unidadeId" = ${unidadeId}
+  `;
+
+    // Prisma retorna um array de objetos, então pegamos o primeiro
+    return result[0]?.total ?? 0;
+};
+
+export const somarSaidas = async (unidadeId) => {
+    const result = await prisma.$queryRaw`
+    SELECT COALESCE (SUM(valor), 0) AS total
+    from "Saídas"
+    where date("data") = CURRENT_DATE
+    and "unidadeId" = ${unidadeId}`;
+
+    return result[0]?.total ?? 0;
+
+}
+
+export const calcularLucro = async (unidadeId) => {
+
+    const result = await prisma.$queryRaw`
+
+    SELECT
+      COALESCE((SELECT SUM(valor)
+        FROM "Vendas"
+        WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+          AND "unidadeId" = ${unidadeId}), 0) AS total_vendas,
+      
+      COALESCE((SELECT SUM(valor)
+        FROM "Saidas"
+        WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+          AND "unidadeId" = ${unidadeId}), 0) AS total_saidas,
+      
+      (
+        COALESCE((SELECT SUM(valor)
+          FROM "Vendas"
+          WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+            AND "unidadeId" = ${unidadeId}), 0)
+        -
+        COALESCE((SELECT SUM(valor)
+          FROM "Saidas"
+          WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+            AND "unidadeId" = ${unidadeId}), 0)
+      ) AS lucro;
+  `;
+
+    return result[0];
+}
+
+export const listarVendas = async (unidadeId) => {
+    try {
+        const vendas = await prisma.Venda.findMany({
+            where: { unidadeId: Number(unidadeId) },
+        })
+        return ({
+            sucesso: true,
+            estoque,
+            message: "Vendas listadas com sucesso!!"
+        })
+    } catch (error) {
+        return ({
+            sucesso: false,
+            erro: "Erro ao listar vendas",
+            detalhes: error.message
+        })
+    }
+}
+
+//do arquivo Loja.js
 //MOSTRA O SALDO FINAL DO DIA DA UNIDADE
 export const mostrarSaldoF = async (unidadeId) => {
     try {
@@ -45,77 +139,6 @@ export const mostrarSaldoF = async (unidadeId) => {
         };
     }
 };
-
-
-//pegar produto mais vendido
-export const buscarProdutoMaisVendido = async (unidadeId) => {
-    try {
-        const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
-            by: ["produtoId"],
-            _sum: { quantidade: true, },
-            where: { venda: { unidadeId: Number(unidadeId), }, },
-            orderBy: { _sum: { quantidade: "desc", }, },
-            take: 1, // pega apenas o produto mais vendido
-        });
-
-        if (resultado.length === 0) {
-            return {
-                sucesso: false,
-                message: "Nenhum item encontrado para esta unidade.",
-            };
-        }
-
-        const produtoMaisVendido = resultado[0];
-
-        const produto = await prisma.produto.findUnique({ // Busca informações do produto
-            where: { id: produtoMaisVendido.produtoId, },
-            select: {
-                id: true,
-                nome: true,
-                descricao: true,
-            },
-        });
-
-        return {
-            sucesso: true,
-            produto: {
-                id: produto.id,
-                nome: produto.nome,
-                descricao: produto.descricao,
-                quantidadeVendida: produtoMaisVendido._sum.quantidade,
-            },
-            message: "Produto mais vendido encontrado com sucesso!",
-        };
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao buscar o produto mais vendido",
-            detalhes: error.message,
-        };
-    }
-};
-
-//listar produtos
-export const listarProdutos = async (unidadeId) => {
-    try {
-        const fornecedores = await prisma.venda.findMany({
-            where: { unidadeId: Number(unidadeId) },
-        })
-        return ({
-            sucesso: true,
-            fornecedores,
-            message: "Fornecedores da unidade listados com sucesso!!"
-        })
-
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao listar fornecedores",
-            detalhes: error.message
-        }
-    }
-}
-
 
 //agrupado por mês
 export async function contarVendasPorMesUltimos6Meses(unidadeId) {
@@ -212,3 +235,5 @@ export async function criarVenda(req, res) {
         });
     }
 }
+
+

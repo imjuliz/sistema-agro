@@ -1,7 +1,8 @@
-import prisma from "../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja.js";
-import { calcularFornecedores } from "../models/unidade-de-venda/fornecedores.js";
-import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/unidade-de-venda/estoque.js";
+import prisma from "../../prisma/client.js";
+import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../../models/unidade-de-venda/Loja.js";
+import { calcularFornecedores } from "../../models/unidade-de-venda/fornecedores.js";
+import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade , mostrarEstoque} from "../../models/estoque_produtos_lotes/estoque.js";
+import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas } from '../../models/financeiro/vendas_despesas.js'
 
 //SALDO FINAL
 export const mostrarSaldoFController = async (req, res) => {
@@ -47,7 +48,6 @@ export const mostrarSaldoFController = async (req, res) => {
     });
   }
 };
-
 
 //BUSCAR PRODUTO MAIS VENDIDO
 export const buscarProdutoMaisVendidoController = async (req, res) => {
@@ -98,48 +98,6 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao buscar o produto mais vendido",
-      detalhes: error.message
-    });
-  }
-};
-
-
-//LISTAR PRODUTOS
-export const listarProdutosController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        message: "Usuário não possui unidade vinculada à sessão."
-      });
-    }
-
-    const produtos = await prisma.produto.findMany({
-      where: { unidadeId: Number(unidadeId) },
-      select: {
-        id: true,
-        nome: true,
-        categoria: true,
-        preco: true,
-        descricao: true,
-        dataFabricacao: true,
-        dataValidade: true
-      },
-      orderBy: { nome: "asc" }
-    });
-
-    return res.json({
-      sucesso: true,
-      produtos,
-      message: "Produtos da unidade listados com sucesso!"
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar produtos",
       detalhes: error.message
     });
   }
@@ -201,31 +159,6 @@ export const criarVendaController = async (req, res) => {
   }
 };
 
-// ✅ SOMA TOTAL DE ITENS NO ESTOQUE
-export const somarQtdTotalEstoqueController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
-
-    const resultado = await somarQtdTotalEstoque(unidadeId);
-
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error("Erro no controller ao somar estoque:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao somar itens no estoque.",
-      detalhes: error.message,
-    });
-  }
-};
-
 // ✅ CALCULA SALDO LÍQUIDO
 export const calcularSaldoLiquidoController = async (req, res) => {
   try {
@@ -245,54 +178,6 @@ export const calcularSaldoLiquidoController = async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao calcular saldo líquido.",
-      detalhes: error.message,
-    });
-  }
-};
-
-// ✅ LISTA O ESTOQUE
-export const listarEstoqueController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
-
-    const resultado = await getEstoque(unidadeId);
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error("Erro ao listar estoque:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar estoque.",
-      detalhes: error.message,
-    });
-  }
-};
-
-// ✅ LISTA USUÁRIOS DA UNIDADE
-export const listarUsuariosPorUnidadeController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
-
-    const resultado = await listarUsuariosPorUnidade(unidadeId);
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error("Erro ao listar usuários da unidade:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar usuários da unidade.",
       detalhes: error.message,
     });
   }
@@ -322,3 +207,81 @@ export const listarSaidasPorUnidadeController = async (req, res) => {
   }
 };
 
+// das funções que eu (lorena) fiz:
+
+export const contarChamadosController = async (req, res) => {
+    try {
+        const total = await contarTodosChamados();
+        res.json(total);
+    } catch (error) {
+        console.error('Erro ao contar chamados!! ', error);
+        res.status(500).json({ erro: 'erro ao contar chamados' });
+    }
+};
+
+export const somarDiariaController = async (req, res) => {
+    try {
+        const unidadeId = Number(req.params.unidadeId);
+
+        if (isNaN(unidadeId)) {
+            return res.status(400).json({ error: 'ID da unidade inválido.' });
+        }
+        const total = await somarDiaria(unidadeId);
+        return res.status(200).json({ total });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Erro ao calcular a soma diária.' });
+    }
+};
+
+export const somarSaidasController = async (req, res) =>{
+    try{
+        const unidadeId = Number(req.params.unidadeId);
+
+        if (isNaN(unidadeId)) {
+            return res.status(400).json({ error: 'ID da unidade inválido.' });
+        }
+        const total = await somarSaidas(unidadeId);
+        return res.status(200).json({ total });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Erro ao calcular a soma das saídas.' });
+    }
+
+    }
+
+
+export const calcularLucroController = async (req, res) => { //funcao assincrona
+      try {
+    // Pegamos a unidade logada (supondo que vem do middleware de autenticação)
+    const unidadeId = req.user?.unidadeId;
+
+    if (!unidadeId) {
+      return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' });
+    }
+
+    // Chama o model que retorna o lucro
+    const resultado = await calcularLucroUltimoMes(unidadeId);
+
+    return res.status(200).json({
+      unidadeId,
+      total_vendas: resultado.total_vendas,
+      total_saidas: resultado.total_saidas,
+      lucro: resultado.lucro,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao calcular lucro do último mês.' });
+  }
+}
+
+export const listarVendasController = async(req, res) =>{
+    try{
+        const unidadeId = req.user?.unidadeId;
+        const vendas = await listarVendas(unidadeId);
+        res.status(200).json(vendas);
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({erro: 'Erro ao listar vendas.'})
+    }
+}
