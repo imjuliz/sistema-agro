@@ -3,53 +3,37 @@ import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPor
 import { calcularFornecedores } from "../models/unidade-de-venda/fornecedores.js";
 import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/unidade-de-venda/estoque.js";
 
-//SALDO FINAL
+// MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
+
     if (!unidadeId) {
       return res.status(401).json({
         sucesso: false,
-        message: "Usuário não possui unidade vinculada à sessão."
-      });
-    }
-    const agora = new Date();
-    const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
-    const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
-
-    const caixaDeHoje = await prisma.caixa.findFirst({
-      where: {
-        unidadeId: Number(unidadeId),
-        abertoEm: { gte: inicioDoDia, lte: fimDoDia },
-      },
-      select: { id: true, saldoFinal: true, abertoEm: true },
-      orderBy: { abertoEm: "desc" },
-    });
-
-    if (!caixaDeHoje) {
-      return res.json({
-        sucesso: false,
-        message: "Nenhum caixa encontrado para hoje."
+        erro: "Usuário não possui unidade vinculada à sessão."
       });
     }
 
-    return res.json({
-      sucesso: true,
-      saldoFinal: caixaDeHoje.saldoFinal ?? 0,
-      message: "Saldo final do caixa de hoje encontrado com sucesso!"
+    const resultado = await mostrarSaldoF(Number(unidadeId));
+
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      saldoFinal: resultado.saldoFinal ?? 0
     });
 
   } catch (error) {
+    console.error("Erro no controller ao mostrar saldo final:", error);
     return res.status(500).json({
       sucesso: false,
-      erro: "Erro ao ver saldo final",
-      detalhes: error.message
+      erro: "Erro no controller ao mostrar saldo final.",
+      detalhes: error.message,
     });
   }
 };
 
-
-//BUSCAR PRODUTO MAIS VENDIDO
+// BUSCAR PRODUTO MAIS VENDIDO -- rota feita
 export const buscarProdutoMaisVendidoController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -57,54 +41,29 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
     if (!unidadeId) {
       return res.status(401).json({
         sucesso: false,
-        message: "Usuário não possui unidade vinculada à sessão."
+        erro: "Usuário não possui unidade vinculada à sessão."
       });
     }
 
-    const resultado = await prisma.itemVenda.groupBy({
-      by: ["produtoId"],
-      _sum: { quantidade: true },
-      where: { venda: { unidadeId: Number(unidadeId) } },
-      orderBy: { _sum: { quantidade: "desc" } },
-      take: 1,
-    });
+    const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
 
-    if (resultado.length === 0) {
-      return res.json({
-        sucesso: false,
-        message: "Nenhum item encontrado para esta unidade."
-      });
-    }
-
-    const produtoMaisVendido = resultado[0];
-
-    const produto = await prisma.produto.findUnique({
-      where: { id: produtoMaisVendido.produtoId },
-      select: { id: true, nome: true, descricao: true }
-    });
-
-    return res.json({
-      sucesso: true,
-      produto: {
-        id: produto.id,
-        nome: produto.nome,
-        descricao: produto.descricao,
-        quantidadeVendida: produtoMaisVendido._sum.quantidade
-      },
-      message: "Produto mais vendido encontrado com sucesso!"
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      produto: resultado.produto ?? null,
     });
 
   } catch (error) {
+    console.error("Erro no controller ao buscar produto mais vendido:", error);
     return res.status(500).json({
       sucesso: false,
-      erro: "Erro ao buscar o produto mais vendido",
-      detalhes: error.message
+      erro: "Erro no controller ao buscar produto mais vendido.",
+      detalhes: error.message,
     });
   }
 };
 
-
-//LISTAR PRODUTOS
+// LISTAR PRODUTOS DA UNIDADE -- rota feita
 export const listarProdutosController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -112,40 +71,29 @@ export const listarProdutosController = async (req, res) => {
     if (!unidadeId) {
       return res.status(401).json({
         sucesso: false,
-        message: "Usuário não possui unidade vinculada à sessão."
+        erro: "Usuário não possui unidade vinculada à sessão."
       });
     }
 
-    const produtos = await prisma.produto.findMany({
-      where: { unidadeId: Number(unidadeId) },
-      select: {
-        id: true,
-        nome: true,
-        categoria: true,
-        preco: true,
-        descricao: true,
-        dataFabricacao: true,
-        dataValidade: true
-      },
-      orderBy: { nome: "asc" }
-    });
+    const resultado = await listarProdutos(Number(unidadeId));
 
-    return res.json({
-      sucesso: true,
-      produtos,
-      message: "Produtos da unidade listados com sucesso!"
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      produtos: resultado.fornecedores ?? [],
     });
 
   } catch (error) {
+    console.error("Erro no controller ao listar produtos:", error);
     return res.status(500).json({
       sucesso: false,
-      erro: "Erro ao listar produtos",
-      detalhes: error.message
+      erro: "Erro no controller ao listar produtos.",
+      detalhes: error.message,
     });
   }
 };
 
-//CONTAR VENDAS DOS ULTIMOS 6 MESES
+//CONTAR VENDAS DOS ULTIMOS 6 MESES -- rota feita
 export const contarVendasPorMesUltimos6MesesController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -173,8 +121,7 @@ export const contarVendasPorMesUltimos6MesesController = async (req, res) => {
   }
 };
 
-
-//CRIAR VENDA
+//CRIAR VENDA --rota feita
 export const criarVendaController = async (req, res) => {
   try {
     const usuario = req.session?.usuario;
@@ -201,7 +148,7 @@ export const criarVendaController = async (req, res) => {
   }
 };
 
-// ✅ SOMA TOTAL DE ITENS NO ESTOQUE
+// SOMA TOTAL DE ITENS NO ESTOQUE -- rota feita
 export const somarQtdTotalEstoqueController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -226,7 +173,7 @@ export const somarQtdTotalEstoqueController = async (req, res) => {
   }
 };
 
-// ✅ CALCULA SALDO LÍQUIDO
+// CALCULA SALDO LÍQUIDO -- rota feita
 export const calcularSaldoLiquidoController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -250,7 +197,7 @@ export const calcularSaldoLiquidoController = async (req, res) => {
   }
 };
 
-// ✅ LISTA O ESTOQUE
+// LISTA O ESTOQUE -- rota feita
 export const listarEstoqueController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -274,7 +221,7 @@ export const listarEstoqueController = async (req, res) => {
   }
 };
 
-// ✅ LISTA USUÁRIOS DA UNIDADE
+// LISTA USUÁRIOS DA UNIDADE -- rota feita
 export const listarUsuariosPorUnidadeController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -298,7 +245,7 @@ export const listarUsuariosPorUnidadeController = async (req, res) => {
   }
 };
 
-// ✅ LISTA SAÍDAS DA UNIDADE
+// LISTA SAÍDAS DA UNIDADE -- rota feita
 export const listarSaidasPorUnidadeController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -317,6 +264,35 @@ export const listarSaidasPorUnidadeController = async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar saídas da unidade.",
+      detalhes: error.message,
+    });
+  }
+};
+
+//calcular fornecedores -- rota feita
+export const calcularFornecedoresController = async (req, res) => {
+  try {
+    const unidadeId = req.session?.usuario?.unidadeId;
+
+    if (!unidadeId) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: "Usuário não possui unidade vinculada à sessão.",
+      });
+    }
+    const resultado = await calcularFornecedores(Number(unidadeId));
+
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      qtdFornecedores: resultado.qtdFornecedores ?? 0,
+    });
+
+  } catch (error) {
+    console.error("Erro no controller ao calcular quantidade de fornecedores:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro no controller ao calcular quantidade de fornecedores.",
       detalhes: error.message,
     });
   }
