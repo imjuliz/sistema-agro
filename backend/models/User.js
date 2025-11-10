@@ -63,48 +63,6 @@ export async function updateUsuario(id, data) {
   }
 };
 
-// export async function login(email, senha) {
-//   try {
-//     const user = await prisma.usuarios.findUnique({
-//       where: { email: email },
-//       include: { perfil: true },
-//     });
-
-//     // Garantir que ambos são strings
-//     const senhaFornecida = String(senha);
-//     const senhaHash = String(user.senha);
-
-//     // Comparar senhas
-//     const senhaValida = await compare(senhaFornecida, senhaHash);
-//     if (!senhaValida) {throw new Error("Senha inválida")}
-
-//     if (user.status === "inativo") {throw new Error("Usuário inativo");}
-
-//     // Gera o token JWT
-//     const token = jwt.sign(
-//       { id: user.id, email: user.email, perfil: user.perfil.nome },
-//       JWT_SECRET,
-//       { expiresIn: "1h" }
-//     );
-//     return {
-//       sucesso: true,
-//       data: {
-//         id: user.id,
-//         email: user.email,
-//         perfil: user.perfil,
-//         token,
-//       },
-//       message: "Usuário logado com sucesso.",
-//     };
-//   } catch (error) {
-//     return {
-//       sucesso: false,
-//       erro: "Erro ao logar usuário",
-//       detalhes: error.message, // opcional, para debug
-//     };
-//   }
-// };
-
 export async function login(email, senha) {
   try {
     // buscar usuário incluindo perfil

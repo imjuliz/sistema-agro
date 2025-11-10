@@ -59,6 +59,26 @@ export default function FazendasPage() {
         return () => clearTimeout(t);
     }, []);
 
+    // verificar se essa requisicao esta certa (AINDA NAO ESTA FUNCIONAL)
+    useEffect(() => {
+  async function fetchFazendas() {
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:8080/unidades/fazendas", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.sucesso) setUnits(data.unidades);
+    } catch (err) {
+      console.error("Erro ao carregar fazendas:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+  fetchFazendas();
+}, []);
+
+
     // filtra somente fazendas e aplica query + localização
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -149,10 +169,6 @@ export default function FazendasPage() {
                         <h1 className="text-2xl font-bold">Unidades — Fazendas</h1>
                         <p className="text-sm text-muted-foreground">Visão dedicada para a Matriz: resumo e detalhes de fazendas</p>
                     </div>
-                    {/* <div className="flex items-center gap-2">
-                        <Button onClick={() => { setQuery(""); setLocationFilter(""); setPage(1); }}>Limpar filtros</Button>
-                        <Button variant="secondary" onClick={() => window.print()}>Imprimir</Button>
-                    </div> */}
                 </header>
 
                 {/* METRICS */}
