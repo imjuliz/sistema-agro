@@ -1,7 +1,5 @@
 import prisma from "../../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../../models/unidade-de-venda/Loja.js";
-import { calcularFornecedores } from "../../models/unidade-de-venda/fornecedores.js";
-import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../../models/estoque_produtos_lotes/estoque.js";
+import { somarQtdTotalEstoque,  getEstoque,  getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos, mostrarEstoque } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
  
 
 //BUSCAR PRODUTO MAIS VENDIDO
@@ -59,49 +57,35 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
 };
 
 
-//LISTAR PRODUTOS 
+// LISTAR PRODUTOS DA UNIDADE -- rota feita
 export const listarProdutosController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        message: "Usuário não possui unidade vinculada à sessão."
-      });
+      return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});
     }
 
-    const produtos = await prisma.produto.findMany({
-      where: { unidadeId: Number(unidadeId) },
-      select: {
-        id: true,
-        nome: true,
-        categoria: true,
-        preco: true,
-        descricao: true,
-        dataFabricacao: true,
-        dataValidade: true
-      },
-      orderBy: { nome: "asc" }
-    });
+    const resultado = await listarProdutos(Number(unidadeId));
 
-    return res.json({
-      sucesso: true,
-      produtos,
-      message: "Produtos da unidade listados com sucesso!"
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      produtos: resultado.fornecedores ?? [],
     });
 
   } catch (error) {
+    console.error("Erro no controller ao listar produtos:", error);
     return res.status(500).json({
       sucesso: false,
-      erro: "Erro ao listar produtos",
-      detalhes: error.message
+      erro: "Erro no controller ao listar produtos.",
+      detalhes: error.message,
     });
   }
 };
 
 
-// ✅ SOMA TOTAL DE ITENS NO ESTOQUE
+// SOMA TOTAL DE ITENS NO ESTOQUE -- rota feita
 export const somarQtdTotalEstoqueController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
@@ -126,7 +110,7 @@ export const somarQtdTotalEstoqueController = async (req, res) => {
   }
 };
 
-// ✅ LISTA O ESTOQUE
+// LISTA O ESTOQUE -- rota feita
 export const listarEstoqueController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;

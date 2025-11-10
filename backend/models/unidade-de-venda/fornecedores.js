@@ -1,6 +1,6 @@
 import prisma from '../../prisma/client.js';
 
-export const listarFornecedores = async (unidadeId) =>{
+export const listarFornecedores = async (unidadeId) =>{ //ainda nao esa no controller
     try{
         const fornecedores = await prisma.Fornecedor.findMany({where:{ unidadeId: Number(unidadeId)},})
         return ({
@@ -18,7 +18,7 @@ export const listarFornecedores = async (unidadeId) =>{
     }
 }
 
-export const calcularFornecedores = async (unidadeId) => {
+export const calcularFornecedores = async (unidadeId) => { //ok
   try {
     const totalFornecedores = await prisma.fornecedor.aggregate({where: {unidadeId: Number(unidadeId),},});
     const somaFornecedores = Number(totalFornecedores|| 0);
