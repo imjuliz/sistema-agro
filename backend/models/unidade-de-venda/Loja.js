@@ -1,4 +1,5 @@
-import prisma from '../../prisma/client'
+// import PrismaClient from '../../PrismaClient/client'
+import { PrismaClient } from '../../prisma/generated/index.js';
 
 //**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
 
@@ -11,7 +12,7 @@ export const mostrarSaldoF = async (unidadeId) => {
         const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
         const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
 
-        const caixaDeHoje = await prisma.caixa.findFirst({ // busca o caixa aberto hoje para a unidade informada
+        const caixaDeHoje = await PrismaClient.caixa.findFirst({ // busca o caixa aberto hoje para a unidade informada
             where: {
                 unidadeId: Number(unidadeId),
                 abertoEm: { gte: inicioDoDia, lte: fimDoDia, },
@@ -50,7 +51,7 @@ export const mostrarSaldoF = async (unidadeId) => {
 //pegar produto mais vendido
 export const buscarProdutoMaisVendido = async (unidadeId) => {
     try {
-        const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
+        const resultado = await PrismaClient.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
             by: ["produtoId"],
             _sum: { quantidade: true, },
             where: { venda: { unidadeId: Number(unidadeId), }, },
@@ -67,7 +68,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
 
         const produtoMaisVendido = resultado[0];
 
-        const produto = await prisma.produto.findUnique({ // Busca informações do produto
+        const produto = await PrismaClient.produto.findUnique({ // Busca informações do produto
             where: { id: produtoMaisVendido.produtoId, },
             select: {
                 id: true,
@@ -98,7 +99,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
 //listar produtos
 export const listarProdutos = async (unidadeId) => {
     try {
-        const fornecedores = await prisma.venda.findMany({
+        const fornecedores = await PrismaClient.venda.findMany({
             where: { unidadeId: Number(unidadeId) },
         })
         return ({
@@ -123,7 +124,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
     const dataLimite = new Date();
     dataLimite.setMonth(dataLimite.getMonth() - 6);
 
-    const vendas = await prisma.venda.findMany({
+    const vendas = await PrismaClient.venda.findMany({
         where: {
             criadoEm: {
                 gte: dataLimite,
@@ -179,7 +180,7 @@ export async function criarVenda(req, res) {
 
         const totalVenda = itensCalculados.reduce((acc, item) => acc + item.subtotal, 0);
 
-        const novaVenda = await prisma.venda.create({
+        const novaVenda = await PrismaClient.venda.create({
             data: {
                 caixaId: Number(caixaId),
                 usuarioId: Number(usuarioId),
