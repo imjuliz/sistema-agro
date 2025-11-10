@@ -333,6 +333,7 @@ model Animais {
   raca             String   @db.VarChar(100) // raça do animal
   quantidade       Int
   tipo             TipoAnimais // abate, venda, reprodução
+  custo            Int?      // Custo para a venda dos animais
   unidadeId        Int
 
   unidade          Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
@@ -344,7 +345,7 @@ model Plantios {
   id               Int      @id @default(autoincrement())
   categoria        String   @db.VarChar(100) @unique  // qual semente foi plantada (milho, soja, feijão)
   areaHectares     Float    @map("area_hectares") // área plantada em hectares  
-  tipo             TipoPlantio // cultivo, colheita, produção
+  custo            Int?      // custo para venda da verdura
   unidadeId        Int
 
   unidade          Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)

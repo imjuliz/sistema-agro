@@ -7,13 +7,13 @@ export async function getAnimais() {
       sucesso: true,
       animais,
       message: "Animais listados com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar animais.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -23,18 +23,37 @@ export async function getAnimaisPelaRaca(raca) {
       where: {
         raca: raca,
       },
-    });
+    })
     return {
       sucesso: true,
       animais_raca,
       message: "Animais listados com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar animais pela raça.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
+  }
+}
+
+export async function getAnimaisPorId(id) {
+  try {
+    const animais = await prisma.animais.findUnique({
+      where: { id },
+    })
+    return {
+      sucesso: true,
+      animais,
+      message: "Animais listados com sucesso.",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar animais.",
+      detalhes: error.message, // opcional, para debug
+    }
   }
 }
 
@@ -48,18 +67,18 @@ export async function createAnimais(data) {
         tipo: data.tipo,
         unidadeId: data.unidadeId,
       },
-    });
+    })
     return {
       sucesso: true,
       animais,
       message: "Animais criados com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao criar animais.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -74,18 +93,18 @@ export async function updateAnimais(id, data) {
         tipo: data.tipo,
         unidadeId: data.unidadeId,
       },
-    });
+    })
     return {
       sucesso: true,
       animais,
       message: "Animais atualizados com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao atualizar animais.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -93,16 +112,16 @@ export async function deleteAnimais(id) {
   try {
     await prisma.animais.delete({
       where: { id: parseInt(id) },
-    });
+    })
     return {
       sucesso: true,
       message: "Animais deletados com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao deletar animais.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }

@@ -1,15 +1,4 @@
-import { es } from "zod/v4/locales";
-import {
-  getEstoques,
-  getEstoqueAcimaMinimo,
-  getEstoqueAbaixoMinimo,
-  getValorEstoque,
-  getEstoqueProximoValorMin,
-  getEstoquePorId,
-  createEstoque,
-  updateEstoque,
-  deleteEstoque,
-} from "../models/estoque.js";
+import { getEstoques, getEstoqueAcimaMinimo, getEstoqueAbaixoMinimo, getValorEstoque, getEstoqueProximoValorMin, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque } from "../models/estoque.js";
 import { getProdutos } from "../models/produtos.js";
 import { estoqueSchema } from "../schemas/estoqueSchema.js";
 
@@ -20,13 +9,13 @@ export async function getEstoquesController(req, res) {
       sucesso: true,
       estoques,
       message: "Estoques listados com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoques.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -39,13 +28,13 @@ export async function getEstoqueAcimaMinimoController(req, res) {
       sucesso: true,
       estoque_acimaMin,
       message: "Estoque listado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoque acima do minimo.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -59,13 +48,13 @@ export async function getEstoqueAbaixoMinimoController(req, res) {
       sucesso: true,
       estoque,
       message: "Estoque listado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoque abaixo do minimo.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -78,14 +67,14 @@ export async function getValorEstoqueController(req, res) {
     return {
       sucesso: true,
       estoque,
-      message: "Estoque listado com sucesso.",
-    };
+      message: "Estoque listado com sucesso."
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar valor do estoque.",
-      detalhes: error.message, // opcional, para debug
-    };
+      detalhes: error.message // opcional, para debug
+    }
   }
 }
 
@@ -97,13 +86,13 @@ export async function getEstoqueProximoValorMinController(req, res) {
       sucesso: true,
       estoque,
       message: "Estoque listado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoque próximo do minimo.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -115,13 +104,13 @@ export async function getEstoquePorIdController(req, res) {
       sucesso: true,
       estoque,
       message: "Estoque listado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoque por id.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -133,13 +122,13 @@ export async function createEstoqueController(req, res) {
       sucesso: true,
       novoEstoque,
       message: "Estoque criado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao criar estoque.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -151,13 +140,13 @@ export async function updateEstoqueController(req, res) {
       sucesso: true,
       data,
       message: "Estoque atualizado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao atualizar estoque.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
@@ -168,12 +157,12 @@ export async function deleteEstoqueController(req, res) {
     return {
       sucesso: true,
       message: "Estoque deletado com sucesso.",
-    };
+    }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao deletar estoque.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }

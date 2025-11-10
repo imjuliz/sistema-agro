@@ -1,10 +1,4 @@
-import {
-  getPlantio,
-  getPlantioCategoria,
-  createPlantio,
-  updatePlantio,
-  deletePlantio,
-} from "../models/plantio.js";
+import { getPlantio, getPlantioCategoria, createPlantio, updatePlantio, deletePlantio } from "../models/plantio.js";
 import { plantioSchema } from "../schemas/plantioSchemas.js";
 
 export async function getPlantioController(req, res) {

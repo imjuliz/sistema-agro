@@ -1,10 +1,4 @@
-import {
-  getAnimais,
-  getAnimaisPelaRaca,
-  createAnimais,
-  updateAnimais,
-  deleteAnimais,
-} from "../models/animais.js";
+import { getAnimais, getAnimaisPelaRaca, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
 import { animaisSchema } from "../schemas/animaisSchemas.js";
 
 export async function getAnimaisController(req, res) {
@@ -39,6 +33,24 @@ export async function getAnimaisPelaRacaController(req, res) {
       erro: "Erro ao listar animais pela raça.",
       detalhes: error.message, // opcional, para debug
     };
+  }
+}
+
+export async function getAnimaisPorIdController(req, res) {
+  const { id } = req.params;
+  try {
+    const animais = await getAnimaisPorId(id);
+    return {
+      sucesso: true,
+      animais,
+      message: "Animais listados com sucesso.",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar animais.",
+      detalhes: error.message, // opcional, para debug
+    }
   }
 }
 
