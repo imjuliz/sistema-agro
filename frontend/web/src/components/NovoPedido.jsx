@@ -2,7 +2,6 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
-// import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -36,11 +35,7 @@ export default function MyForm() {
   function onSubmit(values) {
     try {
       console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
+      toast(<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4"><code className="text-white">{JSON.stringify(values, null, 2)}</code></pre>);
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
@@ -56,9 +51,7 @@ export default function MyForm() {
               <FormItem>
                 <FormLabel>Nome do cliente</FormLabel>
                 <FormControl>
-                  <Input placeholder="nome completo"
-                    type=""
-                    {...field} />
+                  <Input placeholder="nome completo" type="" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -72,10 +65,7 @@ export default function MyForm() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
-                      <Button variant={"outline"} className={cn(
-                        "w-[240px] pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}>
+                      <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
                         {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
