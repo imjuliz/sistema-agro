@@ -1,4 +1,4 @@
-import prisma from '../prisma/client.js';
+import prisma from '../../prisma/client.js';
 
 //Aqui serão feitas as funções relacionadas a outros usuários (ex: listar, filtrar, editar, apagar)
 

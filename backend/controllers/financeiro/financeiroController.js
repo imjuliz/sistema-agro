@@ -1,7 +1,8 @@
-import prisma from "../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos, contarVendasPorMesUltimos6Meses, criarVenda } from "../models/Loja.js";
-import { calcularFornecedores } from "../models/unidade-de-venda/fornecedores.js";
-import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../models/unidade-de-venda/estoque.js";
+import prisma from "../../prisma/client.js";
+import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../../models/unidade-de-venda/Loja.js";
+import { calcularFornecedores } from "../../models/unidade-de-venda/fornecedores.js";
+import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade , mostrarEstoque} from "../../models/estoque_produtos_lotes/estoque.js";
+import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas } from '../../models/financeiro/vendas_despesas.js'
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
@@ -55,6 +56,7 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
   }
 };
 
+//CONTAR VENDAS DOS ULTIMOS 6 MESES
 // LISTAR PRODUTOS DA UNIDADE -- rota feita
 export const listarProdutosController = async (req, res) => {
   try {
@@ -258,6 +260,84 @@ export const listarSaidasPorUnidadeController = async (req, res) => {
   }
 };
 
+// das funções que eu (lorena) fiz:
+
+export const contarChamadosController = async (req, res) => {
+    try {
+        const total = await contarTodosChamados();
+        res.json(total);
+    } catch (error) {
+        console.error('Erro ao contar chamados!! ', error);
+        res.status(500).json({ erro: 'erro ao contar chamados' });
+    }
+};
+
+export const somarDiariaController = async (req, res) => {
+    try {
+        const unidadeId = Number(req.params.unidadeId);
+
+        if (isNaN(unidadeId)) {
+            return res.status(400).json({ error: 'ID da unidade inválido.' });
+        }
+        const total = await somarDiaria(unidadeId);
+        return res.status(200).json({ total });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Erro ao calcular a soma diária.' });
+    }
+};
+
+export const somarSaidasController = async (req, res) =>{
+    try{
+        const unidadeId = Number(req.params.unidadeId);
+
+        if (isNaN(unidadeId)) {
+            return res.status(400).json({ error: 'ID da unidade inválido.' });
+        }
+        const total = await somarSaidas(unidadeId);
+        return res.status(200).json({ total });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Erro ao calcular a soma das saídas.' });
+    }
+
+    }
+
+
+export const calcularLucroController = async (req, res) => { //funcao assincrona
+      try {
+    // Pegamos a unidade logada (supondo que vem do middleware de autenticação)
+    const unidadeId = req.user?.unidadeId;
+
+    if (!unidadeId) {
+      return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' });
+    }
+
+    // Chama o model que retorna o lucro
+    const resultado = await calcularLucroUltimoMes(unidadeId);
+
+    return res.status(200).json({
+      unidadeId,
+      total_vendas: resultado.total_vendas,
+      total_saidas: resultado.total_saidas,
+      lucro: resultado.lucro,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao calcular lucro do último mês.' });
+  }
+}
+
+export const listarVendasController = async(req, res) =>{
+    try{
+        const unidadeId = req.user?.unidadeId;
+        const vendas = await listarVendas(unidadeId);
+        res.status(200).json(vendas);
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({erro: 'Erro ao listar vendas.'})
+    }
+}
 //calcular fornecedores -- rota feita
 export const calcularFornecedoresController = async (req, res) => {
   try {
