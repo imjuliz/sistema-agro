@@ -84,20 +84,80 @@ export const deletarUsuarioController = async (req, res) => {
 // -------------------------------------------- so testando
 const COOKIE_NAME = process.env.REFRESH_COOKIE_NAME || 'refreshToken';
 
+// export async function loginController(req, res) {
+//   try {
+//     const { email, senha } = req.body;
+//     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+
+//     const user = await prisma.usuario.findUnique({ where: { email } });
+//     if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+//     const senhaValida = await compare(String(senha), String(user.senha));
+//     if (!senhaValida) return res.status(401).json({ error: "Credenciais inválidas" });
+//     if (!user.status) return res.status(403).json({ error: "Usuário inativo" });
+
+//     const accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
+
+//     const refreshToken = generateRefreshToken();
+//     const refreshHash = hashToken(refreshToken);
+
+//     await prisma.sessao.create({
+//       data: {
+//         usuarioId: user.id,
+//         refreshTokenHash: refreshHash,
+//         userAgent: req.get('User-Agent') ?? null,
+//         ip: req.ip ?? req.headers['x-forwarded-for'] ?? null,
+//         expiresAt: refreshTokenExpiryDate(),
+//       },
+//     });
+
+//     const cookieOptions = {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === 'production',
+//       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+//       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+//       path: '/',
+//     };
+
+//     res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
+
+//     res.status(200).json({
+//       sucesso: true,
+//       data: ({ accessToken, usuario: { id: user.id, email: user.email } })
+//     })
+//   } catch (err) {
+//     console.error('loginController', err);
+//     res.status(500).json({ error: 'Erro interno' });
+//   }
+// }
+
 export async function loginController(req, res) {
   try {
     const { email, senha } = req.body;
     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
 
-    const user = await prisma.usuario.findUnique({ where: { email } });
+    // buscar usuário incluindo perfil
+    const user = await prisma.usuario.findUnique({
+      where: { email },
+      include: { perfil: true },
+    });
     if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
 
-    const senhaValida = await compare(String(senha), String(user.senha));
-    if (!senhaValida) return res.status(401).json({ error: "Credenciais inválidas" });
-    if (!user.status) return res.status(403).json({ error: "Usuário inativo" });
+    // validar senha
+    const senhaValida = await compare(String(senha), String(user.senha ?? ''));
+    if (!senhaValida) return res.status(401).json({ error: 'Credenciais inválidas' });
 
-    const accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
+    if (!user.status) return res.status(403).json({ error: 'Usuário inativo' });
 
+    // gerar access token
+    const accessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      tokenVersion: user.tokenVersion,
+      perfil: user.perfil?.nome ?? null,
+    });
+
+    // criar sessão de refresh (hash)
     const refreshToken = generateRefreshToken();
     const refreshHash = hashToken(refreshToken);
 
@@ -113,49 +173,113 @@ export async function loginController(req, res) {
 
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
     };
 
+    // enviar cookie de refresh
     res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
 
-    res.status(200).json({
+    // retornar usuario com perfil como string
+    return res.status(200).json({
       sucesso: true,
-      data: ({ accessToken, usuario: { id: user.id, email: user.email } })
-    })
+      data: {
+        accessToken,
+        usuario: {
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          perfil: user.perfil?.nome ?? null,
+        },
+      },
+    });
   } catch (err) {
-    console.error('loginController', err);
-    res.status(500).json({ error: 'Erro interno' });
+    console.error('loginController - erro:', err.stack ?? err);
+    return res.status(500).json({ error: 'Erro interno' });
   }
 }
 
+// Substitua sua função refreshController por esta versão instrumentada
 export async function refreshController(req, res) {
   try {
-    const token = req.cookies[COOKIE_NAME];
-    if (!token) return res.status(401).json({ error: 'Refresh token não fornecido' });
+    console.log("[refreshController] req.headers.cookie:", req.headers?.cookie ?? "<none>");
+    console.log("[refreshController] req.cookies:", req.cookies ?? "<undefined>");
+    console.log("[refreshController] COOKIE_NAME env/const:", typeof COOKIE_NAME !== 'undefined' ? COOKIE_NAME : "<COOKIE_NAME não definido>");
+    console.log("[refreshController] JWT_SECRET presente?:", !!process.env.JWT_SECRET);
 
+    const token = req.cookies?.[COOKIE_NAME];
+    if (!token) {
+      console.warn("[refreshController] refresh token ausente");
+      return res.status(401).json({ error: 'Refresh token não fornecido' });
+    }
+    console.log("[refreshController] token recebido (len):", String(token).length);
 
-    const hashed = hashToken(token);
-    const sessao = await prisma.sessao.findUnique({ where: { refreshTokenHash: hashed }, include: { usuario: true } });
-    if (!sessao) return res.status(401).json({ error: 'Sessão inválida' });
-    if (sessao.revoked) return res.status(401).json({ error: 'Refresh token revogado' });
-    if (new Date(sessao.expiresAt) < new Date()) return res.status(401).json({ error: 'Refresh token expirado' });
+    let hashed;
+    try {
+      hashed = hashToken(token);
+      console.log("[refreshController] hashed token:", hashed);
+    } catch (e) {
+      console.error("[refreshController] erro ao hashear token:", e);
+      return res.status(500).json({ error: "Erro interno ao processar token" });
+    }
 
+    // Buscar sessão
+    let sessao;
+    try {
+      sessao = await prisma.sessao.findUnique({
+        where: { refreshTokenHash: hashed },
+        include: { usuario: true },
+      });
+    } catch (e) {
+      console.error("[refreshController] erro ao consultar prisma.sessao:", e.stack ?? e);
+      return res.status(500).json({ error: "Erro interno ao consultar sessão" });
+    }
+    console.log("[refreshController] sessao encontrada:", !!sessao);
+
+    if (!sessao) {
+      console.warn("[refreshController] sessao não encontrada para hash:", hashed);
+      return res.status(401).json({ error: 'Sessão inválida' });
+    }
+    if (sessao.revoked) {
+      console.warn("[refreshController] sessao revogada:", sessao.id);
+      return res.status(401).json({ error: 'Refresh token revogado' });
+    }
+    if (new Date(sessao.expiresAt) < new Date()) {
+      console.warn("[refreshController] sessao expirada:", sessao.expiresAt);
+      return res.status(401).json({ error: 'Refresh token expirado' });
+    }
 
     const user = sessao.usuario;
-    const accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
+    if (!user) {
+      console.warn("[refreshController] sessao sem usuario associado:", sessao.id);
+      return res.status(401).json({ error: 'Sessão sem usuário' });
+    }
+    console.log("[refreshController] usuario associado:", { id: user.id, email: user.email });
 
+    let accessToken;
+    try {
+      accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
+    } catch (e) {
+      console.error("[refreshController] erro ao gerar access token:", e.stack ?? e);
+      return res.status(500).json({ error: "Erro interno ao gerar access token" });
+    }
 
     // rotacionar refresh token
     const newRefreshToken = generateRefreshToken();
     const newHash = hashToken(newRefreshToken);
     const newExpiry = refreshTokenExpiryDate();
 
-
-    await prisma.sessao.update({ where: { id: sessao.id }, data: { refreshTokenHash: newHash, expiresAt: newExpiry } });
-
+    try {
+      await prisma.sessao.update({
+        where: { id: sessao.id },
+        data: { refreshTokenHash: newHash, expiresAt: newExpiry },
+      });
+    } catch (e) {
+      console.error("[refreshController] erro ao atualizar sessao no prisma:", e.stack ?? e);
+      return res.status(500).json({ error: "Erro interno ao atualizar sessão" });
+    }
 
     const cookieOptions = {
       httpOnly: true,
@@ -165,14 +289,18 @@ export async function refreshController(req, res) {
       path: '/',
     };
 
-
+    // enviar novo cookie
     res.cookie(COOKIE_NAME, newRefreshToken, cookieOptions);
-    res.json({ accessToken });
+    console.log("[refreshController] refresh rotacionado com sucesso. sessaoId:", sessao.id);
+
+    return res.json({ accessToken });
   } catch (err) {
-    console.error('refreshController', err);
-    res.status(500).json({ error: 'Erro interno' });
+    // log detalhado para encontrar raiz do problema
+    console.error("refreshController - erro não tratado:", err.stack ?? err);
+    return res.status(500).json({ error: 'Erro interno' });
   }
 }
+
 
 export async function logoutController(req, res) {
   try {

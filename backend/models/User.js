@@ -63,47 +63,111 @@ export async function updateUsuario(id, data) {
   }
 };
 
+// export async function login(email, senha) {
+//   try {
+//     const user = await prisma.usuarios.findUnique({
+//       where: { email: email },
+//       include: { perfil: true },
+//     });
+
+//     // Garantir que ambos são strings
+//     const senhaFornecida = String(senha);
+//     const senhaHash = String(user.senha);
+
+//     // Comparar senhas
+//     const senhaValida = await compare(senhaFornecida, senhaHash);
+//     if (!senhaValida) {throw new Error("Senha inválida")}
+
+//     if (user.status === "inativo") {throw new Error("Usuário inativo");}
+
+//     // Gera o token JWT
+//     const token = jwt.sign(
+//       { id: user.id, email: user.email, perfil: user.perfil.nome },
+//       JWT_SECRET,
+//       { expiresIn: "1h" }
+//     );
+//     return {
+//       sucesso: true,
+//       data: {
+//         id: user.id,
+//         email: user.email,
+//         perfil: user.perfil,
+//         token,
+//       },
+//       message: "Usuário logado com sucesso.",
+//     };
+//   } catch (error) {
+//     return {
+//       sucesso: false,
+//       erro: "Erro ao logar usuário",
+//       detalhes: error.message, // opcional, para debug
+//     };
+//   }
+// };
+
 export async function login(email, senha) {
   try {
+    // buscar usuário incluindo perfil
     const user = await prisma.usuarios.findUnique({
-      where: { email: email },
+      where: { email },
       include: { perfil: true },
     });
 
-    // Garantir que ambos são strings
+    if (!user) {
+      return {
+        sucesso: false,
+        erro: 'Usuário não encontrado',
+      };
+    }
+
+    // Garantir que ambos são strings (proteção)
     const senhaFornecida = String(senha);
-    const senhaHash = String(user.senha);
+    const senhaHash = String(user.senha ?? '');
 
     // Comparar senhas
     const senhaValida = await compare(senhaFornecida, senhaHash);
-    if (!senhaValida) {throw new Error("Senha inválida")}
+    if (!senhaValida) {
+      return { sucesso: false, erro: 'Senha inválida' };
+    }
 
-    if (user.status === "inativo") {throw new Error("Usuário inativo");}
+    if (user.status === false || user.status === 'inativo') {
+      return { sucesso: false, erro: 'Usuário inativo' };
+    }
 
-    // Gera o token JWT
+    // Perfil como string (nome)
+    const perfilNome = user.perfil?.nome ?? null;
+
+    // Gera o token JWT (se quiser incluir perfil no payload)
     const token = jwt.sign(
-      { id: user.id, email: user.email, perfil: user.perfil.nome },
+      { id: user.id, email: user.email, perfil: perfilNome },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: '1h' }
     );
+
+    // Normalizar objeto de resposta
     return {
       sucesso: true,
       data: {
-        id: user.id,
-        email: user.email,
-        perfil: user.perfil,
-        token,
+        usuario: {
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          perfil: perfilNome, // string ou null
+        },
+        accessToken: token,
       },
-      message: "Usuário logado com sucesso.",
+      message: 'Usuário logado com sucesso.',
     };
   } catch (error) {
+    console.error('[login] erro:', error.stack ?? error);
     return {
       sucesso: false,
-      erro: "Erro ao logar usuário",
-      detalhes: error.message, // opcional, para debug
+      erro: 'Erro ao logar usuário',
+      detalhes: error.message,
     };
   }
-};
+}
+
 
 export async function esqSenha(email, codigo, expira) {
   try {

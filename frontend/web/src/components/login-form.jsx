@@ -28,9 +28,12 @@ export function LoginForm({ className, ...props }) {
         setError(result.error || "Erro ao autenticar");
         return;
       }
+      console.log('login result =>', result);
 
       // se o backend retornar dados do usuário no result, use-os para redirecionar
       const perfil = result.data?.data?.usuario?.perfil ?? result.data?.usuario?.perfil ?? null;
+
+      console.log("perfil detectado:", perfil);
 
       // se não houver perfil, você pode chamar um endpoint /me com fetchWithAuth para pegar info
       switch (perfil) {

@@ -1,4 +1,4 @@
-import prisma from '../../prisma/client'
+import prisma from '../../prisma/client.js'
 
 //**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
 
