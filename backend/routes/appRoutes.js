@@ -7,7 +7,7 @@ import { auth } from '../middlewares/authMiddleware.js'
 // controllers --------------------------------------------------------------------
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
-import { calcularFornecedoresController, mostrarSaldoFController, buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController } from "../controllers/financeiro/financeiroController.js";
+import { calcularFornecedoresController, mostrarSaldoFController, buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController, somarDiariaController } from "../controllers/financeiro/financeiroController.js";
 import { listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
 
@@ -26,6 +26,7 @@ router.get("/produtos", auth, listarProdutosController);
 router.get("/vendas/ultimos-6-meses", auth, contarVendasPorMesUltimos6MesesController);
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/fornecedoresCalculo", auth, calcularFornecedoresController)
+router.get("/somarDiaria/:unidadeId", somarDiariaController);
 // rotas usadas para _____ ---------------------------------------------------------------------------------
 router.delete('/usuarios/:userId', deletarUsuarioController)
 // rotas usadas para _____ ---------------------------------------------------------------------------------

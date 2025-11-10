@@ -266,6 +266,7 @@ export const somarDiariaController = async (req, res) => {
         if (isNaN(unidadeId)) {
             return res.status(400).json({ error: 'ID da unidade inválido.' });
         }
+        
         const total = await somarDiaria(unidadeId);
         return res.status(200).json({ total });
     } catch (error) {

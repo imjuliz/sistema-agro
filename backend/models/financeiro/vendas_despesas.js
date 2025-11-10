@@ -71,16 +71,15 @@ export const buscarProdutoMaisVendido = async (unidadeId) => { //ok
 };
 
 // Função que soma as vendas do dia atual
-export const somarDiaria = async (unidadeId) => { //ok
-    const result = await prisma.$queryRaw`
-    SELECT COALESCE(SUM(valor), 0) AS total
-    FROM "Vendas"
+export const somarDiaria = async (unidadeId) => {
+  const result = await prisma.$queryRaw`
+    SELECT COALESCE(SUM("total"), 0) AS total
+    FROM "vendas"
     WHERE DATE("criado_em") = CURRENT_DATE
-      AND "unidadeId" = ${unidadeId}
+      AND "unidade_id" = ${unidadeId};
   `;
 
-    // Prisma retorna um array de objetos, então pegamos o primeiro
-    return result[0]?.total ?? 0;
+  return result[0]?.total ?? 0;
 };
 
 export const somarSaidas = async (unidadeId) => { //ok
