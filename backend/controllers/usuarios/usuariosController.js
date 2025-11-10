@@ -1,7 +1,5 @@
 import prisma from "../../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../../models/unidade-de-venda/Loja.js";
-import { calcularFornecedores } from "../../models/unidade-de-venda/fornecedores.js";
-import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade } from "../../models/estoque_produtos_lotes/estoque.js";
+import { listarUsuariosPorUnidade } from "../../models/usuarios/usuarios.js";
 
 // ✅ LISTA USUÁRIOS DA UNIDADE
 export const listarUsuariosPorUnidadeController = async (req, res) => {

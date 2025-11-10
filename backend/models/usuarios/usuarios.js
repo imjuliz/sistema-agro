@@ -42,3 +42,30 @@ export const listarAdmins = async (unidadeId) => {
         }
     }
 };
+
+export async function listarUsuariosPorUnidade(unidadeId) {
+  try {
+    const usuarios = await prisma.usuario.findMany({
+      where: {unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
+    
+      include: {
+        perfil: {select: { nome: true, descricao: true },},
+        unidade: {select: { nome: true, tipo: true },},
+      },
+      orderBy: {nome: "asc",},
+    });
+
+    return {
+      sucesso: true,
+      unidadeId: Number(unidadeId),
+      totalUsuarios: usuarios.length,
+      usuarios,
+    };
+  } catch (error) {
+    console.error("Erro ao buscar usuários da unidade:", error);
+    return {
+      sucesso: false,
+      erro: error.message,
+    };
+  }
+}

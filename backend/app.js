@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import connectPgSimple from 'connect-pg-simple';
+import cookieParser from "cookie-parser";
 
 import authRotas from './routes/authRotas.js';
 import appRoutes from './routes/appRoutes.js';
@@ -51,6 +52,8 @@ app.use(
 
 app.use(express.json());
 
+app.use(cookieParser());
+
 const PgSession = connectPgSimple(session);
 
 app.use(session({
@@ -76,7 +79,5 @@ app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
 app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 
 app.use('/uploads', express.static(path.resolve('uploads')));
-
-app.listen(3000, () => {console.log("Servidor rodando em http://localhost:3000");})
 
 export default app;  // aqui exporta o app puro, sem serverless

@@ -1,8 +1,5 @@
 import prisma from "../../prisma/client.js";
-import { mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda } from "../../models/unidade-de-venda/Loja.js";
-import { calcularFornecedores } from "../../models/unidade-de-venda/fornecedores.js";
-import { somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarUsuariosPorUnidade, listarSaidasPorUnidade , mostrarEstoque} from "../../models/estoque_produtos_lotes/estoque.js";
-import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas } from '../../models/financeiro/vendas_despesas.js'
+import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade , mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda} from '../../models/financeiro/vendas_despesas.js'
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
@@ -57,32 +54,32 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
 };
 
 //CONTAR VENDAS DOS ULTIMOS 6 MESES
-// LISTAR PRODUTOS DA UNIDADE -- rota feita
-export const listarProdutosController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+// // LISTAR PRODUTOS DA UNIDADE -- rota feita
+// export const listarProdutosController = async (req, res) => {
+//   try {
+//     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});
-    }
+//     if (!unidadeId) {
+//       return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});
+//     }
 
-    const resultado = await listarProdutos(Number(unidadeId));
+//     const resultado = await listarProdutos(Number(unidadeId));
 
-    return res.status(200).json({
-      sucesso: resultado.sucesso,
-      message: resultado.message,
-      produtos: resultado.fornecedores ?? [],
-    });
+//     return res.status(200).json({
+//       sucesso: resultado.sucesso,
+//       message: resultado.message,
+//       produtos: resultado.fornecedores ?? [],
+//     });
 
-  } catch (error) {
-    console.error("Erro no controller ao listar produtos:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro no controller ao listar produtos.",
-      detalhes: error.message,
-    });
-  }
-};
+//   } catch (error) {
+//     console.error("Erro no controller ao listar produtos:", error);
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro no controller ao listar produtos.",
+//       detalhes: error.message,
+//     });
+//   }
+// };
 
 //CONTAR VENDAS DOS ULTIMOS 6 MESES -- rota feita
 export const contarVendasPorMesUltimos6MesesController = async (req, res) => {
@@ -139,30 +136,30 @@ export const criarVendaController = async (req, res) => {
   }
 };
 
-// SOMA TOTAL DE ITENS NO ESTOQUE -- rota feita
-export const somarQtdTotalEstoqueController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+// // SOMA TOTAL DE ITENS NO ESTOQUE -- rota feita
+// export const somarQtdTotalEstoqueController = async (req, res) => {
+//   try {
+//     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
+//     if (!unidadeId) {
+//       return res.status(401).json({
+//         sucesso: false,
+//         erro: "Sessão inválida ou unidade não identificada.",
+//       });
+//     }
 
-    const resultado = await somarQtdTotalEstoque(unidadeId);
+//     const resultado = await somarQtdTotalEstoque(unidadeId);
 
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error("Erro no controller ao somar estoque:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao somar itens no estoque.",
-      detalhes: error.message,
-    });
-  }
-};
+//     return res.status(200).json(resultado);
+//   } catch (error) {
+//     console.error("Erro no controller ao somar estoque:", error);
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro ao somar itens no estoque.",
+//       detalhes: error.message,
+//     });
+//   }
+// };
 
 // CALCULA SALDO LÍQUIDO -- rota feita
 export const calcularSaldoLiquidoController = async (req, res) => {
@@ -188,53 +185,53 @@ export const calcularSaldoLiquidoController = async (req, res) => {
   }
 };
 
-// LISTA O ESTOQUE -- rota feita
-export const listarEstoqueController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+// // LISTA O ESTOQUE -- rota feita
+// export const listarEstoqueController = async (req, res) => {
+//   try {
+//     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
+//     if (!unidadeId) {
+//       return res.status(401).json({
+//         sucesso: false,
+//         erro: "Sessão inválida ou unidade não identificada.",
+//       });
+//     }
 
-    const resultado = await getEstoque(unidadeId);
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error("Erro ao listar estoque:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar estoque.",
-      detalhes: error.message,
-    });
-  }
-};
+//     const resultado = await getEstoque(unidadeId);
+//     return res.status(200).json(resultado);
+//   } catch (error) {
+//     console.error("Erro ao listar estoque:", error);
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro ao listar estoque.",
+//       detalhes: error.message,
+//     });
+//   }
+// };
 
-// LISTA USUÁRIOS DA UNIDADE -- rota feita
-export const listarUsuariosPorUnidadeController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+// // LISTA USUÁRIOS DA UNIDADE -- rota feita
+// export const listarUsuariosPorUnidadeController = async (req, res) => {
+//   try {
+//     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
+//     if (!unidadeId) {
+//       return res.status(401).json({
+//         sucesso: false,
+//         erro: "Sessão inválida ou unidade não identificada.",
+//       });
+//     }
 
-    const resultado = await listarUsuariosPorUnidade(unidadeId);
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error("Erro ao listar usuários da unidade:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar usuários da unidade.",
-      detalhes: error.message,
-    });
-  }
-};
+//     const resultado = await listarUsuariosPorUnidade(unidadeId);
+//     return res.status(200).json(resultado);
+//   } catch (error) {
+//     console.error("Erro ao listar usuários da unidade:", error);
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro ao listar usuários da unidade.",
+//       detalhes: error.message,
+//     });
+//   }
+// };
 
 // LISTA SAÍDAS DA UNIDADE -- rota feita
 export const listarSaidasPorUnidadeController = async (req, res) => {
@@ -261,16 +258,6 @@ export const listarSaidasPorUnidadeController = async (req, res) => {
 };
 
 // das funções que eu (lorena) fiz:
-
-export const contarChamadosController = async (req, res) => {
-    try {
-        const total = await contarTodosChamados();
-        res.json(total);
-    } catch (error) {
-        console.error('Erro ao contar chamados!! ', error);
-        res.status(500).json({ erro: 'erro ao contar chamados' });
-    }
-};
 
 export const somarDiariaController = async (req, res) => {
     try {
@@ -314,7 +301,7 @@ export const calcularLucroController = async (req, res) => { //funcao assincrona
     }
 
     // Chama o model que retorna o lucro
-    const resultado = await calcularLucroUltimoMes(unidadeId);
+    const resultado = await calcularLucro(unidadeId);
 
     return res.status(200).json({
       unidadeId,

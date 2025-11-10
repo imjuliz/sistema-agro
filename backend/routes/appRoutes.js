@@ -14,21 +14,25 @@ import { deletarUsuarioController } from "../controllers/UserController.js";
 import { mostrarSaldoFController,buscarProdutoMaisVendidoController, listarProdutosController,contarVendasPorMesUltimos6MesesController,
     criarVendaController,somarQtdTotalEstoqueController,calcularSaldoLiquidoController,listarEstoqueController,listarUsuariosPorUnidadeController,
     listarSaidasPorUnidadeController,calcularFornecedoresController } from "../controllers/financeiro/financeiroController.js";
+import { calcularFornecedoresController, mostrarSaldoFController, buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController } from "../controllers/financeiro/financeiroController.js";
+import { listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
+
 // tradução
 router.post('/translate', translateText)
 
 // rotas usadas para loja --------------------------------------------------------------------------------
-router.get("/estoqueSomar",  somarQtdTotalEstoqueController);
-router.get("/estoque/listar", listarEstoqueController);
-router.get("/saldoLiquido", calcularSaldoLiquidoController);
-router.get("/saldo-final", mostrarSaldoFController);
-router.get("/saidas/listar", listarSaidasPorUnidadeController);
-router.get("/usuarios/listar", listarUsuariosPorUnidadeController);
-router.get("/produto-mais-vendido",buscarProdutoMaisVendidoController);
-router.get("/produtos", listarProdutosController);
-router.get("/vendas/ultimos-6-meses",contarVendasPorMesUltimos6MesesController);
-router.post("/vendas/criar",  criarVendaController);
-router.get("/fornecedoresCalculo",calcularFornecedoresController)
+router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
+router.get("/estoque/listar", auth, listarEstoqueController);
+router.get("/saldoLiquido", auth, calcularSaldoLiquidoController);
+router.get("/saldo-final", auth, mostrarSaldoFController);
+router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
+router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
+router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
+router.get("/produtos", auth, listarProdutosController);
+router.get("/vendas/ultimos-6-meses", auth, contarVendasPorMesUltimos6MesesController);
+router.post("/vendas/criar", auth, criarVendaController);
+router.get("/fornecedoresCalculo", auth, calcularFornecedoresController)
 // rotas usadas para _____ ---------------------------------------------------------------------------------
 router.delete('/usuarios/:userId', deletarUsuarioController)
 // rotas usadas para _____ ---------------------------------------------------------------------------------

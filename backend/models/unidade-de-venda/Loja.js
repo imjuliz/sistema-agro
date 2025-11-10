@@ -1,5 +1,6 @@
 // import PrismaClient from '../../PrismaClient/client'
 import { PrismaClient } from '../../prisma/generated/index.js';
+import prisma from '../../prisma/client.js'
 
 //**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
 

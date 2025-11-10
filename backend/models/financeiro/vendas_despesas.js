@@ -23,8 +23,55 @@ export const listarSaidas = async (unidadeId) => {
     }
 }
 
+export const buscarProdutoMaisVendido = async (unidadeId) => { //ok
+    try {
+        const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
+            by: ["produtoId"],
+            _sum: { quantidade: true, },
+            where: { venda: { unidadeId: Number(unidadeId), }, },
+            orderBy: { _sum: { quantidade: "desc", }, },
+            take: 1, // pega apenas o produto mais vendido
+        });
+
+        if (resultado.length === 0) {
+            return {
+                sucesso: false,
+                message: "Nenhum item encontrado para esta unidade.",
+            };
+        }
+
+        const produtoMaisVendido = resultado[0];
+
+        const produto = await prisma.produto.findUnique({ // Busca informações do produto
+            where: { id: produtoMaisVendido.produtoId, },
+            select: {
+                id: true,
+                nome: true,
+                descricao: true,
+            },
+        });
+
+        return {
+            sucesso: true,
+            produto: {
+                id: produto.id,
+                nome: produto.nome,
+                descricao: produto.descricao,
+                quantidadeVendida: produtoMaisVendido._sum.quantidade,
+            },
+            message: "Produto mais vendido encontrado com sucesso!",
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao buscar o produto mais vendido",
+            detalhes: error.message,
+        };
+    }
+};
+
 // Função que soma as vendas do dia atual
-export const somarDiaria = async (unidadeId) => {
+export const somarDiaria = async (unidadeId) => { //ok
     const result = await prisma.$queryRaw`
     SELECT COALESCE(SUM(valor), 0) AS total
     FROM "Vendas"
@@ -36,7 +83,7 @@ export const somarDiaria = async (unidadeId) => {
     return result[0]?.total ?? 0;
 };
 
-export const somarSaidas = async (unidadeId) => {
+export const somarSaidas = async (unidadeId) => { //ok
     const result = await prisma.$queryRaw`
     SELECT COALESCE (SUM(valor), 0) AS total
     from "Saídas"
@@ -47,7 +94,7 @@ export const somarSaidas = async (unidadeId) => {
 
 }
 
-export const calcularLucro = async (unidadeId) => {
+export const calcularLucro = async (unidadeId) => { //ok
 
     const result = await prisma.$queryRaw`
 
@@ -78,7 +125,7 @@ export const calcularLucro = async (unidadeId) => {
     return result[0];
 }
 
-export const listarVendas = async (unidadeId) => {
+export const listarVendas = async (unidadeId) => { //ok
     try {
         const vendas = await prisma.Venda.findMany({
             where: { unidadeId: Number(unidadeId) },
@@ -99,7 +146,7 @@ export const listarVendas = async (unidadeId) => {
 
 //do arquivo Loja.js
 //MOSTRA O SALDO FINAL DO DIA DA UNIDADE
-export const mostrarSaldoF = async (unidadeId) => {
+export const mostrarSaldoF = async (unidadeId) => { //ok
     try {
         const agora = new Date();
         const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
@@ -141,7 +188,7 @@ export const mostrarSaldoF = async (unidadeId) => {
 };
 
 //agrupado por mês
-export async function contarVendasPorMesUltimos6Meses(unidadeId) {
+export async function contarVendasPorMesUltimos6Meses(unidadeId) { //ok
     const hoje = new Date();
     const dataLimite = new Date();
     dataLimite.setMonth(dataLimite.getMonth() - 6);
@@ -184,7 +231,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 }
 
 //insert na tabela de venda
-export async function criarVenda(req, res) {
+export async function criarVenda(req, res) { //ok
     try {
         const { caixaId, usuarioId, unidadeId, pagamento, itens } = req.body;
 
@@ -236,4 +283,62 @@ export async function criarVenda(req, res) {
     }
 }
 
+//obter o saldo geral
+export const calcularSaldoLiquido = async (unidadeId) => { //ok
+  try {
+    const totalCaixas = await prisma.caixa.aggregate({
+      _sum: {saldoFinal: true,},
+      where: {
+        unidadeId: Number(unidadeId),
+        saldoFinal: {not: null,},
+      },
+    });
+
+    const totalSaidas = await prisma.saidas.aggregate({// soma dos valores das saídas
+      _sum: {valor: true,},
+      where: {unidadeId: Number(unidadeId),},
+    });
+
+    const somaCaixas = Number(totalCaixas._sum.saldoFinal || 0);
+    const somaSaidas = Number(totalSaidas._sum.valor || 0);
+    const saldoLiquido = somaCaixas - somaSaidas; // cálculo do saldo líquido
+
+    return {
+      sucesso: true,
+      unidadeId: Number(unidadeId),
+    //   totalCaixas: somaCaixas.toFixed(2),
+    //   totalSaidas: somaSaidas.toFixed(2),
+      saldoLiquido: saldoLiquido.toFixed(2),
+      message: "Saldo líquido calculado com sucesso!",
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao calcular saldo líquido",
+      detalhes: error.message,
+    };
+  }
+};
+
+//select de tudo em saidas
+export async function listarSaidasPorUnidade(unidadeId) { //ok
+  try {
+    const saidas = await prisma.saidas.findMany({
+      where: {unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
+      orderBy: {data: "desc",},
+    });
+
+    return {
+      sucesso: true,
+      unidadeId: Number(unidadeId),
+      saidas: saidas,
+    };
+  } catch (error) {
+    console.error("Erro ao buscar saidas", error);
+    return {
+      sucesso: false,
+      erro: error.message,
+    };
+  }
+}
 
