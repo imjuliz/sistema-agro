@@ -1,5 +1,5 @@
 import prisma from "../../prisma/client.js";
-import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas, somarQtdTotalEstoque, calcularSaldoLiquido, getEstoque, listarSaidasPorUnidade , mostrarEstoque, mostrarSaldoF, buscarProdutoMaisVendido, listarProdutos,contarVendasPorMesUltimos6Meses, criarVenda} from '../../models/financeiro/vendas_despesas.js'
+import { calcularLucro, listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade , mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda} from '../../models/financeiro/vendas_despesas.js'
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {

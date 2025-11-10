@@ -17,26 +17,48 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // Tenta obter novo accessToken ao montar (o refresh cookie pode existir)
+  // useEffect(() => {
+  //   let mounted = true;
+  //   async function tryRefresh() {
+  //     try {
+  //       const res = await fetch(REFRESH_ENDPOINT, {
+  //         method: 'POST',
+  //         credentials: 'include', // importante: envia cookie HttpOnly
+  //         headers: { 'Content-Type': 'application/json' },
+  //       });
+  //       if (!res.ok) {
+  //         setAccessToken(null);
+  //         setUser(null);
+  //       } else {
+  //         const data = await res.json();
+  //         // backend retorna { accessToken, maybe userData }
+  //         if (mounted) {
+  //           setAccessToken(data.accessToken ?? null);
+  //           if (data.usuario) setUser(data.usuario);
+  //         }
+  //       }
+  //     } catch (err) {
+  //       console.error('refresh on mount failed', err);
+  //       setAccessToken(null);
+  //       setUser(null);
+  //     } finally {
+  //       if (mounted) setLoading(false);
+  //     }
+  //   }
+  //   tryRefresh();
+  //   return () => { mounted = false; };
+  // }, []);
   useEffect(() => {
     let mounted = true;
     async function tryRefresh() {
+      // Se já temos accessToken (ex.: usuário fez login), não precisa aqui
+      if (!mounted) return;
       try {
-        const res = await fetch(REFRESH_ENDPOINT, {
-          method: 'POST',
-          credentials: 'include', // importante: envia cookie HttpOnly
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!res.ok) {
-          setAccessToken(null);
-          setUser(null);
-        } else {
-          const data = await res.json();
-          // backend retorna { accessToken, maybe userData }
-          if (mounted) {
-            setAccessToken(data.accessToken ?? null);
-            if (data.usuario) setUser(data.usuario);
-          }
-        }
+        const res = await fetch(REFRESH_ENDPOINT, { method: 'POST', credentials: 'include' });
+        if (!res.ok) { setAccessToken(null); setUser(null); return; }
+        const data = await res.json();
+        setAccessToken(data.accessToken ?? data.data?.accessToken ?? null);
+        if (data.usuario || data.data?.usuario) setUser(data.usuario ?? data.data?.usuario);
       } catch (err) {
         console.error('refresh on mount failed', err);
         setAccessToken(null);
@@ -49,25 +71,30 @@ export function AuthProvider({ children }) {
     return () => { mounted = false; };
   }, []);
 
+
   // login: envia credenciais, backend seta cookie HttpOnly e retorna accessToken
   const login = useCallback(async ({ email, senha }) => {
     const res = await fetch(LOGIN_ENDPOINT, {
       method: 'POST',
-      credentials: 'include', // para receber/armazenar cookie HttpOnly
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha }),
     });
 
     const data = await res.json();
+
     if (!res.ok) {
-      return { success: false, error: data.error || data.mensagem || 'Erro ao autenticar' };
+      return { success: false, error: data.error || data.mensagem || data.erro || 'Erro ao autenticar' };
     }
 
-    // supondo que o backend retorne accessToken e usuario
-    setAccessToken(data.data?.accessToken ?? data.accessToken ?? null);
-    if (data.data?.usuario) setUser(data.data.usuario);
-    // opcional: se backend retornar perfil em data
-    return { success: true, data };
+
+    const payload = data.data ?? data;
+    const usuario = payload.usuario ?? payload.user ?? null;
+
+    setAccessToken(payload.accessToken ?? payload.accessToken); // redundante mas explícito
+    if (usuario) setUser(usuario);
+
+    return { success: true, payload }; // retorno consistente
   }, []);
 
   // logout: chama endpoint que revoga sessao e limpa cookie

@@ -7,7 +7,9 @@ import { auth } from '../middlewares/authMiddleware.js'
 // controllers --------------------------------------------------------------------
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
-import { calcularFornecedoresController, mostrarSaldoFController, buscarProdutoMaisVendidoController, listarProdutosController, contarVendasPorMesUltimos6MesesController, criarVendaController, somarQtdTotalEstoqueController, calcularSaldoLiquidoController, listarEstoqueController, listarUsuariosPorUnidadeController, listarSaidasPorUnidadeController } from "../controllers/financeiro/financeiroController.js";
+import { calcularFornecedoresController, mostrarSaldoFController, buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController } from "../controllers/financeiro/financeiroController.js";
+import { listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
 
 // tradução
 router.post('/translate', translateText)
