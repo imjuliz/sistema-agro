@@ -11,8 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from "@/components/ui/dialog"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form"
-import ProductSelector from "../../ProductSelector"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -38,35 +37,9 @@ export function StoreLevelView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-
   const [selectedProduct, setSelectedProduct] = useState("");
   const [productList, setProductList] = useState([]);
 
-  // Adiciona produto à lista
-  const addProduct = () => {
-    if (!selectedProduct) return;
-    const product = PRODUCTS.find((p) => p.name === selectedProduct);
-    if (!product) return;
-
-    // Evita duplicados
-    if (productList.some((item) => item.id === product.id)) return;
-
-    setProductList([...productList, { ...product, quantity: 0 }]);
-    setSelectedProduct("");
-  };
-
-  // Atualiza quantidade e recalcula preço
-  const updateQuantity = (id, value) => {
-    const newList = productList.map((p) =>
-      p.id === id ? { ...p, quantity: parseFloat(value) || 0 } : p
-    );
-    setProductList(newList);
-  };
-
-  const totalPrice = productList.reduce(
-    (acc, item) => acc + item.pricePerKg * item.quantity,
-    0
-  );
   // paginacao
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -100,8 +73,6 @@ export function StoreLevelView() {
   // pagination logic
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / perPage));
   useEffect(() => { setPage(p => Math.min(Math.max(1, p), totalPages)); }, [totalPages]); // sempre garante que a página atual seja válida quando filtros / perPage mudarem
-
-
   useEffect(() => { setPage(1); }, [searchTerm, selectedStore, selectedCategory, perPage]); // resetar página quando filtros mudarem (UX comum)
 
   // items atualmente visíveis na página
@@ -121,12 +92,7 @@ export function StoreLevelView() {
     name_6456591851: z.string()
   });
 
-  const form = useForm({
-    defaultValues: {
-      "name_1530877542": ["React"],
-      "name_7375090523": new Date()
-    },
-  })
+  const form = useForm({ defaultValues: { "name_1530877542": ["React"], "name_7375090523": new Date() }, })
 
   function onSubmit(values) {
     try {
@@ -189,29 +155,20 @@ export function StoreLevelView() {
                 const difference = item.currentStock - item.minimumStock;
                 return (
                   <TableRow key={item.id}>
-                    <TableCell>
-                      <div className={`w-3 h-3 rounded-full ${stockStatus.id}`}></div>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="font-medium">{item.name}</div>
-                    </TableCell>
+                    <TableCell><div className={`w-3 h-3 rounded-full ${stockStatus.id}`}></div></TableCell>
+                    <TableCell className="max-w-xs"><div className="font-medium">{item.name}</div></TableCell>
                     <TableCell>
                       <Badge variant="outline" className={stockStatus.textColor}>{item.currentStock}{item.unMedida}</Badge>{/* qtd e unmedida */}
                     </TableCell>
                     <TableCell>{item.store}</TableCell>{/* valor un */}
                     <TableCell className="font-mono text-sm">{item.brand} </TableCell>{/* Fornecedor */}
-                    <TableCell>
-                      <span className={stockStatus.textColor}></span>{/* Situação */}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{item.displayStock}</Badge>  {/* lixo e editar */}
-                    </TableCell>
+                    <TableCell><span className={stockStatus.textColor}></span></TableCell>{/* Situação */}
+                    <TableCell><Badge variant="secondary">{item.displayStock}</Badge></TableCell>{/* lixo e editar */}
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
-
           {filteredItems.length === 0 && (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Nenhum item encontrado para os filtros aplicados.</p>
@@ -230,20 +187,16 @@ export function StoreLevelView() {
               </Select>
 
               <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredItems.length / perPage) || 1)}</div>
-
               <div className="inline-flex items-center gap-1 border-l border-neutral-800 pl-3">
                 <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
                   <ChevronsLeft className="h-4 w-4" />
                 </Button>
-
                 <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-
                 <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
-
                 <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
                   <ChevronsRight className="h-4 w-4" />
                 </Button>
@@ -252,14 +205,13 @@ export function StoreLevelView() {
             {/* modal */}
             <Dialog>
               <form>
-                <DialogTrigger asChild>
-                  <Button variant="outline">Repor estoque</Button>
-                </DialogTrigger>
+                <DialogTrigger asChild><Button variant="outline"> Repor estoque </Button></DialogTrigger>
                 <DialogContent className="sm:max-w-[20%]">
-                  <DialogHeader><DialogTitle>Reposição de Estoque</DialogTitle></DialogHeader>
+                  <DialogHeader><DialogTitle> Reposição de Estoque </DialogTitle></DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-3xl mx-auto py-10">
                       <div className="grid grid-cols-12 gap-4">
+
                         <div className="col-span-6">
                           <FormField control={form.control} name="name_1503609575" render={({ field }) => (
                             <FormItem>
@@ -268,13 +220,9 @@ export function StoreLevelView() {
                                 <Card className={'border-none shadow-none'}>
                                   <CardContent className={'px-0'}>
                                     <Select onValueChange={(value) => setSelectedProduct(value)} value={selectedProduct}>
-                                      <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Selecione" />
-                                      </SelectTrigger>
+                                      <SelectTrigger className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
                                       <SelectContent>
-                                        {PRODUCTS.map((p) => (
-                                          <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
-                                        ))}
+                                        {PRODUCTS.map((p) => (<SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>))}
                                       </SelectContent>
                                     </Select>
                                     {productList.length > 0 && (
@@ -297,26 +245,26 @@ export function StoreLevelView() {
 
                       <div className="flex items-center gap-2">
                         <FormField control={form.control} name="name_7375090523" render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel>Quantidade</FormLabel>
-                              <div className="flex items-center border border-gray-300 rounded-md overflow-hidden w-[220px]">
-                                <Input type="number" placeholder="0" {...field} className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 w-full" />
-                                <Select defaultValue="kg">
-                                  <SelectTrigger className="w-[70px] border-l border-gray-300 rounded-none focus:ring-0 focus:ring-offset-0">
-                                    <SelectValue placeholder="Kg" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="kg">Kg</SelectItem>
-                                    <SelectItem value="g">g</SelectItem>
-                                    <SelectItem value="l">L</SelectItem>
-                                    <SelectItem value="ml">mL</SelectItem>
-                                    <SelectItem value="un">un</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}/>
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Quantidade</FormLabel>
+                            <div className="flex items-center border border-gray-300 rounded-md overflow-hidden w-[220px]">
+                              <Input type="number" placeholder="0" {...field} className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 w-full" />
+                              <Select defaultValue="kg">
+                                <SelectTrigger className="w-[70px] border-l border-gray-300 rounded-none focus:ring-0 focus:ring-offset-0">
+                                  <SelectValue placeholder="Kg" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="kg">Kg</SelectItem>
+                                  <SelectItem value="g">g</SelectItem>
+                                  <SelectItem value="l">L</SelectItem>
+                                  <SelectItem value="ml">mL</SelectItem>
+                                  <SelectItem value="un">un</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
                       </div>
 
                       <div className="grid grid-cols-12 gap-4">
@@ -348,10 +296,7 @@ export function StoreLevelView() {
                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
-                                  <Button variant={"outline"} className={cn(
-                                    "w-[240px] pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}>
+                                  <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
                                     {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
@@ -373,9 +318,7 @@ export function StoreLevelView() {
                               <FormLabel>Fornecedor</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione..." />
-                                  </SelectTrigger>
+                                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   <SelectItem value="m@example.com">Fazenda Boa Vista</SelectItem>
@@ -391,9 +334,7 @@ export function StoreLevelView() {
                     </form>
                   </Form>
                   <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DialogClose>
+                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                     <Button type="submit">Registrar reposição</Button>
                   </DialogFooter>
                 </DialogContent>
