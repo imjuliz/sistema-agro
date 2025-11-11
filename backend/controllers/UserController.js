@@ -10,7 +10,7 @@ import { generateAccessToken, generateRefreshToken, hashToken, REFRESH_TOKEN_DAY
 
 export async function cadastrarSeController(req, res) {
   try {
-    const { nome, email, senha } = userShema.partial().parse(req.body);
+    const { nome, email, senha } = userSchema.partial().parse(req.body);
     const id = req.usuario.id
 
     if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
@@ -137,7 +137,7 @@ export async function loginController(req, res) {
     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
 
     // buscar usuário incluindo perfil
-    const user = await prisma.usuario.findUnique({
+    const user = await prisma.usuarios.findUnique({
       where: { email },
       include: { perfil: true },
     });
