@@ -53,8 +53,8 @@ model Unidade {
   imagemUrl          String?     @map("imagem_url") @db.VarChar(1000)
   areaTotal          Decimal?    @map("area_total") @db.Decimal(12,3)
   areaProdutiva      Decimal?    @map("area_produtiva") @db.Decimal(12,3)
-  latitude           Float?      @db.Float
-  longitude          Float?      @db.Float
+  // latitude           Float?      @db.Float
+  // longitude          Float?      @db.Float
   descricaoCurta     String?     @map("descricao_curta") @db.Text
   tipo               TipoUnidade
   status             StatusUnidade @default(ATIVA)
@@ -69,6 +69,7 @@ model Unidade {
   caixas     Caixa[]
   vendas     Venda[]
   Fornecedor Fornecedor[]
+   saidas    Saidas[]
 
   contratosComoFornecedor Contratos[] @relation("ContratoFornecedor")
   contratosComoLoja       Contratos[] @relation("ContratoLoja")
@@ -339,7 +340,10 @@ model Saidas {
   valor     Decimal   @db.Decimal(12, 2)
   data      DateTime
   usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
-  unidade   Unidade   @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  unidade Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+
+    @@map("saidas")
+
 }
 
 model Contratos {
