@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const AuthContext = createContext();
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
+const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/';
 const LOGIN_ENDPOINT = `${BACKEND_BASE}auth/login`;
 const REFRESH_ENDPOINT = `${BACKEND_BASE}auth/refresh`;
 const LOGOUT_ENDPOINT = `${BACKEND_BASE}auth/logout`;
