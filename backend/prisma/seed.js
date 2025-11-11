@@ -159,11 +159,11 @@ async function main() {
         // ===== Unidades =====
         console.log("Criando unidades...");
         const unidadesData = [
-            { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 123, Zona Rural, São Paulo - SP", tipo: TipoUnidade.Fazenda, status: true },
-            { nome: "Fazenda Beta", endereco: "Estrada do Campo, s/n, Zona Rural, Campinas - SP", tipo: TipoUnidade.Fazenda, status: true },
-            { nome: "Loja Central", endereco: "Av. Principal, 456, Centro, São Paulo - SP", tipo: TipoUnidade.Loja, status: true },
-            { nome: "Loja Norte", endereco: "Rua das Flores, 789, Zona Norte, São Paulo - SP", tipo: TipoUnidade.Loja, status: true },
-            { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000, Centro, São Paulo - SP", tipo: TipoUnidade.Matriz, status: true },
+            { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 123, Zona Rural, São Paulo - SP", tipo: TipoUnidade.Fazenda },
+            { nome: "Fazenda Beta", endereco: "Estrada do Campo, s/n, Zona Rural, Campinas - SP", tipo: TipoUnidade.Fazenda },
+            { nome: "Loja Central", endereco: "Av. Principal, 456, Centro, São Paulo - SP", tipo: TipoUnidade.Loja },
+            { nome: "Loja Norte", endereco: "Rua das Flores, 789, Zona Norte, São Paulo - SP", tipo: TipoUnidade.Loja },
+            { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000, Centro, São Paulo - SP", tipo: TipoUnidade.Matriz },
         ];
 
         await prisma.unidade.createMany({ data: unidadesData, skipDuplicates: true });
@@ -517,6 +517,183 @@ async function main() {
                 usado: false,
             },
         });
+
+
+        //TESTE----------------
+
+         const perfil = await prisma.perfil.create({
+    data: {
+      nome: "Administrador",
+      descricao: "Perfil de administrador",
+    },
+  });
+
+  // ============================================
+  // 2️⃣ Criar Unidade
+  // ============================================
+  const unidade = await prisma.unidade.create({
+    data: {
+      id: 82,
+      nome: "Unidade 82",
+      endereco: "Rua das Flores, 123",
+      tipo: "Loja",
+      status: "ATIVA",
+    },
+  });
+  console.log("Unidade criada:", unidade.id);
+
+  // ============================================
+  // 3️⃣ Criar Usuário
+  // ============================================
+  const usuario = await prisma.usuario.create({
+    data: {
+      nome: "Admin Unidade 82",
+      email: "admin82@example.com",
+      senha: "123456",
+      telefone: "999999999",
+      perfilId: perfil.id,
+      unidadeId: unidade.id,
+    },
+  });
+  console.log("Usuário criado:", usuario.id);
+
+  // ============================================
+  // 4️⃣ Criar Lote
+  // ============================================
+  const lote = await prisma.lote.create({
+  data: {
+    unidadeId: unidade.id,          // unidade criada anteriormente
+    responsavelId: usuario.id,      // usuário responsável
+    nome: "Lote de Tomates",
+    tipo: "Soja",               // assumir que TipoLote é um enum e "PRODUCAO" é um valor válido
+    qntdItens: 1000,
+    observacoes: "Primeira produção do ano",
+    dataCriacao: new Date(),
+  },
+});
+
+  // ============================================
+  // 5️⃣ Criar Produto
+  // ============================================
+  const produto = await prisma.produto.create({
+    data: {
+      nome: "Produto Teste",
+      sku: "PROD-001",
+      unidadeId: unidade.id,
+      loteId: lote.id,
+      preco: 50.00,
+      dataFabricacao: new Date(),
+      dataValidade: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+    },
+  });
+  console.log("Produto criado:", produto.id);
+
+  // ============================================
+  // 6️⃣ Criar Estoque
+  // ============================================
+  const estoque = await prisma.estoque.create({
+    data: {
+      unidadeId: unidade.id,
+      produtoId: produto.id,
+      quantidade: 100,
+      estoqueMinimo: 10,
+    },
+  });
+  console.log("Estoque criado:", estoque.id);
+
+  // ============================================
+  // 7️⃣ Criar Caixa
+  // ============================================
+  const caixaTeste = await prisma.caixa.create({
+    data: {
+      unidadeId: unidade.id,
+      usuarioId: usuario.id,
+      status: true,
+      saldoInicial: 1000.00,
+      abertoEm: new Date(),
+    },
+  });
+  console.log("Caixa criado:", caixaTeste.id);
+
+  // ============================================
+  // 8️⃣ Criar Vendas
+  // ============================================
+  const venda1 = await prisma.venda.create({
+    data: {
+      caixaId: caixaTeste.id,
+      usuarioId: usuario.id,
+      unidadeId: unidade.id,
+      total: 150.00,
+      pagamento: "DINHEIRO",
+    },
+  });
+
+  const venda2 = await prisma.venda.create({
+    data: {
+      caixaId: caixaTeste.id,
+      usuarioId: usuario.id,
+      unidadeId: unidade.id,
+      total: 200.00,
+      pagamento: "PIX",
+    },
+  });
+  console.log("Vendas criadas:", venda1.id, venda2.id);
+
+  // ============================================
+  // 9️⃣ Criar Itens de Venda
+  // ============================================
+  await prisma.itemVenda.create({
+    data: {
+      vendaId: venda1.id,
+      produtoId: produto.id,
+      quantidade: 2,
+      precoUnitario: produto.preco,
+      desconto: 0,
+      subtotal: 2 * Number(produto.preco),
+    },
+  });
+
+  await prisma.itemVenda.create({
+    data: {
+      vendaId: venda2.id,
+      produtoId: produto.id,
+      quantidade: 4,
+      precoUnitario: produto.preco,
+      desconto: 10,
+      subtotal: 4 * Number(produto.preco) - 10,
+    },
+  });
+  console.log("Itens de venda criados.");
+
+  // ============================================
+  // 🔟 Criar Saídas
+  // ============================================
+  await prisma.saidas.createMany({
+    data: [
+      {
+        usuarioId: usuario.id,
+        unidadeId: unidade.id,
+        descricao: "Compra de insumos",
+        tipo: "ESTOQUE",
+        valor: 100.00,
+        data: new Date(),
+      },
+      {
+        usuarioId: usuario.id,
+        unidadeId: unidade.id,
+        descricao: "Pagamento de luz",
+        tipo: "ENERGIA",
+        valor: 200.00,
+        data: new Date(),
+      },
+    ],
+  });
+  console.log("Saídas criadas.");
+
+
+
+
+
         console.log("Sessão e reset de senha criados.");
 
         console.log("SEED finalizado com sucesso!");
