@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import connectPgSimple from 'connect-pg-simple';
+import cookieParser from "cookie-parser";
 
 import authRotas from './routes/authRotas.js';
 import appRoutes from './routes/appRoutes.js';
@@ -37,9 +38,9 @@ app.use(
       // Permite requisições sem "origin" (ex: Postman)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
+      if (allowedOrigins.includes(origin)) {return callback(null, true);}
+
+      else {
         console.warn("Origem bloqueada pelo CORS:", origin);
         return callback(new Error("Not allowed by CORS"));
       }
@@ -48,15 +49,14 @@ app.use(
   })
 );
 
-
 app.use(express.json());
+
+app.use(cookieParser());
 
 const PgSession = connectPgSimple(session);
 
 app.use(session({
-  store: new PgSession({
-    conString: process.env.DATABASE_URL,
-  }),
+  store: new PgSession({conString: process.env.DATABASE_URL,}),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
@@ -73,17 +73,10 @@ app.use('/auth', authRotas);
 app.use('/', appRoutes);
 app.use('/unidades', unidadeRoutes);
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Backend online!' });
-});
+app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 
 app.use('/uploads', express.static(path.resolve('uploads')));
-
-app.listen(3000, () => {
-  console.log("Servidor rodando em http://localhost:3000");
-}
-)
 
 export default app;  // aqui exporta o app puro, sem serverless

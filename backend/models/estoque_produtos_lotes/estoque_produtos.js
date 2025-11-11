@@ -1,0 +1,210 @@
+import prisma from '../../prisma/client.js';
+
+export const mostrarEstoque = async (unidadeId) =>{ //ok
+    try{
+        const estoque = await prisma.Estoque.findMany({
+            where:{ unidadeId: Number(unidadeId)},
+        })
+        return ({
+            sucesso: true,
+            estoque,
+            message: "Estoque listado com sucesso!!"
+        })
+
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar estoque",
+            detalhes: error.message
+        }
+    }
+}
+
+//******************NÃO FORAM TESTADAS******************\\
+
+//SOMA A QUANTIDADE DE ITENS NO ESTOQUE
+export const somarQtdTotalEstoque = async (unidadeId) => { //ok
+  try {
+    const resultado = await prisma.estoque.aggregate({
+      _sum: {quantidade: true,},
+      where: {unidadeId: Number(unidadeId)},
+    });
+
+    const total = resultado._sum.quantidade || 0;
+
+    return {
+      sucesso: true,
+      totalItens: total,
+      message: "Total de itens em estoque calculado com sucesso!",
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao calcular o total de itens no estoque",
+      detalhes: error.message,
+    };
+  }
+};
+
+
+
+//listagem do estoque 
+export async function getEstoque(unidadeId) { //ok
+    try {
+        const estoque = await prisma.estoque.findMany({where:{unidadeId:Number(unidadeId)}});
+        return {
+            sucesso: true,
+            estoque: estoque,
+            message: "Estoque listado com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar estoque.",
+            detalhes: error.message 
+        };
+    }
+};
+
+
+
+export const reporEstoque= async(unidadeId)=>{
+
+}
+//PRODUTOS
+
+export async function getProdutos() { //ok
+    try {
+        const produtos = await prisma.produtos.findMany();
+        return {
+            sucesso: true,
+            produtos,
+            message: "Produtos listados com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            message: "Erro ao listar produtos."
+        }
+    }
+};
+
+export async function getProdutoPorId(id) { //ainda nao tem no controller
+    try {
+        const produto = await prisma.produtos.findUnique({ where: { id: id } });
+        return {
+            sucesso: true,
+            produto,
+            message: "Produto encontrado com sucesso."
+        }
+    }
+    catch (error) {
+        return {
+            sucesso: false,
+            message: "Erro ao encontrar produto.",
+            detalhes: error.message // opcional, para debug
+        }
+    }
+};
+
+export async function createProduto(data) {//ainda nao tem no controller
+    try {
+        const produto = await prisma.produtos.create({ data });
+        return {
+            sucesso: true,
+            produto,
+            message: "Produto criado com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            message: "Erro ao criar produto.",
+            detalhes: error.message // opcional, para debug
+        }
+    }
+};
+
+export async function deleteProduto(id) { //ainda nao tem no controller
+    try {
+        const produto = await prisma.produtos.delete({ where: { id } });
+        return {
+            sucesso: true,
+            produto,
+            message: "Produto deletado com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            message: "Erro ao deletar produto.",
+            detalhes: error.message // opcional, para debug
+        }
+    }
+};
+
+export const buscarProdutoMaisVendido = async (unidadeId) => { //ok
+    try {
+        const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
+            by: ["produtoId"],
+            _sum: { quantidade: true, },
+            where: { venda: { unidadeId: Number(unidadeId), }, },
+            orderBy: { _sum: { quantidade: "desc", }, },
+            take: 1, // pega apenas o produto mais vendido
+        });
+
+        if (resultado.length === 0) {
+            return {
+                sucesso: false,
+                message: "Nenhum item encontrado para esta unidade.",
+            };
+        }
+
+        const produtoMaisVendido = resultado[0];
+
+        const produto = await prisma.produto.findUnique({ // Busca informações do produto
+            where: { id: produtoMaisVendido.produtoId, },
+            select: {
+                id: true,
+                nome: true,
+                descricao: true,
+            },
+        });
+
+        return {
+            sucesso: true,
+            produto: {
+                id: produto.id,
+                nome: produto.nome,
+                descricao: produto.descricao,
+                quantidadeVendida: produtoMaisVendido._sum.quantidade,
+            },
+            message: "Produto mais vendido encontrado com sucesso!",
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao buscar o produto mais vendido",
+            detalhes: error.message,
+        };
+    }
+};
+
+export const listarProdutos = async (unidadeId) => { //ok
+    try {
+        const fornecedores = await prisma.venda.findMany({
+            where: { unidadeId: Number(unidadeId) },
+        })
+        return ({
+            sucesso: true,
+            fornecedores,
+            message: "Fornecedores da unidade listados com sucesso!!"
+        })
+
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar fornecedores",
+            detalhes: error.message
+        }
+    }
+}

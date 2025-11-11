@@ -5,18 +5,17 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-// import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from 'next/navigation'
 
 export function LoginForm({ className, ...props }) {
-  // const { login } = useAuth(); // pega a funcao login do AuthContext (que usa cookie httpOnly)
+  const { login } = useAuth();
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
-  const LOGIN_ENDPOINT = `${BACKEND_BASE}auth/login`;
-  console.log(LOGIN_ENDPOINT)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,64 +23,39 @@ export function LoginForm({ className, ...props }) {
     setLoading(true);
 
     try {
-      const res = await fetch(LOGIN_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
-      });
+      const result = await login({ email, senha });
+      if (!result.success) {
+        setError(result.error || "Erro ao autenticar");
+        return;
+      }
+      console.log('login result =>', result);
 
-      const data = await res.json();
+      const payload = result.payload ?? result.data ?? result.data?.data ?? null;
+      const perfil = payload?.usuario?.perfil ?? payload?.usuario?.perfil ?? payload?.perfil ?? null;
+      console.log('perfil detectado:', perfil);
 
-      if (!res.ok) { setError(data.error || data.mensagem || "Erro desconhecido"); }
-      else {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("perfil", data.userData.perfil);
-
-        // Redirecionar baseado no perfil
-        switch (data.userData.perfil) {
-          case "gerente_matriz":
-            window.location.href = "/matriz/dashboard";
-            break;
-          case "gerente_fazenda":
-            window.location.href = "/fazenda/dashboard";
-            break;
-          case "gerente_loja":
-            window.location.href = "/loja/dashboard";
-            break;
-        }
+      // se não houver perfil, você pode chamar um endpoint /me com fetchWithAuth para pegar info
+      switch (perfil) {
+        case "gerente_matriz":
+          router.push("/matriz/dashboard");
+          break;
+        case "gerente_fazenda":
+          router.push("/fazenda/dashboard");
+          break;
+        case "gerente_loja":
+          router.push("/loja/dashboard");
+          break;
+        default:
+          // rota padrão
+          router.push("/");
       }
     } catch (err) {
-      setError("Erro ao conectar com o servidor");
       console.error(err);
-    } finally { setLoading(false); }
+      setError("Erro ao conectar com o servidor");
+    } finally {
+      setLoading(false);
+    }
   };
-
-  // ---------------------------- como as rotas ainda nao existem essa parte esta comentada, mas n deve ser apagada
-  // const [loading, setLoading] = useState(false); // flag de loading para desabilitar botão / mostrar texto
-
-  // // funcao ao submeter o form
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault(); // evita comportamento padrão de recarregar a página
-  //   setError(""); // limpa erro anterior
-  //   setLoading(true); // ativa indicador de carregamento
-
-  //   try {
-  //     // chama a função login do AuthContext passando email/senha
-  //     // se tudo OK, chama loadUser() e faz o redirecionamento conforme perfil
-  //     const result = await login({ email, senha });
-
-  //     // se o contexto retornou success: false, mostra a msg de erro
-  //     if (!result.success) {
-  //       setError(result.error || "Erro ao autenticar");
-  //     }
-  //     // se sucesso, o AuthContext ja devera ter atualizado o user e redirecionado
-  //   } catch (err) {
-  //     console.error("Erro no handleSubmit:", err);
-  //     setError("Erro ao conectar com o servidor");
-  //   } finally {
-  //     setLoading(false); // finaliza loading
-  //   }
-  // };
 
   return (
     <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>

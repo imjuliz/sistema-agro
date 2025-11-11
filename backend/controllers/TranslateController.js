@@ -9,9 +9,7 @@ export const translateText = async (req, res) => {
     const key = process.env.AZURE_TRANSLATOR_KEY;
     const region = process.env.AZURE_TRANSLATOR_REGION; // opcional dependendo do recurso
 
-    if (!endpoint || !key) {
-      return res.status(500).json({ error: "Translator not configured" });
-    }
+    if (!endpoint || !key) {return res.status(500).json({ error: "Translator not configured" });}
 
     const url = `${endpoint.replace(
       /\/$/,

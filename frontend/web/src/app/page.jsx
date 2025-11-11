@@ -19,8 +19,6 @@ export default function LandingPage() {
       <Logos />
       <Items />
       <ThreeDMarqueeDemo />
-      {/* <Stats />
-      <Pricing /> */}
       <BentoSection />
       <FAQ />
       <CTA />

@@ -1,13 +1,10 @@
 "use client"
-
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis, Bar, BarChart } from "recharts"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, } from "@/components/ui/chart";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem, } from "@/components/ui/toggle-group"
-import { TrendingUp } from "lucide-react"
 import { Pie, PieChart } from "recharts"
 
 //grafico de ondas
@@ -61,9 +58,7 @@ export function ChartAreaInteractive() {
       <CardHeader>
         <CardTitle>Total de Vendas</CardTitle>
         <CardDescription>
-          <span className="hidden @[540px]/card:block">
-            Total de vendas dos últimos 6 meses
-          </span>
+          <span className="hidden @[540px]/card:block">Total de vendas dos últimos 6 meses</span>
           <span className="@[540px]/card:hidden">Últimos 6 meses </span>
         </CardDescription>
         <CardAction>
@@ -97,15 +92,10 @@ export function ChartAreaInteractive() {
             <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32}
               tickFormatter={(value) => {
                 const date = new Date(value)
-                return date.toLocaleDateString("en-US", { month: "short", day: "numeric", });
-              }} />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => { return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", }); }}
-                  indicator="dot" />
-              } />
+                return date.toLocaleDateString("en-US", { month: "short", day: "numeric", });}} />
+            <ChartTooltip cursor={false} content={
+              <ChartTooltipContent labelFormatter={(value) => { return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", }); }} indicator="dot" />}
+            />
             <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" stroke="var(--color-desktop)" stackId="a" />
           </AreaChart>
         </ChartContainer>
@@ -117,21 +107,21 @@ export function ChartAreaInteractive() {
 //grafico de barras
 export const description2 = "A multiple bar chart"
 const chartData2 = [
-  { month: "Janeiro", entrada: 186, saida: 80 }, { month: "Fevereiro", entrada: 305, saida: 200 }, { month: "Março", entrada: 237, saida: 120 },
-  { month: "Abril", entrada: 73, saida: 190 }, { month: "Maio", entrada: 209, saida: 130 }, { month: "Junho", entrada: 214, saida: 140 },
+  { month: "Janeiro", entrada: 86, saida: 80 }, { month: "Fevereiro", entrada: 50, saida: 100 }, { month: "Março", entrada: 100, saida: 20 },
+  { month: "Abril", entrada: 73, saida: 90 }, { month: "Maio", entrada: 39, saida: 30 }, { month: "Junho", entrada: 14, saida: 40 },
 ]
 
 const chartConfig2 = { entrada: { label: "Entrada", color: "#738C16", }, saida: { label: "Saída", color: "#99BF0F", }, }
 
 export function ChartBarMultiple() {
   return (
-    <Card className={"h-full w-full"}>
+    <Card className={"h-[60%] w-full"}>
       <CardHeader>
         <CardTitle className={'text-2xl'}>Entradas e Saídas</CardTitle>
         <CardDescription>Janeiro - Junho</CardDescription>
       </CardHeader>
-      <CardContent className={'h-full'}>
-        <ChartContainer config={chartConfig2} className={'h-full pb-20 w-full'}>
+      <CardContent className={'h-[85%]'}>
+        <ChartContainer config={chartConfig2} className={'h-full  w-full'}>
           <BarChart accessibilityLayer data={chartData2}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} />
@@ -155,12 +145,9 @@ const chartData3 = [
 ]
 
 const chartConfig3 = {
-  visitors: { label: "Visitors", },
-  chrome: { label: "Chrome", color: "var(--chart-1)", },
-  safari: { label: "Safari", color: "var(--chart-2)", },
-  firefox: { label: "Firefox", color: "var(--chart-3)", },
-  edge: { label: "Edge", color: "var(--chart-4)", },
-  other: { label: "Other", color: "var(--chart-5)", },
+  visitors: { label: "Visitors", },chrome: { label: "Chrome", color: "var(--chart-1)", },
+  safari: { label: "Safari", color: "var(--chart-2)", },firefox: { label: "Firefox", color: "var(--chart-3)", },
+  edge: { label: "Edge", color: "var(--chart-4)", },other: { label: "Other", color: "var(--chart-5)", },
 }
 
 export function ChartPieDonut() {

@@ -42,14 +42,23 @@ model Fornecedor {
 }
 
 model Unidade {
-  id           Int         @id @default(autoincrement())
-  gerenteId    Int?        @map("gerente_id")
-  nome         String      @db.VarChar(100)
-  endereco     String      @db.Text
-  tipo         TipoUnidade
-  status       Boolean     @default(true)
-  criadoEm     DateTime    @default(now()) @map("criado_em")
-  atualizadoEm DateTime    @default(now()) @updatedAt @map("atualizado_em")
+  id                 Int         @id @default(autoincrement())
+  gerenteId          Int?        @map("gerente_id")
+  nome               String      @db.VarChar(100)
+  endereco           String      @db.Text
+  cidade             String?     @db.VarChar(100)
+  estado             String?     @db.VarChar(100)
+  cep                String?     @db.VarChar(20)
+  imagemUrl          String?     @map("imagem_url") @db.VarChar(1000)
+  areaTotal          Decimal?    @map("area_total") @db.Decimal(12,3)
+  areaProdutiva      Decimal?    @map("area_produtiva") @db.Decimal(12,3)
+  latitude           Float?      @db.Float
+  longitude          Float?      @db.Float
+  descricaoCurta     String?     @map("descricao_curta") @db.Text
+  tipo               TipoUnidade
+  status             StatusUnidade @default(ATIVA)
+  criadoEm           DateTime    @default(now()) @map("criado_em")
+  atualizadoEm       DateTime    @default(now()) @updatedAt @map("atualizado_em")
 
   gerente    Usuario?     @relation("GerenteUnidade", fields: [gerenteId], references: [id], onDelete: SetNull)
   usuarios   Usuario[]    @relation("UsuarioUnidade")
@@ -60,7 +69,12 @@ model Unidade {
   Plantios   Plantios[]
   Animais    Animais[]
 
+  contratosComoFornecedor Contratos[] @relation("ContratoFornecedor")
+  contratosComoLoja       Contratos[] @relation("ContratoLoja")
+
   @@map("unidades")
+  @@index([cidade])
+  @@index([estado])
 }
 
 model Usuario {
@@ -72,6 +86,9 @@ model Usuario {
   senha        String   @db.VarChar(255)
   telefone     String   @db.VarChar(20)
   status       Boolean  @default(true)
+  tokenVersion   Int       @default(0) // mecanismo simples para invalidar todos os access tokens do usuário ao incrementá-lo (ex.: troca de senha, força logout em massa)
+  failedAttempts Int       @default(0) // contador para políticas de lockout (bloquear após N tentativas falhas)
+  lockoutUntil   DateTime? //tempo até quando o usuário fica bloqueado (mitigar brute force).
   criadoEm     DateTime @default(now()) @map("criado_em")
   atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
 
@@ -84,10 +101,28 @@ model Usuario {
   vendas              Venda[]
   saidas              Saidas[]
   AtividadesLote      AtividadesLote[]
-  AtvdPlantio         atvdPlantio[]
-  AtvdAnimalia        atvdAnimalia[]
+  sessoes        Sessao[]
 
   @@map("usuarios")
+}
+
+model Sessao {
+  id               String   @id @default(cuid())
+  usuarioId        Int
+  usuario          Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  refreshTokenHash String   @db.VarChar(128)
+  userAgent        String?  @db.VarChar(512)
+  ip               String?  @db.VarChar(45)
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+  revoked          Boolean  @default(false)
+  replacedById     String?  // referencia outra Sessao.id (quando rotacionar)
+  
+  @@map("sessoes")
+  @@index([refreshTokenHash])
+  @@index([usuarioId])
+  @@index([expiresAt])
+  @@unique([refreshTokenHash])
 }
 
 model ResetSenha {
@@ -149,6 +184,9 @@ model Produto {
   fornecedores ProdutoFornecedor[]
   itensVendas  ItemVenda[]
 
+  // lado inverso: contratos que envolvem este produto
+  contratos Contratos[] @relation("ContratoProduto")
+
   @@map("produtos")
 }
 
@@ -169,7 +207,10 @@ model Estoque {
 
 model ProdutoFornecedor {
   id               Int      @id @default(autoincrement())
+  id_contrato Int
   produtoId        Int      @map("produto_id")
+  quantidade Int
+  unidade_medida UnidadesDeMedida
   fornecedorId     Int      @map("fornecedor_id")
   precoCusto       Decimal? @map("preco_custo") @db.Decimal(10, 2)
   prazoEntregaDias Int?     @map("prazo_entrega_dias")
@@ -351,6 +392,30 @@ model Plantios {
   unidade          Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
 
   @@map("plantios")
+
+}
+
+model Contratos {
+  id        Int       @id @default(autoincrement())
+  fornecedor_id Int
+  produto_id Int
+  loja_id Int
+  dataInicio DateTime
+  dataFim DateTime
+  status StatusContrato
+  frequencia_entregas FrequenciaEnum
+  frequencia_pagamento FrequenciaEnum
+  valorTotal Int
+
+// aqui ambos apontam para Unidade, mas com nomes de relação distintos
+  fornecedor Unidade @relation("ContratoFornecedor", fields: [fornecedor_id], references: [id], onDelete: Restrict)
+  loja       Unidade @relation("ContratoLoja",       fields: [loja_id],       references: [id], onDelete: Restrict)
+
+  // produto com nome de relação para casar com Produto.contratos
+  produto Produto @relation("ContratoProduto", fields: [produto_id], references: [id], onDelete: Restrict)
+
+    @@map("contratos")
+
 }
 
 // ============================================
@@ -397,6 +462,7 @@ enum TipoSaida {
   ENERGIA
   MANUTENCAO
   SALARIOS
+  ESTOQUE
 }
 
 enum AtividadesEnum {
@@ -434,3 +500,31 @@ enum TipoAnimais {
   REPRODUCAO
 }
 
+enum StatusContrato{
+  ATIVO
+  INATIVO
+}
+
+enum FrequenciaEnum{
+  SEMANALMENTE
+  QUINZENAL
+  MENSALMENTE
+}
+
+enum UnidadesDeMedida {
+  KG
+  G
+  T
+  LOTE
+  UNIDADE
+  SACA
+  CABEÇA
+  ARROBA
+  LITRO
+}
+
+enum StatusUnidade {
+  ATIVA
+  INATIVA
+  MANUTENCAO
+}

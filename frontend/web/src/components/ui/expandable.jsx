@@ -256,8 +256,8 @@ const ExpandableCard = React.forwardRef((
   {
     children,
     className = "",
-    collapsedSize = { width: 320, height: 211 },
-    expandedSize = { width: 480, height: undefined },
+    collapsedSize = { width: "100%", height: undefined },
+    expandedSize = { width: "100%", height: undefined },
     hoverToExpand = false,
     expandDelay = 0,
     collapseDelay = 0,
@@ -269,7 +269,8 @@ const ExpandableCard = React.forwardRef((
   const { isExpanded, toggleExpand, expandDirection } = useExpandable()
 
   // Use useMeasure hook to get the dimensions of the content
-  const [measureRef, { width, height }] = useMeasure()
+  // const [measureRef, { width, height }] = useMeasure()
+  const [measureRef, { width = 0, height = 0 }] = useMeasure()
 
   // Create motion values for width and height
   const animatedWidth = useMotionValue(collapsedSize.width || 0)
@@ -343,7 +344,7 @@ const ExpandableCard = React.forwardRef((
         <div
           className="grid grid-cols-1 rounded-lg sm:rounded-xl md:rounded-[2rem] p-1 sm:p-1.5 md:p-2 shadow-md shadow-black/5">
           <div
-            className="rounded-md sm:rounded-lg md:rounded-3xl bg-white p-2 sm:p-3 md:p-4 shadow-xl ring-1 ring-black/5">
+            className="rounded-md sm:rounded-lg md:rounded-3xl bg-white dark:bg-[#000000] p-2 sm:p-3 md:p-4 shadow-xl ring-1 ring-black/5">
             <div className="w-full h-full overflow-hidden">
               {/* Ref for measuring content dimensions (so we can let framer know to animate into the dimensions) */}
               <div ref={measureRef} className="flex flex-col h-full">
@@ -363,7 +364,7 @@ ExpandableCard.displayName = "ExpandableCard"
 const ExpandableTrigger = React.forwardRef(({ children, ...props }, ref) => {
   const { toggleExpand } = useExpandable()
   return (
-    <div ref={ref} onClick={toggleExpand} className="w-fit cursor-pointer" {...props}>
+    <div ref={ref} onClick={toggleExpand} className="w-full cursor-pointer" {...props}>
       {children}
     </div>
   );
@@ -374,7 +375,7 @@ ExpandableTrigger.displayName = "ExpandableTrigger"
 const ExpandableCardHeader = React.forwardRef(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn("flex flex-col space-y-1.5 pb-6 px-4 ", className)}
     {...props}>
     <motion.div layout className="flex justify-between items-start">
       {children}
@@ -387,7 +388,7 @@ ExpandableCardHeader.displayName = "ExpandableCardHeader"
 const ExpandableCardContent = React.forwardRef(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("p-6 pt-0 px-4 overflow-hidden flex-grow", className)}
+    className={cn(" px-4 overflow-hidden flex-grow", className)}
     {...props}>
     <motion.div layout>{children}</motion.div>
   </div>

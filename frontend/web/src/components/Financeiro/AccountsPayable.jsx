@@ -73,10 +73,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const status = formData.paymentDate 
+    const status = formData.paymentDate
       ? 'paid'
-      : formData.dueDate < today 
-        ? 'overdue' 
+      : formData.dueDate < today
+        ? 'overdue'
         : 'pending';
 
     const newAccount = {
@@ -114,9 +114,9 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const status = formData.paymentDate 
+    const status = formData.paymentDate
       ? 'paid'
-      : formData.dueDate < today 
+      : formData.dueDate < today
         ? 'overdue'
         : 'pending';
 
@@ -131,10 +131,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
       status
     };
 
-    onAccountsChange(accounts.map(acc => 
+    onAccountsChange(accounts.map(acc =>
       acc.id === editingAccount.id ? updatedAccount : acc
     ));
-    
+
     resetForm();
     setEditingAccount(null);
     setIsEditDialogOpen(false);
@@ -203,10 +203,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
 
   const parseDate = (dateStr) => {
     if (!dateStr) return '';
-    
+
     // Remove aspas se existirem
     const cleanDateStr = dateStr.replace(/"/g, '').trim();
-    
+
     // Tenta vários formatos de data
     const formats = [
       /^(\d{2})\/(\d{2})\/(\d{4})$/, // DD/MM/YYYY
@@ -232,23 +232,23 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
 
   const parseAmount = (amountStr) => {
     if (!amountStr) return 0;
-    
+
     // Remove aspas, espaços e símbolos de moeda
     const cleanAmount = amountStr
       .replace(/"/g, '')
       .replace(/[R$\s]/g, '')
       .replace(/\./g, '') // Remove pontos (separadores de milhares)
       .replace(',', '.'); // Substitui vírgula por ponto (separador decimal)
-    
+
     const parsed = parseFloat(cleanAmount);
     return isNaN(parsed) ? 0 : parsed;
   };
 
   const findSubcategoryByName = (subcategoryName) => {
     if (!subcategoryName) return null;
-    
+
     const cleanName = subcategoryName.replace(/"/g, '').trim();
-    
+
     for (const category of categories) {
       if (category.type === 'saida') {
         for (const subcategory of category.subcategories) {
@@ -258,7 +258,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
         }
       }
     }
-    
+
     // Se não encontrou, verifica se é uma categoria principal
     for (const category of categories) {
       if (category.type === 'saida') {
@@ -270,7 +270,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
         }
       }
     }
-    
+
     return null;
   };
 
@@ -279,7 +279,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
 
     const text = await importFile.text();
     const rows = parseCSV(text);
-    
+
     if (rows.length === 0) {
       setImportProgress({
         show: true,
@@ -371,10 +371,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
 
         // Calcular status
         const today = new Date().toISOString().split('T')[0];
-        const status = paymentDate 
-          ? 'paid' 
-          : dueDate < today 
-            ? 'overdue'  
+        const status = paymentDate
+          ? 'paid'
+          : dueDate < today
+            ? 'overdue'
             : 'pending';
 
         // Criar conta
@@ -390,7 +390,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
         };
 
         newAccounts.push(newAccount);
-        
+
       } catch (error) {
         errors.push(`Linha ${lineNum}: Erro ao processar dados - ${error}`);
       }
@@ -476,7 +476,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
   const filteredAccounts = useMemo(() => {
     const month = parseInt(selectedMonth);
     const year = parseInt(selectedYear);
-    
+
     const monthStart = new Date(year, month - 1, 1);
     const monthEnd = new Date(year, month, 0);
 
@@ -510,63 +510,411 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
+            <CardTitle className="text-sm">Total Pendente</CardTitle>
+            <Calendar className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-orange-600">{formatCurrency(totalPending)}</div>
+            <p className="text-xs text-muted-foreground">
+              {filteredAccounts.filter(acc => acc.status === 'pending').length} contas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
+            <CardTitle className="text-sm">Total Vencido</CardTitle>
+            <AlertCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-red-600">{formatCurrency(totalOverdue)}</div>
+            <p className="text-xs text-muted-foreground">
+              {filteredAccounts.filter(acc => acc.status === 'overdue').length} contas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm">Total Pago</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-green-600">{formatCurrency(totalPaid)}</div>
+            <p className="text-xs text-muted-foreground">
+              {filteredAccounts.filter(acc => acc.status === 'paid').length} contas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm ">Total Geral</CardTitle>
+            <FileText className="h-4 w-4 " />
+          </CardHeader>
+          <CardContent>
+            <div className="">{formatCurrency(totalPending + totalOverdue + totalPaid)}</div>
+            <p className="text-xs text-muted-foreground">
+              {filteredAccounts.length} contas
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filtros de Período */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 open-sans" />
-            Filtro de Período
-          </CardTitle>
-          <CardDescription>
-            Selecione o mês e ano para filtrar as contas a pagar
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="month-filter">Mês</Label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger id="month-filter">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <Card className={"gap-10"}>
+        <div>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 open-sans" />
+              Filtro de Período
+            </CardTitle>
+            <CardDescription>
+              Selecione o mês e ano para filtrar as contas a pagar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="month-filter">Mês</Label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger id="month-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map(month => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="year-filter">Ano</Label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger id="year-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+
+              <div className="flex gap-2">
+                <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Upload className="h-4 w-4" />
+                      Importar CSV
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Upload className="h-5 w-5" />
+                        Importar Contas a Pagar via CSV
+                      </DialogTitle>
+                      <DialogDescription>
+                        Faça upload de um arquivo CSV com as colunas: Emissão, Vencimento, Pagamento, Valor, Categoria, Obs
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="csv-file">Arquivo CSV</Label>
+                        <Input
+                          id="csv-file"
+                          type="file"
+                          accept=".csv"
+                          onChange={handleFileChange}
+                          className="mt-2"
+                        />
+                      </div>
+
+                      {importFile && (
+                        <Alert>
+                          <FileText className="h-4 w-4" />
+                          <AlertDescription>
+                            Arquivo selecionado: {importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {importProgress.show && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Processando...</span>
+                            <span>{importProgress.processed} de {importProgress.total}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${(importProgress.processed / importProgress.total) * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-sm text-green-600">
+                            {importProgress.imported} contas importadas com sucesso
+                          </div>
+                        </div>
+                      )}
+
+                      {importProgress.errors.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-500" />
+                            <span className="text-sm text-red-600">Erros encontrados ({importProgress.errors.length}):</span>
+                          </div>
+                          <div className="max-h-32 overflow-y-auto bg-red-50 p-2 rounded text-sm">
+                            {importProgress.errors.map((error, index) => (
+                              <div key={index} className="text-red-600">{error}</div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h4 className="mb-2">Formato do CSV esperado:</h4>
+                        <div className="text-sm space-y-1">
+                          <div><strong>Emissão:</strong> Data de competência (DD/MM/YYYY)</div>
+                          <div><strong>Vencimento:</strong> Data de vencimento (DD/MM/YYYY)</div>
+                          <div><strong>Pagamento:</strong> Data de pagamento (DD/MM/YYYY) - opcional</div>
+                          <div><strong>Valor:</strong> Valor em reais (ex: "1.500,00")</div>
+                          <div><strong>Categoria:</strong> Nome da subcategoria (deve existir)</div>
+                          <div><strong>Obs:</strong> Descrição - opcional</div>
+                        </div>
+                        <div className="mt-2 text-sm text-blue-600">
+                          <strong>Nota:</strong> Valores com vírgulas devem estar entre aspas. Certifique-se de que as categorias mencionadas no CSV existem no sistema como categorias de saída.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={resetImport}>
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleImportCSV}
+                        disabled={!importFile || importProgress.show}
+                      >
+                        Importar
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Nova Conta
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Nova Conta a Pagar</DialogTitle>
+                      <DialogDescription>
+                        Adicione uma nova conta a pagar ao sistema
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="competency-date">Data de Competência</Label>
+                          <Input
+                            id="competency-date"
+                            type="date"
+                            value={formData.competencyDate}
+                            onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="due-date">Data de Vencimento</Label>
+                          <Input
+                            id="due-date"
+                            type="date"
+                            value={formData.dueDate}
+                            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="payment-date">Data de Pagamento (opcional)</Label>
+                        <Input
+                          id="payment-date"
+                          type="date"
+                          value={formData.paymentDate}
+                          onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="amount">Valor</Label>
+                          <Input
+                            id="amount"
+                            type="number"
+                            step="0.01"
+                            placeholder="0,00"
+                            value={formData.amount}
+                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="subcategory">Subcategoria</Label>
+                          <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma subcategoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {exitCategories.map(category => (
+                                <React.Fragment key={category.id}>
+                                  {category.subcategories.map(subcategory => (
+                                    <SelectItem key={subcategory.id} value={subcategory.id}>
+                                      {category.name} &gt; {subcategory.name}
+                                    </SelectItem>
+                                  ))}
+                                </React.Fragment>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="description">Descrição</Label>
+                        <Textarea
+                          id="description"
+                          placeholder="Descrição da conta a pagar"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleAdd}>Adicionar</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="year-filter">Ano</Label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger id="year-filter">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            Exibindo contas de<strong>{getSelectedMonthName()} de {selectedYear}</strong>
-            {filteredAccounts.length !== accounts.length && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <p>Exibindo contas de <strong>{getSelectedMonthName()} de {selectedYear}</strong></p>
+              {/* {filteredAccounts.length !== accounts.length && (
               <Badge variant="secondary" className="ml-2">
                 {filteredAccounts.length} de {accounts.length} contas
               </Badge>
-            )}
-          </div>
-        </CardContent>
+            )} */}
+            </div>
+          </CardContent>
+        </div>
+
+
+
+
+        <div>
+          <CardHeader>
+            <CardTitle>Lista de Contas</CardTitle>
+            <CardDescription>Todas as contas a pagar cadastradas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Competência</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Pagamento</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAccounts.map(account => (
+                    <TableRow key={account.id}>
+                      <TableCell>{formatDate(account.competencyDate)}</TableCell>
+                      <TableCell>{formatDate(account.dueDate)}</TableCell>
+                      <TableCell>
+                        {account.paymentDate ? formatDate(account.paymentDate) : '-'}
+                      </TableCell>
+                      <TableCell>{formatCurrency(account.amount)}</TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {getSubcategoryName(account.subcategoryId)}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {account.description}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(account.status)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(account)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(account.id)}>
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filteredAccounts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        {accounts.length === 0
+                          ? 'Nenhuma conta cadastrada'
+                          : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`
+                        }
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </div>
+
       </Card>
 
-      <div className="flex justify-between items-center">
+      {/* <div className="flex justify-between items-center">
         <div>
           <h2>Contas a Pagar - {getSelectedMonthName()}/{selectedYear}</h2>
           <p className="text-muted-foreground">Gerencie suas contas a pagar e despesas</p>
@@ -589,7 +937,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
                   Faça upload de um arquivo CSV com as colunas: Emissão, Vencimento, Pagamento, Valor, Categoria, Obs
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="csv-file">Arquivo CSV</Label>
@@ -618,7 +966,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
                       <span>{importProgress.processed} de {importProgress.total}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${(importProgress.processed / importProgress.total) * 100}%` }}
                       />
@@ -663,7 +1011,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
                 <Button variant="outline" onClick={resetImport}>
                   Cancelar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleImportCSV}
                   disabled={!importFile || importProgress.show}
                 >
@@ -768,149 +1116,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </div> */}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Pendente</CardTitle>
-            <Calendar className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-orange-600">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">
-              {filteredAccounts.filter(acc => acc.status === 'pending').length} contas
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Vencido</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-red-600">{formatCurrency(totalOverdue)}</div>
-            <p className="text-xs text-muted-foreground">
-              {filteredAccounts.filter(acc => acc.status === 'overdue').length} contas
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Pago</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-green-600">{formatCurrency(totalPaid)}</div>
-            <p className="text-xs text-muted-foreground">
-              {filteredAccounts.filter(acc => acc.status === 'paid').length} contas
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Geral</CardTitle>
-            <FileText className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-blue-600">{formatCurrency(totalPending + totalOverdue + totalPaid)}</div>
-            <p className="text-xs text-muted-foreground">
-              {filteredAccounts.length} contas
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Contas</CardTitle>
-          <CardDescription>Todas as contas a pagar cadastradas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Competência</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAccounts.map(account => (
-                  <TableRow key={account.id}>
-                    <TableCell>{formatDate(account.competencyDate)}</TableCell>
-                    <TableCell>{formatDate(account.dueDate)}</TableCell>
-                    <TableCell>
-                      {account.paymentDate ? formatDate(account.paymentDate) : '-'}
-                    </TableCell>
-                    <TableCell>{formatCurrency(account.amount)}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {getSubcategoryName(account.subcategoryId)}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {account.description}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(account.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(account)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(account.id)}>
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredAccounts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                      {accounts.length === 0 
-                        ? 'Nenhuma conta cadastrada' 
-                        : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`
-                      }
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Dialog de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

@@ -11,6 +11,9 @@ import {
 import { userSchema } from "../schemas/userSchema.js";
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
+import prisma from '../prisma/client.js';
+import { compare } from 'bcryptjs';
+import { generateAccessToken, generateRefreshToken, hashToken, REFRESH_TOKEN_DAYS, refreshTokenExpiryDate, } from '../utils/auth.js';
 
 // const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -19,17 +22,11 @@ export async function cadastrarSeController(req, res) {
     const { nome, email, senha } = userShema.partial().parse(req.body);
     const id = req.usuario.id;
 
-    if (!nome || !email || !senha) {
-      return res
-        .status(400)
-        .json({ error: "Preencha todos os campos obrigatórios" });
-    }
+    if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
 
     // Verifica se email já existe
     const existingUser = await getUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: "Email já cadastrado" });
-    }
+    if (existingUser) { return res.status(400).json({ error: "Email já cadastrado" }); }
 
     const user = await cadastrarSe({ nome, email, senha });
 
@@ -47,14 +44,7 @@ export const updateUsuarioController = async (req, res) => {
     .parse(req.body);
   try {
     // Validação dos campos obrigatórios
-    if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) {
-      return res
-        .status(400)
-        .json({
-          sucesso: false,
-          erro: "Preencha todos os campos obrigatórios",
-        });
-    }
+    if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) { return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' }); }
 
     const unidadeData = {
       nomeCompleto,
@@ -67,19 +57,9 @@ export const updateUsuarioController = async (req, res) => {
 
     const result = await updateUsuario(id, unidadeData);
 
-    return res
-      .status(200)
-      .json({
-        sucesso: true,
-        mensagem: "Usuário atualizado com sucesso",
-        result,
-      });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ sucesso: false, erro: "Erro ao atualizar usuário" });
-  }
-};
+    return res.status(200).json({ sucesso: true, mensagem: 'Usuário atualizado com sucesso', result });
+  } catch (error) { return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' }); }
+}
 
 export const deletarUsuarioController = async (req, res) => {
   const { userId } = req.params;
@@ -87,94 +67,265 @@ export const deletarUsuarioController = async (req, res) => {
   try {
     const resultado = await deletarUsuario(userId);
 
-    if (!resultado.sucesso) {
-      return res.status(400).json(resultado);
-    }
+    if (!resultado.sucesso) { return res.status(400).json(resultado) }
 
-    return res
-      .status(200)
-      .json({ sucesso: true, mensagem: "Usuário deletado com sucesso" });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ sucesso: false, erro: "Erro interno do servidor" });
-  }
-};
+    return res.status(200).json({ sucesso: true, mensagem: 'Usuário deletado com sucesso' })
+  } catch (err) { return res.status(500).json({ sucesso: false, erro: 'Erro interno do servidor' }) }
+}
 
-export const loginController = async (req, res) => {
-  const { email, senha } = userSchema.partial().parse(req.body);
-  try {
-    // Validações básicas
-    if (!email || !senha) {
-      return res.status(400).json({ error: "Email e senha são obrigatórios" });
-    }
-
-    // Salva em response a resposta do login
-    const response = await login(email, senha);
-
-    res
-      .status(200)
-      .json({ message: "Usuário autenticado com sucesso", response });
-  } catch (error) {
-    console.error("Erro ao fazer login:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-};
-
-// -------------------------------------------- so testando
 // export const loginController = async (req, res) => {
-//   try {
-//     // validacao de entrada via schema
-//     const { email, senha } = userSchema.partial().parse(req.body);
-
+//   const { email, senha } = userSchema.partial().parse(req.body);
 //     if (!email || !senha) {
 //       return res.status(400).json({ error: "Email e senha são obrigatórios" });
 //     }
 
-//     const response = await login({ email, senha });
+//     // Salva em response a resposta do login
+//     const response =  await login(email, senha)
 
-//     if (!response.success) {
-//       return res.status(401).json({ error: response.error || "Credenciais inválidas" });
-//     }
-
-//     // Salva o usuário na sessão
-//     req.session.user = response.user || null;
-
-//     return res.status(200).json({ message: "Usuário autenticado com sucesso", user: req.session.user });
+//     res
+//       .status(200)
+//       .json({ message: "Usuário autenticado com sucesso", response });
 //   } catch (error) {
 //     console.error("Erro ao fazer login:", error);
 //     res.status(500).json({ error: "Erro interno do servidor" });
 //   }
 // };
 
-// // Me - retorna dados do usuário logado
-// export const meController = (req, res) => {
-//   if (req.session.user) {
-//     return res.status(200).json(req.session.user);
-//   } else {
-//     return res.status(401).json({ error: "Não autenticado" });
-//   }
-// };
+// -------------------------------------------- so testando
+const COOKIE_NAME = process.env.REFRESH_COOKIE_NAME || 'refreshToken';
 
-// // Logout - limpa sessão
-// export const logoutController = (req, res) => {
-//   req.session.destroy(err => {
-//     if (err) {
-//       console.error("Erro ao encerrar sessão:", err);
-//       return res.status(500).json({ error: "Erro ao deslogar" });
-//     }
+// export async function loginController(req, res) {
+//   try {
+//     const { email, senha } = req.body;
+//     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
 
-//     // limpa o cookie
-//     res.clearCookie("connect.sid", {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production",
-//       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+//     const user = await prisma.usuario.findUnique({ where: { email } });
+//     if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+//     const senhaValida = await compare(String(senha), String(user.senha));
+//     if (!senhaValida) return res.status(401).json({ error: "Credenciais inválidas" });
+//     if (!user.status) return res.status(403).json({ error: "Usuário inativo" });
+
+//     const accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
+
+//     const refreshToken = generateRefreshToken();
+//     const refreshHash = hashToken(refreshToken);
+
+//     await prisma.sessao.create({
+//       data: {
+//         usuarioId: user.id,
+//         refreshTokenHash: refreshHash,
+//         userAgent: req.get('User-Agent') ?? null,
+//         ip: req.ip ?? req.headers['x-forwarded-for'] ?? null,
+//         expiresAt: refreshTokenExpiryDate(),
+//       },
 //     });
 
-//     return res.json({ message: "Logout realizado com sucesso" });
-//   });
-// };
-// --------------------------------------------
+//     const cookieOptions = {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === 'production',
+//       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+//       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+//       path: '/',
+//     };
+
+//     res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
+
+//     res.status(200).json({
+//       sucesso: true,
+//       data: ({ accessToken, usuario: { id: user.id, email: user.email } })
+//     })
+//   } catch (err) {
+//     console.error('loginController', err);
+//     res.status(500).json({ error: 'Erro interno' });
+//   }
+// }
+
+export async function loginController(req, res) {
+  try {
+    const { email, senha } = req.body;
+    if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+
+    // buscar usuário incluindo perfil
+    const user = await prisma.usuario.findUnique({
+      where: { email },
+      include: { perfil: true },
+    });
+    if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+    // validar senha
+    const senhaValida = await compare(String(senha), String(user.senha ?? ''));
+    if (!senhaValida) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+    if (!user.status) return res.status(403).json({ error: 'Usuário inativo' });
+
+    // gerar access token
+    const accessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      tokenVersion: user.tokenVersion,
+      perfil: user.perfil?.nome ?? null,
+    });
+
+    // criar sessão de refresh (hash)
+    const refreshToken = generateRefreshToken();
+    const refreshHash = hashToken(refreshToken);
+
+    await prisma.sessao.create({
+      data: {
+        usuarioId: user.id,
+        refreshTokenHash: refreshHash,
+        userAgent: req.get('User-Agent') ?? null,
+        ip: req.ip ?? req.headers['x-forwarded-for'] ?? null,
+        expiresAt: refreshTokenExpiryDate(),
+      },
+    });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    // enviar cookie de refresh
+    res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
+
+    // retornar usuario com perfil como string
+    return res.status(200).json({
+      sucesso: true,
+      data: {
+        accessToken,
+        usuario: {
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          perfil: user.perfil?.nome ?? null,
+        },
+      },
+    });
+  } catch (err) {
+    console.error('loginController - erro:', err.stack ?? err);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+}
+
+// Substitua sua função refreshController por esta versão instrumentada
+export async function refreshController(req, res) {
+  try {
+    console.log("[refreshController] req.headers.cookie:", req.headers?.cookie ?? "<none>");
+    console.log("[refreshController] req.cookies:", req.cookies ?? "<undefined>");
+    console.log("[refreshController] COOKIE_NAME env/const:", typeof COOKIE_NAME !== 'undefined' ? COOKIE_NAME : "<COOKIE_NAME não definido>");
+    console.log("[refreshController] JWT_SECRET presente?:", !!process.env.JWT_SECRET);
+
+    const token = req.cookies?.[COOKIE_NAME];
+    if (!token) {
+      console.warn("[refreshController] refresh token ausente");
+      return res.status(401).json({ error: 'Refresh token não fornecido' });
+    }
+    console.log("[refreshController] token recebido (len):", String(token).length);
+
+    let hashed;
+    try {
+      hashed = hashToken(token);
+      console.log("[refreshController] hashed token:", hashed);
+    } catch (e) {
+      console.error("[refreshController] erro ao hashear token:", e);
+      return res.status(500).json({ error: "Erro interno ao processar token" });
+    }
+
+    // Buscar sessão
+    let sessao;
+    try {
+      sessao = await prisma.sessao.findUnique({
+        where: { refreshTokenHash: hashed },
+        include: { usuario: true },
+      });
+    } catch (e) {
+      console.error("[refreshController] erro ao consultar prisma.sessao:", e.stack ?? e);
+      return res.status(500).json({ error: "Erro interno ao consultar sessão" });
+    }
+    console.log("[refreshController] sessao encontrada:", !!sessao);
+
+    if (!sessao) {
+      console.warn("[refreshController] sessao não encontrada para hash:", hashed);
+      return res.status(401).json({ error: 'Sessão inválida' });
+    }
+    if (sessao.revoked) {
+      console.warn("[refreshController] sessao revogada:", sessao.id);
+      return res.status(401).json({ error: 'Refresh token revogado' });
+    }
+    if (new Date(sessao.expiresAt) < new Date()) {
+      console.warn("[refreshController] sessao expirada:", sessao.expiresAt);
+      return res.status(401).json({ error: 'Refresh token expirado' });
+    }
+
+    const user = sessao.usuario;
+    if (!user) {
+      console.warn("[refreshController] sessao sem usuario associado:", sessao.id);
+      return res.status(401).json({ error: 'Sessão sem usuário' });
+    }
+    console.log("[refreshController] usuario associado:", { id: user.id, email: user.email });
+
+    let accessToken;
+    try {
+      accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
+    } catch (e) {
+      console.error("[refreshController] erro ao gerar access token:", e.stack ?? e);
+      return res.status(500).json({ error: "Erro interno ao gerar access token" });
+    }
+
+    // rotacionar refresh token
+    const newRefreshToken = generateRefreshToken();
+    const newHash = hashToken(newRefreshToken);
+    const newExpiry = refreshTokenExpiryDate();
+
+    try {
+      await prisma.sessao.update({
+        where: { id: sessao.id },
+        data: { refreshTokenHash: newHash, expiresAt: newExpiry },
+      });
+    } catch (e) {
+      console.error("[refreshController] erro ao atualizar sessao no prisma:", e.stack ?? e);
+      return res.status(500).json({ error: "Erro interno ao atualizar sessão" });
+    }
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    // enviar novo cookie
+    res.cookie(COOKIE_NAME, newRefreshToken, cookieOptions);
+    console.log("[refreshController] refresh rotacionado com sucesso. sessaoId:", sessao.id);
+
+    return res.json({ accessToken });
+  } catch (err) {
+    // log detalhado para encontrar raiz do problema
+    console.error("refreshController - erro não tratado:", err.stack ?? err);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+}
+
+export async function logoutController(req, res) {
+  try {
+    const token = req.cookies[COOKIE_NAME];
+    if (token) {
+      const hashed = hashToken(token);
+      await prisma.sessao.updateMany({ where: { refreshTokenHash: hashed }, data: { revoked: true } });
+    }
+    res.clearCookie(COOKIE_NAME, { path: '/' });
+    res.json({ sucesso: true });
+  } catch (err) {
+    console.error('logoutController', err);
+    res.status(500).json({ error: 'Erro interno' });
+  }
+}
+// -------------------------------------------- 
 
 export const esqSenhaController = async (req, res) => {
   const { email } = userSchema.partial().parse(req.body);
@@ -188,9 +339,7 @@ export const esqSenhaController = async (req, res) => {
       process.env.SMTP_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URI
     );
-    oAuth2Client.setCredentials({
-      refresh_token: process.env.SMTP_REFRESH_TOKEN,
-    });
+    oAuth2Client.setCredentials({ refresh_token: process.env.SMTP_REFRESH_TOKEN, });
     const accessToken = await oAuth2Client.getAccessToken();
 
     const transport = nodemailer.createTransport({

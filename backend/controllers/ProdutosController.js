@@ -1,10 +1,4 @@
-import {
-  getProdutos,
-  getProdutosPelaCategoria,
-  getProdutoPorId,
-  createProduto,
-  deleteProduto,
-} from "../models/produtos.js";
+import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
 import { produtoSchema } from "../schemas/produtoSchema.js";
 
 export async function getProdutosController(req, res) {

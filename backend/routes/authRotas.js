@@ -1,43 +1,20 @@
 import express from "express";
-import {
-  cadastrarSeController,
-  loginController,
-  esqSenhaController,
-  codigoController,
-  updateSenhaController,
-} from "../controllers/UserController.js";
-import { auth } from "../middlewares/authMiddleware.js";
+import { cadastrarSeController, loginController, refreshController, logoutController, esqSenhaController, codigoController, updateSenhaController } from "../controllers/UserController.js";
 
 const router = express.Router();
 
-router.post(
-  "/cadastrar",
-  auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]),
-  cadastrarSeController
-);
-router.post(
-  "/login",
-  auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]),
-  loginController
-);
-router.post(
-  "/esqSenha",
-  auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]),
-  esqSenhaController
-);
-router.post(
-  "/codigo",
-  auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]),
-  codigoController
-);
-router.put(
-  "/updateSenha/:codigo",
-  auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]),
-  updateSenhaController
-);
+router.post("/cadastrar", cadastrarSeController);
 
-router.get("/teste", (req, res) => {
-  res.json({ message: "Rota /auth/teste funcionando!" });
-});
+router.post('/login', loginController);
+router.post('/refresh', refreshController);
+router.post('/logout', logoutController);
+
+router.post("/esqSenha", esqSenhaController);
+
+router.post("/codigo", codigoController);
+
+router.put("/updateSenha/:codigo", updateSenhaController);
+
+router.get("/teste", (req, res) => {res.json({ message: "Rota /auth/teste funcionando!" });});
 
 export default router;

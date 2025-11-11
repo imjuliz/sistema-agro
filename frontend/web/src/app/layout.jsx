@@ -5,77 +5,13 @@ import { siteConfig } from "../config/site";
 import { metadata, getMetadataFromPath } from './utils/metadata.js'
 import { ThemeProvider } from "@/contexts/theme-provider";
 import { TranslationProvider } from "@/hooks/useTranslation";
-// import { AuthProvider } from "@/contexts/AuthContext";
 
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 
-// export const metadata = {
-//     title: {
-//       default: siteConfig.name,
-//       template: `%s - ${siteConfig.name}`,
-//     },
-//     metadataBase: new URL(siteConfig.getStartedUrl),
-//     description: siteConfig.description,
-//     keywords: [
-//       "Landing page template",
-//       "Components",
-//       "Shadcn",
-//       "Next.js",
-//       "React",
-//       "Tailwind CSS",
-//       "Radix UI",
-//     ],
-//     authors: [
-//       {
-//         name: "Mikolaj Dobrucki",
-//         url: "https://mikolajdobrucki.com",
-//       },
-//     ],
-//     creator: "mikolajdobrucki",
-//     openGraph: {
-//       type: "website",
-//       locale: "en_US",
-//       url: siteConfig.getStartedUrl,
-//       title: siteConfig.name,
-//       description: siteConfig.description,
-//       siteName: siteConfig.name,
-//       images: [
-//         {
-//           url: siteConfig.ogImage,
-//           width: 1200,
-//           height: 630,
-//           alt: siteConfig.name,
-//         },
-//       ],
-//     },
-//     twitter: {
-//       card: "summary_large_image",
-//       title: siteConfig.name,
-//       description: siteConfig.description,
-//       images: [siteConfig.ogImage],
-//       creator: "@mikolajdobrucki",
-//     },
-//     icons: {
-//       icon: "/favicon.svg",
-//       apple: "/apple-touch-icon.png",
-//     },
-//   };
+import { AuthProvider } from "@/contexts/AuthContext";
 
-// export default function RootLayout({ children }) {
-
-//     return (
-//         <html lang="pt-br" style={{ colorScheme: "dark" }} className="dark">
-//             {/* <body className={`${inter.className} bg-background antialiased`}> */}
-//             <body className={` bg-background antialiased`}>
-//             <ThemeProvider>
-//                 {children}
-//                 </ThemeProvider>
-//             </body>
-//         </html>
-//     );
-// }
 export default function RootLayout({ children }) {
     return (
         <html lang="pt-br" suppressHydrationWarning>
@@ -84,15 +20,15 @@ export default function RootLayout({ children }) {
                 <meta name="description" content={siteConfig.description} />
             </head>
             <body className="bg-background antialiased">
+                <AuthProvider>
                 <TranslationProvider>
-                     {/* <AuthProvider> */}
                     <ThemeProvider>
                         <Transl>
                             {children}
                         </Transl>
                     </ThemeProvider>
-                    {/* </AuthProvider> */}
                 </TranslationProvider>
+                </AuthProvider>
             </body>
         </html>
     );

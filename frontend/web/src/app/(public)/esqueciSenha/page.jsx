@@ -6,10 +6,7 @@ export default function EsqueciSenha() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2 bg-white dark:bg-black">
       <div className="flex flex-col gap-4 p-6 md:p-10 relative">
-        
-        {/* Imagem de fundo fora do container do logo */}
-        <img src="/img/seila.svg" className='absolute top-0 left-0 w-[800px] h-[600px] z-0 -ml-20  dark:brightness-[0.0]' alt="Background" />
-        
+        <img src="/img/seila.svg" className='absolute -mt-16 left-0 w-[600px] h-[600px] z-0 -ml-20  dark:brightness-[0.0]' alt="Background" />
         <div className="flex items-center relative z-10">
           <a href="#" className="flex items-center gap-2 font-medium">
             <div className="flex items-center justify-center rounded-md">

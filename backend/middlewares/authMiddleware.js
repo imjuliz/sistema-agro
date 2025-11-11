@@ -1,52 +1,38 @@
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/jwt.js"; // Importar a chave secreta
 
-// export const authMiddleware = (req, res, next) => {
-//   const authHeader = req.headers.authorization;
+import prisma from '../prisma/client.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-//   if (!authHeader) {return res.status(401).json({ mensagem:'Não autorizado: Token não fornecido' });}
 
-//   const [ , token] = authHeader.split(' ');
-
-//   try {
-//     const decoded = jwt.verify(token, JWT_SECRET);
-//     req.usuarioId = decoded.id;
-//     next();
-//   } catch (error) {return res.status(403).json({ mensagem: 'Não autorizado: Token inválido' }); }
-// };
-
-// Middleware que verifica token e opcionalmente perfis permitidos
 export const auth = (perfisPermitidos = []) => {
-  return (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res
-        .status(401)
-        .json({ mensagem: "Não autorizado: Token não fornecido" });
-    }
+  return async (req, res, next) => {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    if (!token) return res.status(401).json({ mensagem: 'Não autorizado: Token não fornecido' });
 
-    const [, token] = authHeader.split(" ");
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
+      const user = await prisma.usuario.findUnique({ where: { id: decoded.id }, include: { perfil: true } });
+      if (!user) return res.status(401).json({ mensagem: 'Usuário não encontrado' });
 
-      // Adiciona dados do usuário na requisição
-      req.usuario = decoded;
-      // Se foram especificados perfis permitidos, verifica se o usuário está autorizado
-      if (
-        perfisPermitidos.length > 0 &&
-        !perfisPermitidos.includes(decoded.perfil)
-      ) {
-        return res
-          .status(403)
-          .json({ mensagem: "Acesso negado para este perfil" });
+
+      if (decoded.tokenVersion !== user.tokenVersion) {
+        return res.status(401).json({ mensagem: 'Token inválido (revogado)' });
       }
 
+
+      if (perfisPermitidos.length > 0 && !perfisPermitidos.includes(user.perfil.nome)) {
+        return res.status(403).json({ mensagem: 'Acesso negado para este perfil' });
+      }
+
+
+      req.usuario = { id: user.id, email: user.email, perfil: user.perfil };
       next();
-    } catch (error) {
-      return res
-        .status(403)
-        .json({ mensagem: "Não autorizado: Token inválido" });
+    } catch (err) {
+      return res.status(403).json({ mensagem: 'Token inválido' });
     }
   };
 };

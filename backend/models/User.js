@@ -10,22 +10,13 @@ export async function cadastrarSe({ nome, email, senha }) {
   const hash = await hashPassword(senha);
 
   // busca o perfil gerente_fazenda
-  const perfil = await prisma.perfis.findUnique({
-    where: { nome: "gerente_fazenda" },
-  });
+  const perfil = await prisma.perfis.findUnique({where: { nome: "gerente_fazenda" },});
 
-  if (!perfil) {
-    throw new Error("Perfil gerente_fazenda não encontrado");
-  }
+  if (!perfil) {throw new Error("Perfil gerente_fazenda não encontrado");}
 
   // cria usuário
   const usuario = await prisma.usuarios.create({
-    data: {
-      nome,
-      email,
-      senha: hash,
-      perfilId: perfil.id,
-    },
+    data: {nome,email,senha: hash,perfilId: perfil.id,},
   });
 
   return usuario;
@@ -33,9 +24,7 @@ export async function cadastrarSe({ nome, email, senha }) {
 
 // Buscar usuário por email
 export async function getUserByEmail(email) {
-  const usuario = await prisma.usuarios.findUnique({
-    where: { email },
-  });
+  const usuario = await prisma.usuarios.findUnique({where: { email },});
   return usuario; // pode ser null se não existir
 }
 
@@ -76,46 +65,63 @@ export async function updateUsuario(id, data) {
 
 export async function login(email, senha) {
   try {
+    // buscar usuário incluindo perfil
     const user = await prisma.usuarios.findUnique({
-      where: { email: email },
+      where: { email },
       include: { perfil: true },
     });
 
-    // Garantir que ambos são strings
+    if (!user) {
+      return {
+        sucesso: false,
+        erro: 'Usuário não encontrado',
+      };
+    }
+
+    // Garantir que ambos são strings (proteção)
     const senhaFornecida = String(senha);
-    const senhaHash = String(user.senha);
+    const senhaHash = String(user.senha ?? '');
 
     // Comparar senhas
     const senhaValida = await compare(senhaFornecida, senhaHash);
     if (!senhaValida) {
-      throw new Error("Senha inválida");
+      return { sucesso: false, erro: 'Senha inválida' };
     }
 
-    if (user.status === "inativo") {
-      throw new Error("Usuário inativo");
+    if (user.status === false || user.status === 'inativo') {
+      return { sucesso: false, erro: 'Usuário inativo' };
     }
 
-    // Gera o token JWT
+    // Perfil como string (nome)
+    const perfilNome = user.perfil?.nome ?? null;
+
+    // Gera o token JWT (se quiser incluir perfil no payload)
     const token = jwt.sign(
-      { id: user.id, email: user.email, perfil: user.perfil.nome },
+      { id: user.id, email: user.email, perfil: perfilNome },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: '1h' }
     );
+
+    // Normalizar objeto de resposta
     return {
       sucesso: true,
       data: {
-        id: user.id,
-        email: user.email,
-        perfil: user.perfil,
-        token,
+        usuario: {
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          perfil: perfilNome, // string ou null
+        },
+        accessToken: token,
       },
-      message: "Usuário logado com sucesso.",
+      message: 'Usuário logado com sucesso.',
     };
   } catch (error) {
+    console.error('[login] erro:', error.stack ?? error);
     return {
       sucesso: false,
-      erro: "Erro ao logar usuário",
-      detalhes: error.message, // opcional, para debug
+      erro: 'Erro ao logar usuário',
+      detalhes: error.message,
     };
   }
 }
@@ -124,14 +130,10 @@ export async function esqSenha(email, codigo, expira) {
   try {
     const user = await prisma.usuarios.findUnique({ where: { email: email } });
 
-    if (!user) {
-      return res.status(401).json({ error: "Usuário não encontrado" });
-    }
+    if (!user) {return res.status(401).json({ error: "Usuário não encontrado" });}
 
     // Verificar se o usuário está ativo
-    if (user.status === "inativo") {
-      throw new Error("Usuário inativo");
-    }
+    if (user.status === "inativo") {throw new Error("Usuário inativo");}
 
     // Salvar no banco junto com a validade (10 minutos)
     await prisma.reset_senhas.create({
@@ -165,17 +167,11 @@ export async function codigo(codigo_reset) {
       where: { codigo_reset: codigo_reset },
     });
 
-    if (!resetSenha) {
-      throw new Error("Código inválido");
-    }
+    if (!resetSenha) {throw new Error("Código inválido");}
 
     const expirado = resetSenha.codigo_expira < new Date();
-    if (expirado) {
-      throw new Error("Código expirado");
-    }
-    if (resetSenha.usado) {
-      throw new Error("Código utilizado");
-    }
+    if (expirado) {throw new Error("Código expirado");}
+    if (resetSenha.usado) {throw new Error("Código utilizado");}
 
     return {
       sucesso: true,
@@ -201,9 +197,7 @@ export async function updateSenha(codigo, senha, confSenha) {
       where: { codigo_reset: codigo },
     });
 
-    if (confSenha !== senha) {
-      return res.status(400).json({ error: "As senhas devem ser iguais" });
-    }
+    if (confSenha !== senha) {return res.status(400).json({ error: "As senhas devem ser iguais" });}
     await prisma.usuarios.update({
       data: { senha: await bcrypt.hash(senha, 10) },
       where: { id: resetEntry.usuario_id },
