@@ -214,3 +214,6 @@ export async function criarVenda(req, res) {
         });
     }
 }
+
+//------------------------NOVAS FUNÇÕES - 11/11------------------------
+

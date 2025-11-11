@@ -1,6 +1,6 @@
 import prisma from '../../prisma/client.js';
 
-export async function getProdutos() {
+export async function getProdutos() {//tem controller
     try {
         const produtos = await prisma.produtos.findMany();
         return {
@@ -16,7 +16,7 @@ export async function getProdutos() {
     }
 };
 
-export async function getProdutoPorId(id) {
+export async function getProdutoPorId(id) {//tem controller
     try {
         const produto = await prisma.produtos.findUnique({ where: { id: id } });
         return {
@@ -29,12 +29,12 @@ export async function getProdutoPorId(id) {
         return {
             sucesso: false,
             message: "Erro ao encontrar produto.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         }
     }
 };
 
-export async function createProduto(data) {
+export async function createProduto(data) {//tem controller
     try {
         const produto = await prisma.produtos.create({ data });
         return {
@@ -46,12 +46,12 @@ export async function createProduto(data) {
         return {
             sucesso: false,
             message: "Erro ao criar produto.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         }
     }
 };
 
-export async function deleteProduto(id) {
+export async function deleteProduto(id) {//tem controller
     try {
         const produto = await prisma.produtos.delete({ where: { id } });
         return {
@@ -63,13 +63,13 @@ export async function deleteProduto(id) {
         return {
             sucesso: false,
             message: "Erro ao deletar produto.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         }
     }
 };
 
 //pegar produto mais vendido
-export const buscarProdutoMaisVendido = async (unidadeId) => {
+export const buscarProdutoMaisVendido = async (unidadeId) => {//tem controller
     try {
         const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
             by: ["produtoId"],
@@ -88,7 +88,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
 
         const produtoMaisVendido = resultado[0];
 
-        const produto = await prisma.produto.findUnique({ // Busca informações do produto
+        const produto = await prisma.produto.findUnique({ 
             where: { id: produtoMaisVendido.produtoId, },
             select: {
                 id: true,
@@ -116,11 +116,9 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
     }
 };
 
-export const listarProdutos = async (unidadeId) => {
+export const listarProdutos = async (unidadeId) => {//tem controller
     try {
-        const fornecedores = await prisma.venda.findMany({
-            where: { unidadeId: Number(unidadeId) },
-        })
+        const fornecedores = await prisma.venda.findMany({where: { unidadeId: Number(unidadeId) },})
         return ({
             sucesso: true,
             fornecedores,

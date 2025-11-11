@@ -225,6 +225,7 @@ export const listarVendasController = async(req, res) =>{
         return res.status(500).json({erro: 'Erro ao listar vendas.'})
     }
 }
+
 //calcular fornecedores -- rota feita
 export const calcularFornecedoresController = async (req, res) => {
   try {

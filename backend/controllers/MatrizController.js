@@ -1,4 +1,4 @@
-import { deleteUnidade, getUnidadePorId, getUnidades, createUnidade, getFazendas, getLoja, getMatriz, UnidadeService } from "../models/Matriz.js";
+import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getLoja, getMatriz, UnidadeService } from "../models/Matriz.js";
 import { unidadeSchema } from "../schemas/unidadeSchema.js";
 
 // BUSCA ---------------------------------------------------------------------------
@@ -159,4 +159,34 @@ export async function deleteUnidadeController(req, res) {
             detalhes: error.message // opcional, para debug
         }
     }
+};
+
+export const updateStatusUnidadeController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { novoStatus } = req.body;
+
+    if (!id || isNaN(id)) {return res.status(400).json({sucesso: false,erro: "ID da unidade inválido."});}
+
+    if (!novoStatus) {return res.status(400).json({sucesso: false,erro: "O campo 'novoStatus' é obrigatório."});}
+
+    const resultado = await updateStatusUnidade(Number(id), novoStatus);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: resultado.message || "Erro ao atualizar status da unidade.",
+        detalhes: resultado.error,
+      });
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao atualizar status da unidade:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao atualizar status da unidade.",
+      detalhes: error.message,
+    });
+  }
 };

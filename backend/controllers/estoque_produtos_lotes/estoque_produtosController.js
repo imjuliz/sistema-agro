@@ -62,9 +62,7 @@ export const listarProdutosController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});
-    }
+    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});}
 
     const resultado = await listarProdutos(Number(unidadeId));
 
@@ -84,6 +82,86 @@ export const listarProdutosController = async (req, res) => {
   }
 };
 
+//BUSCAR PRODUTO POR ID
+export const getProdutoPorIdController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {return res.status(400).json({sucesso: false,erro: "ID do produto inválido."})}
+
+    const resultado = await getProdutoPorId(Number(id));
+
+    if (!resultado.sucesso || !resultado.produto) {
+      return res.status(404).json({sucesso: false,erro: "Produto não encontrado."});
+}
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao buscar produto por ID:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao buscar produto.",
+      detalhes: error.message,
+    });
+  }
+};
+
+//CRIAR PRODUTO 
+export const createProdutoController = async (req, res) => {
+  try { const data = req.body;
+
+    if (!data || Object.keys(data).length === 0) {
+      return res.status(400).json({sucesso: false,erro: "Os dados do produto são obrigatórios.",});
+    }
+
+    const resultado = await createProduto(data);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Erro ao criar produto.",
+        detalhes: resultado.detalhes,
+      });
+    }
+
+    return res.status(201).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao criar produto:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao criar produto.",
+      detalhes: error.message,
+    });
+  }
+};
+
+//deletar produto
+export const deleteProdutoController = async (req, res) => {
+  try { const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({sucesso: false,erro: "ID do produto inválido.",});
+    }
+
+    const resultado = await deleteProduto(Number(id));
+
+    if (!resultado.sucesso) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Erro ao deletar produto.",
+        detalhes: resultado.detalhes,
+      });
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao deletar produto:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao deletar produto.",
+      detalhes: error.message,
+    });
+  }
+};
 
 // SOMA TOTAL DE ITENS NO ESTOQUE -- rota feita
 export const somarQtdTotalEstoqueController = async (req, res) => {
