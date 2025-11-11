@@ -4,6 +4,7 @@ import { Pie, PieChart } from "recharts"
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { useState } from 'react'
 import { PlusIcon } from 'lucide-react'
+import { useTheme } from "next-themes";
 //ui
 import { Badge } from "@/components/ui/badge"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -17,6 +18,7 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import ArticleIcon from '@mui/icons-material/Article';
 import PersonIcon from '@mui/icons-material/Person';
 import CreateIcon from '@mui/icons-material/Create';
+
 
 export function SectionCards() {
   return (
@@ -62,10 +64,10 @@ export function SectionCards2() {
           </CardFooter>
         </Card>
         <Stack spacing={2} direction="column" justifyContent="end">
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <CreateIcon /> Nova atividade
           </Button>
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <ArticleIcon />Gerar relatório</Button>
         </Stack>
       </div>
@@ -81,10 +83,10 @@ export function SectionCards2() {
           </CardFooter>
         </Card>
         <Stack spacing={2} direction="column" justifyContent="end">
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <PersonIcon />Registrar funcionário
           </Button>
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <CreateIcon />Nova tarefa
           </Button>
         </Stack>
@@ -108,10 +110,10 @@ export function SectionCards3() {
           </CardFooter>
         </Card>
         <Stack spacing={2} direction="column" justifyContent="end">
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <CreateIcon /> Nova atividade
           </Button>
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <ArticleIcon />Gerar relatório</Button>
         </Stack>
       </div>
@@ -127,10 +129,10 @@ export function SectionCards3() {
           </CardFooter>
         </Card>
         <Stack spacing={2} direction="column" justifyContent="end">
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <PersonIcon />Registrar funcionário
           </Button>
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12'}}}>
+          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
             <CreateIcon />Nova tarefa
           </Button>
         </Stack>
@@ -176,10 +178,28 @@ export function ChartPieDonut() {
 }
 
 export function GraficoDeBarras() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
-    <BarChart xAxis={[{ data: ['Vegetais', 'Frutas', 'Animália'], scaleType: 'band' }]}
-      series={[{ data: [4, 3, 5], color: '#99BF0F' }, { data: [1, 6, 3], color: '#738C16' },]}
-      height={650} barLabel="value" margin={{ left: 0 }} yAxis={[{ width: 50 }]} />
+    <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-4">
+      <BarChart xAxis={[
+          {
+            data: ["Vegetais", "Frutas", "Animália"],
+            scaleType: "band",
+            tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000", },
+            labelStyle: { fill: isDark ? "#ffffff" : "#000000", },
+          },
+        ]}
+        yAxis={[{ width: 50, tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000", }, },]}
+        series={[{ data: [4, 3, 5], color: "#99BF0F" }, { data: [1, 6, 3], color: "#738C16" },]}
+        height={650} barLabel="value" margin={{ left: 60, right: 30, top: 30, bottom: 30 }}
+        sx={{
+          "& .MuiChartsGrid-line": { stroke: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)", },
+          "& .MuiChartsAxis-line": { stroke: isDark ? "#ffffff88" : "#00000066", },
+          "& .MuiChartsAxis-tick": { stroke: isDark ? "#ffffff88" : "#00000066", },
+        }}
+      />
+    </div>
   );
 }
 
@@ -200,7 +220,7 @@ export const CalendarEventListDemo = () => {
   const filteredEvents = allEvents.filter(event => new Date(event.from).toDateString() === date?.toDateString());
   return (
     <div>
-      <Card className='w-full py-2'>
+      <Card className='w-full py-2 border-gray-200 dark:border-gray-700'>
         <CardContent className='px-4'>
           <Calendar mode='single' selected={date} onSelect={setDate} className='w-full bg-transparent p-0' required modifiersClassNames={{ today: 'bg-[#738C16] text-white rounded-xl ', selected: 'rounded-xl text-white ' }} />
         </CardContent>
@@ -215,13 +235,13 @@ export const CalendarEventListDemo = () => {
           </div>
           <div className='flex w-full flex-col gap-2'>
             {filteredEvents.length > 0 ? (filteredEvents.map(event => (
-                <div key={event.title} className='bg-muted after:bg-primary/70 relative rounded-md p-2 pl-6 text-sm after:absolute after:inset-y-2 after:left-2 after:w-1 after:rounded-full'>
-                  <div className='font-medium'>{event.title}</div>
-                  <div className='text-muted-foreground text-xs'>
-                    {formatDateRange2(new Date(event.from), new Date(event.to))}
-                  </div>
+              <div key={event.title} className='bg-muted after:bg-primary/70 relative rounded-md p-2 pl-6 text-sm after:absolute after:inset-y-2 after:left-2 after:w-1 after:rounded-full'>
+                <div className='font-medium'>{event.title}</div>
+                <div className='text-muted-foreground text-xs'>
+                  {formatDateRange2(new Date(event.from), new Date(event.to))}
                 </div>
-              ))) : (<p className="text-sm text-muted-foreground p-2">Nenhum evento para este dia.</p>)}
+              </div>
+            ))) : (<p className="text-sm text-muted-foreground p-2">Nenhum evento para este dia.</p>)}
           </div>
         </CardFooter>
       </Card>
@@ -259,7 +279,7 @@ export function ItemVariant() {
   )
 }
 
-import {Table,TableBody,TableCaption,TableCell,TableHead,TableHeader,TableRow,} from "@/components/ui/table"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 
 const admins = [
   { id: 1, nome: "Mariana Souza", email: "mariana@fazenda.com", telefone: "(11) 99999-1234" },
@@ -270,7 +290,7 @@ const admins = [
 
 export function TableDemo() {
   return (
-    <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900">
+    <div className="border rounded-lg shadow-sm bg-white dark:bg-black">
       <Table>
         <TableCaption>Lista de administradores da fazenda.</TableCaption>
         <TableHeader>
@@ -283,7 +303,7 @@ export function TableDemo() {
         </TableHeader>
         <TableBody>
           {admins.map((admin) => (
-            <TableRow key={admin.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <TableRow key={admin.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <TableCell className="font-medium">{admin.id}</TableCell>
               <TableCell>{admin.nome}</TableCell>
               <TableCell>{admin.email}</TableCell>

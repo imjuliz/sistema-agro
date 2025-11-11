@@ -77,16 +77,12 @@ export function SetupView() {
     }
   };
 
-  const handleDeleteItem = (id) => {
-    deleteItem(id);
-  };
+  const handleDeleteItem = (id) => {deleteItem(id);};
 
   const updateStoreStock = (itemId, storeCode, value) => {
     const item = items.find(i => i.id === itemId);
     if (item) {
-      updateItem(itemId, {
-        storeDisplayStock: { ...item.storeDisplayStock, [storeCode]: value }
-      });
+      updateItem(itemId, {storeDisplayStock: { ...item.storeDisplayStock, [storeCode]: value }});
     }
   };
 
@@ -159,11 +155,7 @@ export function SetupView() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block mb-2">Search</label>
-              <Input
-                placeholder="Search by item name, code..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <Input placeholder="Search by item name, code..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
             </div>
             <div>
               <label className="block mb-2">Setup Type</label>
@@ -186,9 +178,7 @@ export function SetupView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Groups</SelectItem>
-                  {itemGroups.map(group => (
-                    <SelectItem key={group} value={group}>{group}</SelectItem>
-                  ))}
+                  {itemGroups.map(group => (<SelectItem key={group} value={group}>{group}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -246,10 +236,7 @@ export function SetupView() {
               </TableHeader>
               <TableBody>
                 {filteredItems.map(item => (
-                  <TableRow 
-                    key={item.id} 
-                    className={item.setupType === 'model' ? 'bg-blue-50 hover:bg-blue-100' : 'bg-yellow-50 hover:bg-yellow-100'}
-                  >
+                  <TableRow key={item.id} className={item.setupType === 'model' ? 'bg-blue-50 hover:bg-blue-100 dark:bg-black dark:hover:text-green-500' : 'bg-yellow-50 hover:bg-yellow-100'}>
                     <TableCell className="font-mono text-sm">{item.code}</TableCell>
                     <TableCell>{item.name}</TableCell>
                     <TableCell className="text-sm">{item.createDate}</TableCell>

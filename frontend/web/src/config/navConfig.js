@@ -1,12 +1,4 @@
-import {
-    SquareTerminal,
-    Settings2,
-    Bot,
-    BookOpen,
-    Bus,
-    Map,
-    Users,
-} from "lucide-react";
+import {SquareTerminal,Settings2,Bot,BookOpen,Bus,Map,Users,} from "lucide-react";
 
 export const navConfig = {
     adm: {
