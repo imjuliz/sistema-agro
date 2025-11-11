@@ -160,3 +160,34 @@ export async function deleteUnidade(id) {
         message: "Unidade deletada com sucesso."
     })
 };
+
+//trocar a utilização desta função DELETE por está: 
+export async function updateStatusUnidade(id, novoStatus) {
+  try {
+    const statusPermitidos = ["ATIVA", "INATIVA", "MANUTENCAO"];
+    if (!statusPermitidos.includes(novoStatus.toUpperCase())) {
+      return {
+        sucesso: false,
+        message: "Status inválido. Use: 'ATIVA', 'INATIVA' ou 'MANUTENCAO'.",
+      };
+    }
+
+    // Atualiza o status da unidade
+    const unidade = await prisma.unidade.update({
+      where: { id: Number(id) },
+      data: { status: novoStatus.toUpperCase() },
+    });
+
+    return {
+      sucesso: true,
+      unidade,
+      message: `Status da unidade atualizado para ${novoStatus}.`,
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao atualizar status da unidade.",
+      error: error.message,
+    };
+  }
+}
