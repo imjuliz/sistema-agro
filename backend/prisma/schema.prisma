@@ -56,8 +56,8 @@ model Unidade {
   imagemUrl          String?     @map("imagem_url") @db.VarChar(1000)
   areaTotal          Decimal?    @map("area_total") @db.Decimal(12,3)
   areaProdutiva      Decimal?    @map("area_produtiva") @db.Decimal(12,3)
-  latitude           Float?      @db.Float
-  longitude          Float?      @db.Float
+  latitude           Float?      @db.DoublePrecision
+  longitude          Float?      @db.DoublePrecision
   descricaoCurta     String?     @map("descricao_curta") @db.Text
   tipo               TipoUnidade
   status             StatusUnidade @default(ATIVA)

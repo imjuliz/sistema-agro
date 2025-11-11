@@ -47,7 +47,7 @@ export default function Hero(props) {
         href: '/sobreNos',
         text: "Conheça a RuralTech",
         variant: "glow",
-        icon: <Github className="mr-2 size-4" />,
+        icon: <img src='/img/logo-ruraltechBranco.svg' width={20}/>,
       },
     ],
     className,

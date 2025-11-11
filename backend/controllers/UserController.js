@@ -130,7 +130,7 @@ export async function loginController(req, res) {
     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
 
     // buscar usuário incluindo perfil
-    const user = await prisma.usuario.findUnique({
+    const user = await prisma.usuarios.findUnique({
       where: { email },
       include: { perfil: true },
     });

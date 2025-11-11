@@ -41,7 +41,7 @@ const sampleUnits = Array.from({ length: 18 }).map((_, i) => {
 });
 
 export default function FazendasPage() {
-    usePerfilProtegido('gerente_matriz'); 
+    // usePerfilProtegido('gerente_matriz'); 
 
     const [units, setUnits] = useState(sampleUnits);
     const [query, setQuery] = useState("");
@@ -69,7 +69,7 @@ export default function FazendasPage() {
         async function fetchFazendas() {
             setLoading(true);
             try {
-                const res = await fetch(`${API_URL}/unidades/fazendas`, {
+                const res = await fetch(`${API_URL}unidades/fazendas`, {
                     credentials: "include",
                 });
                 const data = await res.json();
@@ -87,7 +87,7 @@ export default function FazendasPage() {
     useEffect(() => {
         async function fetchMetrics() {
             try {
-                const res = await fetch(`${API_URL}/unidades/fazendas/contagem`);
+                const res = await fetch(`${API_URL}unidades/fazendas/contagem`);
                 const data = await res.json();
                 if (res.ok) {
                     setMetrics({

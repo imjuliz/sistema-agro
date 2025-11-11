@@ -12,15 +12,15 @@ import '@/app/globals.css'
 
 const boxConfigs = [
   {
-    title: "Groceries Budget",
+    title: "Checar clima",
     className: "bg-[#99BF0F] text-white",
   },
   {
-    title: "Dining Out Alert",
+    title: "Monitorar produtividade",
     className: "bg-[#99BF0F]/40 text-white",
   },
   {
-    title: "Save for Vacation",
+    title: "Planejar vendas futuras",
     className:
       "bg-[#99BF0F]/20 border border-[#99BF0F] border-dashed text-[#99BF0F]",
   },
@@ -167,7 +167,8 @@ export function FourthBentoAnimation({
       </div>
 
       {/* Days of the week */}
-      <div className="absolute top-4 left-0 right-0 flex justify-between max-w-md mx-auto px-8 text-sm text-gray-500">
+      <div className="absolute top-4 left-0 right-0 flex justify-between px-8 text-sm text-gray-500">
+        <span>Seg</span>
         <span>Ter</span>
         <span>Qua</span>
         <span>Qui</span>

@@ -14,6 +14,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="pt-br" suppressHydrationWarning>
             <head>
+                <link rel="icon" href={siteConfig.ogImage} />
                 <title>{siteConfig.name}</title>
                 <meta name="description" content={siteConfig.description} />
             </head>
