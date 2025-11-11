@@ -7,7 +7,7 @@ import { auth } from '../middlewares/authMiddleware.js'
 // controllers --------------------------------------------------------------------
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
-import { mostrarSaldoFController,buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController,calcularFornecedoresController, somarDiariaController } from "../controllers/financeiro/financeiroController.js";
+import { mostrarSaldoFController,buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController,calcularFornecedoresController, somarDiariaController, somarSaidasController } from "../controllers/financeiro/financeiroController.js";
 import { listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
 
