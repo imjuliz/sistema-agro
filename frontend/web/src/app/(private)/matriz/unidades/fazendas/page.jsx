@@ -21,6 +21,8 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 // SAMPLE DATA (em app real, busque via API)
 const sampleUnits = Array.from({ length: 18 }).map((_, i) => {
@@ -39,6 +41,8 @@ const sampleUnits = Array.from({ length: 18 }).map((_, i) => {
 });
 
 export default function FazendasPage() {
+    usePerfilProtegido('gerente_matriz'); 
+
     const [units, setUnits] = useState(sampleUnits);
     const [query, setQuery] = useState("");
     const [locationFilter, setLocationFilter] = useState("");
@@ -47,6 +51,7 @@ export default function FazendasPage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
     const [sheetUnit, setSheetUnit] = useState(null);
+    const [metrics, setMetrics] = useState({ total: 0, active: 0, inactive: 0 });
 
     // filtros avançados: tipos e status e local
     const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // por default mostra todos
@@ -61,22 +66,44 @@ export default function FazendasPage() {
 
     // verificar se essa requisicao esta certa (AINDA NAO ESTA FUNCIONAL)
     useEffect(() => {
-  async function fetchFazendas() {
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:8080/unidades/fazendas", {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.sucesso) setUnits(data.unidades);
-    } catch (err) {
-      console.error("Erro ao carregar fazendas:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-  fetchFazendas();
-}, []);
+        async function fetchFazendas() {
+            setLoading(true);
+            try {
+                const res = await fetch(`${API_URL}/unidades/fazendas`, {
+                    credentials: "include",
+                });
+                const data = await res.json();
+                if (data.sucesso) setUnits(data.unidades);
+            } catch (err) {
+                console.error("Erro ao carregar fazendas:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchFazendas();
+    }, []);
+
+    // Buscar métricas de fazendas (total, ativas, inativas, etc)
+    useEffect(() => {
+        async function fetchMetrics() {
+            try {
+                const res = await fetch(`${API_URL}/unidades/fazendas/contagem`);
+                const data = await res.json();
+                if (res.ok) {
+                    setMetrics({
+                        total: data.total ?? 0,
+                        active: data.ativas ?? 0,
+                        inactive: data.inativas ?? 0,
+                    });
+                } else {
+                    console.warn("Erro ao buscar métricas:", data);
+                }
+            } catch (err) {
+                console.error("Erro ao buscar métricas:", err);
+            }
+        }
+        fetchMetrics();
+    }, []);
 
 
     // filtra somente fazendas e aplica query + localização
@@ -108,14 +135,14 @@ export default function FazendasPage() {
         setSelected([]);
     }
 
-    const metrics = useMemo(() => {
-        const total = filtered.length;
-        const active = filtered.filter(u => u.status === "Ativa").length;
-        const inactive = total - active;
-        const avgIot = Math.round((filtered.reduce((s, u) => s + u.iotHealth, 0) / Math.max(1, filtered.length)) || 0);
-        const totalArea = filtered.reduce((s, u) => s + (u.areaHa || 0), 0);
-        return { total, active, inactive, avgIot, totalArea };
-    }, [filtered]);
+    // const metrics = useMemo(() => {
+    //     const total = filtered.length;
+    //     const active = filtered.filter(u => u.status === "Ativa").length;
+    //     const inactive = total - active;
+    //     const avgIot = Math.round((filtered.reduce((s, u) => s + u.iotHealth, 0) / Math.max(1, filtered.length)) || 0);
+    //     const totalArea = filtered.reduce((s, u) => s + (u.areaHa || 0), 0);
+    //     return { total, active, inactive, avgIot, totalArea };
+    // }, [filtered]);
 
 
     // ---------------------------------------------------------------------
@@ -200,8 +227,8 @@ export default function FazendasPage() {
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
                         <CardHeader><CardTitle>IoT (média)</CardTitle></CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{metrics.avgIot}%</div>
-                            <div className="text-sm text-muted-foreground mt-1">Média de saúde dos dispositivos</div>
+                            <div className="text-3xl font-bold">RAnDOM%</div>
+                            <div className="text-sm text-muted-foreground mt-1">NÃO SEI O QUE COLOCAR AQUI</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -400,7 +427,7 @@ export default function FazendasPage() {
                                 <ChartContainer config={chartConfigFazendasProdutivas}>
                                     <BarChart accessibilityLayer data={FazendasProdutivas} layout="vertical" margin={{ right: 16, }}>
                                         <CartesianGrid horizontal={false} />
-                                        <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} hide/>
+                                        <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} hide />
                                         <XAxis dataKey="desktop" type="number" hide />
                                         <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
                                         <Bar dataKey="desktop" layout="vertical" fill="var(--color-desktop)" radius={4} >

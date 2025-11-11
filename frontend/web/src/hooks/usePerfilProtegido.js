@@ -1,15 +1,24 @@
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const usePerfilProtegido = (perfilNecessario) => {
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const perfil = localStorage.getItem("perfil");
+    // enquanto checa refresh, não redirecionar (previne flash)
+    if (loading) return;
 
-    if (!token || perfil !== perfilNecessario) {
-      router.push("/login"); // redireciona para login se não autorizado
+    const perfil = user?.perfil ?? null;
+    if (!user) {
+      router.push('/login');
+      return;
     }
-  }, [router, perfilNecessario]);
+
+    if (perfilNecessario && perfil !== perfilNecessario) {
+      router.push('/login'); // ou /403
+    }
+  }, [user, loading, router, perfilNecessario]);
 };
