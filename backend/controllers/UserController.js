@@ -301,7 +301,6 @@ export async function refreshController(req, res) {
   }
 }
 
-
 export async function logoutController(req, res) {
   try {
     const token = req.cookies[COOKIE_NAME];

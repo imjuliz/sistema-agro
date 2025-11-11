@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const AuthContext = createContext();
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
+const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/';
 const LOGIN_ENDPOINT = `${BACKEND_BASE}auth/login`;
 const REFRESH_ENDPOINT = `${BACKEND_BASE}auth/refresh`;
 const LOGOUT_ENDPOINT = `${BACKEND_BASE}auth/logout`;
@@ -110,47 +110,86 @@ export function AuthProvider({ children }) {
   }, []);
 
   // fetchWithAuth: envia Authorization + tenta refresh se 401
+  // const fetchWithAuth = useCallback(async (input, init = {}) => {
+  //   const initCopy = {
+  //     ...init,
+  //     credentials: 'include', // garante envio do cookie de refresh quando necessário
+  //     headers: {
+  //       ...(init.headers || {}),
+  //       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  //     },
+  //   };
+
+  //   let res = await fetch(input, initCopy);
+  //   if (res.status === 401) {
+  //     // tentar refresh token
+  //     const refreshRes = await fetch(REFRESH_ENDPOINT, {
+  //       method: 'POST',
+  //       credentials: 'include',
+  //       headers: { 'Content-Type': 'application/json' },
+  //     });
+  //     if (!refreshRes.ok) {
+  //       // não foi possível renovar -> logout
+  //       setAccessToken(null);
+  //       setUser(null);
+  //       throw new Error('Sessão expirada. Faça login novamente.');
+  //     }
+  //     const refreshData = await refreshRes.json();
+  //     const newAccessToken = refreshData.accessToken;
+  //     setAccessToken(newAccessToken);
+
+  //     // repetir requisição original com novo token
+  //     const retryInit = {
+  //       ...init,
+  //       credentials: 'include',
+  //       headers: {
+  //         ...(init.headers || {}),
+  //         Authorization: `Bearer ${newAccessToken}`,
+  //       },
+  //     };
+  //     res = await fetch(input, retryInit);
+  //   }
+  //   return res;
+  // }, [accessToken]);
   const fetchWithAuth = useCallback(async (input, init = {}) => {
-    const initCopy = {
+  let initCopy = {
+    ...init,
+    credentials: 'include',
+    headers: {
+      ...(init.headers || {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+  };
+
+  let res = await fetch(input, initCopy);
+
+  if (res.status === 401) {
+    // tentar refresh
+    const refreshRes = await fetch(REFRESH_ENDPOINT, { method: 'POST', credentials: 'include' });
+    if (!refreshRes.ok) {
+      setAccessToken(null);
+      setUser(null);
+      throw new Error('Sessão expirada');
+    }
+    const refreshData = await refreshRes.json();
+    const newAccessToken = refreshData.accessToken ?? refreshData.data?.accessToken;
+    if (newAccessToken) setAccessToken(newAccessToken);
+
+    // retry
+    initCopy = {
       ...init,
-      credentials: 'include', // garante envio do cookie de refresh quando necessário
+      credentials: 'include',
       headers: {
         ...(init.headers || {}),
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        Authorization: `Bearer ${newAccessToken}`,
       },
     };
+    res = await fetch(input, initCopy);
+  }
 
-    let res = await fetch(input, initCopy);
-    if (res.status === 401) {
-      // tentar refresh token
-      const refreshRes = await fetch(REFRESH_ENDPOINT, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!refreshRes.ok) {
-        // não foi possível renovar -> logout
-        setAccessToken(null);
-        setUser(null);
-        throw new Error('Sessão expirada. Faça login novamente.');
-      }
-      const refreshData = await refreshRes.json();
-      const newAccessToken = refreshData.accessToken;
-      setAccessToken(newAccessToken);
+  return res;
+}, [accessToken]);
 
-      // repetir requisição original com novo token
-      const retryInit = {
-        ...init,
-        credentials: 'include',
-        headers: {
-          ...(init.headers || {}),
-          Authorization: `Bearer ${newAccessToken}`,
-        },
-      };
-      res = await fetch(input, retryInit);
-    }
-    return res;
-  }, [accessToken]);
 
   return (
     <AuthContext.Provider value={{ accessToken, user, loading, login, logout, fetchWithAuth }}>
