@@ -10,7 +10,7 @@ import { generateAccessToken, generateRefreshToken, hashToken, REFRESH_TOKEN_DAY
 
 export async function cadastrarSeController(req, res) {
   try {
-    const { nome, email, senha } = userShema.partial().parse(req.body);
+    const { nome, email, senha } = userSchema.partial().parse(req.body);
     const id = req.usuario.id
 
     if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
@@ -36,14 +36,7 @@ export const updateUsuarioController = async (req, res) => {
     // Validação dos campos obrigatórios
     if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) { return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' }); }
 
-    const unidadeData = {
-      nomeCompleto,
-      email,
-      funcao,
-      setor,
-      unidade,
-      periodo
-    };
+    const unidadeData = {nomeCompleto,email,funcao,setor,unidade,periodo};
 
     const result = await updateUsuario(id, unidadeData);
 

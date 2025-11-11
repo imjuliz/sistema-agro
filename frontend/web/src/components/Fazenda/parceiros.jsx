@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react";
 import * as React from "react"
 import { toast } from "sonner"
@@ -208,7 +207,7 @@ export function DataTable({ data: initialData }) {
             <TabsContent value="geral" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
                 <div className="overflow-hidden rounded-lg border">
                     <DndContext collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd} sensors={sensors} id={sortableId}>
-                        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+                        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
                             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                                 <div className="flex items-center gap-4 flex-wrap">
                                     <h2 className="text-xl font-semibold">Estoque</h2>

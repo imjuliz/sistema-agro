@@ -10,8 +10,6 @@ import { TranslationProvider } from "@/hooks/useTranslation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 
-import { AuthProvider } from "@/contexts/AuthContext";
-
 export default function RootLayout({ children }) {
     return (
         <html lang="pt-br" suppressHydrationWarning>
@@ -20,15 +18,13 @@ export default function RootLayout({ children }) {
                 <meta name="description" content={siteConfig.description} />
             </head>
             <body className="bg-background antialiased">
-                <AuthProvider>
-                <TranslationProvider>
-                    <ThemeProvider>
-                        <Transl>
-                            {children}
-                        </Transl>
-                    </ThemeProvider>
-                </TranslationProvider>
-                </AuthProvider>
+                    <TranslationProvider>
+                        <ThemeProvider>
+                            <Transl>
+                                {children}
+                            </Transl>
+                        </ThemeProvider>
+                    </TranslationProvider>
             </body>
         </html>
     );

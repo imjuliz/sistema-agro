@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -127,9 +126,7 @@ export function KanbanBoard() {
     };
 
     setColumns(prevColumns =>
-      prevColumns.map(column =>
-        column.id === columnId ? { ...column, tasks: [...column.tasks, newTask] } : column
-      )
+      prevColumns.map(column =>column.id === columnId ? { ...column, tasks: [...column.tasks, newTask] } : column)
     );
   };
 
@@ -143,13 +140,13 @@ export function KanbanBoard() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="h-screen bg-gray-50 flex flex-col">
+      <div className="h-screen bg-gray-50 flex flex-col dark:bg-black">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="bg-white border-b border-gray-200 px-6 py-4 dark:bg-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Quadro de Projetos</h1>
-              <p className="text-sm text-gray-600 mt-1">Organize seus afazeres</p>
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-200">Quadro de Projetos</h1>
+              <p className="text-sm text-gray-600 mt-1 dark:text-gray-500">Organize seus afazeres</p>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -172,7 +169,7 @@ export function KanbanBoard() {
         </div>
 
         {/* Kanban Board */}
-        <div className="flex-1 overflow-x-auto p-6">
+        <div className="flex-1 overflow-x-auto p-6 ">
           <div className="flex space-x-6 h-full min-w-max">
             {filteredColumns.map(column => (
               <KanbanColumn key={column.id} column={column} onMoveTask={moveTask} onAddTask={() => addNewTask(column.id)}/>

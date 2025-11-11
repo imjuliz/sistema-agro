@@ -1,6 +1,6 @@
 import prisma from '../../prisma/client.js';
 
-export const listarFornecedores = async (unidadeId) =>{ //ainda nao esa no controller
+export const listarFornecedores = async (unidadeId) =>{ //tem controller
     try{
         const fornecedores = await prisma.Fornecedor.findMany({where:{ unidadeId: Number(unidadeId)},})
         return ({
