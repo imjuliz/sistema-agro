@@ -124,7 +124,7 @@ export function TableDemo() {
     const [busca, setBusca] = useState("");
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Atividades</h2>
@@ -145,7 +145,7 @@ export function TableDemo() {
             <Table>
                 <TableCaption>Atividades Animais</TableCaption>
                 <TableHeader>
-                    <TableRow className="bg-gray-100 dark:bg-gray-800">
+                    <TableRow className="bg-gray-100 dark:bg-gray-700">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>
                         <TableHead className="font-semibold">Descrição</TableHead>
                         <TableHead className="font-semibold">Tipo</TableHead>
@@ -188,7 +188,7 @@ export function TableDemo2() {
     const [busca, setBusca] = useState("");
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Lotes de Animais</h2>
@@ -239,7 +239,7 @@ export function TableDemo2() {
             <Table>
                 <TableCaption>Lotes de Animais</TableCaption>
                 <TableHeader>
-                    <TableRow className="bg-gray-100 dark:bg-gray-800">
+                    <TableRow className="bg-gray-100 dark:bg-gray-700">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>
                         <TableHead className="font-semibold">Animal</TableHead>
                         <TableHead className="font-semibold">Tipo</TableHead>

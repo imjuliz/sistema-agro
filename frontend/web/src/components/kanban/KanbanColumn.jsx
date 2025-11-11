@@ -10,22 +10,18 @@ import { Column, Task } from './KanbanBoard';
 export function KanbanColumn({ column, onMoveTask, onAddTask }) {
   const [{ isOver }, drop] = useDrop({
     accept: 'TASK',
-    drop: (item) => {
-      onMoveTask(item.id, item.columnId, column.id);
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
+    drop: (item) => {onMoveTask(item.id, item.columnId, column.id);},
+    collect: (monitor) => ({isOver: !!monitor.isOver(),}),
   });
 
   return (
-    <div className="flex flex-col w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-full">
+    <div className="flex flex-col w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-full dark:bg-black">
       {/* Column Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-            <h3 className="font-medium text-gray-900">{column.title}</h3>
+            <h3 className="font-medium text-gray-300">{column.title}</h3>
             <Badge variant="secondary" className="text-xs">
               {column.tasks.length}
             </Badge>
@@ -37,12 +33,7 @@ export function KanbanColumn({ column, onMoveTask, onAddTask }) {
       </div>
 
       {/* Tasks Container */}
-      <div
-        ref={drop}
-        className={`flex-1 p-4 space-y-3 overflow-y-auto ${
-          isOver ? 'bg-blue-50 border-2 border-blue-200 border-dashed' : ''
-        }`}
-      >
+      <div ref={drop} className={`flex-1 p-4 space-y-3 overflow-y-auto ${ isOver ? 'bg-blue-50 border-2 border-blue-200 border-dashed' : ''}`}>
         {column.tasks.map(task => (
           <TaskCard key={task.id} task={task} columnId={column.id} />
         ))}
@@ -56,13 +47,9 @@ export function KanbanColumn({ column, onMoveTask, onAddTask }) {
 
       {/* Add Task Button */}
       <div className="p-4 border-t border-gray-200">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-600 hover:text-gray-900"
-          onClick={onAddTask}
-        >
+        <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-gray-900 dark:hover:text-gray-200" onClick={onAddTask}>
           <Plus className="w-4 h-4 mr-2" />
-          Add a task
+          Adicionar tarefa
         </Button>
       </div>
     </div>

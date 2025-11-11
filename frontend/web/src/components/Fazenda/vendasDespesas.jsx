@@ -73,7 +73,7 @@ export function TableDemo2() {
     const [busca, setBusca] = useState("");
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Estoque</h2>
@@ -109,8 +109,7 @@ export function TableDemo2() {
                             (!categoria || lote.tipo === categoria) &&
                             (!status || lote.status === status) &&
                             (!busca || lote.animal.toLowerCase().includes(busca.toLowerCase()))
-                        )
-                        .map((lote) => (
+                        ) .map((lote) => (
                             <TableRow key={lote.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">{lote.id}</TableCell>
                                 <TableCell>{lote.nome}</TableCell>
@@ -188,7 +187,7 @@ export function EnvioLotes() {
     const [busca, setBusca] = useState("");
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Envio de Lotes Recorrentes</h2>
@@ -225,8 +224,7 @@ export function EnvioLotes() {
                             (!categoria || cliente.tipo === categoria) &&
                             (!status || cliente.status === status) &&
                             (!busca || cliente.cliente.toLowerCase().includes(busca.toLowerCase()))
-                        )
-                        .map((cliente) => (
+                        ).map((cliente) => (
                             <TableRow key={cliente.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">{cliente.id}</TableCell>
                                 <TableCell>{cliente.cliente}</TableCell>
@@ -303,7 +301,7 @@ export function TabelaSaidas() {
     const [busca, setBusca] = useState("");
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Saídas</h2>
@@ -339,8 +337,7 @@ export function TabelaSaidas() {
                             (!categoria || saida.tipo === categoria) &&
                             (!status || saida.status === status) &&
                             (!busca || saida.descricao.toLowerCase().includes(busca.toLowerCase()))
-                        )
-                        .map((saida) => (
+                        ).map((saida) => (
                             <TableRow key={saida.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">{saida.id}</TableCell>
                                 <TableCell>{saida.descricao}</TableCell>
@@ -373,7 +370,7 @@ export function TabelaSobDemanda() {
     const [busca, setBusca] = useState("");
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Vendas Sob Demanda</h2>

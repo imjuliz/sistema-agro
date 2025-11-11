@@ -3,15 +3,13 @@ import { useDrag } from 'react-dnd';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, MessageCircle, Paperclip } from 'lucide-react';
-import  { Task } from './KanbanBoard';
+import { Task } from './KanbanBoard';
 
 export function TaskCard({ task, columnId }) {
   const [{ isDragging }, drag] = useDrag({
     type: 'TASK',
     item: { id: task.id, columnId },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
+    collect: (monitor) => ({ isDragging: !!monitor.isDragging(), }),
   });
 
   const getPriorityColor = (priority) => {
@@ -28,18 +26,10 @@ export function TaskCard({ task, columnId }) {
   };
 
   return (
-    <div
-      ref={drag}
-      className={`bg-white border border-gray-200 rounded-lg p-4 cursor-move hover:shadow-md transition-shadow ${
-        isDragging ? 'opacity-50' : ''
-      }`}
-    >
+    <div ref={drag} className={`bg-white border border-gray-200 rounded-lg p-4 cursor-move hover:shadow-md transition-shadow dark:bg-black ${isDragging ? 'opacity-50' : ''}`}>
       {/* Priority Badge */}
       <div className="flex items-center justify-between mb-3">
-        <Badge 
-          variant="outline" 
-          className={`text-xs ${getPriorityColor(task.priority)}`}
-        >
+        <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
           {task.priority.toUpperCase()}
         </Badge>
         {task.dueDate && (
@@ -51,16 +41,14 @@ export function TaskCard({ task, columnId }) {
       </div>
 
       {/* Task Title and Description */}
-      <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">{task.title}</h4>
-      <p className="text-sm text-gray-600 mb-4 line-clamp-3">{task.description}</p>
+      <h4 className="font-medium text-gray-900 mb-2 line-clamp-2 dark:text-gray-200">{task.title}</h4>
+      <p className="text-sm text-gray-600 mb-4 line-clamp-3 dar:text-gray-500">{task.description}</p>
 
       {/* Tags */}
       {task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-4">
           {task.tags.map((tag, index) => (
-            <Badge key={index} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
+            <Badge key={index} variant="secondary" className="text-xs">{tag}</Badge>
           ))}
         </div>
       )}
