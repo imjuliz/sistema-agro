@@ -9,7 +9,9 @@ import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { mostrarSaldoFController,buscarProdutoMaisVendidoController, listarProdutosController,contarVendasPorMesUltimos6MesesController,
     criarVendaController,somarQtdTotalEstoqueController,calcularSaldoLiquidoController,listarEstoqueController,listarUsuariosPorUnidadeController,
-    listarSaidasPorUnidadeController,calcularFornecedoresController } from "../controllers/financeiro/financeiroController.js";
+    listarSaidasPorUnidadeController,calcularFornecedoresController, 
+    somarSaidasController,
+    somarDiariaController} from "../controllers/financeiro/financeiroController.js";
 import { calcularFornecedoresController, mostrarSaldoFController, buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController } from "../controllers/financeiro/financeiroController.js";
 import { listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
@@ -29,6 +31,7 @@ router.get("/vendas/ultimos-6-meses", auth, contarVendasPorMesUltimos6MesesContr
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/fornecedoresCalculo", auth, calcularFornecedoresController)
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
+router.get("/somarSaidas/:unidadeId", somarSaidasController);
 // rotas usadas para _____ ---------------------------------------------------------------------------------
 router.delete('/usuarios/:userId', deletarUsuarioController)
 router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
