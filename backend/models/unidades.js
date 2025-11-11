@@ -53,6 +53,7 @@ export async function createUnidade(data) {
   }
 }
 
+// deixar inativo
 export async function deleteUnidade(id) {
   const unidade = await prisma.unidades.delete({
     where: { id },
