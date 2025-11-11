@@ -1,4 +1,4 @@
-import { deleteUnidade, getUnidadePorId, getUnidades, createUnidade, getFazendas, getLoja, getMatriz, UnidadeService } from "../models/Unidades.js";
+import { getUnidadePorId, getUnidades, getFazendas, getLoja, getMatriz, UnidadeService, createUnidade, updateUnidade, deleteUnidade } from "../models/Unidades.js";
 import { unidadeSchema } from "../schemas/unidadeSchema.js";
 
 // BUSCA ---------------------------------------------------------------------------

@@ -151,6 +151,34 @@ export async function createUnidade(data) {
     }
 };
 
+// ATUALIZAR ---------------------------------------------------------------------
+export async function updateUnidade(id, data) {
+    const unidade = await prisma.unidade.update({ 
+      where: { id },
+      data: {
+        // gerenteId: data.gerenteId,
+        // nome: data.nome,
+        // endereco: data.endereco,
+        // cidade: data.cidade,
+        // estado: data.estado,
+        // cep: data.cep,
+        // imagemUrl: data.imagemUrl,
+        // areaTotal: data.areaTotal,
+        // areaProdutiva: data.areaProdutiva,
+        // latitude: data.latitude,
+        // longitude: data.longitude,
+        // descricaoCurta: data.descricaoCurta,
+        // tipo: data.tipo,
+        status: data.status
+      }
+    })
+    return ({
+        sucesso: true,
+        unidade,
+        message: "Unidade atualizada com sucesso."
+    })
+};
+
 // DELETAR ---------------------------------------------------------------------
 export async function deleteUnidade(id) {
     const unidade = await prisma.unidade.delete({ where: { id } })

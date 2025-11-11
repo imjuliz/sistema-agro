@@ -52,8 +52,8 @@ model Unidade {
   imagemUrl          String?     @map("imagem_url") @db.VarChar(1000)
   areaTotal          Decimal?    @map("area_total") @db.Decimal(12,3)
   areaProdutiva      Decimal?    @map("area_produtiva") @db.Decimal(12,3)
-  latitude           Float?      @db.Float
-  longitude          Float?      @db.Float
+  latitude           Float?      
+  longitude          Float?      
   descricaoCurta     String?     @map("descricao_curta") @db.Text
   tipo               TipoUnidade
   status             StatusUnidade @default(ATIVA)
@@ -101,7 +101,9 @@ model Usuario {
   vendas              Venda[]
   saidas              Saidas[]
   AtividadesLote      AtividadesLote[]
-  sessoes        Sessao[]
+  sessoes             Sessao[]
+  atvdPlantios    atvdPlantio[]   @relation("UsuarioAtvdPlantio")
+  atvdAnimalias   atvdAnimalia[]  @relation("UsuarioAtvdAnimalia")
 
   @@map("usuarios")
 }
@@ -348,7 +350,7 @@ model atvdPlantio{
   data             DateTime
   responsavelId    Int
 
-  responsavel      Usuario  @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  responsavel    Usuario  @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id], onDelete: Restrict)
   lote             Lote     @relation(fields: [loteId], references: [id])
 
   @@map("atvd_plantio")
@@ -362,7 +364,7 @@ model atvdAnimalia{
   data             DateTime
   responsavelId    Int
 
-  responsavel      Usuario  @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
+  responsavel    Usuario  @relation("UsuarioAtvdAnimalia", fields: [responsavelId], references: [id], onDelete: Restrict)
   lote             Lote     @relation(fields: [loteId], references: [id])
 
 @@map("atvd_animalia")
