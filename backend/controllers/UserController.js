@@ -36,14 +36,7 @@ export const updateUsuarioController = async (req, res) => {
     // Validação dos campos obrigatórios
     if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) { return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' }); }
 
-    const unidadeData = {
-      nomeCompleto,
-      email,
-      funcao,
-      setor,
-      unidade,
-      periodo
-    };
+    const unidadeData = {nomeCompleto,email,funcao,setor,unidade,periodo};
 
     const result = await updateUsuario(id, unidadeData);
 

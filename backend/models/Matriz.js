@@ -1,7 +1,7 @@
 import prisma from '../prisma/client.js';
 
 // BUSCA ---------------------------------------------------------------------------
-export async function getUnidades() {
+export async function getUnidades() { //tem controller
     try {
         const unidades = await prisma.unidade.findMany();
         return {
@@ -13,12 +13,12 @@ export async function getUnidades() {
         return {
             sucesso: false,
             erro: "Erro ao listar unidades.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         };
     }
 };
 
-export async function getUnidadePorId(id) {
+export async function getUnidadePorId(id) { //tem controller
     try {
         const unidade = await prisma.unidade.findUnique({ where: { id } })
         return ({
@@ -30,13 +30,13 @@ export async function getUnidadePorId(id) {
         return {
             sucesso: false,
             erro: "Erro ao listar unidade por id.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         }
     }
 };
 
 // buscar APENAS fazendas
-export async function getFazendas() {
+export async function getFazendas() {//tem controller
   try {
     const fazendas = await prisma.unidade.findMany({
       where: { tipo: 'Fazenda' },
@@ -58,7 +58,7 @@ export async function getFazendas() {
 }
 
 // buscar APENAS matrizes
-export async function getMatriz() {
+export async function getMatriz() {//tem controller
   try {
     const matriz = await prisma.unidade.findMany({
       where: { tipo: 'Matriz' },
@@ -80,7 +80,7 @@ export async function getMatriz() {
 }
 
 // buscar APENAS lojas
-export async function getLoja() {
+export async function getLoja() {//tem controller
   try {
     const loja = await prisma.unidade.findMany({
       where: { tipo: 'Loja' },
@@ -102,7 +102,7 @@ export async function getLoja() {
 }
 
 // CONTAGEM ---------------------------------------------------------------------------
-export const UnidadeService = {
+export const UnidadeService = {//tem controller
   // Contagem total de unidades do tipo "FAZENDA"
   async contarFazendas() {
     return await prisma.unidade.count({
@@ -113,7 +113,7 @@ export const UnidadeService = {
   },
 
   // Contagem de fazendas com status ATIVA
-  async contarFazendasAtivas() {
+  async contarFazendasAtivas() {//tem controller
     return await prisma.unidade.count({
       where: {
         tipo: 'FAZENDA',
@@ -123,7 +123,7 @@ export const UnidadeService = {
   },
 
   // Contagem de fazendas com status INATIVA
-  async contarFazendasInativas() {
+  async contarFazendasInativas() {//tem controller
     return await prisma.unidade.count({
       where: {
         tipo: 'FAZENDA',
@@ -134,7 +134,7 @@ export const UnidadeService = {
 };
 
 // CRIAR --------------------------------------------------------------------
-export async function createUnidade(data) {
+export async function createUnidade(data) {//tem controller
     try {
         const unidade = await prisma.unidade.create({ data });
         return ({
@@ -143,10 +143,10 @@ export async function createUnidade(data) {
             message: "Unidade criada com sucesso."
         })
     } catch (error) {
-        return {
+        return {                           
             sucesso: false,
             erro: "Erro ao criar unidade.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         }
     }
 };

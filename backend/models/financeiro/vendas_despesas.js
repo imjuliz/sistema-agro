@@ -2,7 +2,7 @@ import prisma from '../../prisma/client.js';
 
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId) => {
+export const listarSaidas = async (unidadeId) => {//tem controller
     try {
         const saidas = await prisma.Saidas.findMany({
             where: { unidadeId: Number(unidadeId) },
@@ -71,7 +71,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => { //ok
 };
 
 // Função que soma as vendas do dia atual
-export const somarDiaria = async (unidadeId) => {
+export const somarDiaria = async (unidadeId) => {//tem controller
   const result = await prisma.$queryRaw`
     SELECT COALESCE(SUM("total"), 0) AS total
     FROM "vendas"

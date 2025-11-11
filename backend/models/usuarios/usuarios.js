@@ -43,7 +43,7 @@ export const listarAdmins = async (unidadeId) => {
     }
 };
 
-export async function listarUsuariosPorUnidade(unidadeId) {
+export async function listarUsuariosPorUnidade(unidadeId) { //tem controller
   try {
     const usuarios = await prisma.usuario.findMany({
       where: {unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
