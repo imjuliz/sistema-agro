@@ -22,7 +22,7 @@ function ContribuidoresTable() {
   };
 
   return (
-    <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4 w-full">
+    <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4 w-full">
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-semibold">Estoque</h2>
