@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
                 <meta name="description" content={siteConfig.description} />
             </head>
             <body className="bg-background antialiased">
-                <AuthProvider>
+
                 <TranslationProvider>
                     <ThemeProvider>
                         <Transl>
@@ -28,7 +28,6 @@ export default function RootLayout({ children }) {
                         </Transl>
                     </ThemeProvider>
                 </TranslationProvider>
-                </AuthProvider>
             </body>
         </html>
     );
