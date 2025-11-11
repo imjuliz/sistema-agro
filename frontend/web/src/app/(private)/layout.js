@@ -17,7 +17,6 @@ import { SidebarInset, SidebarProvider, SidebarTrigger, } from "@/components/Nav
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 
-
 import { AuthProvider } from "@/contexts/AuthContext";
 
 export default function PrivateLayout({ children }) {
