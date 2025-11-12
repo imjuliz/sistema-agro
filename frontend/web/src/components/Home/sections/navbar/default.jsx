@@ -1,14 +1,13 @@
 import { Menu } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
-import LaunchUI from "@/components/Home/logos/launch-ui";
 import { Button } from "@/components/ui/button";
 import {Navbar as NavbarComponent,NavbarLeft,NavbarRight,} from "@/components/ui/navbar";
 import Navigation from "@/components/ui/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Navbar({
-  logo = <LaunchUI />,
+  logo = <img src={'/img/ruraltech-logo.svg'} className="h-6"/>,
   name = "RuralTech",
   // homeUrl = siteConfig.url,
   homeUrl = '/',

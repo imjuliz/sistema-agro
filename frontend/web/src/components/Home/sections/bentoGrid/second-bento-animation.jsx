@@ -1,7 +1,7 @@
 import { Icons } from "@/components/Home/sections/bentoGrid/icons";
 import { OrbitingCircles } from "@/components/ui/orbiting-circle";
 import React from "react";
-
+import Screenshot from "@/components/ui/screenshot";
 import { Radar } from "@/components/ui/RadarAnimation";
 
 export function SecondBentoAnimation({ size = 520, sweepDuration = 4 }) {
@@ -56,7 +56,8 @@ export function SecondBentoAnimation({ size = 520, sweepDuration = 4 }) {
       {/* Central circle original (remova ou ajuste se não quiser o logo) */}
       <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 size-16 bg-secondary p-2 rounded-full z-30 md:bottom-0 md:top-auto">
         {/* ícone */}
-        <img src={'/img/logo-ruraltechBranco.svg'} className="h-10" />
+         <Screenshot srcLight="/img/ruraltech-logopreto.svg" srcDark="/img/ruraltech-logobranco.svg" alt="RuralTech Logo" width={20} height={20} />
+        {/* <img src={'/img/ruraltech-logobranco.svg'} className="h-10" /> */}
 
       </div>
 

@@ -52,7 +52,7 @@ const defaultFeatures = [
 
 export default function sobreNos({
     // Hero section - inline defaults for simple strings
-    badgeText = "Sobre nós",
+    badgeText = "Conheça a RuralTech",
     title = "Revolucionando o",
     titleHighlight = "Futuro do Agronegócio",
     description = "A RuralTech nasceu com o propósito de conectar tecnologia e campo. Nosso sistema de gestão e rastreabilidade transforma dados em decisões estratégicas, garantindo transparência, qualidade e eficiência em toda a cadeia produtiva.",
@@ -81,7 +81,7 @@ export default function sobreNos({
     ctaDescription = "A RuralTech acredita que o agronegócio do futuro é digital, sustentável e transparente. Nosso sistema foi projetado para conectar todas as pontas da cadeia produtiva, promovendo um novo padrão de excelência e confiança no setor agrícola.",
     ctaButton1Text = "Conheça o Sistema",
     ctaButton2Text = "Ver Demonstração",
-    ctaImageSrc = "/img/agricultorUtilizandoTablet.jpg",
+    ctaImageSrc = "/img/mulher-tablet.jpg",
     ctaImageAlt = "Agricultor utilizando tablet no campo",
     ctaImageOverlayText = "Sistema RuralTech",
     ctaImageOverlaySubtext = "Gestão, rastreabilidade e eficiência para o agronegócio",
@@ -97,7 +97,7 @@ export default function sobreNos({
 
     const cards = [
         {
-            icon: <Mail className="w-8 h-8 text-neutral-500" />,
+            icon: <Mail className="w-4 h-4 text-neutral-500" />,
             title: "ruraltech91@gmail.com",
             description: "Estamos aqui para ajudar com qualquer dúvida ou código.",
             linkText: "Contatar suporte",
@@ -105,7 +105,7 @@ export default function sobreNos({
             highlight: false,
         },
         {
-            icon: <WhatsAppIcon className="w-8 h-8 text-neutral-500" />,
+            icon: <WhatsAppIcon className="w-4 h-4 text-neutral-500" />,
             title: "(11) 98765-4321",
             description: "Pesquise em nosso FAQ respostas para qualquer dúvida que você possa ter.",
             linkText: "Visitar FAQ",
@@ -113,7 +113,7 @@ export default function sobreNos({
             highlight: false,
         },
         {
-            icon: <Wrench className="w-8 h-8 text-neutral-500" />,
+            icon: <Wrench className="w-4 h-4 text-neutral-500" />,
             title: "Email",
             description: "Confira nosso guia de início rápido para desenvolvedores.",
             linkText: "Contatar vendas",
@@ -199,9 +199,9 @@ export default function sobreNos({
                     </div>
                     <div className="grid gap-8 md:grid-cols-3 md:gap-10">
                         {features.map((item, index) => (
-                            <div key={index} className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-[#d6e59f] hover:shadow-sm">
-                                <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 transition-all group-hover:bg-[#d6e59f]">
-                                    <item.icon className="size-5 text-primary md:size-6" />
+                            <div key={index} className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-[#99BF0F] hover:shadow-sm">
+                                <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 group-hover:bg-[#99BF0F]/10 dark:group-hover:bg-[#99BF0F]/30 transition-all group-hover:border-[#99BF0F]">
+                                    <item.icon className="size-5 text-primary md:size-6 group-hover:stroke-[#99BF0F]" />
                                 </div>
                                 <h3 className="mb-2 text-xl font-semibold">{item.title}</h3>
                                 <p className="mb-4 text-muted-foreground">{item.description}</p>
@@ -335,17 +335,17 @@ export default function sobreNos({
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="relative">
                                             <User className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
-                                            <Input placeholder="First Name" value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                            <Input placeholder="Nome" value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} className="border-border bg-card h-12 pl-10" required />
                                         </div>
                                         <div className="relative">
                                             <User className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
-                                            <Input placeholder="Last Name" value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                            <Input placeholder="Sobrenome" value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} className="border-border bg-card h-12 pl-10" required />
                                         </div>
                                     </div>
 
                                     <div className="relative">
                                         <Phone className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
-                                        <Input placeholder="Phone No" type="tel" value={formData.phone} onChange={(e) => handleChange("phone", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                        <Input placeholder="Telefone" type="tel" value={formData.phone} onChange={(e) => handleChange("phone", e.target.value)} className="border-border bg-card h-12 pl-10" required />
                                     </div>
 
                                     <div className="relative">
@@ -354,7 +354,7 @@ export default function sobreNos({
                                     </div>
 
                                     <div>
-                                        <Textarea placeholder="Your message" value={formData.message} onChange={(e) => handleChange("message", e.target.value)} className="border-border bg-card min-h-32 resize-none" required />
+                                        <Textarea placeholder="Sua mensagem" value={formData.message} onChange={(e) => handleChange("message", e.target.value)} className="border-border bg-card min-h-32 resize-none" required />
                                     </div>
 
                                     <div className="flex items-center space-x-3">
@@ -362,7 +362,7 @@ export default function sobreNos({
                                         <label htmlFor="privacy" className="text-muted-foreground text-sm leading-relaxed">
                                             Eu li e concordo com a{" "}
                                             <Link href="#" className="underline">
-                                                politica de privacidade
+                                                política de privacidade
                                             </Link>
                                         </label>
                                     </div>
@@ -392,10 +392,9 @@ export default function sobreNos({
                         <section className="w-full py-12">
                             <div className="mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {cards.map((card, index) => (
-                                    <div key={index} className={`flex flex-row gap-4 items-center text-center p-8 rounded-xl border transition-colors
-              ${card.highlight ? "bg-neutral-50 dark:bg-neutral-800" : "bg-white dark:bg-neutral-900"} hover:bg-neutral-100 dark:hover:bg-neutral-800`}>
+                                    <div key={index} className={`flex flex-row gap-4 items-center text-center p-4 rounded-xl border transition-colors ${card.highlight ? "bg-neutral-50 dark:bg-neutral-800" : "bg-white dark:bg-neutral-900"} hover:bg-neutral-100 dark:hover:bg-neutral-800`}>
                                         {card.icon}
-                                        <a href={card.linkHref} className="text-lg font-semibold text-neutral-900 dark:text-white hover:underline">{card.title} →</a>
+                                        <a href={card.linkHref} className="text-sm font-semibold text-neutral-900 dark:text-white hover:underline">{card.title} →</a>
                                         {/* <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{card.description}</p>
                                         <a  className="mt-4 text-sm font-medium text-neutral-900 dark:text-white hover:underline">
                                             {card.title} 

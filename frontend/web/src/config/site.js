@@ -3,7 +3,7 @@ export const siteConfig = {
   url: "https://sistema-agro.vercel.app/",
   getStartedUrl:
     "https://launchuicomponents.com/docs/getting-started/introduction",
-  ogImage: "/img/logo-ruraltech.svg",
+  ogImage: "/img/ruraltech-logo.svg",
   description:
     "Centralize suas fazendas e lojas em uma única plataforma, com controle total da produção, vendas e qualidade dos produtos.",
   links: {

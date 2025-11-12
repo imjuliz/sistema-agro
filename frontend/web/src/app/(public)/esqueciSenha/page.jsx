@@ -9,7 +9,7 @@ export default function EsqueciSenha() {
         <div className="flex items-center relative z-10">
           <a href="#" className="flex items-center gap-2 font-medium">
             <div className="flex items-center justify-center rounded-md">
-              <img src="/img/logo-ruraltech.svg" className='w-80 h-20 dark:brightness-[0.9]' alt="RuralTech Logo"/>
+              <img src="/img/ruraltech-logo.svg" className='w-80 h-20 dark:brightness-[0.9]' alt="RuralTech Logo"/>
             </div>
           </a>
           <div className="flex-1"></div>

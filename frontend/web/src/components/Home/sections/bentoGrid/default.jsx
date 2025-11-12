@@ -55,13 +55,11 @@ export function BentoSection() {
 
   return (
     <div className="mx-auto max-w-7xl rounded-3xl">
-      <Section
-      id="bento"
-    >
+      <Section id="bento">
       <div className="relative">
         <SectionHeader>
-          <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance pb-1">
-            Empower Your Finances with AI
+          <h2 className="text-3xl font-semibold sm:text-5xl tracking-tighter text-center text-balance pb-1">
+            Leve seu agronegócio para o próximo nível
           </h2>
           <p className="text-muted-foreground text-center text-balance font-medium">
             Experience AI-powered spending insights, predictive budgeting, and real-time financial health monitoring to optimize your money management.
