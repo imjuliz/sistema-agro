@@ -108,7 +108,8 @@
     "start": "node index.js",
     "dev": "node --watch app.js",
     "generate": "npx prisma generate",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",

@@ -36,7 +36,7 @@ export const updateUsuarioController = async (req, res) => {
     // Validação dos campos obrigatórios
     if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) { return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' }); }
 
-    const unidadeData = {nomeCompleto,email,funcao,setor,unidade,periodo};
+    const unidadeData = { nomeCompleto, email, funcao, setor, unidade, periodo };
 
     const result = await updateUsuario(id, unidadeData);
 
@@ -153,6 +153,18 @@ export async function loginController(req, res) {
     // criar sessão de refresh (hash)
     const refreshToken = generateRefreshToken();
     const refreshHash = hashToken(refreshToken);
+
+    // DEBUG TEMPORÁRIO - remover depois
+    try {
+      console.log('[DEBUG] prisma é:', typeof prisma, prisma ? 'ok' : 'null/undef');
+      try { console.log('[DEBUG] prisma keys:', Object.keys(prisma)); } catch (e) { console.log('[DEBUG] Object.keys(prisma) falhou:', e); }
+      console.log('[DEBUG] prisma.sessao ===', prisma.sessao);
+      console.log('[DEBUG] typeof prisma.sessao.create ===', prisma.sessao?.create ? typeof prisma.sessao.create : 'undefined');
+      console.log('[DEBUG] prisma._clientVersion ===', prisma._clientVersion ?? '<no version>');
+    } catch (e) {
+      console.log('[DEBUG] erro ao logar prisma debug:', e);
+    }
+
 
     await prisma.sessao.create({
       data: {
