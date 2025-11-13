@@ -130,7 +130,7 @@ export async function loginController(req, res) {
     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
 
     // buscar usuário incluindo perfil
-    const user = await prisma.usuarios.findUnique({
+    const user = await prisma.usuario.findUnique({
       where: { email },
       include: { perfil: true },
     });
@@ -154,19 +154,7 @@ export async function loginController(req, res) {
     const refreshToken = generateRefreshToken();
     const refreshHash = hashToken(refreshToken);
 
-    // DEBUG TEMPORÁRIO - remover depois
-    try {
-      console.log('[DEBUG] prisma é:', typeof prisma, prisma ? 'ok' : 'null/undef');
-      try { console.log('[DEBUG] prisma keys:', Object.keys(prisma)); } catch (e) { console.log('[DEBUG] Object.keys(prisma) falhou:', e); }
-      console.log('[DEBUG] prisma.sessao ===', prisma.sessao);
-      console.log('[DEBUG] typeof prisma.sessao.create ===', prisma.sessao?.create ? typeof prisma.sessao.create : 'undefined');
-      console.log('[DEBUG] prisma._clientVersion ===', prisma._clientVersion ?? '<no version>');
-    } catch (e) {
-      console.log('[DEBUG] erro ao logar prisma debug:', e);
-    }
-
-
-    await prisma.sessao.create({
+   await prisma.sessao.create({
       data: {
         usuarioId: user.id,
         refreshTokenHash: refreshHash,
