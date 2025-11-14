@@ -16,7 +16,7 @@ import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 
 export default function SettingsPage() {
-    usePerfilProtegido("gerente_matriz");
+    usePerfilProtegido("GERENTE_MATRIZ");
 
     const { lang, changeLang } = useTranslation();
     const languageOptions = [

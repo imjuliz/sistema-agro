@@ -19,7 +19,7 @@ datasource db {
 
 model Perfil {
   id        Int       @id @default(autoincrement())
-  nome      String    @unique @db.VarChar(255) // "MATRIZ" | "PRODUCAO" | "VENDA"
+  funcao    TipoPerfil
   descricao String    @db.Text
   usuarios  Usuario[]
 
@@ -374,20 +374,25 @@ model Contratos {
 // ============================================
 // ENUMS
 // ============================================
+enum TipoPerfil {
+  GERENTE_MATRIZ
+  GERENTE_FAZENDA
+  GERENTE_LOJA
+}
 
 enum TipoUnidade {
-  Matriz
-  Fazenda
-  Loja
+  MATRIZ
+  FAZENDA
+  LOJA
 
   @@map("tipo_unidade")
 }
 
 enum TipoLote {
-  Gado
-  Soja
-  Leite
-  Outro
+  GADO
+  SOJA
+  LEITE
+  OUTRO
 
   @@map("tipo_lote")
 }

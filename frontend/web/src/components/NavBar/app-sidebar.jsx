@@ -7,6 +7,7 @@ import { NavUser } from "@/components/NavBar/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, } from "@/components/NavBar/sidebar"
 import { ThemeToggle } from "@/components/toggleSwitchTema";
+import { useAuth } from '@/contexts/AuthContext'
 
 // This is sample data.
 const data = {
@@ -79,6 +80,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }) {
+  const { user } = useAuth();
+  console.log("USER NA SIDEBAR →", user);
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

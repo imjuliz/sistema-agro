@@ -20,12 +20,6 @@ export const supabase = createClient(
 
 const app = express();
 
-// app.use(cors({
-//   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-//   credentials: true
-// }));
-
-
 // --- CORS DINÂMICO ---
 const allowedOrigins = [
   "http://localhost:3000",

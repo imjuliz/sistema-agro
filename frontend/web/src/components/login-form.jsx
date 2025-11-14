@@ -25,10 +25,10 @@ export function LoginForm({ className, ...props }) {
     try {
       const result = await login({ email, senha });
       if (!result.success) {
-        setError(result.error || "Erro ao autenticar");
+        setError(result.error || `Erro: ${result.status ?? ''}`);
         return;
       }
-      console.log('login result =>', result);
+      // console.log('login result =>', result);
 
       const payload = result.payload ?? result.data ?? result.data?.data ?? null;
       const perfil = payload?.usuario?.perfil ?? payload?.usuario?.perfil ?? payload?.perfil ?? null;
@@ -36,13 +36,13 @@ export function LoginForm({ className, ...props }) {
 
       // se não houver perfil, você pode chamar um endpoint /me com fetchWithAuth para pegar info
       switch (perfil) {
-        case "gerente_matriz":
+        case "GERENTE_MATRIZ":
           router.push("/matriz/dashboard");
           break;
-        case "gerente_fazenda":
+        case "GERENTE_FAZENDA":
           router.push("/fazenda/dashboard");
           break;
-        case "gerente_loja":
+        case "GERENTE_LOJA":
           router.push("/loja/dashboard");
           break;
         default:

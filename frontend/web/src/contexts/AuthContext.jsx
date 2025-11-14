@@ -1,8 +1,7 @@
-// Gerencia o estado global do usuário autenticado (login, logout, token, dados do usuário).
-// Todos os componentes podem consultar useAuth() para saber se há um usuário logado e quem ele é.
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 
 const AuthContext = createContext();
 
@@ -11,66 +10,103 @@ const LOGIN_ENDPOINT = `${BACKEND_BASE}auth/login`;
 const REFRESH_ENDPOINT = `${BACKEND_BASE}auth/refresh`;
 const LOGOUT_ENDPOINT = `${BACKEND_BASE}auth/logout`;
 
-export function AuthProvider({ children }) {
+let refreshPromise = null;
+
+export function AuthProvider({ children, skipInitialRefresh = false }) {
+  const pathname = usePathname();
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Tenta obter novo accessToken ao montar (o refresh cookie pode existir)
-  // useEffect(() => {
-  //   let mounted = true;
-  //   async function tryRefresh() {
-  //     try {
-  //       const res = await fetch(REFRESH_ENDPOINT, {
-  //         method: 'POST',
-  //         credentials: 'include', // importante: envia cookie HttpOnly
-  //         headers: { 'Content-Type': 'application/json' },
-  //       });
-  //       if (!res.ok) {
-  //         setAccessToken(null);
-  //         setUser(null);
-  //       } else {
-  //         const data = await res.json();
-  //         // backend retorna { accessToken, maybe userData }
-  //         if (mounted) {
-  //           setAccessToken(data.accessToken ?? null);
-  //           if (data.usuario) setUser(data.usuario);
-  //         }
-  //       }
-  //     } catch (err) {
-  //       console.error('refresh on mount failed', err);
-  //       setAccessToken(null);
-  //       setUser(null);
-  //     } finally {
-  //       if (mounted) setLoading(false);
-  //     }
-  //   }
-  //   tryRefresh();
-  //   return () => { mounted = false; };
-  // }, []);
+  const doRefresh = useCallback(async () => {
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch(REFRESH_ENDPOINT, {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          // Mantemos limpeza do estado, mas não logamos ruidosamente aqui.
+          setAccessToken(null);
+          setUser(null);
+          // lança erro com status para quem chamou poder agir
+          throw new Error(`refresh-failed:${res.status}`);
+        }
+
+        const data = await res.json();
+        const newAccessToken = data.accessToken ?? data.data?.accessToken ?? null;
+        let usuario = data.usuario ?? data.data?.usuario ?? null;
+
+        if (!usuario && newAccessToken) {
+          try {
+            const meRes = await fetch(`${BACKEND_BASE}auth/me`, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                Authorization: `Bearer ${newAccessToken}`,
+              },
+            });
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              usuario = meData.usuario ?? null;
+            }
+          } catch (err) {
+            console.warn('Falha ao buscar /auth/me:', err);
+          }
+        }
+
+        if (newAccessToken) setAccessToken(newAccessToken);
+        if (usuario)
+          setUser({
+            ...usuario,
+            perfil: usuario?.perfil?.funcao ?? null,   // <- este é o segredo
+          });
+
+        return { data, newAccessToken, usuario };
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+
+    return refreshPromise;
+  }, []);
+
   useEffect(() => {
     let mounted = true;
+
     async function tryRefresh() {
-      // Se já temos accessToken (ex.: usuário fez login), não precisa aqui
       if (!mounted) return;
+
+      // Se o provider for usado em páginas públicas (ex: login) e quisermos pular o refresh inicial:
+      const publicPaths = ['/login', '/cadastrar', '/esqueciSenha'];
+      if (skipInitialRefresh || publicPaths.some(p => pathname?.startsWith(p))) {
+        // não tentar refresh automático nessas páginas
+        if (mounted) setLoading(false);
+        return;
+      }
+
       try {
-        const res = await fetch(REFRESH_ENDPOINT, { method: 'POST', credentials: 'include' });
-        if (!res.ok) { setAccessToken(null); setUser(null); return; }
-        const data = await res.json();
-        setAccessToken(data.accessToken ?? data.data?.accessToken ?? null);
-        if (data.usuario || data.data?.usuario) setUser(data.usuario ?? data.data?.usuario);
+        await doRefresh();
       } catch (err) {
-        console.error('refresh on mount failed', err);
+        // Suprima erro de refresh 401 (esperado quando não há cookie)
+        if (!String(err).includes('refresh-failed:401')) {
+          console.error('refresh on mount failed', err);
+        } else {
+          // opcional: console.debug('refresh 401 on mount (expected)');
+        }
         setAccessToken(null);
         setUser(null);
       } finally {
         if (mounted) setLoading(false);
       }
     }
+
     tryRefresh();
     return () => { mounted = false; };
-  }, []);
-
+  }, [doRefresh, pathname, skipInitialRefresh]);
 
   // login: envia credenciais, backend seta cookie HttpOnly e retorna accessToken
   const login = useCallback(async ({ email, senha }) => {
@@ -81,23 +117,24 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, senha }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      return { success: false, error: data.error || data.mensagem || data.erro || 'Erro ao autenticar' };
+      const errMsg = data.error || data.mensagem || data.erro || 'Erro ao autenticar';
+      return { success: false, error: errMsg, status: res.status };
     }
 
-
+    // extrair payload com robustez
     const payload = data.data ?? data;
+    const token = payload.accessToken ?? data.accessToken ?? null;
     const usuario = payload.usuario ?? payload.user ?? null;
 
-    setAccessToken(payload.accessToken ?? payload.accessToken); // redundante mas explícito
+    if (token) setAccessToken(token);
     if (usuario) setUser(usuario);
 
-    return { success: true, payload }; // retorno consistente
+    return { success: true, payload, token, usuario };
   }, []);
 
-  // logout: chama endpoint que revoga sessao e limpa cookie
   const logout = useCallback(async () => {
     try {
       await fetch(LOGOUT_ENDPOINT, { method: 'POST', credentials: 'include' });
@@ -109,87 +146,45 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // fetchWithAuth: envia Authorization + tenta refresh se 401
-  // const fetchWithAuth = useCallback(async (input, init = {}) => {
-  //   const initCopy = {
-  //     ...init,
-  //     credentials: 'include', // garante envio do cookie de refresh quando necessário
-  //     headers: {
-  //       ...(init.headers || {}),
-  //       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-  //     },
-  //   };
-
-  //   let res = await fetch(input, initCopy);
-  //   if (res.status === 401) {
-  //     // tentar refresh token
-  //     const refreshRes = await fetch(REFRESH_ENDPOINT, {
-  //       method: 'POST',
-  //       credentials: 'include',
-  //       headers: { 'Content-Type': 'application/json' },
-  //     });
-  //     if (!refreshRes.ok) {
-  //       // não foi possível renovar -> logout
-  //       setAccessToken(null);
-  //       setUser(null);
-  //       throw new Error('Sessão expirada. Faça login novamente.');
-  //     }
-  //     const refreshData = await refreshRes.json();
-  //     const newAccessToken = refreshData.accessToken;
-  //     setAccessToken(newAccessToken);
-
-  //     // repetir requisição original com novo token
-  //     const retryInit = {
-  //       ...init,
-  //       credentials: 'include',
-  //       headers: {
-  //         ...(init.headers || {}),
-  //         Authorization: `Bearer ${newAccessToken}`,
-  //       },
-  //     };
-  //     res = await fetch(input, retryInit);
-  //   }
-  //   return res;
-  // }, [accessToken]);
   const fetchWithAuth = useCallback(async (input, init = {}) => {
-  let initCopy = {
-    ...init,
-    credentials: 'include',
-    headers: {
-      ...(init.headers || {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    },
-  };
-
-  let res = await fetch(input, initCopy);
-
-  if (res.status === 401) {
-    // tentar refresh
-    const refreshRes = await fetch(REFRESH_ENDPOINT, { method: 'POST', credentials: 'include' });
-    if (!refreshRes.ok) {
-      setAccessToken(null);
-      setUser(null);
-      throw new Error('Sessão expirada');
-    }
-    const refreshData = await refreshRes.json();
-    const newAccessToken = refreshData.accessToken ?? refreshData.data?.accessToken;
-    if (newAccessToken) setAccessToken(newAccessToken);
-
-    // retry
-    initCopy = {
+    let initCopy = {
       ...init,
       credentials: 'include',
       headers: {
         ...(init.headers || {}),
-        Authorization: `Bearer ${newAccessToken}`,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
     };
-    res = await fetch(input, initCopy);
-  }
 
-  return res;
-}, [accessToken]);
+    let res = await fetch(input, initCopy);
 
+    if (res.status === 401) {
+      try {
+        const refreshResult = await doRefresh();
+        const newAccessToken = refreshResult?.newAccessToken ?? null;
+
+        if (!newAccessToken) {
+          setAccessToken(null);
+          setUser(null);
+          throw new Error('Sessão expirada');
+        }
+
+        initCopy = {
+          ...init,
+          credentials: 'include',
+          headers: {
+            ...(init.headers || {}),
+            Authorization: `Bearer ${newAccessToken}`,
+          },
+        };
+        res = await fetch(input, initCopy);
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    return res;
+  }, [accessToken, doRefresh]);
 
   return (
     <AuthContext.Provider value={{ accessToken, user, loading, login, logout, fetchWithAuth }}>
