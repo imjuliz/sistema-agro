@@ -145,16 +145,16 @@ model ResetSenha {
 // ============================================
 
 model Lote {
-  id             Int          @id @default(autoincrement())
-  unidadeId      Int          @map("unidade_id")
-  responsavelId  Int          @map("responsavel_id")
-  nome           String       @db.VarChar(255)
-  tipo           TipoLote     
-  qntdItens      Int          @map("qntd_itens")
-  observacoes    String?      @db.Text
-  atividade      Boolean      @default(true)
-  dataFabricacao DateTime     @default(now())     @map("data_fabricacao")
-  dataValidade   DateTime?                    @map("data_validade")
+  id                     Int          @id @default(autoincrement())
+  unidadeId              Int          @map("unidade_id")
+  responsavelId          Int          @map("responsavel_id")
+  nome                   String       @db.VarChar(255)
+  tipo                   TipoLote     
+  qntdItens              Int          @map("qntd_itens")
+  observacoes            String?      @db.Text
+  atividade              Boolean      @default(true)
+  dataFabricacao         DateTime     @default(now())     @map("data_fabricacao")
+  dataValidade           DateTime?                        @map("data_validade")
 
   unidade                Unidade               @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
   responsavel            Usuario               @relation(fields: [responsavelId], references: [id], onDelete: Restrict)

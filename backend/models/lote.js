@@ -94,6 +94,36 @@ export async function getLotePorDataColheita() {
   } 
 }
 
+export async function getLotePorDataCriacao(ano, produto) {
+  try {
+    const lote_data_criacao = await prisma.lote.findMany({
+      where: {
+        dataFabricacao: {
+        gte: new Date(`${ano}-01-01`),
+        lte: new Date(`${ano}-12-31`)
+        },
+      },
+      select: {
+        nome: true,
+        tipo: true,
+        qntdItens: true,
+        produto: true
+      }
+    })
+    return {
+      sucesso: true,
+      lote_data_criacao,
+      message: "Lotes criados na data listados com sucesso!!",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes criados na data!!",
+      error: error.message
+    }
+  }
+}
+
 export async function getlotePorId(id) {
   try {
     const lote = await prisma.lote.findUnique({ where: { id } });

@@ -1,4 +1,4 @@
-import { getLote, getLoteAtividade, getLotePorAnimaliaId, getLotePorDataColheita, getlotePorId, createLote, updateLote, deleteLote, getLoteAtividade} from "../models/lote.js";
+import { getLote, getLoteAtividade, getLotePorAnimaliaId, getLotePorDataColheita, getlotePorId, createLote, updateLote, deleteLote, getLoteAtividade, getLotePorDataCriacao } from "../models/lote.js";
 import { getAnimais, getAnimaisPorId } from "../models/animais.js";
 import { loteSchema } from "../schemas/loteSchema.js";
 
@@ -77,6 +77,26 @@ export async function getLoteRentabilidadeController(req, res) {
     return {
       sucesso: false,
       erro: "Erro ao listar lotes com rentabilidade.",
+      detalhes: error.message // opcional, para debug
+    }
+  }
+}
+
+export async function getLotePorDataCriacaoController(req, res) {
+  const { ano } = req.body;
+  const { id_produto } = req.query;
+  try {
+    const produto = await getProdutoPorId(id_produto);
+    const lote = await getLotePorDataCriacao(produto, ano);
+    return {
+      sucesso: true,
+      lote,
+      message: "Lotes criados na data listados com sucesso."
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar lotes criados na data.",
       detalhes: error.message // opcional, para debug
     }
   }
