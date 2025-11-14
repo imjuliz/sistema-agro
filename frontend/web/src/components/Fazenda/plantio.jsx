@@ -129,7 +129,7 @@ const atividades = [
 
 export function TableDemo() {
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Atividades Agrícolas</h2>
@@ -244,7 +244,7 @@ export function TableDemo2() {
     const [categoria, setCategoria] = useState("");
     const [busca, setBusca] = useState("");
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-gray-900 h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Lotes de Vegetais</h2>

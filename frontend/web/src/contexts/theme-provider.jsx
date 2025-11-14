@@ -7,20 +7,12 @@ import { useEffect, useState } from "react";
 export function ThemeProvider({ children }) {
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => {setMounted(true);}, []);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
+  if (!mounted) {return <>{children}</>;}
 
   return (
-    <NextThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem={false}
-    >
+    <NextThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
       {children}
     </NextThemeProvider>
   );

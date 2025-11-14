@@ -1,0 +1,224 @@
+import prisma from "../prisma/client.js";
+
+// BUSCA ---------------------------------------------------------------------------
+export async function getUnidades() { //tem controller
+    try {
+        const unidades = await prisma.unidade.findMany();
+        return {
+            sucesso: true,
+            unidades,
+            message: "Unidades listadas com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar unidades.",
+            detalhes: error.message 
+        };
+    }
+};
+
+export async function getUnidadePorId(id) { //tem controller
+    try {
+        const unidade = await prisma.unidade.findUnique({ where: { id } })
+        return ({
+            sucesso: true,
+            unidade,
+            message: "Unidade listada com sucesso."
+        })
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar unidade por id.",
+            detalhes: error.message 
+        }
+    }
+};
+
+// buscar APENAS fazendas
+export async function getFazendas() {//tem controller
+  try {
+    const fazendas = await prisma.unidade.findMany({
+      where: { tipo: 'Fazenda' },
+      orderBy: { nome: 'asc' },
+    });
+
+    return {
+      sucesso: true,
+      unidades: fazendas,
+      message: "Fazendas listadas com sucesso."
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar fazendas.",
+      detalhes: error.message
+    };
+  }
+}
+
+// buscar APENAS matrizes
+export async function getMatriz() {//tem controller
+  try {
+    const matriz = await prisma.unidade.findMany({
+      where: { tipo: 'Matriz' },
+      orderBy: { nome: 'asc' },
+    });
+
+    return {
+      sucesso: true,
+      unidades: matriz,
+      message: "Matriz listadas com sucesso."
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar matriz.",
+      detalhes: error.message
+    };
+  }
+}
+
+// buscar APENAS lojas
+export async function getLoja() {//tem controller
+  try {
+    const loja = await prisma.unidade.findMany({
+      where: { tipo: 'Loja' },
+      orderBy: { nome: 'asc' },
+    });
+
+    return {
+      sucesso: true,
+      unidades: loja,
+      message: "Loja listadas com sucesso."
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar loja.",
+      detalhes: error.message
+    };
+  }
+}
+
+// CONTAGEM ---------------------------------------------------------------------------
+export const UnidadeService = {//tem controller
+  // Contagem total de unidades do tipo "FAZENDA"
+  async contarFazendas() {
+    return await prisma.unidade.count({
+      where: {
+        tipo: 'FAZENDA',
+      },
+    });
+  },
+
+  // Contagem de fazendas com status ATIVA
+  async contarFazendasAtivas() {//tem controller
+    return await prisma.unidade.count({
+      where: {
+        tipo: 'FAZENDA',
+        status: 'ATIVA',
+      },
+    });
+  },
+
+  // Contagem de fazendas com status INATIVA
+  async contarFazendasInativas() {//tem controller
+    return await prisma.unidade.count({
+      where: {
+        tipo: 'FAZENDA',
+        status: 'INATIVA',
+      },
+    });
+  },
+};
+
+// CRIAR --------------------------------------------------------------------
+export async function createUnidade(data) {//tem controller
+    try {
+        const unidade = await prisma.unidade.create({ data });
+        return ({
+            sucesso: true,
+            unidade,
+            message: "Unidade criada com sucesso."
+        })
+    } catch (error) {
+        return {                           
+            sucesso: false,
+            erro: "Erro ao criar unidade.",
+            detalhes: error.message 
+        }
+    }
+};
+
+// ATUALIZAR ---------------------------------------------------------------------
+export async function updateUnidade(id, data) {
+    const unidade = await prisma.unidade.update({ 
+      where: { id },
+      data: {
+        // gerenteId: data.gerenteId,
+        // nome: data.nome,
+        // endereco: data.endereco,
+        // cidade: data.cidade,
+        // estado: data.estado,
+        // cep: data.cep,
+        // imagemUrl: data.imagemUrl,
+        // areaTotal: data.areaTotal,
+        // areaProdutiva: data.areaProdutiva,
+        // latitude: data.latitude,
+        // longitude: data.longitude,
+        // descricaoCurta: data.descricaoCurta,
+        // tipo: data.tipo,
+        status: data.status
+      }
+    })
+    return ({
+        sucesso: true,
+        unidade,
+        message: "Unidade atualizada com sucesso."
+    })
+};
+
+// DELETAR ---------------------------------------------------------------------
+export async function deleteUnidade(id) {
+    const unidade = await prisma.unidade.delete({ where: { id } })
+    return ({
+        sucesso: true,
+        unidade,
+        message: "Unidade deletada com sucesso."
+    })
+};
+<<<<<<< HEAD:backend/models/unidades.js
+=======
+
+//trocar a utilização desta função DELETE por está: 
+export async function updateStatusUnidade(id, novoStatus) {
+  try {
+    const statusPermitidos = ["ATIVA", "INATIVA", "MANUTENCAO"];
+    if (!statusPermitidos.includes(novoStatus.toUpperCase())) {
+      return {
+        sucesso: false,
+        message: "Status inválido. Use: 'ATIVA', 'INATIVA' ou 'MANUTENCAO'.",
+      };
+    }
+
+    // Atualiza o status da unidade
+    const unidade = await prisma.unidade.update({
+      where: { id: Number(id) },
+      data: { status: novoStatus.toUpperCase() },
+    });
+
+    return {
+      sucesso: true,
+      unidade,
+      message: `Status da unidade atualizado para ${novoStatus}.`,
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao atualizar status da unidade.",
+      error: error.message,
+    };
+  }
+}
+>>>>>>> main:backend/models/Matriz.js

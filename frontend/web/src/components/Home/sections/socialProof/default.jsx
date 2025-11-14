@@ -42,7 +42,7 @@ export default function ThreeDMarqueeDemo() {
   return (
     <Section>
 
-      <div className="mx-auto my-10 max-w-7xl rounded-3xl p-2 ring-1 ring-border">
+      <div className="mx-auto my-10 max-w-7xl rounded-3xl p-2">
       {/* container relativo que serve de referência para os overlays */}
       <div className="relative overflow-hidden">
         {/* marquee "abaixo" das overlays */}

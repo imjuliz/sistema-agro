@@ -2,7 +2,7 @@ import prisma from '../../prisma/client.js';
 
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId) => {
+export const listarSaidas = async (unidadeId) => {//tem controller
     try {
         const saidas = await prisma.Saidas.findMany({
             where: { unidadeId: Number(unidadeId) },
@@ -23,7 +23,7 @@ export const listarSaidas = async (unidadeId) => {
     }
 }
 
-export const buscarProdutoMaisVendido = async (unidadeId) => { //ok
+export const buscarProdutoMaisVendido = async (unidadeId) => { 
     try {
         const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
             by: ["produtoId"],
@@ -71,7 +71,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => { //ok
 };
 
 // Função que soma as vendas do dia atual
-export const somarDiaria = async (unidadeId) => {
+export const somarDiaria = async (unidadeId) => {//tem controller
   const result = await prisma.$queryRaw`
     SELECT COALESCE(SUM("total"), 0) AS total
     FROM "vendas"
@@ -79,13 +79,27 @@ export const somarDiaria = async (unidadeId) => {
       AND "unidade_id" = ${unidadeId};
   `;
 
-  return result[0]?.total ?? 0;
+    return result[0]?.total ?? 0;
 };
 
-export const somarSaidas = async (unidadeId) => { //ok
+export const somarEntradaMensal = async (unidadeId) =>{ //nao funciona
+    const result = await prisma.$queryRaw`
+    SELECT
+  TO_CHAR(DATE_TRUNC('month', "criado_em"), 'YYYY-MM') AS mes,
+  SUM("total") AS total_vendas
+FROM "vendas"
+WHERE "unidade_id" = 1  -- opcional
+GROUP BY DATE_TRUNC('month', "criado_em")
+ORDER BY mes DESC;`;
+
+return result[0]?.total??0;
+}
+
+
+export const somarSaidas = async (unidadeId) => { 
     const result = await prisma.$queryRaw`
     SELECT COALESCE (SUM(valor), 0) AS total
-    from "Saídas"
+    from "Saidas"
     where date("data") = CURRENT_DATE
     and "unidadeId" = ${unidadeId}`;
 
@@ -93,45 +107,40 @@ export const somarSaidas = async (unidadeId) => { //ok
 
 }
 
-export const calcularLucro = async (unidadeId) => { //ok
+export const calcularLucroDoMes = async (unidadeId) => { 
 
-    const result = await prisma.$queryRaw`
+    const unidadeIdNum = Number(unidadeId); // força número
 
-    SELECT
-      COALESCE((SELECT SUM(valor)
-        FROM "Vendas"
-        WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-          AND "unidadeId" = ${unidadeId}), 0) AS total_vendas,
-      
-      COALESCE((SELECT SUM(valor)
-        FROM "Saidas"
-        WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-          AND "unidadeId" = ${unidadeId}), 0) AS total_saidas,
-      
-      (
-        COALESCE((SELECT SUM(valor)
-          FROM "Vendas"
-          WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-            AND "unidadeId" = ${unidadeId}), 0)
-        -
-        COALESCE((SELECT SUM(valor)
-          FROM "Saidas"
-          WHERE DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-            AND "unidadeId" = ${unidadeId}), 0)
-      ) AS lucro;
+//
+      const [vendas] = await prisma.$queryRaw`
+    SELECT COALESCE(SUM(total), 0) AS total
+    FROM "vendas"
+    WHERE "unidade_id" = ${unidadeIdNum}
+      AND DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
   `;
 
-    return result[0];
+  const [saidas] = await prisma.$queryRaw`
+    SELECT COALESCE(SUM(valor), 0) AS total
+    FROM "Saidas"
+    WHERE "unidadeId" = ${unidadeIdNum}
+      AND DATE_TRUNC('month', "data") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
+  `;
+
+  return {
+    total_vendas: vendas.total,
+    total_saidas: saidas.total,
+    lucro: vendas.total - saidas.total,
+  };
 }
 
-export const listarVendas = async (unidadeId) => { //ok
+export const listarVendas = async (unidadeId) => { 
     try {
         const vendas = await prisma.Venda.findMany({
             where: { unidadeId: Number(unidadeId) },
         })
         return ({
             sucesso: true,
-            estoque,
+            vendas,
             message: "Vendas listadas com sucesso!!"
         })
     } catch (error) {
@@ -145,7 +154,7 @@ export const listarVendas = async (unidadeId) => { //ok
 
 //do arquivo Loja.js
 //MOSTRA O SALDO FINAL DO DIA DA UNIDADE
-export const mostrarSaldoF = async (unidadeId) => { //ok
+export const mostrarSaldoF = async (unidadeId) => { 
     try {
         const agora = new Date();
         const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
@@ -187,7 +196,7 @@ export const mostrarSaldoF = async (unidadeId) => { //ok
 };
 
 //agrupado por mês
-export async function contarVendasPorMesUltimos6Meses(unidadeId) { //ok
+export async function contarVendasPorMesUltimos6Meses(unidadeId) { 
     const hoje = new Date();
     const dataLimite = new Date();
     dataLimite.setMonth(dataLimite.getMonth() - 6);
@@ -230,7 +239,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) { //ok
 }
 
 //insert na tabela de venda
-export async function criarVenda(req, res) { //ok
+export async function criarVenda(req, res) { 
     try {
         const { caixaId, usuarioId, unidadeId, pagamento, itens } = req.body;
 
@@ -283,61 +292,61 @@ export async function criarVenda(req, res) { //ok
 }
 
 //obter o saldo geral
-export const calcularSaldoLiquido = async (unidadeId) => { //ok
-  try {
-    const totalCaixas = await prisma.caixa.aggregate({
-      _sum: {saldoFinal: true,},
-      where: {
-        unidadeId: Number(unidadeId),
-        saldoFinal: {not: null,},
-      },
-    });
+export const calcularSaldoLiquido = async (unidadeId) => { 
+    try {
+        const totalCaixas = await prisma.caixa.aggregate({
+            _sum: { saldoFinal: true, },
+            where: {
+                unidadeId: Number(unidadeId),
+                saldoFinal: { not: null, },
+            },
+        });
 
-    const totalSaidas = await prisma.saidas.aggregate({// soma dos valores das saídas
-      _sum: {valor: true,},
-      where: {unidadeId: Number(unidadeId),},
-    });
+        const totalSaidas = await prisma.saidas.aggregate({// soma dos valores das saídas
+            _sum: { valor: true, },
+            where: { unidadeId: Number(unidadeId), },
+        });
 
-    const somaCaixas = Number(totalCaixas._sum.saldoFinal || 0);
-    const somaSaidas = Number(totalSaidas._sum.valor || 0);
-    const saldoLiquido = somaCaixas - somaSaidas; // cálculo do saldo líquido
+        const somaCaixas = Number(totalCaixas._sum.saldoFinal || 0);
+        const somaSaidas = Number(totalSaidas._sum.valor || 0);
+        const saldoLiquido = somaCaixas - somaSaidas; // cálculo do saldo líquido
 
-    return {
-      sucesso: true,
-      unidadeId: Number(unidadeId),
-    //   totalCaixas: somaCaixas.toFixed(2),
-    //   totalSaidas: somaSaidas.toFixed(2),
-      saldoLiquido: saldoLiquido.toFixed(2),
-      message: "Saldo líquido calculado com sucesso!",
-    };
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao calcular saldo líquido",
-      detalhes: error.message,
-    };
-  }
+        return {
+            sucesso: true,
+            unidadeId: Number(unidadeId),
+            //   totalCaixas: somaCaixas.toFixed(2),
+            //   totalSaidas: somaSaidas.toFixed(2),
+            saldoLiquido: saldoLiquido.toFixed(2),
+            message: "Saldo líquido calculado com sucesso!",
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao calcular saldo líquido",
+            detalhes: error.message,
+        };
+    }
 };
 
 //select de tudo em saidas
-export async function listarSaidasPorUnidade(unidadeId) { //ok
-  try {
-    const saidas = await prisma.saidas.findMany({
-      where: {unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
-      orderBy: {data: "desc",},
-    });
+export async function listarSaidasPorUnidade(unidadeId) { 
+    try {
+        const saidas = await prisma.saidas.findMany({
+            where: { unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
+            orderBy: { data: "desc", },
+        });
 
-    return {
-      sucesso: true,
-      unidadeId: Number(unidadeId),
-      saidas: saidas,
-    };
-  } catch (error) {
-    console.error("Erro ao buscar saidas", error);
-    return {
-      sucesso: false,
-      erro: error.message,
-    };
-  }
+        return {
+            sucesso: true,
+            unidadeId: Number(unidadeId),
+            saidas: saidas,
+        };
+    } catch (error) {
+        console.error("Erro ao buscar saidas", error);
+        return {
+            sucesso: false,
+            erro: error.message,
+        };
+    }
 }
 

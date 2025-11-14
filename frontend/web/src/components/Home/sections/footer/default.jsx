@@ -1,13 +1,11 @@
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
-
-import LaunchUI from "@/components/Home/logos/launch-ui";
 import { Footer, FooterBottom, FooterColumn, FooterContent } from "@/components/ui/footer";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 
 export default function FooterSection(props) {
   const {
-    logo = <LaunchUI />,
+    logo = <img src={'/img/ruraltech-logo.svg'} className="h-6"/>,
     name = "RuralTech",
     columns = [
       {
@@ -28,7 +26,7 @@ export default function FooterSection(props) {
     ],
     copyright = "© 2025 RuralTech. Todos os direitos reservados",
     policies = [
-      { text: "Politica de Privacidade", href: '/politicaPrivacidade' },
+      { text: "Política de Privacidade", href: '/politicaPrivacidade' },
       { text: "Termos de Uso", href: '/termosDeUso' },
     ],
     showModeToggle = true,

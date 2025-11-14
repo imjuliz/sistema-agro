@@ -15,10 +15,10 @@ export default function Hero(props) {
   const {
     title = "Gestão e rastreabilidade inteligente para o agronegócio",
     description =
-      "Centralize suas fazendas e lojas em uma única plataforma, com controle total da produção, vendas e qualidade dos produtos.",
+    "Centralize suas fazendas e lojas em uma única plataforma, com controle total da produção, vendas e qualidade dos produtos.",
     mockup = (
       <Screenshot
-        srcLight="/dashboard-light.png"
+        srcLight="/img/rebanho.jpg"
         srcDark="/img/rebanho.jpg"
         alt="Launch UI app screenshot"
         width={1248}
@@ -32,7 +32,7 @@ export default function Hero(props) {
           {/* New version of Launch UI is out! */}
         </span>
         <p className="flex items-center gap-1">
-        Leve seu agronegócio para o próximo nível
+          Leve seu agronegócio para o próximo nível
           {/* <ArrowRightIcon className="size-3" /> */}
         </p>
       </Badge>
@@ -47,7 +47,8 @@ export default function Hero(props) {
         href: '/sobreNos',
         text: "Conheça a RuralTech",
         variant: "glow",
-        icon: <Github className="mr-2 size-4" />,
+        // icon: <img src='/img/ruraltech-logobranco.svg' width={20}/>,
+        icon: <Screenshot srcLight="/img/ruraltech-logopreto.svg" srcDark="/img/ruraltech-logobranco.svg" alt="RuralTech Logo" width={20} height={20} />
       },
     ],
     className,

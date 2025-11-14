@@ -1,11 +1,11 @@
 export const siteConfig = {
-  name: "Launch UI",
-  url: "https://launchuicomponents.com",
+  name: "RuralTech",
+  url: "https://sistema-agro.vercel.app/",
   getStartedUrl:
     "https://launchuicomponents.com/docs/getting-started/introduction",
-  ogImage: "https://launchuicomponents.com/og.jpg",
+  ogImage: "/img/ruraltech-logo.svg",
   description:
-    "Landing page components built with React, Shadcn/ui and Tailwind that will make your website feel premium.",
+    "Centralize suas fazendas e lojas em uma única plataforma, com controle total da produção, vendas e qualidade dos produtos.",
   links: {
     twitter: "https://twitter.com/mikolajdobrucki",
     github: "https://github.com/launch-ui/launch-ui",

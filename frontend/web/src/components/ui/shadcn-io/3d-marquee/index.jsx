@@ -57,18 +57,14 @@ export default function SocialProofMarquee({ testimonials }) {
     <>
       <section aria-label="Social proof" className="py-12">
         <div className="max-w-6xl mx-auto text-center mb-8">
-          <h2 className="text-3xl font-semibold text-black dark:text-white">Histórias de quem já confia na RuralTech</h2>
+          <h2 className="text-3xl sm:text-5xl font-semibold text-black dark:text-white">Histórias de quem <br />já confia na RuralTech</h2>
           <p className="mt-2 text-sm text-gray-300">Da fazenda à prateleira, veja como nossa solução está transformando o agronegócio.</p>
         </div>
 
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Row 1: move left */}
           <div className="marquee">
-            <div
-              className="marquee__track marquee-animate-left"
-              style={{ animationDuration: "28s" }}
-              aria-hidden="true"
-            >
+            <div className="marquee__track marquee-animate-left" style={{ animationDuration: "28s" }} aria-hidden="true" >
               {doubled.map((t, i) => (
                 <Card key={`r1-${i}`} t={t} />
               ))}

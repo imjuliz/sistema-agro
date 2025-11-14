@@ -21,7 +21,6 @@ const equipe = [
     avatar: '/api/placeholder/48/48',
     isPrimary: true,
     lastContact: '2 hours ago',
-    notes: 'Key decision maker for technical roles. Prefers candidates with strong React experience.'
   },
   {
     id: 2,
@@ -34,7 +33,6 @@ const equipe = [
     avatar: '/api/placeholder/48/48',
     isPrimary: false,
     lastContact: '1 day ago',
-    notes: 'Handles onboarding and benefits discussions. Available for final interviews.'
   },
   {
     id: 3,
@@ -47,7 +45,6 @@ const equipe = [
     avatar: '/api/placeholder/48/48',
     isPrimary: false,
     lastContact: '3 days ago',
-    notes: 'Internal TA partner. Coordinates interview schedules and candidate feedback.'
   },
   {
     id: 4,
@@ -60,7 +57,6 @@ const equipe = [
     avatar: '/api/placeholder/48/48',
     isPrimary: false,
     lastContact: '1 week ago',
-    notes: 'Decision maker for product roles. Prefers candidates with B2B SaaS experience.'
   }
 ];
 
@@ -318,15 +314,6 @@ export function EquipeTab() {
                   </div>
                 </div>
               </div>
-
-              {eqp.notes && (
-                <div className="mb-4">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Notes</div>
-                  <div className="text-sm bg-muted/50 p-3 rounded-lg">
-                    {eqp.notes}
-                  </div>
-                </div>
-              )}
 
               <div className="flex items-center gap-2 pt-4 border-t">
                 {/* <Button size="sm">Log Activity</Button> */}

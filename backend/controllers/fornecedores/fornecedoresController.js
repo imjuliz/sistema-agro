@@ -1,5 +1,39 @@
 import prisma from "../../prisma/client";
 import { calcularFornecedores } from "../../models/unidade-de-venda/fornecedores";
+
+export const listarFornecedoresController = async (req, res) => {
+  try {
+    const unidadeId = req.session?.usuario?.unidadeId;
+
+    if (!unidadeId) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: "Sessão inválida ou unidade não identificada.",
+      });
+    }
+
+    const resultado = await listarFornecedores(unidadeId);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: resultado.erro || "Erro ao listar fornecedores.",
+        detalhes: resultado.detalhes,
+      });
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao listar fornecedores:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao listar fornecedores.",
+      detalhes: error.message,
+    });
+  }
+};
+
+
 //calcular fornecedores -- rota feita
 export const calcularFornecedoresController = async (req, res) => {
   try {

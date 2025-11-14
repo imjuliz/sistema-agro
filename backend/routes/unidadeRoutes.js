@@ -1,5 +1,5 @@
 import express from "express";
-import { getUnidadesController, getUnidadePorIdController, createUnidadeController, updateUnidadeController, deleteUnidadeController, contarFazendasController, getFazendasController, getLojaController, getMatrizController } from "../controllers/UnidadesController.js";
+import { getUnidadesController, getUnidadePorIdController, createUnidadeController, updateUnidadeController, deleteUnidadeController, contarFazendasController, getFazendasController, getLojaController, getMatrizController } from "../controllers/MatrizController.js";
 import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();

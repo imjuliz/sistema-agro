@@ -1,7 +1,7 @@
 // import PrismaClient from '../../PrismaClient/client'
-import { PrismaClient } from '../../prisma/generated/index.js';
-import prisma from '../../prisma/client.js'
-
+// import { PrismaClient } from '../../prisma/generated/index.js';
+// import prisma from '../../prisma/client.js'
+import { PrismaClient } from '@prisma/client';
 //**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
 
 //DASHBOARD ------------------------------------------------------------------------------------------------------------------
@@ -214,3 +214,6 @@ export async function criarVenda(req, res) {
         });
     }
 }
+
+//------------------------NOVAS FUNÇÕES - 11/11------------------------
+

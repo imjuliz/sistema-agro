@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,12 +16,15 @@ import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 //icons-----
-import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin, BookOpen, MessageSquare, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, ArrowRight } from "lucide-react";
+import { Mail, Phone, BookOpen, MessageSquare, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, ArrowRight, User, Send } from "lucide-react";
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import EmailIcon from '@mui/icons-material/Email';
 import LocalPhoneIcon from '@mui/icons-material/LocalPhone';
 import { green } from '@mui/material/colors';
 import FmdGoodIcon from '@mui/icons-material/FmdGood';
+import { Checkbox } from "@/components/ui/checkbox";
+import Link from "next/link";
+
 const defaultFeatures = [
     {
         icon: Rocket,
@@ -39,16 +43,16 @@ const defaultFeatures = [
     },
 ];
 
-const defaultStats = [
-    { number: "10M+", label: "Professionals Empowered" },
-    { number: "150+", label: "Countries Reached" },
-    { number: "98%", label: "Client Satisfaction" },
-    { number: "24/7", label: "Support Available" },
-];
+// const defaultStats = [
+//     { number: "10M+", label: "Professionals Empowered" },
+//     { number: "150+", label: "Countries Reached" },
+//     { number: "98%", label: "Client Satisfaction" },
+//     { number: "24/7", label: "Support Available" },
+// ];
 
 export default function sobreNos({
     // Hero section - inline defaults for simple strings
-    badgeText = "Sobre nós",
+    badgeText = "Conheça a RuralTech",
     title = "Revolucionando o",
     titleHighlight = "Futuro do Agronegócio",
     description = "A RuralTech nasceu com o propósito de conectar tecnologia e campo. Nosso sistema de gestão e rastreabilidade transforma dados em decisões estratégicas, garantindo transparência, qualidade e eficiência em toda a cadeia produtiva.",
@@ -77,13 +81,13 @@ export default function sobreNos({
     ctaDescription = "A RuralTech acredita que o agronegócio do futuro é digital, sustentável e transparente. Nosso sistema foi projetado para conectar todas as pontas da cadeia produtiva, promovendo um novo padrão de excelência e confiança no setor agrícola.",
     ctaButton1Text = "Conheça o Sistema",
     ctaButton2Text = "Ver Demonstração",
-    ctaImageSrc = "/img/agricultorUtilizandoTablet.jpg",
+    ctaImageSrc = "/img/mulher-tablet.jpg",
     ctaImageAlt = "Agricultor utilizando tablet no campo",
     ctaImageOverlayText = "Sistema RuralTech",
     ctaImageOverlaySubtext = "Gestão, rastreabilidade e eficiência para o agronegócio",
 
     // Stats section
-    stats = defaultStats,
+    // stats = defaultStats,
 }) {
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text)
@@ -93,23 +97,23 @@ export default function sobreNos({
 
     const cards = [
         {
-            icon: <BookOpen className="w-8 h-8 text-neutral-500" />,
-            title: "Endereço",
+            icon: <Mail className="w-4 h-4 text-neutral-500" />,
+            title: "ruraltech91@gmail.com",
             description: "Estamos aqui para ajudar com qualquer dúvida ou código.",
             linkText: "Contatar suporte",
-            linkHref: "#",
+            linkHref: "mailto:ruraltech91@gmail.com",
             highlight: false,
         },
         {
-            icon: <MessageSquare className="w-8 h-8 text-neutral-500" />,
-            title: "Telefone",
+            icon: <WhatsAppIcon className="w-4 h-4 text-neutral-500" />,
+            title: "(11) 98765-4321",
             description: "Pesquise em nosso FAQ respostas para qualquer dúvida que você possa ter.",
             linkText: "Visitar FAQ",
             linkHref: "#",
             highlight: false,
         },
         {
-            icon: <Wrench className="w-8 h-8 text-neutral-500" />,
+            icon: <Wrench className="w-4 h-4 text-neutral-500" />,
             title: "Email",
             description: "Confira nosso guia de início rápido para desenvolvedores.",
             linkText: "Contatar vendas",
@@ -117,6 +121,33 @@ export default function sobreNos({
             highlight: false, // esse ficará com fundo cinza claro
         },
     ];
+
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        phone: "",
+        email: "",
+        message: "",
+        agreedToPrivacy: false
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        // Reset form
+        setFormData({
+            firstName: "",
+            lastName: "",
+            phone: "",
+            email: "",
+            message: "",
+            agreedToPrivacy: false
+        });
+    };
+
+    const handleChange = (field, value) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+    };
 
     return (
         <main className="container mx-auto bg-background ">
@@ -168,9 +199,9 @@ export default function sobreNos({
                     </div>
                     <div className="grid gap-8 md:grid-cols-3 md:gap-10">
                         {features.map((item, index) => (
-                            <div key={index} className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-[#d6e59f] hover:shadow-sm">
-                                <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 transition-all group-hover:bg-[#d6e59f]">
-                                    <item.icon className="size-5 text-primary md:size-6" />
+                            <div key={index} className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-[#99BF0F] hover:shadow-sm">
+                                <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 group-hover:bg-[#99BF0F]/10 dark:group-hover:bg-[#99BF0F]/30 transition-all group-hover:border-[#99BF0F]">
+                                    <item.icon className="size-5 text-primary md:size-6 group-hover:stroke-[#99BF0F]" />
                                 </div>
                                 <h3 className="mb-2 text-xl font-semibold">{item.title}</h3>
                                 <p className="mb-4 text-muted-foreground">{item.description}</p>
@@ -209,16 +240,16 @@ export default function sobreNos({
                     </div>
                 </div>
                 {/* cards */}
-                <div className="grid gap-8 md:grid-cols-4">
+                {/* <div className="grid gap-8 md:grid-cols-4">
                     {stats.map((stat, index) => (
                         <div key={index} className="flex flex-col items-center rounded-lg border border-border p-6 text-center">
                             <p className="text-3xl font-bold md:text-4xl">{stat.number}</p>
                             <p className="text-sm text-muted-foreground">{stat.label}</p>
                         </div>
                     ))}
-                </div>
+                </div> */}
                 {/* fale conosco */}
-                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-muted/80 to-muted/30 p-6 md:p-10">
+                {/* <div className="overflow-hidden rounded-lg bg-gradient-to-br from-muted/80 to-muted/30 p-6 md:p-10">
                     <h2 className="mb-3 text-3xl font-bold md:text-4xl">Fale conosco</h2>
                     <div>
                         <Grid container spacing={2}>
@@ -289,53 +320,91 @@ export default function sobreNos({
                             </Grid>
                         </Grid>
                     </div>
-                </div>
+                </div> */}
 
-                <section className="w-full bg-white dark:bg-neutral-900 rounded-2xl shadow-md overflow-hidden">
-                    <div className="grid md:grid-cols-2">
-                        {/* 🗺️ Mapa */}
-                        <div className="h-[400px] md:h-auto">
-                            <iframe title="Localização"  width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086302231854!2d-122.40107092459283!3d37.77665667198132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858088d35df8e9%3A0xc8b2b3c0b48a0b49!2s123%20Market%20St%2C%20San%20Francisco%2C%20CA%2094103!5e0!3m2!1spt-BR!2sbr!4v1680293848340!5m2!1spt-BR!2sbr"
-                              ></iframe>
-                        </div>
+                <div className="bg-background min-h-screen">
+                    <div className="mx-auto  px-4 py-12 sm:px-6 lg:px-8">
+                        <div className="grid items-start gap-16 lg:grid-cols-2">
+                            <div className="space-y-8">
+                                <div className="space-y-4">
+                                    <h1 className="text-foreground text-3xl leading-tight font-bold lg:text-4xl">Vamos conversar sobre<br />Seu agronegócio</h1>
+                                    <p className="text-muted-foreground leading-relaxed">Se você está curioso sobre agronegócios ou apenas precisa de uma orientação sincera — nossos especialistas estão aqui para ajudar.</p>
+                                </div>
 
-                        {/* 📩 Informações e Formulário */}
-                        <div className="p-8 flex flex-col justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-3">Envie uma mensagem rápida</h3>
-                                <form className="space-y-3">
-                                    <Input placeholder="Seu e-mail" type="email" required />
-                                    <Textarea placeholder="Sua mensagem" required />
-                                    <Button className="w-full bg-black text-white hover:bg-neutral-800">
-                                        Enviar
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="relative">
+                                            <User className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
+                                            <Input placeholder="Nome" value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                        </div>
+                                        <div className="relative">
+                                            <User className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
+                                            <Input placeholder="Sobrenome" value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                        </div>
+                                    </div>
+
+                                    <div className="relative">
+                                        <Phone className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
+                                        <Input placeholder="Telefone" type="tel" value={formData.phone} onChange={(e) => handleChange("phone", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                    </div>
+
+                                    <div className="relative">
+                                        <Mail className="text-muted-foreground absolute top-3 left-3 h-5 w-5" />
+                                        <Input placeholder="Email" type="email" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} className="border-border bg-card h-12 pl-10" required />
+                                    </div>
+
+                                    <div>
+                                        <Textarea placeholder="Sua mensagem" value={formData.message} onChange={(e) => handleChange("message", e.target.value)} className="border-border bg-card min-h-32 resize-none" required />
+                                    </div>
+
+                                    <div className="flex items-center space-x-3">
+                                        <Checkbox id="privacy" checked={formData.agreedToPrivacy} onCheckedChange={(checked) => handleChange("agreedToPrivacy", checked)} />
+                                        <label htmlFor="privacy" className="text-muted-foreground text-sm leading-relaxed">
+                                            Eu li e concordo com a{" "}
+                                            <Link href="#" className="underline">
+                                                política de privacidade
+                                            </Link>
+                                        </label>
+                                    </div>
+
+                                    <Button type="submit" size="lg">
+                                        Enviar<Send />
                                     </Button>
                                 </form>
                             </div>
-                            <hr className="my-6" />
-                            <div className="flex justify-center gap-4 mt-6 text-neutral-500">
-                                <a href="#"><Facebook /></a>
-                                <a href="#"><Instagram /></a>
-                                <a href="#"><Twitter /></a>
-                                <a href="#"><Linkedin /></a>
+
+                            {/* Right Column - Hero Image */}
+                            <div className="relative h-full">
+                                <div className="overflow-hidden h-full rounded-2xl shadow-lg">
+                                    {/* <img
+                                        src="https://plus.unsplash.com/premium_photo-1716603741447-7fcd7ddeba39?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                                        alt="Wind turbine over coastal landscape representing sustainable energy solutions"
+                                        className="h-full w-full object-cover"
+                                    /> */}
+
+                                    <iframe title="Localização" width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086302231854!2d-122.40107092459283!3d37.77665667198132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858088d35df8e9%3A0xc8b2b3c0b48a0b49!2s123%20Market%20St%2C%20San%20Francisco%2C%20CA%2094103!5e0!3m2!1spt-BR!2sbr!4v1680293848340!5m2!1spt-BR!2sbr"
+                                    ></iframe>
+                                </div>
                             </div>
+
+
                         </div>
-                    </div>
-                </section>
-                <section className="w-full py-12">
-                    <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {cards.map((card, index) => (
-                            <div key={index} className={`flex flex-col items-center text-center p-8 rounded-xl border transition-colors
-              ${card.highlight ? "bg-neutral-50 dark:bg-neutral-800" : "bg-white dark:bg-neutral-900"} hover:bg-neutral-100 dark:hover:bg-neutral-800`}>
-                                {card.icon}
-                                <h3 className="mt-4 text-lg font-semibold text-neutral-900 dark:text-white">{card.title}</h3>
-                                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{card.description}</p>
-                                <a href={card.linkHref} className="mt-4 text-sm font-medium text-neutral-900 dark:text-white hover:underline">
-                                    {card.linkText} →
-                                </a>
+                        <section className="w-full py-12">
+                            <div className="mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {cards.map((card, index) => (
+                                    <div key={index} className={`flex flex-row gap-4 items-center text-center p-4 rounded-xl border transition-colors ${card.highlight ? "bg-neutral-50 dark:bg-neutral-800" : "bg-white dark:bg-neutral-900"} hover:bg-neutral-100 dark:hover:bg-neutral-800`}>
+                                        {card.icon}
+                                        <a href={card.linkHref} className="text-sm font-semibold text-neutral-900 dark:text-white hover:underline">{card.title} →</a>
+                                        {/* <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{card.description}</p>
+                                        <a  className="mt-4 text-sm font-medium text-neutral-900 dark:text-white hover:underline">
+                                            {card.title} 
+                                        </a> */}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </section>
                     </div>
-                </section>
+                </div>
             </div>
             <Footer />
         </main>

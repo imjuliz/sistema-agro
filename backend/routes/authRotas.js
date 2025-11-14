@@ -1,5 +1,6 @@
 import express from "express";
-import { cadastrarSeController, loginController, refreshController, logoutController, esqSenhaController, codigoController, updateSenhaController } from "../controllers/UserController.js";
+import { cadastrarSeController, loginController, refreshController, logoutController, esqSenhaController, codigoController, updateSenhaController, meController } from "../controllers/UserController.js";
+import { auth } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -8,6 +9,8 @@ router.post("/cadastrar", cadastrarSeController);
 router.post('/login', loginController);
 router.post('/refresh', refreshController);
 router.post('/logout', logoutController);
+
+router.get('/me', auth(), meController); // retorna dados públicos do usuário autenticado
 
 router.post("/esqSenha", esqSenhaController);
 
