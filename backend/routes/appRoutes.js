@@ -7,10 +7,11 @@ import { auth } from '../middlewares/authMiddleware.js'
 // controllers --------------------------------------------------------------------
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
-import { mostrarSaldoFController,buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController,calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController, somarEntradaMensalController, listarVendasController } from "../controllers/financeiro/financeiroController.js";
-import { consultarLoteController, listarAtividadesLoteController, listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController,calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController, somarEntradaMensalController, listarVendasController } from "../controllers/financeiro/financeiroController.js";
+import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
-
+import { verContratosController, listarFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
+import { listarFornecedoresController, verContratosController, calcularFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
 // tradução
 router.post('/translate', translateText)
 
@@ -31,6 +32,11 @@ router.get("/somarDiaria/:unidadeId", somarDiariaController);
 router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
 router.get("/somarSaidas/:unidadeId", somarSaidasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
+
+router.get("/verContratos/:unidadeId", verContratosController);
+router.get("/verFornecedores/:unidadeId", listarFornecedoresController);
+router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
+
 // rotas usadas para _____ ---------------------------------------------------------------------------------
 router.delete('/usuarios/:userId', deletarUsuarioController)
 router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
