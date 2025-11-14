@@ -14,7 +14,7 @@ export async function getUnidadesController(req, res) {
         return {
             sucesso: false,
             erro: "Erro ao listar unidades.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message
         }
     }
 };
@@ -32,7 +32,7 @@ export async function getUnidadePorIdController(req, res) {
         return {
             sucesso: false,
             erro: "Erro ao listar unidade por id.",
-            detalhes: error.message // opcional, para debug
+            detalhes: error.message 
         }
     }
 };
@@ -40,9 +40,7 @@ export async function getUnidadePorIdController(req, res) {
 export async function getFazendasController(req, res) {
     try {
         const resultado = await getFazendas();
-        if (!resultado.sucesso) {
-            return res.status(500).json(resultado);
-        }
+        if (!resultado.sucesso) {return res.status(500).json(resultado);}
         return res.json(resultado);
     } catch (error) {
         return res.status(500).json({
@@ -56,9 +54,7 @@ export async function getFazendasController(req, res) {
 export async function getLojaController(req, res) {
     try {
         const resultado = await getLoja();
-        if (!resultado.sucesso) {
-            return res.status(500).json(resultado);
-        }
+        if (!resultado.sucesso) {return res.status(500).json(resultado);}
         return res.json(resultado);
     } catch (error) {
         return res.status(500).json({
@@ -72,9 +68,7 @@ export async function getLojaController(req, res) {
 export async function getMatrizController(req, res) {
     try {
         const resultado = await getMatriz();
-        if (!resultado.sucesso) {
-            return res.status(500).json(resultado);
-        }
+        if (!resultado.sucesso) {return res.status(500).json(resultado);}
         return res.json(resultado);
     } catch (error) {
         return res.status(500).json({

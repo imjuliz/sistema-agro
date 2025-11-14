@@ -6,9 +6,7 @@ export const listarFuncionariosController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({sucesso: false,erro: "Sessão inválida ou unidade não identificada.",});
-    }
+    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: "Sessão inválida ou unidade não identificada.",});}
 
     const resultado = await listarFuncionarios(unidadeId);
 
@@ -36,9 +34,7 @@ export const listarAdminsController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({sucesso: false,erro: "Sessão inválida ou unidade não identificada."});
-    }
+    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: "Sessão inválida ou unidade não identificada."});}
 
     const resultado = await listarAdmins(unidadeId);
 
