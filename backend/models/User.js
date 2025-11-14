@@ -81,7 +81,13 @@ export async function getUserById(id) {
       status: true,
       criadoEm: true,
       atualizadoEm: true,
-      // adicione outros campos públicos que quiser expor
+      perfil: {      // <<< traz o objeto perfil
+        select: {
+          id: true,
+          funcao: true,
+          descricao: true,
+        },
+      },
     },
   });
 
