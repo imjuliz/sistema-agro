@@ -130,7 +130,7 @@ export async function loginController(req, res) {
       sameSite: isProd ? 'none' : 'lax',
       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
-      domain: isProd ? '.vercel.app' : undefined,
+      // domain: isProd ? '.vercel.app' : undefined,
     };
 
     // enviar cookie de refresh
@@ -251,7 +251,7 @@ export async function refreshController(req, res) {
       sameSite: isProd ? 'none' : 'lax',
       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
-      domain: isProd ? '.vercel.app' : undefined,
+      // domain: isProd ? '.vercel.app' : undefined,
     };
 
     // enviar novo cookie
