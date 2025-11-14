@@ -8,7 +8,7 @@ import { auth } from '../middlewares/authMiddleware.js'
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { mostrarSaldoFController,buscarProdutoMaisVendidoController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController,calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController, somarEntradaMensalController, listarVendasController } from "../controllers/financeiro/financeiroController.js";
-import { listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { consultarLoteController, listarAtividadesLoteController, listarEstoqueController, listarProdutosController, somarQtdTotalEstoqueController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
 
 // tradução
@@ -34,6 +34,18 @@ router.get("/calcularLucro/:unidadeId", calcularLucroController);
 // rotas usadas para _____ ---------------------------------------------------------------------------------
 router.delete('/usuarios/:userId', deletarUsuarioController)
 router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
+
+//estoques, lotes, produtos, etc
+router.get("/atividadesLote", listarAtividadesLoteController);
+router.get("/consultarLote", consultarLoteController);
+
+//financeiro (de todos os perfis)
+
+
+//fornecedores
+
+
+//perfil
 
 
 

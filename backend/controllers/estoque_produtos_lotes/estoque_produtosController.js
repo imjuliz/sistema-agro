@@ -1,5 +1,5 @@
 import prisma from "../../prisma/client.js";
-import { somarQtdTotalEstoque,  getEstoque,  getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos, mostrarEstoque } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
+import { somarQtdTotalEstoque,  getEstoque,  getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos, mostrarEstoque, listarAtividadesLote, consultarLote } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
  
 
 //BUSCAR PRODUTO MAIS VENDIDO
@@ -221,4 +221,29 @@ export const mostrarEstoqueController = async(req, res) =>{
         console.error(error);
         res.status(500).json({erro: 'Erro ao mostrar estoque da unidade de venda.'})
     }
+}
+
+export const listarAtividadesLoteController = async(req, res) =>{
+  try{
+    const unidadeId = req.params.unidadeId;
+    const atividades = await listarAtividadesLote(unidadeId);
+    return res.status(200).json(atividades);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({erro: "Erro ao listar atividades realizadas nos lotes."})
+  }
+}
+
+export const consultarLoteController = async (req, res) =>{
+  try{
+    const unidadeId = req.params.unidadeId;
+    const loteId = req.body.loteId;
+
+    const atividadesLote = await consultarLote(unidadeId, loteId);
+    return res.status(200).json(atividadesLote);
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({erro: "Erro ao consultar atividades do lote."})
+  }
 }
