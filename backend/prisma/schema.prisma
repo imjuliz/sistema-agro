@@ -209,7 +209,7 @@ model Estoque {
 
 model ProdutoFornecedor {
   id               Int      @id @default(autoincrement())
-  id_contrato Int
+  id_contrato      Int
   produtoId        Int      @map("produto_id")
   quantidade Int
   unidade_medida UnidadesDeMedida
@@ -220,6 +220,7 @@ model ProdutoFornecedor {
 
   produto    Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade)
   fornecedor Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  contrato Contratos @relation(fields: [id_contrato], references: [id], onDelete: Restrict)
 
   @@unique([produtoId, fornecedorId])
   @@map("produtos_fornecedores")
@@ -386,7 +387,7 @@ model Animais {
 
 model Plantios {
   id               Int      @id @default(autoincrement())
-  categoria        String   @db.VarChar(100) @unique  // qual semente foi plantada (milho, soja, feijão)
+  categoria        String   @db.VarChar(100)  // qual semente foi plantada (milho, soja, feijão)
   areaHectares     Float    @map("area_hectares") // área plantada em hectares  
   custo            Int?      // custo para venda da verdura
   unidadeId        Int
@@ -415,6 +416,8 @@ model Contratos {
 
   // produto com nome de relação para casar com Produto.contratos
   produto Produto @relation("ContratoProduto", fields: [produto_id], references: [id], onDelete: Restrict)
+
+  produtos_fornecedores ProdutoFornecedor[]
 
     @@map("contratos")
 

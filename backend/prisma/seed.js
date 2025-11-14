@@ -144,9 +144,9 @@ async function main() {
         console.log("Criando perfis...");
         const perfis = await prisma.perfil.createMany({
             data: [
-                { nome: "gerente_matriz", descricao: "Gerente da matriz ou administração central" },
-                { nome: "gerente_fazenda", descricao: "Gerente responsável pela fazenda" },
-                { nome: "gerente_loja", descricao: "Gerente responsável pela loja ou filial" },
+                { nome: "gerente_matriz", descricao: "Gerente da matriz ou administração central", funcao: "MATRIZ" },
+                { nome: "gerente_fazenda", descricao: "Gerente responsável pela fazenda", funcao: "PRODUCAO" },
+                { nome: "gerente_loja", descricao: "Gerente responsável pela loja ou filial", funcao: "VENDA" },
             ],
             skipDuplicates: true,
         });
