@@ -35,9 +35,7 @@ export const calcularMediaProducaoPorLoteController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({sucesso: false,message: "Usuário não possui unidade vinculada à sessão."});
-    }
+    if (!unidadeId) {return res.status(401).json({sucesso: false,message: "Usuário não possui unidade vinculada à sessão."})}
 
     const { loteId } = req.params;
 
@@ -77,9 +75,7 @@ export const buscarAtividadesDoLoteController = async (req, res) => {
 
     const resultado = await buscarAtividadesDoLote(loteId);
 
-    if (!resultado.sucesso) {
-      return res.status(400).json(resultado);
-    }
+    if (!resultado.sucesso) {return res.status(400).json(resultado);}
 
     return res.json({
       sucesso: true,
@@ -172,8 +168,7 @@ export const gerarRelatorioProducaoController = async (req, res) => {
     const unidadeId = req.session?.usuario?.unidadeId;
     const { loteId } = req.params;
 
-    if (!unidadeId) {
-      return res.status(401).json({sucesso: false,message: "Usuário não possui unidade vinculada à sessão."})}
+    if (!unidadeId) {return res.status(401).json({sucesso: false,message: "Usuário não possui unidade vinculada à sessão."})}
 
     // Buscar informações básicas do lote
     const lote = await prisma.lote.findFirst({
