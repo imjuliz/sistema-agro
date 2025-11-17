@@ -1,7 +1,3 @@
-// generator client {
-//   provider = "prisma-client-js"
-//   output   = "./generated"
-// }
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,70 +12,84 @@ datasource db {
 // ============================================
 // TABELAS BASE
 // ============================================
-
 model Perfil {
-  id        Int       @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   funcao    TipoPerfil
-  descricao String    @db.Text
+  descricao String     @db.Text
   usuarios  Usuario[]
 
   @@map("perfis")
 }
 
+// Fornecedor externo (empresa)
 model Fornecedor {
-  id               Int                 @id @default(autoincrement())
-  unidadeId        Int?                @map("unidade_id")
-  nomeEmpresa      String              @map("nome_empresa") @db.VarChar(200)
-  descricaoEmpresa String              @map("descricao_empresa") @db.Text
-  material         String              @db.VarChar(150)
-  cnpjCpf          String              @unique @map("cnpj_cpf") @db.VarChar(20)
-  contato          String              @db.VarChar(100)
-  email            String              @db.VarChar(150)
-  endereco         String              @db.Text
-  criadoEm         DateTime            @default(now()) @map("criado_em")
-  atualizadoEm     DateTime            @default(now()) @updatedAt @map("atualizado_em")
-  produtos         ProdutoFornecedor[]
+  id               Int      @id @default(autoincrement())
+  unidadeId        Int?     @map("unidade_id") // se for vinculado a uma unidade interna (opcional)
+  nomeEmpresa      String   @map("nome_empresa") @db.VarChar(200)
+  descricaoEmpresa String   @map("descricao_empresa") @db.Text
+  material         Json?
+  cnpjCpf          String?  @unique @map("cnpj_cpf") @db.VarChar(20)
+  email            String?  @db.VarChar(150)
+  endereco         String?  @db.Text
+  criadoEm         DateTime @default(now()) @map("criado_em")
+  atualizadoEm     DateTime @default(now()) @updatedAt @map("atualizado_em")
 
-  Unidade Unidade? @relation(fields: [unidadeId], references: [id])
+  // relações
+  unidade           Unidade?            @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  produtos          ProdutoFornecedor[]
+  produtosRecebidos Produto[]           @relation("FornecedorProdutosRecebidos") // acessar diretamente produtos que tiveram este fornecedor como origem
+  contratos         Contratos[]         @relation("ContratoFornecedorExterno")
 
   @@map("fornecedores")
 }
 
 model Unidade {
-  id                 Int         @id @default(autoincrement())
-  gerenteId          Int?        @map("gerente_id")
-  nome               String      @db.VarChar(100)
-  endereco           String      @db.Text
-  cidade             String?     @db.VarChar(100)
-  estado             String?     @db.VarChar(100)
-  cep                String?     @db.VarChar(20)
-  imagemUrl          String?     @map("imagem_url") @db.VarChar(1000)
-  areaTotal          Decimal?    @map("area_total") @db.Decimal(12,3)
-  areaProdutiva      Decimal?    @map("area_produtiva") @db.Decimal(12,3)
-  latitude           Float?      @db.DoublePrecision
-  longitude          Float?      @db.DoublePrecision
-  descricaoCurta     String?     @map("descricao_curta") @db.Text
-  tipo               TipoUnidade
-  status             StatusUnidade @default(ATIVA)
-  criadoEm           DateTime    @default(now()) @map("criado_em")
-  atualizadoEm       DateTime    @default(now()) @updatedAt @map("atualizado_em")
+  id                Int           @id @default(autoincrement())
+  gerenteId         Int?          @map("gerente_id")
+  nome              String        @db.VarChar(100)
+  endereco          String        @db.Text
+  cnpj              String        @db.VarChar(20)
+  cidade            String?       @db.VarChar(100)
+  estado            String?       @db.VarChar(100)
+  cep               String?       @db.VarChar(20)
+  imagemUrl         String?       @map("imagem_url") @db.VarChar(1000)
+  areaTotal         Decimal?      @map("area_total") @db.Decimal(12, 3)
+  areaProdutiva     Decimal?      @map("area_produtiva") @db.Decimal(12, 3)
+  latitude          Float?        @db.DoublePrecision
+  longitude         Float?        @db.DoublePrecision
+  descricaoCurta    String?       @map("descricao_curta") @db.Text
+  tipo              TipoUnidade
+  horarioAbertura   DateTime?     @map("horario_abertura") @db.Time(0)
+  horarioFechamento DateTime?     @map("horario_fechamento") @db.Time(0)
+  telefone          String?       @db.VarChar(30)
+  email             String?       @db.VarChar(255)
+  status            StatusUnidade @default(ATIVA)
+  criadoEm          DateTime      @default(now()) @map("criado_em")
+  atualizadoEm      DateTime      @default(now()) @updatedAt @map("atualizado_em")
 
-  gerente    Usuario?     @relation("GerenteUnidade", fields: [gerenteId], references: [id], onDelete: SetNull)
-  usuarios   Usuario[]    @relation("UsuarioUnidade")
-  produtos   Produto[]
-  estoques   Estoque[]
-  lotes      Lote[]
-  caixas     Caixa[]
-  vendas     Venda[]
-  Fornecedor Fornecedor[]
-   saidas    Saidas[]
+  // relações
+  gerente        Usuario?     @relation("GerenteUnidade", fields: [gerenteId], references: [id], onDelete: SetNull)
+  usuarios       Usuario[]    @relation("UsuarioUnidade")
+  produtoUnidade Produto[]    @relation("ProdutoUnidade")
+  produtoOrigem  Produto[]    @relation("ProdutoOrigem")
+  estoques       Estoque[]
+  lotes          Lote[]
+  caixas         Caixa[]
+  vendas         Venda[]
+  fornecedores   Fornecedor[] // unidades que possivelmente têm vínculo com fornecedores externos
+  saidas         Saidas[]
+  animais        Animais[]
+  plantio        Plantios[]
 
-  contratosComoFornecedor Contratos[] @relation("ContratoFornecedor")
-  contratosComoLoja       Contratos[] @relation("ContratoLoja")
+  // Contratos:
+  contratosComoLoja       Contratos[]        @relation("ContratoLoja") // - contratosComoLoja: quando esta unidade atua como LOJA (compradora)
+  contratosComoFornecedor Contratos[]        @relation("ContratoFornecedorInterno") // - contratosComoFornecedor: quando esta unidade atua como FAZENDA (fornecedora interna)
+  estoqueMovimentos       EstoqueMovimento[]
+  estoqueMovimentos       EstoqueMovimento[]
 
-  @@map("unidades")
   @@index([cidade])
   @@index([estado])
+  @@map("unidades")
 }
 
 model Usuario {
@@ -90,6 +100,7 @@ model Usuario {
   email          String    @unique @db.VarChar(100)
   senha          String    @db.VarChar(255)
   telefone       String    @db.VarChar(20)
+  ftPerfil       String?   @map("ft_perfil") @db.VarChar(1000)
   status         Boolean   @default(true)
   tokenVersion   Int       @default(0) // mecanismo simples para invalidar todos os access tokens do usuário ao incrementá-lo (ex.: troca de senha, força logout em massa)
   failedAttempts Int       @default(0) // contador para políticas de lockout (bloquear após N tentativas falhas)
@@ -106,7 +117,10 @@ model Usuario {
   vendas              Venda[]
   saidas              Saidas[]
   AtividadesLote      AtividadesLote[]
+  atvdPlantios        atvdPlantio[]    @relation("UsuarioAtvdPlantio")
+  atvdAnimalias       atvdAnimalia[]   @relation("UsuarioAtvdAnimalia")
   sessoes             Sessao[]
+  produtos            Produto[]        @relation("ProdutoCriador")
 
   @@map("usuarios")
 }
@@ -146,16 +160,19 @@ model ResetSenha {
 // ============================================
 // LOTES E PRODUÇÃO
 // ============================================
-
 model Lote {
-  id            Int      @id @default(autoincrement())
-  unidadeId     Int      @map("unidade_id")
-  responsavelId Int      @map("responsavel_id")
-  nome          String   @db.VarChar(255)
-  tipo          TipoLote
-  qntdItens     Int      @map("qntd_itens")
-  observacoes   String?  @db.Text
-  dataCriacao   DateTime @default(now()) @map("data_criacao")
+  id                    Int             @id @default(autoincrement())
+  unidadeId             Int             @map("unidade_id")
+  responsavelId         Int             @map("responsavel_id")
+  nome                  String          @db.VarChar(255)
+  tipo                  TipoLote
+  qntdItens             Int?            @map("qntd_itens")
+  observacoes           String?         @db.Text
+  dataCriacao           DateTime        @default(now()) @map("data_criacao") // momento em que o lote passa a existir no sistema
+  dataColheita          DateTime?       @map("data_colheita") // momento em que o lote foi finalizado / colhido / encerrado
+  percentualAgrotoxicos Float?          @map("percentual_agrotoxicos") @db.DoublePrecision // preenchido por leitura IoT ou cálculo
+  statusQualidade       StatusQualidade @default(PROPRIO) @map("status_qualidade")
+  bloqueadoParaVenda    Boolean         @default(false) @map("bloqueado_para_venda")
 
   unidade                Unidade               @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
   responsavel            Usuario               @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
@@ -164,30 +181,44 @@ model Lote {
   registrosSanitarios    RegistroSanitario[]
   rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
   rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
-  AtividadesLote         AtividadesLote[]
+  atividadesLote         AtividadesLote[]
+  AtvdAnimalia           atvdAnimalia[]
+  atvdPlantio            atvdPlantio[]
 
   @@map("lotes")
 }
 
 model Produto {
-  id             Int      @id @default(autoincrement())
-  unidadeId      Int      @map("unidade_id")
-  loteId         Int      @map("lote_id")
-  nome           String   @db.VarChar(150)
-  sku            String   @unique @db.VarChar(50)
-  categoria      String?  @db.VarChar(100)
-  descricao      String?  @db.Text
-  preco          Decimal  @db.Decimal(10, 2)
-  dataFabricacao DateTime @map("data_fabricacao")
-  dataValidade   DateTime @map("data_validade")
-  criadoEm       DateTime @default(now()) @map("criado_em")
-  atualizadoEm   DateTime @default(now()) @updatedAt @map("atualizado_em")
+  id              Int               @id @default(autoincrement())
+  unidadeId       Int               @map("unidade_id")
+  origemUnidadeId Int?              @map("origem_unidade_id") // unidade origem do produto (quem produziu/enviou)
+  fornecedorId    Int?              @map("fornecedor_id") // fornecedor externo (se aplicável)
+  criadoPorId     Int?              @map("criado_por_id") // usuário que cadastrou o produto
+  loteId          Int?              @map("lote_id") // lote representa produção interna
+  nome            String            @db.VarChar(150)
+  sku             String            @unique @db.VarChar(50)
+  categoria       String?           @db.VarChar(100)
+  descricao       String?           @db.Text
+  preco           Decimal           @db.Decimal(10, 2)
+  dataFabricacao  DateTime          @map("data_fabricacao")
+  dataValidade    DateTime          @map("data_validade")
+  criadoEm        DateTime          @default(now()) @map("criado_em")
+  atualizadoEm    DateTime          @default(now()) @updatedAt @map("atualizado_em")
+  unidadeMedida   UnidadesDeMedida? @map("unidade_medida") // usa enum já existente (KG, L, UNIDADE, SACA...)
+  codigoBarras    String?           @map("codigo_barras")
+  ncm             String?           @map("ncm") // código fiscal NCM 
+  pesoUnidade     Decimal?          @map("peso_unidade") @db.Decimal(10, 3) // peso por unidade (kg)
+  tags            Json?             @map("tags") // array JSON de tags (ex: ["orgânico","premium"])
+  impostos        Json?             @map("impostos") // objeto JSON com alíquotas/ex.: { icms: 12.0, pis: 1.65 }
 
-  unidade      Unidade             @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
-  lote         Lote                @relation(fields: [loteId], references: [id], onDelete: Restrict)
-  estoques     Estoque[]
-  fornecedores ProdutoFornecedor[]
-  itensVendas  ItemVenda[]
+  unidade       Unidade             @relation("ProdutoUnidade", fields: [unidadeId], references: [id], onDelete: Restrict)
+  origemUnidade Unidade?            @relation("ProdutoOrigem", fields: [origemUnidadeId], references: [id], onDelete: SetNull)
+  fornecedor    Fornecedor?         @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id], onDelete: SetNull)
+  criadoPor     Usuario?            @relation("ProdutoCriador", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  lote          Lote                @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  estoques      Estoque[]
+  fornecedores  ProdutoFornecedor[]
+  itensVendas   ItemVenda[]
 
   // lado inverso: contratos que envolvem este produto
   contratos Contratos[] @relation("ContratoProduto")
@@ -203,19 +234,43 @@ model Estoque {
   estoqueMinimo Int      @map("estoque_minimo")
   atualizadoEm  DateTime @default(now()) @updatedAt @map("atualizado_em")
 
-  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
-  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  unidade           Unidade            @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  produto           Produto            @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  estoqueMovimentos EstoqueMovimento[]
 
   @@unique([unidadeId, produtoId])
   @@map("estoques")
 }
 
+model EstoqueMovimento {
+  id               Int           @id @default(autoincrement())
+  estoqueId        Int
+  tipoMovimento    TipoMovimento // ENTRADA / SAÍDA
+  quantidade       Int
+  producaoId       Int?          @map("producao_id")
+  vendaId          Int?          @map("venda_id")
+  origemUnidadeId  Int?          @map("origem_unidade_id") // de onde saiu o produto
+  destinoUnidadeId Int?          @map("destino_unidade_id") // para onde vai 
+  data             DateTime      @default(now())
+
+  estoque        Estoque   @relation(fields: [estoqueId], references: [id], onDelete: Cascade)
+  producao       Producao? @relation(fields: [producaoId], references: [id], onDelete: SetNull)
+  venda          Venda?    @relation(fields: [vendaId], references: [id], onDelete: SetNull)
+  origemUnidade  Unidade?  @relation("OrigemMovimento", fields: [origemUnidadeId], references: [id], onDelete: SetNull)
+  destinoUnidade Unidade?  @relation("DestinoMovimento", fields: [destinoUnidadeId], references: [id], onDelete: SetNull)
+
+  @@index([estoqueId])
+  @@index([producaoId])
+  @@index([vendaId])
+  @@map("estoque_movimentos")
+}
+
 model ProdutoFornecedor {
   id               Int              @id @default(autoincrement())
-  id_contrato      Int
+  contratoId       Int?             @map("contrato_id") // optional
   produtoId        Int              @map("produto_id")
-  quantidade       Int
-  unidade_medida   UnidadesDeMedida
+  quantidade       Decimal?         @db.Decimal(12, 3)
+  unidadeMedida    UnidadesDeMedida @map("unidade_medida")
   fornecedorId     Int              @map("fornecedor_id")
   precoCusto       Decimal?         @map("preco_custo") @db.Decimal(10, 2)
   prazoEntregaDias Int?             @map("prazo_entrega_dias")
@@ -223,6 +278,7 @@ model ProdutoFornecedor {
 
   produto    Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade)
   fornecedor Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  contrato   Contratos? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
   @@unique([produtoId, fornecedorId])
   @@map("produtos_fornecedores")
@@ -236,7 +292,8 @@ model Producao {
   unidadeMedida String   @map("unidade_medida") @db.VarChar(50)
   dataRegistro  DateTime @default(now()) @map("data_registro")
 
-  lote Lote @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  lote              Lote               @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  estoqueMovimentos EstoqueMovimento[]
 
   @@map("producoes")
 }
@@ -311,10 +368,11 @@ model Venda {
   pagamento TipoPagamento
   criadoEm  DateTime      @default(now()) @map("criado_em")
 
-  caixa   Caixa       @relation(fields: [caixaId], references: [id], onDelete: Restrict)
-  usuario Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
-  unidade Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
-  itens   ItemVenda[]
+  caixa             Caixa              @relation(fields: [caixaId], references: [id], onDelete: Restrict)
+  usuario           Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  unidade           Unidade            @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  itens             ItemVenda[]
+  estoqueMovimentos EstoqueMovimento[]
 
   @@map("vendas")
 }
@@ -343,31 +401,94 @@ model Saidas {
   valor     Decimal   @db.Decimal(12, 2)
   data      DateTime
   usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
-  unidade Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  unidade   Unidade   @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
 
-    @@map("saidas")
-
+  @@map("saidas")
 }
 
+model atvdPlantio {
+  id            Int         @id @default(autoincrement())
+  descricao     String      @db.Text
+  tipo          TipoPlantio
+  loteId        Int
+  data          DateTime
+  responsavelId Int
+
+  responsavel Usuario @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id], onDelete: Restrict)
+  lote        Lote    @relation(fields: [loteId], references: [id])
+
+  @@map("atvd_plantio")
+}
+
+model atvdAnimalia {
+  id            Int          @id @default(autoincrement())
+  descricao     String       @db.Text
+  tipo          TipoAnimalia
+  loteId        Int
+  data          DateTime
+  responsavelId Int
+
+  responsavel Usuario @relation("UsuarioAtvdAnimalia", fields: [responsavelId], references: [id], onDelete: Restrict)
+  lote        Lote    @relation(fields: [loteId], references: [id])
+
+  @@map("atvd_animalia")
+}
+
+model Animais {
+  id         Int         @id @default(autoincrement())
+  animal     String      @db.VarChar(100) // qual animal foi criado
+  raca       String      @db.VarChar(100) // raça do animal
+  quantidade Int
+  tipo       TipoAnimais // abate, venda, reprodução
+  custo      Int? // Custo para a venda dos animais
+  unidadeId  Int
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+
+  @@map("animais")
+}
+
+model Plantios {
+  id           Int    @id @default(autoincrement())
+  categoria    String @db.VarChar(100) // qual semente foi plantada (milho, soja, feijão)
+  areaHectares Float  @map("area_hectares") // área plantada em hectares  
+  custo        Int? // custo para venda da verdura
+  unidadeId    Int
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+
+  @@map("plantios")
+}
+
+// ============================================
+// CONTRATOS (ajustado para fornecedor interno/externo)
+// ============================================
 model Contratos {
-  id                   Int            @id @default(autoincrement())
-  fornecedor_id        Int
-  produto_id           Int
-  loja_id              Int
-  dataInicio           DateTime
-  dataFim              DateTime
-  status               StatusContrato
-  frequencia_entregas  FrequenciaEnum
-  frequencia_pagamento FrequenciaEnum
-  valorTotal           Int
+  id Int @id @default(autoincrement())
 
-  // aqui ambos apontam para Unidade, mas com nomes de relação distintos
-  fornecedor Unidade @relation("ContratoFornecedor", fields: [fornecedor_id], references: [id], onDelete: Restrict)
-  loja       Unidade @relation("ContratoLoja", fields: [loja_id], references: [id], onDelete: Restrict)
+  lojaId              Int            @map("loja_id") // loja (sempre unidade: pode ser LOJA ou FAZENDA quando a unidade contrata)
+  // fornecedor pode ser:
+  fornecedorUnidadeId Int?           @map("fornecedor_unidade_id") // - interno: fornecedorUnidadeId -> Unidade (fazenda)
+  fornecedorExternoId Int?           @map("fornecedor_externo_id") // - externo: fornecedorExternoId -> Fornecedor (empresa)
+  produtoId           Int            @map("produto_id")
+  dataInicio          DateTime       @map("data_inicio")
+  dataFim             DateTime?      @map("data_fim")
+  status              StatusContrato
+  frequenciaEntregas  FrequenciaEnum @map("frequencia_entregas")
+  frequenciaPagamento FrequenciaEnum @map("frequencia_pagamento")
+  valorTotal          Decimal?       @map("valor_total") @db.Decimal(12, 2)
 
-  // produto com nome de relação para casar com Produto.contratos
-  produto Produto @relation("ContratoProduto", fields: [produto_id], references: [id], onDelete: Restrict)
+  // relações
+  loja               Unidade             @relation("ContratoLoja", fields: [lojaId], references: [id], onDelete: Restrict)
+  fornecedorInterno  Unidade?            @relation("ContratoFornecedorInterno", fields: [fornecedorUnidadeId], references: [id], onDelete: Restrict) // fornecedor interno: relação com Unidade (fazenda) - nullable
+  fornecedorExterno  Fornecedor?         @relation("ContratoFornecedorExterno", fields: [fornecedorExternoId], references: [id], onDelete: Restrict) // fornecedor externo: relação com Fornecedor - nullable
+  produto            Produto             @relation("ContratoProduto", fields: [produtoId], references: [id], onDelete: Restrict)
+  produtosFornecedor ProdutoFornecedor[] // itens vinculados a este contrato
 
+  @@index([lojaId])
+  @@index([fornecedorUnidadeId])
+  @@index([fornecedorExternoId])
+  @@index([produtoId])
   @@map("contratos")
 }
 
@@ -456,4 +577,35 @@ enum StatusUnidade {
   ATIVA
   INATIVA
   MANUTENCAO
+}
+
+enum StatusQualidade {
+  PROPRIO
+  ALERTA
+  IMPRÓPRIO
+
+  @@map("status_qualidade")
+}
+
+enum TipoAnimalia {
+  VETERINARIO
+  ALIMENTACAO
+  COLHEITA
+}
+
+enum TipoPlantio {
+  CULTIVO
+  COLHEITA
+  PRODUCAO
+}
+
+enum TipoAnimais {
+  ABATE
+  VENDA
+  REPRODUCAO
+}
+
+enum TipoMovimento {
+  ENTRADA
+  SAIDA
 }
