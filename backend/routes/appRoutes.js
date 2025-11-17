@@ -12,10 +12,12 @@ import {
     listarSaidasPorUnidadeController, calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController
 } from "../controllers/financeiro/financeiroController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
-import { verContratosController, listarFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
-import { listarFornecedoresController, verContratosController, calcularFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
+import { verContratosController, listarFornecedoresController, calcularFornecedoresController, listarFornecedoresController, verContratosController } from "../controllers/fornecedores/fornecedoresController.js";
+import { verificarProducaoLoteController } from "../controllers/fazenda.js";
+import { consultarLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 // tradução
 router.post('/translate', translateText)
 
@@ -31,7 +33,7 @@ router.get("/vendas/ultimos-6-meses", auth, contarVendasPorMesUltimos6MesesContr
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
-router.get("/fornecedoresCalculo", auth, calcularFornecedoresController);
+router.get("/fornecedoresCalculo", calcularFornecedoresController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
 router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
 router.get("/somarSaidas/:unidadeId", somarSaidasController);
@@ -47,7 +49,7 @@ router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
 //estoques, lotes, produtos, etc
 router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/consultarLote", consultarLoteController);
-
+router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 //financeiro (de todos os perfis)
 
 
