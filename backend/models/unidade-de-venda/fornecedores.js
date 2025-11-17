@@ -36,3 +36,20 @@ export const calcularFornecedores = async (unidadeId) => { //ok
     };
   }
 };
+
+export const verContratos = async(unidadeId)=>{
+  try{
+    const contratos = await prisma.Contratos.findMany({where:{unidadeId: Number(unidadeId)}});
+    return ({
+      sucesso: true,
+      contratos: contratos,
+      message: "Contratos listados com sucesso!"
+    })
+  }catch(error){
+    return{
+      sucesso: false,
+      erro:"Erro ao listar fornecedores",
+      detalhes: error.message
+    }
+  }
+}

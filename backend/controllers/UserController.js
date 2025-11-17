@@ -60,14 +60,10 @@ export async function meController(req, res) {
   try {
     // sua middleware já definiu req.usuario = { id, email, perfil }
     const usuarioContext = req.usuario;
-    if (!usuarioContext || !usuarioContext.id) {
-      return res.status(401).json({ mensagem: 'Não autorizado' });
-    }
+    if (!usuarioContext || !usuarioContext.id) {return res.status(401).json({ mensagem: 'Não autorizado' });}
 
     const usuario = await getUserById(usuarioContext.id);
-    if (!usuario) {
-      return res.status(404).json({ mensagem: 'Usuário não encontrado' });
-    }
+    if (!usuario) {return res.status(404).json({ mensagem: 'Usuário não encontrado' });}
 
     // Retorna o usuário em campo "usuario" — consistente com outros endpoints que você usa
     return res.status(200).json({ usuario });
@@ -129,7 +125,7 @@ export async function loginController(req, res) {
       sameSite: isProd ? 'none' : 'lax',
       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
-      domain: isProd ? '.vercel.app' : undefined,
+      // domain: isProd ? '.vercel.app' : undefined,
     };
 
     // enviar cookie de refresh
@@ -173,7 +169,7 @@ export async function refreshController(req, res) {
     let hashed;
     try {
       hashed = hashToken(token);
-      // console.log("[refreshController] hashed token:", hashed);
+    
     } catch (e) {
       console.error("[refreshController] erro ao hashear token:", e);
       return res.status(500).json({ error: "Erro interno ao processar token" });
@@ -250,7 +246,7 @@ export async function refreshController(req, res) {
       sameSite: isProd ? 'none' : 'lax',
       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
-      domain: isProd ? '.vercel.app' : undefined,
+      // domain: isProd ? '.vercel.app' : undefined,
     };
 
     // enviar novo cookie

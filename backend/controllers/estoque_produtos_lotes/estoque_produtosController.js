@@ -1,6 +1,6 @@
 import prisma from "../../prisma/client.js";
-import { somarQtdTotalEstoque,  getEstoque,  getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos, mostrarEstoque } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
- 
+import { somarQtdTotalEstoque, getEstoque, getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos, mostrarEstoque } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
+import { lotesPlantio } from "../../models/Fazendas.js";
 
 //BUSCAR PRODUTO MAIS VENDIDO
 export const buscarProdutoMaisVendidoController = async (req, res) => {
@@ -62,7 +62,7 @@ export const listarProdutosController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: "Usuário não possui unidade vinculada à sessão."});}
+    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." }); }
 
     const resultado = await listarProdutos(Number(unidadeId));
 
@@ -87,13 +87,13 @@ export const getProdutoPorIdController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id || isNaN(id)) {return res.status(400).json({sucesso: false,erro: "ID do produto inválido."})}
+    if (!id || isNaN(id)) { return res.status(400).json({ sucesso: false, erro: "ID do produto inválido." }) }
 
     const resultado = await getProdutoPorId(Number(id));
 
     if (!resultado.sucesso || !resultado.produto) {
-      return res.status(404).json({sucesso: false,erro: "Produto não encontrado."});
-}
+      return res.status(404).json({ sucesso: false, erro: "Produto não encontrado." });
+    }
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller ao buscar produto por ID:", error);
@@ -107,11 +107,10 @@ export const getProdutoPorIdController = async (req, res) => {
 
 //CRIAR PRODUTO 
 export const createProdutoController = async (req, res) => {
-  try { const data = req.body;
+  try {
+    const data = req.body;
 
-    if (!data || Object.keys(data).length === 0) {
-      return res.status(400).json({sucesso: false,erro: "Os dados do produto são obrigatórios.",});
-    }
+    if (!data || Object.keys(data).length === 0) { return res.status(400).json({ sucesso: false, erro: "Os dados do produto são obrigatórios.", }); }
 
     const resultado = await createProduto(data);
 
@@ -136,11 +135,10 @@ export const createProdutoController = async (req, res) => {
 
 //deletar produto
 export const deleteProdutoController = async (req, res) => {
-  try { const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-    if (!id || isNaN(id)) {
-      return res.status(400).json({sucesso: false,erro: "ID do produto inválido.",});
-    }
+    if (!id || isNaN(id)) { return res.status(400).json({ sucesso: false, erro: "ID do produto inválido.", }); }
 
     const resultado = await deleteProduto(Number(id));
 
@@ -212,13 +210,49 @@ export const listarEstoqueController = async (req, res) => {
   }
 };
 
-export const mostrarEstoqueController = async(req, res) =>{
-    try{
-        const unidadeId = req.user?.unidadeId;
-        const estoque = await mostrarEstoque(unidadeId);
-        res.status(200).json(estoque);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({erro: 'Erro ao mostrar estoque da unidade de venda.'})
-    }
+export const mostrarEstoqueController = async (req, res) => {
+  try {
+    const unidadeId = req.user?.unidadeId;
+    const estoque = await mostrarEstoque(unidadeId);
+    res.status(200).json(estoque);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao mostrar estoque da unidade de venda.' })
+  }
 }
+
+export const listarAtividadesLoteController = async(req, res) =>{
+  try{
+    const unidadeId = req.params.unidadeId;
+    const atividades = await listarAtividadesLote(unidadeId);
+    return res.status(200).json(atividades);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({erro: "Erro ao listar atividades realizadas nos lotes."})
+  }
+}
+
+export const consultarLoteController = async (req, res) =>{
+  try{
+    const unidadeId = req.params.unidadeId;
+    const loteId = req.body.loteId;
+
+    const atividadesLote = await consultarLote(unidadeId, loteId);
+    return res.status(200).json(atividadesLote);
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({erro: "Erro ao consultar atividades do lote."})
+  }
+}
+//lotes
+export const lotesPlantioController = async (req, res) => {
+  try {
+    const unidadeId = req.user?.unidadeId;
+    const lotesP = await lotesPlantio(unidadeId);
+    res.status(200).json(lotesP);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao mostrar lotes da unidade!' })
+  }
+};

@@ -1,14 +1,12 @@
 import prisma from "../../prisma/client.js";
-import {  listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade , mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal} from '../../models/financeiro/vendas_despesas.js'
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade , mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal} from '../../models/financeiro/vendas_despesas.js'
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." });
-    }
+    if (!unidadeId) {return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." });}
     const resultado = await mostrarSaldoF(Number(unidadeId));
 
     return res.status(200).json({
@@ -26,33 +24,6 @@ export const mostrarSaldoFController = async (req, res) => {
     });
   }
 };
-
-// BUSCAR PRODUTO MAIS VENDIDO -- rota feita
-export const buscarProdutoMaisVendidoController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-
-    if (!unidadeId) {
-      return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." });
-    }
-    const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
-
-    return res.status(200).json({
-      sucesso: resultado.sucesso,
-      message: resultado.message,
-      produto: resultado.produto ?? null,
-    });
-
-  } catch (error) {
-    console.error("Erro no controller ao buscar produto mais vendido:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro no controller ao buscar produto mais vendido.",
-      detalhes: error.message,
-    });
-  }
-};
-
 
 //CONTAR VENDAS DOS ULTIMOS 6 MESES -- rota feita
 export const contarVendasPorMesUltimos6MesesController = async (req, res) => {
@@ -133,7 +104,6 @@ export const calcularSaldoLiquidoController = async (req, res) => {
   }
 };
 
-
 // LISTA SAÍDAS DA UNIDADE -- rota feita
 export const listarSaidasPorUnidadeController = async (req, res) => { //FUNCIONANDO
   try {
@@ -162,9 +132,7 @@ export const somarDiariaController = async (req, res) => { //FUNCIONANDO
     try {
         const unidadeId = Number(req.params.unidadeId);
 
-        if (isNaN(unidadeId)) {
-            return res.status(400).json({ error: 'ID da unidade inválido.' });
-        }
+        if (isNaN(unidadeId)) {return res.status(400).json({ error: 'ID da unidade inválido.' });}
         
         const total = await somarDiaria(unidadeId);
         return res.status(200).json({ total });
@@ -178,9 +146,7 @@ export const somarEntradaMensalController = async (req, res) =>{ //NAO FUNCIONAN
   try{
     const unidadeId = Number(req.params.unidadeId);
 
-    if (isNaN(unidadeId)) {
-            return res.status(400).json({ error: 'ID da unidade inválido.' });
-        }
+    if (isNaN(unidadeId)) {return res.status(400).json({ error: 'ID da unidade inválido.' });}
 
         const total = await somarEntradaMensal(unidadeId);
         return res.status(200).json({ total });
@@ -195,9 +161,7 @@ export const somarSaidasController = async (req, res) =>{ //FUNCIONANDO
     try{
         const unidadeId = Number(req.params.unidadeId);
 
-        if (isNaN(unidadeId)) {
-            return res.status(400).json({ error: 'ID da unidade inválido.' });
-        }
+        if (isNaN(unidadeId)) {return res.status(400).json({ error: 'ID da unidade inválido.' });}
         const total = await somarSaidas(unidadeId);
         return res.status(200).json({ total });
     } catch (error) {
@@ -213,9 +177,7 @@ export const calcularLucroController = async (req, res) => { //NAO FUNCIONANDO :
     // Pegamos a unidade logada (supondo que vem do middleware de autenticação)
     const unidadeId = req.params.unidadeId; //acredito que na hora de implementar no sistema tem que colocar req.user?.unidadeId
 
-    if (!unidadeId) {
-      return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' });
-    }
+    if (!unidadeId) {return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' });}
 
     // Chama o model que retorna o lucro
     const resultado = await calcularLucroDoMes(unidadeId);
@@ -243,32 +205,5 @@ export const listarVendasController = async(req, res) =>{ //FUNCIONANDO
     }
 }
 
-//calcular fornecedores -- rota feita
-export const calcularFornecedoresController = async (req, res) => {
-  try {
-    const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Usuário não possui unidade vinculada à sessão.",
-      });
-    }
-    const resultado = await calcularFornecedores(Number(unidadeId));
-
-    return res.status(200).json({
-      sucesso: resultado.sucesso,
-      message: resultado.message,
-      qtdFornecedores: resultado.qtdFornecedores ?? 0,
-    });
-
-  } catch (error) {
-    console.error("Erro no controller ao calcular quantidade de fornecedores:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro no controller ao calcular quantidade de fornecedores.",
-      detalhes: error.message,
-    });
-  }
-};
 

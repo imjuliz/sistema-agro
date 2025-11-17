@@ -16,7 +16,8 @@ export default function LoginPage() {
                   <img src="/img/ruraltech-logo.svg" className='w-80 h-20 dark:brightness-[0.9]' alt="RuralTech Logo" />
                 </div>
               </a>
-              <div className="flex-1"></div><ThemeToggle /></div>
+              {/* <div className="flex-1"></div><ThemeToggle /> */}
+              </div>
           </div>
           <div className="flex flex-1 items-center justify-center">
             <div className="w-full max-w-xs"><LoginForm /></div>

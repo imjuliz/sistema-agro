@@ -1,9 +1,10 @@
+import { success } from 'zod';
 import prisma from '../../prisma/client.js';
 
-export const mostrarEstoque = async (unidadeId) =>{ //ok
-    try{
+export const mostrarEstoque = async (unidadeId) => { //ok
+    try {
         const estoque = await prisma.Estoque.findMany({
-            where:{ unidadeId: Number(unidadeId)},
+            where: { unidadeId: Number(unidadeId) },
         })
         return ({
             sucesso: true,
@@ -24,27 +25,27 @@ export const mostrarEstoque = async (unidadeId) =>{ //ok
 
 //SOMA A QUANTIDADE DE ITENS NO ESTOQUE
 export const somarQtdTotalEstoque = async (unidadeId) => { //ok
-  try {
-    const resultado = await prisma.estoque.aggregate({
-      _sum: {quantidade: true,},
-      where: {unidadeId: Number(unidadeId)},
-    });
+    try {
+        const resultado = await prisma.estoque.aggregate({
+            _sum: { quantidade: true, },
+            where: { unidadeId: Number(unidadeId) },
+        });
 
-    const total = resultado._sum.quantidade || 0;
+        const total = resultado._sum.quantidade || 0;
 
-    return {
-      sucesso: true,
-      totalItens: total,
-      message: "Total de itens em estoque calculado com sucesso!",
-    };
+        return {
+            sucesso: true,
+            totalItens: total,
+            message: "Total de itens em estoque calculado com sucesso!",
+        };
 
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao calcular o total de itens no estoque",
-      detalhes: error.message,
-    };
-  }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao calcular o total de itens no estoque",
+            detalhes: error.message,
+        };
+    }
 };
 
 
@@ -52,7 +53,7 @@ export const somarQtdTotalEstoque = async (unidadeId) => { //ok
 //listagem do estoque 
 export async function getEstoque(unidadeId) { //ok
     try {
-        const estoque = await prisma.estoque.findMany({where:{unidadeId:Number(unidadeId)}});
+        const estoque = await prisma.estoque.findMany({ where: { unidadeId: Number(unidadeId) } });
         return {
             sucesso: true,
             estoque: estoque,
@@ -62,12 +63,12 @@ export async function getEstoque(unidadeId) { //ok
         return {
             sucesso: false,
             erro: "Erro ao listar estoque.",
-            detalhes: error.message 
+            detalhes: error.message
         };
     }
 };
 
-export const reporEstoque= async(unidadeId)=>{
+export const reporEstoque = async (unidadeId) => {
 
 }
 
@@ -101,7 +102,7 @@ export async function getProdutoPorId(id) { // tem controller
         return {
             sucesso: false,
             message: "Erro ao encontrar produto.",
-            detalhes: error.message 
+            detalhes: error.message
         }
     }
 };
@@ -118,7 +119,7 @@ export async function createProduto(data) {// tem controller
         return {
             sucesso: false,
             message: "Erro ao criar produto.",
-            detalhes: error.message 
+            detalhes: error.message
         }
     }
 };
@@ -135,7 +136,7 @@ export async function deleteProduto(id) { //tem controller
         return {
             sucesso: false,
             message: "Erro ao deletar produto.",
-            detalhes: error.message 
+            detalhes: error.message
         }
     }
 };
@@ -188,7 +189,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => { //ok tem controll
 
 export const listarProdutos = async (unidadeId) => { //ok controller feito
     try {
-        const fornecedores = await prisma.venda.findMany({where: { unidadeId: Number(unidadeId) },})
+        const fornecedores = await prisma.venda.findMany({ where: { unidadeId: Number(unidadeId) }, })
         return ({
             sucesso: true,
             fornecedores,
@@ -203,3 +204,47 @@ export const listarProdutos = async (unidadeId) => { //ok controller feito
         }
     }
 }
+
+export const listarAtividadesLote = async (unidadeId) => {
+    try {
+        const atividades = await prisma.atividadesLote.findMany({ where: { unidadeId: Number(unidadeId) }, })
+        return {
+            sucesso: true,
+            atividades,
+            message: "Atividades listadas com sucesso!!"
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar atividades.",
+            detalhes: error.message
+        }
+    }
+}
+
+export const consultarLote = async (unidadeId, loteId) => {
+    try {
+        const atividadesLote = await prisma.atividadesLote.findMany({
+            where: {
+                loteId,
+                unidadeId : Number(unidadeId),
+            }
+
+
+        });
+
+        return {
+            sucesso: true,
+            atividadesLote,
+            message: "Consulta das atividades realizadas no lote concluida com sucesso!"
+        }
+    } catch(error) {
+        return{
+            sucesso: false,
+            erro: "erro ao consultar atividades do lote especificado.",
+            detalhes: error.message
+        }
+    }
+}
+
+export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId)
