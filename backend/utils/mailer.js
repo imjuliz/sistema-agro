@@ -25,6 +25,5 @@ export async function sendResetPasswordEmail(to, token) {
 		subject: 'Redefinição de senha - ZELOS',
 		html,
 	};
-
 	await transporter.sendMail(mailOptions);
 }
