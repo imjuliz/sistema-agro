@@ -1,6 +1,7 @@
 import prisma from "../../prisma/client.js";
 import { somarQtdTotalEstoque, getEstoque, getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos, mostrarEstoque } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
 import { lotesPlantio } from "../../models/Fazendas.js";
+import { verPedidos, contarSaidas } from "../../models/unidade-de-venda/Loja.js";
 
 //BUSCAR PRODUTO MAIS VENDIDO
 export const buscarProdutoMaisVendidoController = async (req, res) => {
@@ -253,4 +254,56 @@ export const lotesPlantioController = async (req, res) => {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao mostrar lotes da unidade!' })
   }
+};
+
+//////////////////////
+// Função de 17/11 //
+////////////////////
+
+//listar pedidos ---- Não testada
+export const listarPedidosController = async (req, res) => {
+  try {
+    const unidadeId = req.session?.usuario?.unidadeId;
+
+    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." }); }
+
+    const resultado = await verPedidos(Number(unidadeId));
+
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      produtos: resultado
+    });
+
+  } catch (error) {
+    console.error("Erro no controller ao listar os pedidos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro no controller ao listar os pedidos.",
+      detalhes: error.message,
+    });
+  }
+};
+
+export const contarSaidasController = async (req, res) => {
+  const { unidadeId } = req.params;
+
+  if (!unidadeId) {
+    return res.status(400).json({
+      sucesso: false,
+      erro: "O parâmetro unidadeId é obrigatório.",
+    });
+  }
+
+  const resultado = await contarSaidas(unidadeId);
+
+  if (!resultado.sucesso) {
+    return res.status(500).json(resultado);
+  }
+
+  return res.status(200).json({
+    sucesso: true,
+    quantidade: resultado.quantidade,
+    mensagem: "Quantidade de saídas obtida com sucesso!",
+  });
 };

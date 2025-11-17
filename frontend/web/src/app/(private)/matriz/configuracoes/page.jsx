@@ -70,36 +70,19 @@ export default function SettingsPage() {
         setCompanyAvatarUrl(url);
     }
 
-    function addUrl() {
-        setUrls((s) => [...s, ""]);
-    }
+    function addUrl() { setUrls((s) => [...s, ""]); }
 
-    function updateUrl(index, value) {
-        setUrls((s) => s.map((u, i) => (i === index ? value : u)));
-    }
+    function updateUrl(index, value) { setUrls((s) => s.map((u, i) => (i === index ? value : u))); }
 
-    function removeUrl(index) {
-        setUrls((s) => s.filter((_, i) => i !== index));
-    }
+    function removeUrl(index) { setUrls((s) => s.filter((_, i) => i !== index)); }
 
-    function saveProfile() {
-        // chamar a API para salvar os dados
-        setProfileEditing(false);
-    }
+    function saveProfile() { setProfileEditing(false); } // chamar a API para salvar os dados
 
-    function cancelProfileEdit() {
-        // reverter para valores salvos - atualmente apenas sai do modo edição
-        setProfileEditing(false);
-    }
+    function cancelProfileEdit() { setProfileEditing(false); }  // reverter para valores salvos - atualmente apenas sai do modo edição
 
-    function saveCompany() {
-        // Salvar dados da empresa
-        setCompanyEditing(false);
-    }
+    function saveCompany() { setCompanyEditing(false); } // Salvar dados da empresa
 
-    function cancelCompanyEdit() {
-        setCompanyEditing(false);
-    }
+    function cancelCompanyEdit() { setCompanyEditing(false); }
 
     return (
         <div className="container mx-auto py-8">
@@ -154,12 +137,11 @@ export default function SettingsPage() {
                                                             </AvatarFallback>
                                                         )}
                                                     </Avatar>
-
                                                     <div>
                                                         {/* mostrar upload somente em modo edição */}
                                                         {profileEditing ? (
                                                             <>
-                                                                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange}/>
+                                                                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                                                                 <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
                                                                     <Transl>Fazer upload</Transl>
                                                                 </Button>
@@ -172,31 +154,26 @@ export default function SettingsPage() {
                                                 <Label className={"pb-3"} htmlFor="username"><Transl>Nome de usuário</Transl></Label>
                                                 {profileEditing ? (
                                                     <>
-                                                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)}/>
+                                                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Nome público exibido no sistema.</Transl>
                                                         </p>
                                                     </>
 
-                                                ) : (
-                                                    <p className="text-sm text-foreground">{username || "—"}</p>
-                                                )}
-
+                                                ) : (<p className="text-sm text-foreground">{username || "—"}</p>)}
                                             </div>
 
                                             <div>
                                                 <Label className={"pb-3"} htmlFor="nome"><Transl>Nome completo</Transl></Label>
                                                 {profileEditing ? (
                                                     <>
-                                                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)}/>
+                                                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Digite seu nome completo.</Transl>
                                                         </p>
                                                     </>
 
-                                                ) : (
-                                                    <p className="text-sm text-foreground">{nome || "Nome não informado"}</p>
-                                                )}
+                                                ) : (<p className="text-sm text-foreground">{nome || "Nome não informado"}</p>)}
 
                                             </div>
 
@@ -221,22 +198,16 @@ export default function SettingsPage() {
                                                             <Transl>Gerencie os emails verificados da empresa.</Transl>
                                                         </p>
                                                     </>
-
-                                                ) : (
-                                                    <p className="text-sm text-foreground">{emailSelect || "Email não informado"}</p>
-                                                )}
-
+                                                ) : (<p className="text-sm text-foreground">{emailSelect || "Email não informado"}</p>)}
                                             </div>
-
                                             <div>
                                                 <Label className={"pb-3"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
                                                 {profileEditing ? (
-                                                    <><Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)}/>
+                                                    <><Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Telefone de contato.</Transl>
                                                         </p>
                                                     </>
-
                                                 ) : (<p className="text-sm text-foreground">{telefone || "Telefone não informado"}</p>)}
                                             </div>
 
@@ -249,16 +220,13 @@ export default function SettingsPage() {
                                                     {profileEditing ? (
                                                         urls.map((u, i) => (
                                                             <div key={i} className="flex items-center gap-2">
-                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1"/>
+                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1" />
                                                                 <Button variant="outline" size="sm" onClick={() => removeUrl(i)}>
                                                                     <Transl>Remover</Transl>
                                                                 </Button>
                                                             </div>
                                                         ))
-                                                    ) : (
-                                                        urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>))
-                                                    )}
-
+                                                    ) : (urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>)))}
                                                     {profileEditing ? (
                                                         <div>
                                                             <Button size="sm" onClick={addUrl} variant="secondary">
@@ -294,25 +262,21 @@ export default function SettingsPage() {
 
                                             {/* Nome da empresa */}
                                             <div className="">
-                                                <Label className={"pb-3"}>
-                                                    <Transl>Nome da empresa</Transl>
-                                                </Label>
+                                                <Label className={"pb-3"}><Transl>Nome da empresa</Transl></Label>
 
                                                 <div className="w-full max-w-md">
                                                     <div className="flex flex-col w-full items-start gap-2">
                                                         {companyEditing ? (
                                                             <><p className="text-sm text-muted-foreground mb-2">
-                                                                    <Transl>Nome visível da Matriz ou da Unidade.</Transl>
-                                                                </p>
+                                                                <Transl>Nome visível da Matriz ou da Unidade.</Transl>
+                                                            </p>
                                                                 <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="flex-1" />
                                                                 <p className="text-sm text-muted-foreground mt-1">
                                                                     <Transl>Máximo de 32 caracteres.</Transl>
                                                                 </p>
-                                                                {/* <Button size="sm" onClick={() => { }}>Salvar</Button> */}
                                                             </>
                                                         ) : (<p className="text-sm text-foreground">{companyName || "Nome não informado"}</p>)}
                                                     </div>
-
                                                 </div>
                                             </div>
                                             <Separator className="my-4" />
@@ -322,20 +286,17 @@ export default function SettingsPage() {
                                                 <p className="text-sm text-muted-foreground mb-2">
                                                     <Transl>Adicione links do site da unidade, blog ou perfis sociais.</Transl>
                                                 </p>
-
                                                 <div className="flex flex-col gap-2">
                                                     {companyEditing ? (
                                                         urls.map((u, i) => (
                                                             <div key={i} className="flex items-center gap-2">
-                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1"/>
+                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1" />
                                                                 <Button variant="outline" size="sm" onClick={() => removeUrl(i)}>
                                                                     <Transl>Remover</Transl>
                                                                 </Button>
                                                             </div>
                                                         ))
-                                                    ) : (
-                                                        urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>))
-                                                    )}
+                                                    ) : (urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>)))}
 
                                                     {companyEditing ? (
                                                         <div>
@@ -363,7 +324,6 @@ export default function SettingsPage() {
                                                                 </p>
                                                                 <AvatarImage src={companyAvatarUrl} alt={<Transl>Team Avatar</Transl>} />
                                                             </>
-
                                                         ) : (<AvatarFallback />)}
                                                     </Avatar>
                                                     <div>
@@ -394,7 +354,7 @@ export default function SettingsPage() {
                                                                 <p className="text-sm text-muted-foreground mb-2">
                                                                     <Transl>Identificador usado em integrações e APIs.</Transl>
                                                                 </p>
-                                                                <Input type="text" value={''} readOnly className="flex-grow font-mono text-sm"/>
+                                                                <Input type="text" value={''} readOnly className="flex-grow font-mono text-sm" />
                                                                 <Button variant="outline" size="icon" aria-label="Copiar ID da Unidade">
                                                                     <Copy className="h-4 w-4" />
                                                                 </Button>
@@ -402,8 +362,7 @@ export default function SettingsPage() {
                                                                     <Transl>Usado ao integrar outros sistemas com a Matriz.</Transl>
                                                                 </p>
                                                             </>
-                                                        ) : (
-                                                            <p className="text-sm text-foreground">(id-da-unidade-1234)</p>)}
+                                                        ) : (<p className="text-sm text-foreground">(id-da-unidade-1234)</p>)}
                                                     </div>
                                                 </div>
                                             </div>
@@ -443,7 +402,6 @@ export default function SettingsPage() {
                                                         <p>
                                                             <Transl>Excluir permanentemente a empresa (Matriz) e todos os dados. A ação não é reversível — </Transl><span className="font-medium underline"><Transl>proceda com cuidado.</Transl></span>
                                                         </p>
-
                                                     </AlertDescription>
                                                 </Alert>
                                                 <Button variant="destructive"><Transl>Deletar empresa</Transl></Button>
@@ -455,9 +413,7 @@ export default function SettingsPage() {
                                                         <Button onClick={saveCompany}><Transl>Salvar</Transl></Button>
                                                         <Button variant="outline" onClick={cancelCompanyEdit}><Transl>Cancelar</Transl></Button>
                                                     </div>
-                                                ) : (
-                                                    <Button onClick={() => setCompanyEditing(true)}><Transl>Editar informações</Transl></Button>
-                                                )}
+                                                ) : (<Button onClick={() => setCompanyEditing(true)}><Transl>Editar informações</Transl></Button>)}
                                             </div>
                                         </div>
                                     </div>
@@ -530,22 +486,6 @@ export default function SettingsPage() {
                                         </p>
                                     </div>
 
-                                    {/* <div>
-                                        <Label className="pb-3">{translate("Idioma")}</Label>
-                                        <Select value={lang} onValueChange={(v) => changeLang(v)}>
-                                            <SelectTrigger className="w-64">
-                                                <SelectValue placeholder={translate("Selecionar idioma")} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="pt-BR">Português (BR)</SelectItem>
-                                                <SelectItem value="en-US">English (US)</SelectItem>
-                                                <SelectItem value="es-ES">Español (ES)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            {translate("Defina o idioma da interface.")}
-                                        </p>
-                                    </div> */}
                                     {/* Language selector */}
                                     <div className="flex items-center gap-2">
                                         <Label htmlFor="language-select" className="hidden md:inline-block"><Transl>Idioma</Transl></Label>
@@ -564,12 +504,12 @@ export default function SettingsPage() {
                                     <div>
                                         <Label className="pb-3"><Transl>Tema</Transl></Label>
                                         <div className="flex items-start gap-6 mt-3">
-                                            <button onClick={() => setTheme("light")} className={`rounded-lg border p-3 ${theme === "light" ? "border-primary" : "border-border"}`}aria-pressed={theme === "light"}>
+                                            <button onClick={() => setTheme("light")} className={`rounded-lg border p-3 ${theme === "light" ? "border-primary" : "border-border"}`} aria-pressed={theme === "light"}>
                                                 <div className="w-32 h-20 bg-white border rounded" />
                                                 <div className="text-sm mt-2 text-center"><Transl>Claro</Transl></div>
                                             </button>
 
-                                            <button onClick={() => setTheme("dark")} className={`rounded-lg border p-3 ${theme === "dark" ? "border-primary" : "border-border"}`}aria-pressed={theme === "dark"}>
+                                            <button onClick={() => setTheme("dark")} className={`rounded-lg border p-3 ${theme === "dark" ? "border-primary" : "border-border"}`} aria-pressed={theme === "dark"}>
                                                 <div className="w-32 h-20 bg-slate-900 border rounded" />
                                                 <div className="text-sm mt-2 text-center"><Transl>Escuro</Transl></div>
                                             </button>
@@ -596,7 +536,7 @@ export default function SettingsPage() {
                                                 <Transl>Receba resumos e alertas por email (ex.: alertas de qualidade de lote).</Transl>
                                             </p>
                                         </div>
-                                        <Switch checked={emailNotifications} onCheckedChange={(v) => setEmailNotifications(!!v)}/>
+                                        <Switch checked={emailNotifications} onCheckedChange={(v) => setEmailNotifications(!!v)} />
                                     </div>
 
                                     <div>
@@ -611,8 +551,6 @@ export default function SettingsPage() {
                                 </div>
                             </>
                         )}
-
-
                     </div>
                 </section>
             </div>

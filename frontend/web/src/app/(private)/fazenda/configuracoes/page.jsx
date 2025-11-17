@@ -267,13 +267,8 @@ export default function Settings1(props) {
               <span>
                 {texts.toolbarInfo?.split("Chrome extension")[0]}
                 <a href={links.chromeExtension} className="text-primary underline">Chrome extension</a>
-                {
-                  texts.toolbarInfo
-                    ?.split("Chrome extension")[1]
-                    .split("toolbar in production")[0]
-                }
-                <a href={links.toolbarInProduction} className="text-primary underline">toolbar in production</a>
-                .
+                {texts.toolbarInfo ?.split("Chrome extension")[1] .split("toolbar in production")[0]}
+                <a href={links.toolbarInProduction} className="text-primary underline">toolbar in production</a>.
               </span>
             </div>
             <div className="mb-4 flex items-center space-x-2">

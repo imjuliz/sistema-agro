@@ -6,7 +6,6 @@ import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import connectPgSimple from 'connect-pg-simple';
 import cookieParser from "cookie-parser";
-
 import authRotas from './routes/authRotas.js';
 import appRoutes from './routes/appRoutes.js';
 import unidadeRoutes from './routes/unidadeRoutes.js';
