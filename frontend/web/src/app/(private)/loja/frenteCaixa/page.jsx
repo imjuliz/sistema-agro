@@ -68,14 +68,13 @@ export default function POSModule() {
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) {
-      setCart(cart.map(item =>item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item));
-    } else {setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}]);}
+    if (existingItem) {setCart(cart.map(item =>item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item))}
+    else {setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}])}
   };
 
   const updateQuantity = (id, newQuantity) => {
     if (newQuantity <= 0) { setCart(cart.filter(item => item.id !== id)); }
-    else {setCart(cart.map(item =>item.id === id ? { ...item, quantity: newQuantity, total: newQuantity * item.price } : item));}
+    else {setCart(cart.map(item =>item.id === id ? { ...item, quantity: newQuantity, total: newQuantity * item.price } : item))}
   };
 
   const removeFromCart = (id) => { setCart(cart.filter(item => item.id !== id)); };
@@ -224,7 +223,6 @@ export default function POSModule() {
                   <Button variant="outline" size="sm" onClick={clearCart}><Trash2 className="size-4" /></Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Customer Selection */}
                   <div className="space-y-2">
                     <Label>Customer</Label>
                     <div className="flex gap-2">

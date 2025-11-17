@@ -18,20 +18,11 @@ import { OrderManagement } from '@/components/fornecedores/OrderManagement';
 export default function FornecedoresLoja() {
     return (
         <>
-
             <div className="flex flex-1 flex-col p-10">
                 <div className="@container/main flex flex-1 flex-col gap-2">
                     <div className="justify-center W-100%"><FornecedoresTable /></div>
                 </div>
             </div>
-
-
-
-
-
-
-
-
             <div className="space-y-6 flex flex-col gap-12">
                 {/* cards / kpis / indicadores */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
@@ -42,21 +33,9 @@ export default function FornecedoresLoja() {
                                 7
                             </CardTitle>
                             <CardAction>
-                                {/* <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge> */}
                                 <ShoppingCart />
                             </CardAction>
                         </CardHeader>
-                        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
-        </CardFooter> */}
                     </Card>
                     <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
                         <CardHeader>
@@ -64,22 +43,8 @@ export default function FornecedoresLoja() {
                             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
                                 3
                             </CardTitle>
-                            <CardAction>
-                                {/* <Badge variant="outline">
-              <IconTrendingDown />
-              -20%
-            </Badge> */}
-                                <Clock />
-                            </CardAction>
+                            <CardAction><Clock /></CardAction>
                         </CardHeader>
-                        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <IconTrendingDown className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Acquisition needs attention
-          </div>
-        </CardFooter> */}
                     </Card>
                     <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
                         <CardHeader>
@@ -88,29 +53,14 @@ export default function FornecedoresLoja() {
                                 24
                             </CardTitle>
                             <CardAction>
-                                {/* <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge> */}
                                 <CheckCircle />
                             </CardAction>
                         </CardHeader>
-                        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
-        </CardFooter> */}
                     </Card>
                 </div>
-
-                {/* card de fornecedores */}
                 <FornecedoresCard />
-                {/* produtos */}
                 <ProductCatalog />
-                {/* produtos */}
                 <OrderManagement />
-
             </div>
         </>
     )

@@ -1,5 +1,4 @@
 import prisma from '../../prisma/client.js';
-
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
 export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
@@ -105,7 +104,6 @@ export const somarSaidas = async (unidadeId) => {
     and "unidadeId" = ${unidadeId}`;
 
     return result[0]?.total ?? 0;
-
 }
 
 export const calcularLucroDoMes = async (unidadeId) => {
@@ -135,7 +133,7 @@ export const calcularLucroDoMes = async (unidadeId) => {
 
 export const listarVendas = async (unidadeId) => {
     try {
-        const vendas = await prisma.Venda.findMany({where: { unidadeId: Number(unidadeId) },})
+        const vendas = await prisma.Venda.findMany({ where: { unidadeId: Number(unidadeId) }, })
         return ({
             sucesso: true,
             vendas,
@@ -151,8 +149,7 @@ export const listarVendas = async (unidadeId) => {
 }
 
 //do arquivo Loja.js
-//MOSTRA O SALDO FINAL DO DIA DA UNIDADE
-export const mostrarSaldoF = async (unidadeId) => {
+export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA DA UNIDADE
     try {
         const agora = new Date();
         const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
@@ -168,7 +165,7 @@ export const mostrarSaldoF = async (unidadeId) => {
                 saldoFinal: true,
                 abertoEm: true,
             },
-            orderBy: { abertoEm: "desc" }, // caso haja mais de um caixa no dia, pega o mais recente
+            orderBy: { abertoEm: "desc" }, // se tiver mais de um caixa no dia, pega o mais recente
         });
 
         if (!caixaDeHoje) {
@@ -177,7 +174,6 @@ export const mostrarSaldoF = async (unidadeId) => {
                 message: "Nenhum caixa encontrado para hoje.",
             };
         }
-
         return {
             sucesso: true,
             saldoFinal: caixaDeHoje.saldoFinal ?? 0,
@@ -201,7 +197,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 
     const vendas = await prisma.venda.findMany({
         where: {
-            criadoEm: {gte: dataLimite,lte: hoje,},
+            criadoEm: { gte: dataLimite, lte: hoje, },
             unidadeId
         },
         select: { criadoEm: true, },
@@ -308,8 +304,6 @@ export const calcularSaldoLiquido = async (unidadeId) => {
         return {
             sucesso: true,
             unidadeId: Number(unidadeId),
-            //   totalCaixas: somaCaixas.toFixed(2),
-            //   totalSaidas: somaSaidas.toFixed(2),
             saldoLiquido: saldoLiquido.toFixed(2),
             message: "Saldo líquido calculado com sucesso!",
         };
