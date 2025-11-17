@@ -2,19 +2,25 @@ import prisma from '../../prisma/client.js';
 
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId) => {//tem controller
+export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
     try {
-        const saidas = await prisma.Saidas.findMany({ where: { unidadeId: Number(unidadeId) }, })
+        const saidas = await prisma.Saidas.findMany({ 
+            where: { unidadeId: Number(unidadeId) ,
+                tipo,
+                data
+            }, 
+
+        })
         return ({
             sucesso: true,
             saidas,
-            message: "Saidas listadas com sucesso!!"
+            message: "Saidas do tipo especificado listadas com sucesso!!"
         })
     }
     catch (error) {
         return {
             sucesso: false,
-            erro: "erro ao listar saidas",
+            erro: "erro ao listar saidas do tipo especificado",
             detalhes: error.message
         }
     }

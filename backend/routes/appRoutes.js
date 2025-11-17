@@ -8,7 +8,7 @@ import { auth } from '../middlewares/authMiddleware.js'
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController, listarSaidasPorUnidadeController,calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController, somarEntradaMensalController, listarVendasController } from "../controllers/financeiro/financeiroController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { listarEstoqueController, listarAtividadesLoteController,consultarLoteController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
 import { verContratosController, listarFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarFornecedoresController, verContratosController, calcularFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";

@@ -128,6 +128,35 @@ export const listarSaidasPorUnidadeController = async (req, res) => { //FUNCIONA
   }
 };
 
+//listar saidas especificas
+export const listarSaidasController = async (req, res) => {
+    try {
+        // unidadeId vem da autenticação
+        const unidadeId = req.params.unidadeId; //quando implemetar mudar para  req.usuario.unidadeId ou sei la
+
+        // tipo e data vêm do front
+        const { tipo, data } = req.body;
+
+        if (!tipo || !data) {
+            return res.status(400).json({
+                sucesso: false,
+                mensagem: "Informe 'tipo' e 'data' na query. Ex: /saidas?tipo=VENDA&data=2025-01-01"
+            });
+        }
+
+        const resposta = await listarSaidas(unidadeId, tipo, data);
+
+        return res.status(200).json(resposta);
+
+    } catch (error) {
+        return res.status(500).json({
+            sucesso: false,
+            mensagem: "Erro no controller ao listar saídas",
+            detalhes: error.message
+        });
+    }
+};
+
 export const somarDiariaController = async (req, res) => { //FUNCIONANDO
     try {
         const unidadeId = Number(req.params.unidadeId);

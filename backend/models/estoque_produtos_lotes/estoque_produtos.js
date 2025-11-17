@@ -68,9 +68,29 @@ export async function getEstoque(unidadeId) { //ok
     }
 };
 
-export const reporEstoque = async (unidadeId) => {
+export const reporEstoque = async (dados) => {
+    try {
+        const novaSaida = await prisma.saidas.create({
+            data: {
+                unidadeId: Number(dados.unidadeId),
+                tipo: dados.tipo,
+                data: new Date(dados.data),
+                quantidade: Number(dados.quantidade)
+            }
+        });
 
-}
+        return {
+            sucesso: true,
+            saida: novaSaida
+        };
+
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: error.message
+        };
+    }
+};
 
 //PRODUTOS
 export async function getProdutos() { //ok
@@ -246,5 +266,7 @@ export const consultarLote = async (unidadeId, loteId) => {
         }
     }
 }
+
+
 
 export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId)
