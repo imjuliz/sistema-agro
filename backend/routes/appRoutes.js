@@ -3,7 +3,6 @@ const router = express.Router();
 
 // middlewares -----------------------------------------------------------------------------------------
 import { auth } from '../middlewares/authMiddleware.js'
-
 // controllers --------------------------------------------------------------------
 import { translateText } from '../controllers/TranslateController.js'
 import { deletarUsuarioController } from "../controllers/UserController.js";
@@ -15,49 +14,52 @@ import {
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js'
 import { verContratosController, listarFornecedoresController, calcularFornecedoresController, listarFornecedoresController, verContratosController } from "../controllers/fornecedores/fornecedoresController.js";
-import { verificarProducaoLoteController } from "../controllers/fazenda.js";
+import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
 import { consultarLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+
 // tradução
 router.post('/translate', translateText)
 
 // rotas usadas para loja --------------------------------------------------------------------------------
-router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
-router.get("/estoque/listar", auth, listarEstoqueController);
-router.get("/saldoLiquido", auth, calcularSaldoLiquidoController);
-router.get("/saldo-final", auth, mostrarSaldoFController);
-router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
-router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
-router.get("/produtos", auth, listarProdutosController);
 router.get("/vendas/ultimos-6-meses", auth, contarVendasPorMesUltimos6MesesController);
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
-router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
-router.get("/fornecedoresCalculo", calcularFornecedoresController);
-router.get("/somarDiaria/:unidadeId", somarDiariaController);
-router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
-router.get("/somarSaidas/:unidadeId", somarSaidasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
-router.get("/verContratos/:unidadeId", verContratosController);
-router.get("/verFornecedores/:unidadeId", listarFornecedoresController);
-router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
+router.get("/somarDiaria/:unidadeId", somarDiariaController);
 
 // rotas usadas para _____ ---------------------------------------------------------------------------------
 router.delete('/usuarios/:userId', deletarUsuarioController)
 router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
 
-//estoques, lotes, produtos, etc
+//estoques, lotes, produtos, etc--------------------
 router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
-//financeiro (de todos os perfis)
+router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
+router.get("/produtos", auth, listarProdutosController);
+router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
+router.get("/estoque/listar", auth, listarEstoqueController);
+router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
+router.get("/lote/:loteId/media-producao", calcularMediaProducaoPorLoteController);
 
+//relatório
+router.get("/relatorio/lote/:loteId", gerarRelatorioLoteController);
+router.get("/relatorio/producao/:loteId", gerarRelatorioProducaoController);
 
-//fornecedores
+//financeiro (de todos os perfis)--------------------
+router.get("/saldoLiquido", auth, calcularSaldoLiquidoController);
+router.get("/saldo-final", auth, mostrarSaldoFController);
+router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
+router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
+router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
+router.get("/somarSaidas/:unidadeId", somarSaidasController);
+router.get("/verContratos/:unidadeId", verContratosController);
 
+//fornecedores--------------------
+router.get("/fornecedoresCalculo", calcularFornecedoresController);
+router.get("/verFornecedores/:unidadeId", listarFornecedoresController);
 
-//perfil
-
-
+//perfil--------------------
 
 export default router;
