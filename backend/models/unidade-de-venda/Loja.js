@@ -1,8 +1,6 @@
 // import PrismaClient from '../../PrismaClient/client'
-// import { PrismaClient } from '../../prisma/generated/index.js';
 // import prisma from '../../prisma/client.js'
 import { PrismaClient } from '@prisma/client';
-//**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
 
 //DASHBOARD ------------------------------------------------------------------------------------------------------------------
 
@@ -23,7 +21,7 @@ export const mostrarSaldoF = async (unidadeId) => {
                 saldoFinal: true,
                 abertoEm: true,
             },
-            orderBy: { abertoEm: "desc" }, // caso haja mais de um caixa no dia, pega o mais recente
+            orderBy: { abertoEm: "desc" }, 
         });
 
         if (!caixaDeHoje) {
@@ -100,15 +98,12 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
 //listar produtos
 export const listarProdutos = async (unidadeId) => {
     try {
-        const fornecedores = await PrismaClient.venda.findMany({
-            where: { unidadeId: Number(unidadeId) },
-        })
+        const fornecedores = await PrismaClient.venda.findMany({where: { unidadeId: Number(unidadeId) },})
         return ({
             sucesso: true,
             fornecedores,
             message: "Fornecedores da unidade listados com sucesso!!"
         })
-
     } catch (error) {
         return {
             sucesso: false,
@@ -118,7 +113,6 @@ export const listarProdutos = async (unidadeId) => {
     }
 }
 
-
 //agrupado por mês
 export async function contarVendasPorMesUltimos6Meses(unidadeId) {
     const hoje = new Date();
@@ -127,10 +121,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 
     const vendas = await PrismaClient.venda.findMany({
         where: {
-            criadoEm: {
-                gte: dataLimite,
-                lte: hoje,
-            },
+            criadoEm: {gte: dataLimite,lte: hoje,},
             unidadeId
         },
         select: { criadoEm: true, },
@@ -151,7 +142,6 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
         const data = new Date(venda.criadoEm);
         const mesVenda = data.getMonth();
         const anoVenda = data.getFullYear();
-
         const mesEncontrado = meses.find((m) => m.chave === mesVenda && m.ano === anoVenda);
         if (mesEncontrado) { mesEncontrado.total++; }
     });
@@ -214,6 +204,3 @@ export async function criarVenda(req, res) {
         });
     }
 }
-
-//------------------------NOVAS FUNÇÕES - 11/11------------------------
-

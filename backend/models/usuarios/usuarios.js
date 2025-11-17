@@ -32,13 +32,11 @@ export const listarAdmins = async (unidadeId) => {
             admins,
             message: "Administradores da unidade listados com sucesso."
         })
-    }
-    catch (error) {
+    } catch (error) {
         return {
             sucesso: false,
             erro: "Erro ao listar administradores da unidade.",
             detalhes: error.message
-
         }
     }
 };

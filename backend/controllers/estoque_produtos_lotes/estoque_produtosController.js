@@ -91,9 +91,7 @@ export const getProdutoPorIdController = async (req, res) => {
 
     const resultado = await getProdutoPorId(Number(id));
 
-    if (!resultado.sucesso || !resultado.produto) {
-      return res.status(404).json({ sucesso: false, erro: "Produto não encontrado." });
-    }
+    if (!resultado.sucesso || !resultado.produto) {return res.status(404).json({ sucesso: false, erro: "Produto não encontrado." });}
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller ao buscar produto por ID:", error);

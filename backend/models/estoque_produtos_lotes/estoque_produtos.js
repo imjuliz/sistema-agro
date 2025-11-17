@@ -3,9 +3,7 @@ import prisma from '../../prisma/client.js';
 
 export const mostrarEstoque = async (unidadeId) => { //ok
     try {
-        const estoque = await prisma.Estoque.findMany({
-            where: { unidadeId: Number(unidadeId) },
-        })
+        const estoque = await prisma.Estoque.findMany({where: { unidadeId: Number(unidadeId) }})
         return ({
             sucesso: true,
             estoque,
@@ -68,9 +66,7 @@ export async function getEstoque(unidadeId) { //ok
     }
 };
 
-export const reporEstoque = async (unidadeId) => {
-
-}
+export const reporEstoque = async (unidadeId) => {}
 
 //PRODUTOS
 export async function getProdutos() { //ok
@@ -229,8 +225,6 @@ export const consultarLote = async (unidadeId, loteId) => {
                 loteId,
                 unidadeId : Number(unidadeId),
             }
-
-
         });
 
         return {

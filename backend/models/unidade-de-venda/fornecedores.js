@@ -8,7 +8,6 @@ export const listarFornecedores = async (unidadeId) =>{ //tem controller
             fornecedores,
             message: "Fornecedores da unidade listados com sucesso!!"
         })
-
     } catch (error) {
         return {
             sucesso: false,
