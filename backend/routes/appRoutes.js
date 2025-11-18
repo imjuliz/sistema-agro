@@ -1,35 +1,61 @@
 import express from "express";
 const router = express.Router();
 // middlewares --------------------------------------------------------------------
-import { auth } from '../middlewares/authMiddleware.js'
+import { auth } from "../middlewares/authMiddleware.js";
 // controllers --------------------------------------------------------------------
-import { translateText } from '../controllers/TranslateController.js';
+import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
-import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { consultarLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+import { listarUsuariosPorUnidadeController } from "../controllers/usuarios/usuariosController.js";
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
-import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { verContratosController, listarFornecedoresController, calcularFornecedoresController, verContratosController } from "../controllers/fornecedores/fornecedoresController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import {
-    mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
-    listarSaidasPorUnidadeController, calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController,
-    somarEntradaMensalController, listarVendasController
+  verificarProducaoLoteController,
+  calcularMediaProducaoPorLoteController,
+  gerarRelatorioLoteController,
+  gerarRelatorioProducaoController,
+} from "../controllers/fazenda.js";
+import {
+  verContratosController,
+  listarFornecedoresController,
+  calcularFornecedoresController,
+} from "../controllers/fornecedores/fornecedoresController.js";
+import {
+  listarEstoqueController,
+  buscarProdutoMaisVendidoController,
+  listarProdutosController,
+  somarQtdTotalEstoqueController,
+  lotesPlantioController,
+  consultarLoteController,
+} from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+import {
+  mostrarSaldoFController,
+  contarVendasPorMesUltimos6MesesController,
+  criarVendaController,
+  calcularSaldoLiquidoController,
+  listarSaidasPorUnidadeController,
+  somarDiariaController,
+  somarSaidasController,
+  calcularLucroController,
+  somarEntradaMensalController,
+  listarVendasController,
 } from "../controllers/financeiro/financeiroController.js";
 
 // tradução
 router.post("/translate", translateText);
 
 // rotas usadas para loja --------------------------------------------------------------------
-router.get("/vendas/ultimos-6-meses", auth, contarVendasPorMesUltimos6MesesController);
+router.get(
+  "/vendas/ultimos-6-meses",
+  auth,
+  contarVendasPorMesUltimos6MesesController
+);
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
 
 // rotas usadas para _____ --------------------------------------------------------------------
-router.delete('/usuarios/:userId', deletarUsuarioController)
-router.get("/usuarios/listar", auth, listarUsuariosPorUnidadeController);
+router.delete("/usuarios/:userId", deletarUsuarioController);
+router.get("/usuarios/listar",  listarUsuariosPorUnidadeController);
 
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
 router.get("/atividadesLote", listarAtividadesLoteController);
@@ -40,7 +66,10 @@ router.get("/produtos", auth, listarProdutosController);
 router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/estoque/listar", auth, listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
-router.get("/lote/:loteId/media-producao", calcularMediaProducaoPorLoteController);
+router.get(
+  "/lote/:loteId/media-producao",
+  calcularMediaProducaoPorLoteController
+);
 
 //relatório
 router.get("/relatorio/lote/:loteId", gerarRelatorioLoteController);

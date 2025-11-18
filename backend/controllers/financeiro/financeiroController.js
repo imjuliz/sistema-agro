@@ -1,9 +1,5 @@
 import prisma from "../../prisma/client.js";
-<<<<<<< HEAD
-import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade , mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal } from '../../models/financeiro/vendas_despesas.js'
-=======
 import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal } from '../../models/financeiro/vendas_despesas.js'
->>>>>>> main
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
@@ -175,7 +171,7 @@ export const somarDiariaController = async (req, res) => { //FUNCIONANDO
   }
 };
 
-export const somarEntradaMensalController = async (req, res) => { //NAO FUNCIONANDO
+export const somarEntradaMensalController = async (req, res) => { //TESTAR
   try {
     const unidadeId = Number(req.params.unidadeId);
 
@@ -204,12 +200,12 @@ export const somarSaidasController = async (req, res) => { //FUNCIONANDO
 }
 
 
-export const calcularLucroController = async (req, res) => { //NAO FUNCIONANDO :(
+export const calcularLucroController = async (req, res) => { //TEM Q TESTAR 👍
   try {
     // Pegamos a unidade logada (supondo que vem do middleware de autenticação)
-    const unidadeId = req.params.unidadeId; //acredito que na hora de implementar no sistema tem que colocar req.user?.unidadeId
+    const unidadeId = Number(req.params.unidadeId); //acredito que na hora de implementar no sistema tem que colocar req.user?.unidadeId
 
-    if (!unidadeId) { return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' }); }
+    if (!unidadeId || isNaN(unidadeId)) { return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' }); }
 
     // Chama o model que retorna o lucro
     const resultado = await calcularLucroDoMes(unidadeId);

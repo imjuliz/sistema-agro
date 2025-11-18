@@ -1,5 +1,4 @@
-import prisma from "../../prisma/client";
-import { calcularFornecedores, verContratos } from "../../models/unidade-de-venda/fornecedores";
+
 
 export const listarFornecedoresController = async (req, res) => {
   try {

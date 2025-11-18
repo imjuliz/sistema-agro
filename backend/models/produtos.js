@@ -16,14 +16,14 @@ export async function getProdutos() {
   }
 }
 
-export async function getProdutosPelaCategoria(categoria_animalia) {
+export async function getProdutosPelaCategoria(categoria) {
   try {
-    const produto_animalia = await prisma.produto.findMany({
-      where: { categoria: categoria_animalia },
+    const produto_categoria = await prisma.produto.findMany({
+      where: { categoria: categoria },
     });
     return {
       sucesso: true,
-      produto_animalia,
+      produto_categoria,
       message: "Produtos de animalia listados com sucesso.",
     };
   } catch (error) {

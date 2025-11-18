@@ -177,8 +177,6 @@ export async function deleteUnidade(id) {
         message: "Unidade deletada com sucesso."
     })
 };
-<<<<<<< HEAD:backend/models/unidades.js
-=======
 
 //trocar a utilização desta função DELETE por está: 
 export async function updateStatusUnidade(id, novoStatus) {
@@ -210,4 +208,3 @@ export async function updateStatusUnidade(id, novoStatus) {
     };
   }
 }
->>>>>>> main:backend/models/Matriz.js

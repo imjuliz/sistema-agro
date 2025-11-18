@@ -4,8 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url      = env("DATABASE_URL")
 }
 
 // npx prisma db push — envia o schema.prisma para o banco
@@ -232,7 +231,7 @@ model Estoque {
   unidadeId     Int      @map("unidade_id")
   produtoId     Int      @map("produto_id")
   quantidade    Int      @default(0)
-  estoqueMinimo Int      @map("estoque_minimo") @default(100)
+  estoqueMinimo Int      @map("estoque_minimo")
   atualizadoEm  DateTime @default(now()) @updatedAt @map("atualizado_em")
 
   unidade           Unidade            @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
@@ -491,7 +490,6 @@ model Contratos {
   @@index([fornecedorExternoId])
   @@index([produtoId])
   @@map("contratos")
-
 }
 
 // ============================================
@@ -550,29 +548,6 @@ enum AtividadesEnum {
   PLANTIO
   ADUBACAO
   FERTILIZACAO
-}
-
-enum TipoCategoria {
-  ANIMALIA
-  PLANTIO
-}
-
-enum TipoAnimalia {
-  VETERINARIO
-  ALIMENTACAO
-  COLHEITA
-}
-
-enum TipoPlantio {
-  CULTIVO
-  COLHEITA
-  PRODUCAO
-}
-
-enum TipoAnimais {
-  ABATE
-  VENDA
-  REPRODUCAO
 }
 
 enum StatusContrato {

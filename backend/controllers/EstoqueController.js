@@ -1,4 +1,5 @@
-import { getEstoques, getEstoqueAcimaMinimo, getEstoqueAbaixoMinimo, getValorEstoque, getEstoqueProximoValorMin, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque } from "../models/estoque.js";
+import { getEstoques, getEstoqueAcimaMinimo, getEstoqueAbaixoMinimo, getValorEstoque, getEstoqueProximoValorMin, getEstoquePorProduto, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque } from "../models/estoque.js";
+import { getProdutosPelaCategoria } from "../models/produtos.js";
 import { getProdutos } from "../models/produtos.js";
 import { estoqueSchema } from "../schemas/estoqueSchema.js";
 
@@ -91,6 +92,29 @@ export async function getEstoqueProximoValorMinController(req, res) {
     return {
       sucesso: false,
       erro: "Erro ao listar estoque próximo do minimo.",
+      detalhes: error.message, // opcional, para debug
+    }
+  }
+}
+
+export async function getEstoquePorProdutoController(req, res) { //td errado
+  try {
+    const { categoria } = req.query;
+    const produto = await getProdutosPelaCategoria(categoria)
+
+    if (!produtos || produtos.length === 0) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Nenhum produto encontrado com essa categoria."
+      });
+    }
+
+    const estoque = await getEstoquePorProduto(produto.id, produto.categoria);
+    return res.status(200).json(estoque)
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar estoque por produto.",
       detalhes: error.message, // opcional, para debug
     }
   }

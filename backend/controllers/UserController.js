@@ -12,7 +12,8 @@ dotenv.config();
 export async function cadastrarSeController(req, res) {
   try {
     const { nome, email, senha } = userSchema.partial().parse(req.body);
-    const id = req.usuario.id
+
+    console.log( nome, email, senha );
 
     if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
 
@@ -20,6 +21,7 @@ export async function cadastrarSeController(req, res) {
     const existingUser = await getUserByEmail(email);
     if (existingUser) { return res.status(400).json({ error: "Email já cadastrado" }); }
 
+    console.log("oi");
     const user = await cadastrarSe({ nome, email, senha });
 
     res.status(201).json({ message: "Usuário criado com sucesso", user });

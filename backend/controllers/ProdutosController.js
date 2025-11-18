@@ -20,11 +20,11 @@ export async function getProdutosController(req, res) {
 
 export async function getProdutosPelaCategoriaController(req, res) {
   try {
-    const { categoria_animalia } = req.params;
-    const produto_animalia = await getProdutosPelaCategoria(categoria_animalia);
+    const { categoria } = req.query;
+    const produtos = await getProdutosPelaCategoria(categoria);
     return {
       sucesso: true,
-      produto_animalia,
+      produtos,
       message: "Produtos de animalia listados com sucesso.",
     };
   } catch (error) {

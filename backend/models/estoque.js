@@ -89,6 +89,29 @@ export async function getValorEstoque(valor_estoque) {
   }
 }
 
+export async function getEstoquePorProduto(estoque) { //td errado
+  try {
+    const produtos = await prisma.estoque.findMany({
+      where: { 
+        estoque: {
+          
+        }
+       },
+    })
+    return {
+      sucesso: true,
+      estoque,
+      message: "Estoque listado com sucesso.",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar estoque por id.",
+      detalhes: error.message, // opcional, para debug
+    }
+  }
+}
+
 export async function getEstoquePorId(id) {
   try {
     const estoque = await prisma.estoque.findUnique({

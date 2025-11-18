@@ -72,4 +72,8 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 
 app.use('/uploads', express.static(path.resolve('uploads')));
 
+app.listen(8080, () => {
+  console.log('Servidor rodando na http://localhost:8080',);
+});
+
 export default app;  // aqui exporta o app puro, sem serverless

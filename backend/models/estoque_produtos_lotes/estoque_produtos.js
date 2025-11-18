@@ -265,4 +265,4 @@ export const consultarLote = async (unidadeId, loteId) => {
 
 
 
-export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId)
+// export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId) 

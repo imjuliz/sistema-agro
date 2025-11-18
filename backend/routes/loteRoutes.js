@@ -1,4 +1,15 @@
-import { getLoteController, getLoteAtividadeController, getLotePorAnimaliaIdController, getLoteRentabilidadeController, getLotePorIdController, createLoteController, updateLoteController, deleteLoteController, getLotePorDataCriacaoController } from "../controllers/LoteController.js";
+import {
+    getLoteController,
+    getLoteAtividadeController,
+    getLotePorAnimaliaIdController,
+    getLoteRentabilidadeController,
+    getLotePorIdController,
+    createLoteController,
+    updateLoteController,
+    deleteLoteController,
+    getLotePorDataCriacaoController,
+  } from "../controllers/LoteController.js";
+import { getAtividadeLoteTipoPlantioController } from "../controllers/AtividadeLoteController.js";
 import express from "express";
 import { auth } from "../middleware/auth.js";
 
@@ -13,5 +24,8 @@ router.post("/", auth(["gerente_fazenda"]), createLoteController);
 router.put("/:id", auth(["gerente_fazenda"]), updateLoteController);
 router.delete("/:id", auth(["gerente_fazenda"]), deleteLoteController);
 router.get("/dataCriacao/:dataCriacao", auth(["gerente_matriz", "gerente_fazenda"]), getLotePorDataCriacaoController);
+
+// atividadesLote
+router.get("/atividadeLote:tipo", getAtividadeLoteTipoPlantioController);
 
 export default router;
