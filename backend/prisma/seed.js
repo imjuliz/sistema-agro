@@ -72,7 +72,7 @@ async function main() {
         // // ===== Unidades =====
         console.log("Criando unidades...");
         const unidadesData = [
-            { nome: "Matriz São Paulo", endereco: "Av. Empresarial, 1000", tipo: TU.MATRIZ, cidade: "São Paulo", estado: "SP", cep: "01000-000", latitude: -23.55052, longitude: -46.633308, cnpj: "12345678000101", email: "ruraltech91@gmail.com", telefone: "1140000001" },
+            { nome: "RuralTech", endereco: "Av. Empresarial, 1000", tipo: TU.MATRIZ, cidade: "São Paulo", estado: "SP", cep: "01000-000", latitude: -23.55052, longitude: -46.633308, cnpj: "12345678000101", email: "ruraltech91@gmail.com", telefone: "1140000001" },
             { nome: "VerdeFresco Hortaliças", endereco: "Av. Central, 1", tipo: TU.LOJA, cidade: "São Paulo", estado: "SP", cep: "01001-001", latitude: -23.5450, longitude: -46.6340, cnpj: "12345678000202", email: "lojacentral@empresa.com", telefone: "1140000002", horarioAbertura: new Date('1970-01-01T09:00:00Z'), horarioFechamento: new Date('1970-01-01T19:00:00Z'), },
             { nome: "AgroBoi", endereco: "Rua Norte, 23", tipo: TU.LOJA, cidade: "Guarulhos", estado: "SP", cep: "07010-000", latitude: -23.4628, longitude: -46.5333, cnpj: "12345678000303", email: "lojanorte@empresa.com", telefone: "1140000003", horarioAbertura: new Date('1970-01-01T09:00:00Z'), horarioFechamento: new Date('1970-01-01T18:00:00Z'), },
             { nome: "Casa Útil Mercado", endereco: "Av. Sul, 45", tipo: TU.LOJA, cidade: "Santo André", estado: "SP", cep: "09010-000", latitude: -23.6639, longitude: -46.5361, cnpj: "12345678000404", email: "lojasul@empresa.com", telefone: "1140000004", horarioAbertura: new Date('1970-01-01T10:00:00Z'), horarioFechamento: new Date('1970-01-01T20:00:00Z'), },
@@ -95,7 +95,7 @@ async function main() {
         const senhaHash = await bcrypt.hash("123456", 10);
 
         const usuariosData = [
-            { nome: "Julia Alves", email: "juliaalvesdeo447@gmail.com", senha: senhaHash, telefone: "11987651001", perfilId: perfilMap["GERENTE_MATRIZ"], unidadeId: unidadeMap["Matriz São Paulo"], status: true },
+            { nome: "Julia Alves", email: "juliaalvesdeo447@gmail.com", senha: senhaHash, telefone: "11987651001", perfilId: perfilMap["GERENTE_MATRIZ"], unidadeId: unidadeMap["RuralTech"], status: true },
             { nome: "Usuario Ficticio", email: "user.teste@gmail.com", senha: senhaHash, telefone: "11995251689", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Unidade Teste"], status: true },
             { nome: "Lorena Oshiro", email: "lorenaoshiro2007@gmail.com", senha: senhaHash, telefone: "11987652001", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Alpha"], status: true },
             { nome: "Otávio Viana", email: "otavio.viana89@gmail.com", senha: senhaHash, telefone: "11999215361", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
@@ -116,7 +116,7 @@ async function main() {
         console.log("Ajustando gerenteId nas unidades...");
 
         await prisma.unidade.update({
-            where: { id: unidadeMap["Matriz São Paulo"] },
+            where: { id: unidadeMap["RuralTech"] },
             data: { gerenteId: usuarioMap["Julia Alves"] },
         });
         await prisma.unidade.update({
@@ -390,7 +390,8 @@ async function main() {
 
         // ===== Produtos =====
         console.log("Criando produtos...");
-        const produtosData = [
+        // ------------------------ PRODUTOS PARA ESTOQUE DAS FAZENDAS ------------------------
+        const produtosEstoqueFazenda = [
             // ------------------------ PRODUTOS PARA ESTOQUE DAS FAZENDAS (insumos / ração / fertilizantes / sementes) ------------------------
             // Fazenda Alpha — insumos para gado (FORNECEDOR externo)
             {
@@ -595,8 +596,205 @@ async function main() {
                 tags: ["inoculante", "microbiano"],
                 impostos: { icms: 12.0 }
             },
+        ];
+        await prisma.produto.createMany({ data: produtosEstoqueFazenda, skipDuplicates: true });
 
-            // ------------------------ PRODUTOS PARA ESTOQUE DAS LOJAS ------------------------
+        // ------------------------ PRODUTOS PARA PRODUÇÃO DAS FAZENDAS ------------------------ 
+        const produtosProducaoFazenda = [
+        ];
+        await prisma.produto.createMany({ data: produtosProducaoFazenda, skipDuplicates: true })
+
+        // ------------------------ PRODUTOS PARA ESTOQUE DAS LOJAS ------------------------
+        const produtosEstoqueLoja = [
+            // VerdeFresco Hortaliças (hortaliças / vegetais) - origin: Fazenda Delta (hortas)
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                origemUnidadeId: unidadeMap["Fazenda Delta"],
+                loteId: loteMap["Lote Horta 2025-02"],
+                criadoPorId: usuarioMap["Maria Del Rey"],
+                nome: "Alface Crespa (maço)",
+                sku: "ALFACE-CRES-001",
+                categoria: "Hortaliça",
+                descricao: "Alface crespa colhida para venda por unidade (maço)",
+                preco: "2.50",
+                dataFabricacao: new Date("2025-06-01"),
+                dataValidade: new Date("2025-06-07"),
+                unidadeMedida: UMED.UNIDADE,
+                pesoUnidade: "0.150",
+            },
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                origemUnidadeId: unidadeMap["Fazenda Delta"],
+                loteId: loteMap["Lote Horta 2025-01"],
+                criadoPorId: usuarioMap["Maria Del Rey"],
+                nome: "Tomate Carmem (kg)",
+                sku: "TOMATE-CARM-001",
+                categoria: "Hortaliça",
+                descricao: "Tomate Carmem, vendido a granel por kg",
+                preco: "6.80",
+                dataFabricacao: new Date("2025-05-28"),
+                dataValidade: new Date("2025-06-10"),
+                ncm: "07020010",
+                pesoUnidade: "1.000",
+            },
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                origemUnidadeId: unidadeMap["Fazenda Delta"],
+                loteId: loteMap["Lote Horta 2025-02"],
+                criadoPorId: usuarioMap["Maria Del Rey"],
+                nome: "Mix Verduras (pack)",
+                sku: "MIX-VERD-001",
+                categoria: "Hortaliça",
+                descricao: "Pack com mix de rúcula, agrião e alface (porção pronta para venda)",
+                preco: "5.50",
+                dataFabricacao: new Date("2025-06-01"),
+                dataValidade: new Date("2025-06-06"),
+                unidadeMedida: UMED.UNIDADE,
+                pesoUnidade: "0.350",
+            },
+            // AgroBoi (gado / insumos para bovinos) - origin: Fazenda Alpha (gado)
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Gado 2025-01"],
+                criadoPorId: usuarioMap["Richard Souza"],
+                nome: "Carne Contrafilé (1kg)",
+                sku: "CARNE-CF-001",
+                categoria: "Carne",
+                descricao: "Contrafilé bovino - embalagem por 1kg (procedência Fazenda Alpha)",
+                preco: "39.00",
+                dataFabricacao: new Date("2025-05-25"),
+                dataValidade: new Date("2025-06-05"),
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "1.000",
+            },
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Gado 2025-01"],
+                criadoPorId: usuarioMap["Richard Souza"],
+                nome: "Ração Bovino Engorda 50kg (loja)",
+                sku: "RACAO-BOV-050-LOJA",
+                categoria: "Ração",
+                descricao: "Ração para engorda - saco 50kg (transferência interna da fazenda)",
+                preco: "265.00",
+                dataFabricacao: new Date("2025-01-20"),
+                dataValidade: new Date("2026-01-20"),
+                ncm: "23091000",
+                pesoUnidade: "50.000",
+            },
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Gado 2025-02"],
+                criadoPorId: usuarioMap["Richard Souza"],
+                nome: "Suplemento Mineral Bovino 5kg (loja)",
+                sku: "SUP-MIN-BOV-005-LOJA",
+                categoria: "Suplemento",
+                descricao: "Bloco mineral 5kg para bovinos - vendido na loja AgroBoi",
+                preco: "45.00",
+                dataFabricacao: new Date("2025-02-01"),
+                dataValidade: new Date("2027-02-01"),
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "5.000",
+            },
+            // Sabor do Campo Laticínios (laticínios) - origin: Fazenda Gamma (leite)
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                loteId: loteMap["Lote Leite 2025-01"],
+                criadoPorId: usuarioMap["Juliana Correia"],
+                nome: "Leite Pasteurizado 1L",
+                sku: "LEITE-PAST-001",
+                categoria: "Laticínio",
+                descricao: "Leite pasteurizado, 1 litro, procedência Fazenda Gamma",
+                preco: "4.50",
+                dataFabricacao: new Date("2025-05-10"),
+                dataValidade: new Date("2025-05-17"),
+                unidadeMedida: UMED.LITRO,
+                pesoUnidade: "1.000",
+            },
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                loteId: loteMap["Lote Leite 2025-01"],
+                criadoPorId: usuarioMap["Juliana Correia"],
+                nome: "Queijo Minas Frescal 200g",
+                sku: "QUEIJO-MINAS-200",
+                categoria: "Laticínio",
+                descricao: "Queijo Minas fresco - 200g (produção local)",
+                preco: "16.00",
+                dataFabricacao: new Date("2025-05-05"),
+                dataValidade: new Date("2025-05-20"),
+                unidadeMedida: UMED.UNIDADE,
+                pesoUnidade: "0.200",
+            },
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                loteId: loteMap["Lote Leite 2025-02"],
+                criadoPorId: usuarioMap["Juliana Correia"],
+                nome: "Iogurte Natural 500g",
+                sku: "IOGURTE-NAT-500",
+                categoria: "Laticínio",
+                descricao: "Iogurte natural sem açúcar - pote 500g",
+                preco: "7.50",
+                dataFabricacao: new Date("2025-05-12"),
+                dataValidade: new Date("2025-05-22"),
+                unidadeMedida: UMED.UNIDADE,
+                pesoUnidade: "0.500",
+            },
+            // Casa Útil Mercado (produtos diversos pequenos) - origem variada (ex.: Fazendas / Unidade Teste)
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                origemUnidadeId: unidadeMap["Fazenda Beta"],
+                loteId: loteMap["Lote Trigo 2025-01"],
+                criadoPorId: usuarioMap["Roberto Barros"],
+                nome: "Farinha de Trigo Tipo 1 1kg",
+                sku: "FARIN-TRIG-1KG",
+                categoria: "Alimentos",
+                descricao: "Farinha de trigo tipo 1 - pacote 1kg (produção local / moagem a partir do lote)",
+                preco: "6.80",
+                dataFabricacao: new Date("2025-04-15"),
+                dataValidade: new Date("2026-04-15"),
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "1.000",
+            },
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                origemUnidadeId: unidadeMap["Unidade Teste"],
+                loteId: loteMap["Lote Teste 01"],
+                criadoPorId: usuarioMap["Roberto Barros"],
+                nome: "Sabão em Pó 1kg (marca local)",
+                sku: "SABAO-PO-1KG",
+                categoria: "Higiene",
+                descricao: "Sabão em pó embalagem 1kg - marca local/teste",
+                preco: "9.50",
+                dataFabricacao: new Date("2025-03-01"),
+                dataValidade: new Date("2027-03-01"),
+                unidadeMedida: UMED.UNIDADE,
+                pesoUnidade: "1.000",
+            },
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Milho 2025-01"],
+                criadoPorId: usuarioMap["Roberto Barros"],
+                nome: "Milho Para Pipoca 1kg",
+                sku: "MILHO-PIPE-1KG",
+                categoria: "Alimentos",
+                descricao: "Milho seco para consumo/uso doméstico - 1kg",
+                preco: "7.20",
+                dataFabricacao: new Date("2025-04-01"),
+                dataValidade: new Date("2026-04-01"),
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "1.000",
+            },
+        ];
+        await prisma.produto.createMany({ data: produtosEstoqueLoja, skipDuplicates: true });
+
+        // ------------------------ PRODUTOS PARA VENDA DAS LOJAS ------------------------
+        const produtosVendaLoja = [
             // VerdeFresco Hortaliças (hortaliças / vegetais) - origin: Fazenda Delta (hortas)
             {
                 unidadeId: unidadeMap["VerdeFresco Hortaliças"],
@@ -771,7 +969,7 @@ async function main() {
                 tags: ["iogurte", "natural"],
                 impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
             },
-            // Casa Útil Mercado (produtos diversos pequenos) - origem variada (ex.: Fazendas / Unidade Teste)
+            // Casa Útil Mercado (produtos diversos pequenos) - origem variada
             {
                 unidadeId: unidadeMap["Casa Útil Mercado"],
                 origemUnidadeId: unidadeMap["Fazenda Beta"],
@@ -828,50 +1026,60 @@ async function main() {
                 pesoUnidade: "1.000",
                 tags: ["milho", "seco"],
                 impostos: { icms: 12.0 }
-            }
+            },
         ];
+        await prisma.produto.createMany({ data: produtosVendaLoja, skipDuplicates: true });
 
-        await prisma.produto.createMany({ data: produtosData, skipDuplicates: true });
         let produtosDb = await prisma.produto.findMany();
         const produtoMap = Object.fromEntries(produtosDb.map(p => [p.sku, p.id]));
         console.log("Produtos criados:", produtosDb.length);
 
         // ===== Estoques =====
         console.log("Criando estoques...");
-        const estoqueData = [
+        const estoqueLoja = [
             // ----------------- LOJAS
             // VerdeFresco Hortaliças (hortaliças / vegetais)
-            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["ALFACE-HID-001"], quantidade: 300, estoqueMinimo: 20 },
-            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["TOMATE-CRM-1KG"], quantidade: 250, estoqueMinimo: 20 },
-            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["CENOURA-1KG"], quantidade: 200, estoqueMinimo: 15 },
-            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["MIX-VERD-200"], quantidade: 200, estoqueMinimo: 10 },
+            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["RACAO-BOV-050"], quantidade: 250, estoqueMinimo: 20 },
+            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["TOMATE-CARM-001"], quantidade: 200, estoqueMinimo: 15 },
+            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], produtoId: produtoMap["MIX-VERD-001"], quantidade: 200, estoqueMinimo: 10 },
             // AgroBoi (gado / insumos para bovinos)
-            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["RACAO-BOV-025"], quantidade: 120, estoqueMinimo: 10 },
-            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["RACAO-BOV-020"], quantidade: 80, estoqueMinimo: 8 },
-            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["CARC-BOV-001"], quantidade: 50, estoqueMinimo: 5 },
-            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["PICANHA-500G"], quantidade: 80, estoqueMinimo: 8 },
-            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["FARELO-SOJA-025"], quantidade: 60, estoqueMinimo: 6 },
+            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["CARNE-CF-001"], quantidade: 50, estoqueMinimo: 5 },
+            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["RACAO-BOV-050-LOJA"], quantidade: 80, estoqueMinimo: 8 },
+            { unidadeId: unidadeMap["AgroBoi"], produtoId: produtoMap["SUP-MIN-BOV-005-LOJA"], quantidade: 60, estoqueMinimo: 6 },
             // Sabor do Campo Laticínios (laticínios)
-            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["LEITE-1L-INT"], quantidade: 400, estoqueMinimo: 40 },
+            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["LEITE-PAST-001"], quantidade: 400, estoqueMinimo: 40 },
             { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["QUEIJO-MIN-1KG"], quantidade: 60, estoqueMinimo: 6 },
-            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["IOG-NAT-500"], quantidade: 120, estoqueMinimo: 12 },
-            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["QUEIJO-COA-500"], quantidade: 80, estoqueMinimo: 8 },
-            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["MANTEIGA-200"], quantidade: 50, estoqueMinimo: 5 },
+            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], produtoId: produtoMap["IOGURTE-NAT-500"], quantidade: 120, estoqueMinimo: 12 },
             // Casa Útil Mercado (produtos diversos pequenos)
-            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["SEED-MIL-1KG"], quantidade: 200, estoqueMinimo: 20 },
-            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["FERT-ORG-010"], quantidade: 80, estoqueMinimo: 8 },
-            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["COMP-ORG-005"], quantidade: 100, estoqueMinimo: 10 },
-            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["FAR-SOJA-10KG"], quantidade: 40, estoqueMinimo: 4 },
-            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["OLEO-SOJA-005L"], quantidade: 90, estoqueMinimo: 9 },
-            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["SACO-MIL-050"], quantidade: 60, estoqueMinimo: 6 },
-
-            // ----------------- FAZENDAS
+            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["FARIN-TRIG-1KG"], quantidade: 40, estoqueMinimo: 4 },
+            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["SABAO-PO-1KG"], quantidade: 90, estoqueMinimo: 9 },
+            { unidadeId: unidadeMap["Casa Útil Mercado"], produtoId: produtoMap["MILHO-PIPE-1KG"], quantidade: 60, estoqueMinimo: 6 },
         ];
+        await prisma.estoque.createMany({ data: estoqueLoja, skipDuplicates: true });
 
-        await prisma.estoque.createMany({ data: estoqueData, skipDuplicates: true });
+        const estoqueFazenda = [
+            // ----------------- FAZENDAS
+            // Fazenda Alpha
+            { unidadeId: unidadeMap["Fazenda Alpha"], produtoId: produtoMap["RACAO-BOV-050"], quantidade: 250, estoqueMinimo: 20 },
+            { unidadeId: unidadeMap["Fazenda Alpha"], produtoId: produtoMap["SUP-MIN-BOV-005"], quantidade: 200, estoqueMinimo: 15 },
+            { unidadeId: unidadeMap["Fazenda Alpha"], produtoId: produtoMap["BLOCO-MIN-BOV-010"], quantidade: 200, estoqueMinimo: 10 },
+            // Fazenda Beta
+            { unidadeId: unidadeMap["Fazenda Beta"], produtoId: produtoMap["SEED-SOJA-020"], quantidade: 50, estoqueMinimo: 5 },
+            { unidadeId: unidadeMap["Fazenda Beta"], produtoId: produtoMap["FARELO-SOJA-025"], quantidade: 80, estoqueMinimo: 8 },
+            { unidadeId: unidadeMap["Fazenda Beta"], produtoId: produtoMap["CALC-AG-040"], quantidade: 60, estoqueMinimo: 6 },
+            // Fazenda Gamma
+            { unidadeId: unidadeMap["Fazenda Gamma"], produtoId: produtoMap["RACAO-LEI-040"], quantidade: 400, estoqueMinimo: 40 },
+            { unidadeId: unidadeMap["Fazenda Gamma"], produtoId: produtoMap["BLOCO-MIN-COCHO-010"], quantidade: 60, estoqueMinimo: 6 },
+            // Fazenda Delta
+            { unidadeId: unidadeMap["Fazenda Delta"], produtoId: produtoMap["NPK-20520-025"], quantidade: 40, estoqueMinimo: 4 },
+            { unidadeId: unidadeMap["Fazenda Delta"], produtoId: produtoMap["COMPO-MIC-010"], quantidade: 90, estoqueMinimo: 9 },
+            { unidadeId: unidadeMap["Fazenda Delta"], produtoId: produtoMap["INOC-SOJA-001"], quantidade: 60, estoqueMinimo: 6 },
+        ]
+
+        await prisma.estoque.createMany({ data: estoqueFazenda, skipDuplicates: true });
         console.log("Estoques criados:", estoqueData.length);
 
-        //                 // ===== ProdutoFornecedor (preço, prazo) =====
+        // ===== ProdutoFornecedor (preço, prazo) =====
         //                 console.log("Ligando produtos a fornecedores...");
         //                 await prisma.produtoFornecedor.createMany({
         //                     data: [
