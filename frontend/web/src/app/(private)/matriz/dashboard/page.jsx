@@ -22,17 +22,8 @@ export default function Page() {
     <div className="flex flex-col p-10 gap-10">
       <div className="@container/main flex flex-2 flex-col gap-1">
         <div className="flex flex-col gap-1 py-1 md:gap-6 md:py-6">
-          {/* <div className="flex flex-row gap-6 items-start justify-between px-4 lg:px-6 mt-10">
-            <div className="w-full">
-              <Component />
-            </div>
-            <div className="flex-1">
-              <Calendar />
-            </div>
-          </div> */}
 
           <div className="grid grid-cols-3 gap-6">
-            {/* <div className="grid grid-cols-4 gap-4"> */}
             <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">

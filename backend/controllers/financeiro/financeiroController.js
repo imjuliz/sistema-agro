@@ -234,4 +234,31 @@ export const listarVendasController = async (req, res) => { //FUNCIONANDO
 }
 
 
+// ------ 18/11/25
+import fs from "fs";
+import { criarNotaFiscal } from "@/services/vendas/criarNotaFiscal";
 
+export const criarNotaFiscalController = async (req, res) => {
+  try {
+    const resultado = await criarNotaFiscal(req.body);
+
+    if (!resultado.sucesso) {return res.status(400).json(resultado);}
+    // Ler PDF
+    const buffer = fs.readFileSync(resultado.pdfPath);
+
+    // Enviar PDF
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=nota_fiscal_${resultado.venda.id}.pdf`
+    );
+    return res.send(buffer);
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao processar nota fiscal",
+      detalhes: error.message
+    });
+  }
+};

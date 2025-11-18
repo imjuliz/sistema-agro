@@ -267,6 +267,7 @@ model EstoqueMovimento {
 
 model ProdutoFornecedor {
   id               Int              @id @default(autoincrement())
+  
   contratoId       Int?             @map("contrato_id") // optional
   produtoId        Int              @map("produto_id")
   quantidade       Decimal?         @db.Decimal(12, 3)
