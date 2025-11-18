@@ -167,10 +167,8 @@ export async function refreshController(req, res) {
     // console.log("[refreshController] token recebido (len):", String(token).length);
 
     let hashed;
-    try {
-      hashed = hashToken(token);
-    
-    } catch (e) {
+    try {hashed = hashToken(token); }
+    catch (e) {
       console.error("[refreshController] erro ao hashear token:", e);
       return res.status(500).json({ error: "Erro interno ao processar token" });
     }
@@ -216,9 +214,8 @@ export async function refreshController(req, res) {
     console.log("[refreshController] usuario associado:", { id: user.id, email: user.email });
 
     let accessToken;
-    try {
-      accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });
-    } catch (e) {
+    try {accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });}
+    catch (e) {
       console.error("[refreshController] erro ao gerar access token:", e.stack ?? e);
       return res.status(500).json({ error: "Erro interno ao gerar access token" });
     }
@@ -343,7 +340,6 @@ export const updateSenhaController = async (req, res) => {
   try {
     const { codigo } = req.params;
     const { senha, confSenha } = userSchema.partial().parse(req.body);
-
     const result = await updateSenha(codigo, senha, confSenha);
     res.status(200).json({ message: "Senha atualizada com sucesso", result });
   } catch (error) {

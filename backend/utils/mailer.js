@@ -19,6 +19,7 @@ export async function sendResetPasswordEmail(to, token) {
     process.env.FRONTEND_URL || "http://localhost:3001"
   );
 
+<<<<<<< HEAD
   const mailOptions = {
     from: process.env.SMTP_USER,
     to,
@@ -28,3 +29,13 @@ export async function sendResetPasswordEmail(to, token) {
 
   await transporter.sendMail(mailOptions);
 }
+=======
+	const mailOptions = {
+		from: process.env.SMTP_USER,
+		to,
+		subject: 'Redefinição de senha - ZELOS',
+		html,
+	};
+	await transporter.sendMail(mailOptions);
+}
+>>>>>>> main

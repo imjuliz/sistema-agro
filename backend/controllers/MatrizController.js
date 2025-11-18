@@ -86,11 +86,7 @@ export async function contarFazendasController(req, res) {
         const ativas = await UnidadeService.contarFazendasAtivas();
         const inativas = await UnidadeService.contarFazendasInativas();
 
-        res.json({
-            total,
-            ativas,
-            inativas,
-        });
+        res.json({total,ativas,inativas,});
     } catch (error) {
         console.error('Erro ao obter contagem das fazendas:', error);
         res.status(500).json({ error: 'Erro interno no servidor' });

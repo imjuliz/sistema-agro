@@ -1,11 +1,8 @@
 // import PrismaClient from '../../PrismaClient/client'
-// import { PrismaClient } from '../../prisma/generated/index.js';
 // import prisma from '../../prisma/client.js'
 import { PrismaClient } from '@prisma/client';
-//**********************NENHUMA DESTAS FUNÇÕES FOI TESTADA**********************//
 
 //DASHBOARD ------------------------------------------------------------------------------------------------------------------
-
 //MOSTRA O SALDO FINAL DO DIA DA UNIDADE --
 export const mostrarSaldoF = async (unidadeId) => {
     try {
@@ -14,25 +11,18 @@ export const mostrarSaldoF = async (unidadeId) => {
         const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
 
         const caixaDeHoje = await PrismaClient.caixa.findFirst({ // busca o caixa aberto hoje para a unidade informada
-            where: {
-                unidadeId: Number(unidadeId),
-                abertoEm: { gte: inicioDoDia, lte: fimDoDia, },
-            },
+            where: {unidadeId: Number(unidadeId),abertoEm: { gte: inicioDoDia, lte: fimDoDia}},
             select: {
                 id: true,
                 saldoFinal: true,
                 abertoEm: true,
             },
-            orderBy: { abertoEm: "desc" }, // caso haja mais de um caixa no dia, pega o mais recente
+            orderBy: { abertoEm: "desc" }, 
         });
 
         if (!caixaDeHoje) {
-            return {
-                sucesso: false,
-                message: "Nenhum caixa encontrado para hoje.",
-            };
+            return {sucesso: false,message: "Nenhum caixa encontrado para hoje.",};
         }
-
         return {
             sucesso: true,
             saldoFinal: caixaDeHoje.saldoFinal ?? 0,
@@ -48,7 +38,6 @@ export const mostrarSaldoF = async (unidadeId) => {
     }
 };
 
-
 //pegar produto mais vendido
 export const buscarProdutoMaisVendido = async (unidadeId) => {
     try {
@@ -59,16 +48,10 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
             orderBy: { _sum: { quantidade: "desc", }, },
             take: 1, // pega apenas o produto mais vendido
         });
-
         if (resultado.length === 0) {
-            return {
-                sucesso: false,
-                message: "Nenhum item encontrado para esta unidade.",
-            };
+            return {sucesso: false,message: "Nenhum item encontrado para esta unidade."};
         }
-
         const produtoMaisVendido = resultado[0];
-
         const produto = await PrismaClient.produto.findUnique({ // Busca informações do produto
             where: { id: produtoMaisVendido.produtoId, },
             select: {
@@ -77,7 +60,6 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
                 descricao: true,
             },
         });
-
         return {
             sucesso: true,
             produto: {
@@ -100,15 +82,12 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
 //listar produtos
 export const listarProdutos = async (unidadeId) => {
     try {
-        const fornecedores = await PrismaClient.venda.findMany({
-            where: { unidadeId: Number(unidadeId) },
-        })
+        const fornecedores = await PrismaClient.venda.findMany({where: { unidadeId: Number(unidadeId) },})
         return ({
             sucesso: true,
             fornecedores,
             message: "Fornecedores da unidade listados com sucesso!!"
         })
-
     } catch (error) {
         return {
             sucesso: false,
@@ -118,7 +97,6 @@ export const listarProdutos = async (unidadeId) => {
     }
 }
 
-
 //agrupado por mês
 export async function contarVendasPorMesUltimos6Meses(unidadeId) {
     const hoje = new Date();
@@ -126,13 +104,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
     dataLimite.setMonth(dataLimite.getMonth() - 6);
 
     const vendas = await PrismaClient.venda.findMany({
-        where: {
-            criadoEm: {
-                gte: dataLimite,
-                lte: hoje,
-            },
-            unidadeId
-        },
+        where: {criadoEm: {gte: dataLimite,lte: hoje,},unidadeId},
         select: { criadoEm: true, },
     });
 
@@ -151,7 +123,6 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
         const data = new Date(venda.criadoEm);
         const mesVenda = data.getMonth();
         const anoVenda = data.getFullYear();
-
         const mesEncontrado = meses.find((m) => m.chave === mesVenda && m.ano === anoVenda);
         if (mesEncontrado) { mesEncontrado.total++; }
     });
@@ -215,5 +186,41 @@ export async function criarVenda(req, res) {
     }
 }
 
-//------------------------NOVAS FUNÇÕES - 11/11------------------------
+//////////////////////
+// Função de 17/11 //
+////////////////////
+export const verPedidos = async(unidadeId)=>{
+  try{
+    const pedidos = await prisma.Venda.findMany({where:{unidadeId: Number(unidadeId)}});
+    return ({
+      sucesso: true,
+      pedidos: pedidos,
+      message: "Pedidos listados com sucesso!"
+    })
+  }catch(error){
+    return{
+      sucesso: false,
+      erro:"Erro ao listar os pedidos",
+      detalhes: error.message
+    }
+  }
+};
 
+
+// Conta quantos registros existem na tabela "saidas"
+export const contarSaidas = async (unidadeId) => {
+  try {
+    const totalSaidas = await prisma.saidas.count({where: {unidadeId: Number(unidadeId)}});
+
+    return {
+      sucesso: true,
+      quantidade: totalSaidas,
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao contar saídas",
+      detalhes: error.message,
+    };
+  }
+};

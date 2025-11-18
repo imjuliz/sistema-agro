@@ -4,9 +4,7 @@ export const dadosPerfilController = async (req, res) => {
     try {
         const id = req.user.id;
         const dadosPerfil = await dadosPerfil(id);
-        if (!dadosPerfil) {
-            return res.status(404).json({ erro: 'Usuário não encontrado.' })
-        }
+        if (!dadosPerfil) {return res.status(404).json({ erro: 'Usuário não encontrado.' })}
         return res.status(200).json(dadosPerfil)
     }
     catch (error) {

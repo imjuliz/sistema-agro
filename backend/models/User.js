@@ -167,10 +167,8 @@ export async function esqSenha(email, codigo, expira) {
   try {
     const user = await prisma.usuarios.findUnique({ where: { email: email } });
 
-    if (!user) { return res.status(401).json({ error: "Usuário não encontrado" }); }
-
-    // Verificar se o usuário está ativo
-    if (user.status === "inativo") { throw new Error("Usuário inativo"); }
+    if (!user) { return res.status(401).json({ error: "Usuário não encontrado" })}
+    if (user.status === "inativo") { throw new Error("Usuário inativo")} // Verificar se o usuário está ativo
 
     // Salvar no banco junto com a validade (10 minutos)
     await prisma.reset_senhas.create({
@@ -193,20 +191,14 @@ export async function esqSenha(email, codigo, expira) {
     return {
       sucesso: false,
       erro: "Erro ao encontrar codigo de reset.",
-      detalhes: error.message, // opcional, para debug
-    };
+      detalhes: error.message,
+    }
   }
 }
 
 export async function codigo(codigo_reset) {
   try {
-<<<<<<< HEAD
-    const resetSenha = await prisma.reset_senhas.findUnique({
-      where: { codigo_reset: codigo_reset },
-    });
-=======
     const resetSenha = await prisma.reset_senhas.findUnique({ where: { codigo_reset: codigo_reset } });
->>>>>>> main
 
     if (!resetSenha) { throw new Error("Código inválido"); }
 
@@ -227,8 +219,8 @@ export async function codigo(codigo_reset) {
     return {
       sucesso: false,
       erro: "Erro ao criar",
-      detalhes: error.message, // opcional, para debug
-    };
+      detalhes: error.message,
+    }
   }
 }
 
@@ -257,7 +249,7 @@ export async function updateSenha(codigo, senha, confSenha) {
     return {
       sucesso: false,
       erro: "Erro ao criar",
-      detalhes: error.message, // opcional, para debug
-    };
+      detalhes: error.message,
+    }
   }
 }

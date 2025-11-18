@@ -3,9 +3,7 @@ import prisma from '../../prisma/client.js';
 
 export const mostrarEstoque = async (unidadeId) => { //ok
     try {
-        const estoque = await prisma.Estoque.findMany({
-            where: { unidadeId: Number(unidadeId) },
-        })
+        const estoque = await prisma.Estoque.findMany({where: { unidadeId: Number(unidadeId) }})
         return ({
             sucesso: true,
             estoque,
@@ -68,9 +66,29 @@ export async function getEstoque(unidadeId) { //ok
     }
 };
 
-export const reporEstoque = async (unidadeId) => {
+export const reporEstoque = async (dados) => {
+    try {
+        const novaSaida = await prisma.saidas.create({
+            data: {
+                unidadeId: Number(dados.unidadeId),
+                tipo: dados.tipo,
+                data: new Date(dados.data),
+                quantidade: Number(dados.quantidade)
+            }
+        });
 
-}
+        return {
+            sucesso: true,
+            saida: novaSaida
+        };
+
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: error.message
+        };
+    }
+};
 
 //PRODUTOS
 export async function getProdutos() { //ok
@@ -229,8 +247,6 @@ export const consultarLote = async (unidadeId, loteId) => {
                 loteId,
                 unidadeId : Number(unidadeId),
             }
-
-
         });
 
         return {
@@ -246,5 +262,7 @@ export const consultarLote = async (unidadeId, loteId) => {
         }
     }
 }
+
+
 
 export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId)

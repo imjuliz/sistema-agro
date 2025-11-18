@@ -86,7 +86,6 @@ export async function getLoja() {//tem controller
       where: { tipo: 'Loja' },
       orderBy: { nome: 'asc' },
     });
-
     return {
       sucesso: true,
       unidades: loja,
@@ -105,30 +104,20 @@ export async function getLoja() {//tem controller
 export const UnidadeService = {//tem controller
   // Contagem total de unidades do tipo "FAZENDA"
   async contarFazendas() {
-    return await prisma.unidade.count({
-      where: {
-        tipo: 'FAZENDA',
-      },
-    });
+    return await prisma.unidade.count({where: {tipo: 'FAZENDA'}});
   },
 
   // Contagem de fazendas com status ATIVA
   async contarFazendasAtivas() {//tem controller
     return await prisma.unidade.count({
-      where: {
-        tipo: 'FAZENDA',
-        status: 'ATIVA',
-      },
+      where: {tipo: 'FAZENDA',status: 'ATIVA'},
     });
   },
 
   // Contagem de fazendas com status INATIVA
   async contarFazendasInativas() {//tem controller
     return await prisma.unidade.count({
-      where: {
-        tipo: 'FAZENDA',
-        status: 'INATIVA',
-      },
+      where: {tipo: 'FAZENDA',status: 'INATIVA'},
     });
   },
 };
