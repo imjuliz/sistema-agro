@@ -80,12 +80,12 @@ export const somarDiaria = async (unidadeId) => {//tem controller
 export const somarEntradaMensal = async (unidadeId) => { //nao funciona
     const result = await prisma.$queryRaw`
     SELECT
-  TO_CHAR(DATE_TRUNC('month', "criado_em"), 'YYYY-MM') AS mes,
-  SUM("total") AS total_vendas
-FROM "vendas"
-WHERE "unidade_id" = 1  -- opcional
-GROUP BY DATE_TRUNC('month', "criado_em")
-ORDER BY mes DESC;`;
+    TO_CHAR(DATE_TRUNC('month', "criado_em"), 'YYYY-MM') AS mes,
+    SUM("total") AS total_vendas
+    FROM "vendas"
+    WHERE "unidade_id" = 1  -- opcional
+    GROUP BY DATE_TRUNC('month', "criado_em")
+    ORDER BY mes DESC;`;
 
     return result[0]?.total ?? 0;
 }

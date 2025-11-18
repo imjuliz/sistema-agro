@@ -136,25 +136,6 @@ export async function updateUnidadeController(req, res) {
     }
 };
 
-// DELETAR ---------------------------------------------------------------------------
-export async function deleteUnidadeController(req, res) {
-    try {
-        const { id } = req.params;
-        const unidade = await deleteUnidade(id);
-        return {
-            sucesso: true,
-            unidade,
-            message: "Unidade deletada com sucesso."
-        }
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao deletar unidade.",
-            detalhes: error.message // opcional, para debug
-        }
-    }
-};
-
 export const updateStatusUnidadeController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -183,4 +164,23 @@ export const updateStatusUnidadeController = async (req, res) => {
       detalhes: error.message,
     });
   }
+};
+
+// DELETAR ---------------------------------------------------------------------------
+export async function deleteUnidadeController(req, res) {
+    try {
+        const { id } = req.params;
+        const unidade = await deleteUnidade(id);
+        return {
+            sucesso: true,
+            unidade,
+            message: "Unidade deletada com sucesso."
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao deletar unidade.",
+            detalhes: error.message // opcional, para debug
+        }
+    }
 };

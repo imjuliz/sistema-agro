@@ -1,9 +1,4 @@
-import {
-  getRegistroSanitario,
-  getRegistroSanitarioPorId,
-  createRegistroSanitario,
-  deleteRegistroSanitario,
-} from "../models/registro_sanitario.js";
+import { getRegistroSanitario, getRegistroSanitarioPorId, createRegistroSanitario, deleteRegistroSanitario } from "../models/registro_sanitario.js";
 import { registroSanitarioSchema } from "../schemas/registro_sanitarioSchema.js";
 
 export async function getRegistroSanitarioController(req, res) {

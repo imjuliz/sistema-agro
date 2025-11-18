@@ -30,6 +30,10 @@ export async function updateFornecedorController(req, res) {
             message: "Fornecedor atualizado com sucesso!!",
         }
     } catch (error) {
-        
+        return {
+            sucesso: false,
+            erro: "Erro ao atualizar fornecedor",
+            detalhes: error.message
+        }
     }
 }
