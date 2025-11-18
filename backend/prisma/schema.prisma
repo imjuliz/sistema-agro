@@ -84,8 +84,8 @@ model Unidade {
   // Contratos:
   contratosComoLoja       Contratos[]        @relation("ContratoLoja") // - contratosComoLoja: quando esta unidade atua como LOJA (compradora)
   contratosComoFornecedor Contratos[]        @relation("ContratoFornecedorInterno") // - contratosComoFornecedor: quando esta unidade atua como FAZENDA (fornecedora interna)
-  estoqueMovimentos       EstoqueMovimento[]
-  estoqueMovimentos       EstoqueMovimento[]
+  OrigemMovimento         EstoqueMovimento[] @relation("OrigemMovimento")
+  DestinoMovimento        EstoqueMovimento[] @relation("DestinoMovimento")
 
   @@index([cidade])
   @@index([estado])
@@ -191,8 +191,8 @@ model Lote {
 model Produto {
   id              Int               @id @default(autoincrement())
   unidadeId       Int               @map("unidade_id")
-  origemUnidadeId Int?              @map("origem_unidade_id") // unidade origem do produto (quem produziu/enviou)
-  fornecedorId    Int?              @map("fornecedor_id") // fornecedor externo (se aplicável)
+  origemUnidadeId Int?              @map("origem_unidade_id") // unidade origem do produto (quem produziu/enviou) - essa coluna vai ser usada p loja
+  fornecedorId    Int?              @map("fornecedor_id") // fornecedor externo - essa coluna vai ser usada p fazenda
   criadoPorId     Int?              @map("criado_por_id") // usuário que cadastrou o produto
   loteId          Int?              @map("lote_id") // lote representa produção interna
   nome            String            @db.VarChar(150)
@@ -215,7 +215,7 @@ model Produto {
   origemUnidade Unidade?            @relation("ProdutoOrigem", fields: [origemUnidadeId], references: [id], onDelete: SetNull)
   fornecedor    Fornecedor?         @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id], onDelete: SetNull)
   criadoPor     Usuario?            @relation("ProdutoCriador", fields: [criadoPorId], references: [id], onDelete: SetNull)
-  lote          Lote                @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  lote          Lote?                @relation(fields: [loteId], references: [id], onDelete: Restrict)
   estoques      Estoque[]
   fornecedores  ProdutoFornecedor[]
   itensVendas   ItemVenda[]

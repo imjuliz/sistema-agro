@@ -172,88 +172,49 @@ async function main() {
                 unidadeId: unidadeMap["Fazenda Alpha"],
             },
             {
-                nomeEmpresa: "Distribuidora Central",
-                descricaoEmpresa: "Distribuição para lojas",
-                material: ["Embalagens", "Produtos secos"],
-                cnpjCpf: "98765432000111",
-                email: "vendas@distcentral.com",
-                endereco: "Av. Distribuição, 500",
+                nomeEmpresa: "NutriBov Distribuidora",
+                descricaoEmpresa: "Distribuição de ração bovina e suplementos",
+                material: ["Ração", "Suplemento"],
+                cnpjCpf: "10111213000144",
+                email: "vendas@nutribov.com",
+                endereco: "Rua NutriBov, 123",
                 unidadeId: unidadeMap["Fazenda Alpha"],
             },
-
             {
-                nomeEmpresa: "AgroBeta Ltda",
-                descricaoEmpresa: "Rações e serviços agropecuários",
-                material: ["Ração", "Medicamentos"],
-                cnpjCpf: "22333444000101",
-                email: "contato@agrobeta.com",
-                endereco: "Estrada Beta, km 2",
+                nomeEmpresa: "Sementes Brasil",
+                descricaoEmpresa: "Venda de sementes selecionadas",
+                material: ["Sementes"],
+                cnpjCpf: "11121314000155",
+                email: "contato@sementesbrasil.com",
+                endereco: "Av. Sementes, 200",
                 unidadeId: unidadeMap["Fazenda Beta"],
             },
             {
-                nomeEmpresa: "Distribuidora Beta",
-                descricaoEmpresa: "Distribui produtos agrícolas",
-                material: ["Embalagens", "Secos"],
-                cnpjCpf: "33444555000122",
-                email: "vendas@distbeta.com",
-                endereco: "Av. Beta, 200",
+                nomeEmpresa: "AgroGrãos Comercial",
+                descricaoEmpresa: "Comercialização de farelos e grãos",
+                material: ["Farelo", "Grãos"],
+                cnpjCpf: "12131415000166",
+                email: "vendas@agrograos.com",
+                endereco: "Rua Grãos, 50",
                 unidadeId: unidadeMap["Fazenda Beta"],
             },
             {
-                nomeEmpresa: "Gamma Insumos Ltda",
-                descricaoEmpresa: "Insumos agrícolas e fertilizantes",
-                material: ["Fertilizante", "Semente"],
-                cnpjCpf: "44555666000133",
-                email: "contato@gammainsumos.com",
-                endereco: "Rua Gamma, 10",
-                unidadeId: unidadeMap["Fazenda Gamma"],
-            },
-            {
-                nomeEmpresa: "Distribuidora Gamma",
-                descricaoEmpresa: "Distribuição local para regiões rurais",
-                material: ["Embalagens", "Produtos secos"],
-                cnpjCpf: "55666777000144",
-                email: "vendas@distgamma.com",
-                endereco: "Av. Gamma, 77",
-                unidadeId: unidadeMap["Fazenda Gamma"],
-            },
-
-            {
-                nomeEmpresa: "Delta Agropecuária",
-                descricaoEmpresa: "Fornece animais, ração e serviços",
-                material: ["Ração", "Animais"],
-                cnpjCpf: "66777888000155",
-                email: "contato@deltaagro.com",
-                endereco: "Fazenda Delta, s/n",
+                nomeEmpresa: "FertSul Distribuicao",
+                descricaoEmpresa: "Distribuição de fertilizantes e corretivos",
+                material: ["Fertilizante", "Corretivo"],
+                cnpjCpf: "13141516000177",
+                email: "contato@fertsul.com",
+                endereco: "Av. Fertilizantes, 300",
                 unidadeId: unidadeMap["Fazenda Delta"],
             },
             {
-                nomeEmpresa: "Distribuidora Delta",
-                descricaoEmpresa: "Logística e distribuição Delta",
-                material: ["Embalagens", "Secos"],
-                cnpjCpf: "77888999000166",
-                email: "vendas@distdelta.com",
-                endereco: "Av. Delta, 88",
+                nomeEmpresa: "BioInsumos Ltda",
+                descricaoEmpresa: "Produtos biológicos e microbianos",
+                material: ["Composto", "Inoculante"],
+                cnpjCpf: "14151617000188",
+                email: "contato@bioinsumos.com",
+                endereco: "Rua Bio, 77",
                 unidadeId: unidadeMap["Fazenda Delta"],
-            },
-
-            {
-                nomeEmpresa: "Fornecedor Teste Ltda",
-                descricaoEmpresa: "Fornecedor associado à Unidade Teste",
-                material: ["Sementes", "Fertilizantes"],
-                cnpjCpf: "88999000000177",
-                email: "contato@testefornece.com",
-                endereco: "Rua Teste, 1",
-                unidadeId: unidadeMap["Unidade Teste"],
-            },
-            {
-                nomeEmpresa: "Distribuidora Teste",
-                descricaoEmpresa: "Distribuição local - Unidade Teste",
-                material: ["Embalagens"],
-                cnpjCpf: "99000111000188",
-                email: "vendas@testedistrib.com",
-                endereco: "Av. Teste, 9",
-                unidadeId: unidadeMap["Unidade Teste"],
             },
         ];
         await prisma.fornecedor.createMany({ data: fornecedores, skipDuplicates: true });
@@ -486,7 +447,6 @@ async function main() {
                 tags: ["mineral", "bovino"],
                 impostos: { icms: 12.0 }
             },
-
             // Fazenda Beta — sementes / corretivos / farelo (FORNECEDORES externos)
             {
                 unidadeId: unidadeMap["Fazenda Beta"],
@@ -543,7 +503,6 @@ async function main() {
                 tags: ["calcario", "corretivo"],
                 impostos: { icms: 12.0 }
             },
-
             // Fazenda Gamma — insumos para produção leiteira (FORNECEDORES externos)
             {
                 unidadeId: unidadeMap["Fazenda Gamma"],
@@ -581,7 +540,6 @@ async function main() {
                 tags: ["mineral", "bovino"],
                 impostos: { icms: 12.0 }
             },
-
             // Fazenda Delta — fertilizantes / composto / inoculantes (FORNECEDORES externos)
             {
                 unidadeId: unidadeMap["Fazenda Delta"],
@@ -638,7 +596,241 @@ async function main() {
                 impostos: { icms: 12.0 }
             },
 
+            // ------------------------ PRODUTOS PARA ESTOQUE DAS LOJAS ------------------------
+            // VerdeFresco Hortaliças (hortaliças / vegetais) - origin: Fazenda Delta (hortas)
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                origemUnidadeId: unidadeMap["Fazenda Delta"],
+                loteId: loteMap["Lote Horta 2025-02"],
+                criadoPorId: usuarioMap["Maria Del Rey"],
+                nome: "Alface Crespa (maço)",
+                sku: "ALFACE-CRES-001",
+                categoria: "Hortaliça",
+                descricao: "Alface crespa colhida para venda por unidade (maço)",
+                preco: "2.50",
+                dataFabricacao: new Date("2025-06-01"),
+                dataValidade: new Date("2025-06-07"),
+                unidadeMedida: UMED.UNIDADE,
+                codigoBarras: "7891000000011",
+                ncm: "07051100",
+                pesoUnidade: "0.150",
+                tags: ["folha", "orgânico"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                origemUnidadeId: unidadeMap["Fazenda Delta"],
+                loteId: loteMap["Lote Horta 2025-01"],
+                criadoPorId: usuarioMap["Maria Del Rey"],
+                nome: "Tomate Carmem (kg)",
+                sku: "TOMATE-CARM-001",
+                categoria: "Hortaliça",
+                descricao: "Tomate Carmem, vendido a granel por kg",
+                preco: "6.80",
+                dataFabricacao: new Date("2025-05-28"),
+                dataValidade: new Date("2025-06-10"),
+                unidadeMedida: UMED.KG,
+                codigoBarras: "7891000000012",
+                ncm: "07020010",
+                pesoUnidade: "1.000",
+                tags: ["tomate", "fresco"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                origemUnidadeId: unidadeMap["Fazenda Delta"],
+                loteId: loteMap["Lote Horta 2025-02"],
+                criadoPorId: usuarioMap["Maria Del Rey"],
+                nome: "Mix Verduras (pack)",
+                sku: "MIX-VERD-001",
+                categoria: "Hortaliça",
+                descricao: "Pack com mix de rúcula, agrião e alface (porção pronta para venda)",
+                preco: "5.50",
+                dataFabricacao: new Date("2025-06-01"),
+                dataValidade: new Date("2025-06-06"),
+                unidadeMedida: UMED.UNIDADE,
+                codigoBarras: "7891000000013",
+                ncm: "07059000",
+                pesoUnidade: "0.350",
+                tags: ["mix", "salada"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            // AgroBoi (gado / insumos para bovinos) - origin: Fazenda Alpha (gado)
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Gado 2025-01"],
+                criadoPorId: usuarioMap["Richard Souza"],
+                nome: "Carne Contrafilé (1kg)",
+                sku: "CARNE-CF-001",
+                categoria: "Carne",
+                descricao: "Contrafilé bovino - embalagem por 1kg (procedência Fazenda Alpha)",
+                preco: "39.00",
+                dataFabricacao: new Date("2025-05-25"),
+                dataValidade: new Date("2025-06-05"),
+                unidadeMedida: UMED.KG,
+                codigoBarras: "7891000000020",
+                ncm: "02023000",
+                pesoUnidade: "1.000",
+                tags: ["bovino", "corte"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Gado 2025-01"],
+                criadoPorId: usuarioMap["Richard Souza"],
+                nome: "Ração Bovino Engorda 50kg (loja)",
+                sku: "RACAO-BOV-050-LOJA",
+                categoria: "Ração",
+                descricao: "Ração para engorda - saco 50kg (transferência interna da fazenda)",
+                preco: "265.00",
+                dataFabricacao: new Date("2025-01-20"),
+                dataValidade: new Date("2026-01-20"),
+                unidadeMedida: UMED.SACA,
+                codigoBarras: "7891000000021",
+                ncm: "23091000",
+                pesoUnidade: "50.000",
+                tags: ["racao", "bovino"],
+                impostos: { icms: 12.0 }
+            },
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Gado 2025-02"],
+                criadoPorId: usuarioMap["Richard Souza"],
+                nome: "Suplemento Mineral Bovino 5kg (loja)",
+                sku: "SUP-MIN-BOV-005-LOJA",
+                categoria: "Suplemento",
+                descricao: "Bloco mineral 5kg para bovinos - vendido na loja AgroBoi",
+                preco: "45.00",
+                dataFabricacao: new Date("2025-02-01"),
+                dataValidade: new Date("2027-02-01"),
+                unidadeMedida: UMED.KG,
+                codigoBarras: "7891000000022",
+                ncm: "23099000",
+                pesoUnidade: "5.000",
+                tags: ["suplemento", "bovino"],
+                impostos: { icms: 12.0 }
+            },
+            // Sabor do Campo Laticínios (laticínios) - origin: Fazenda Gamma (leite)
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                loteId: loteMap["Lote Leite 2025-01"],
+                criadoPorId: usuarioMap["Juliana Correia"],
+                nome: "Leite Pasteurizado 1L",
+                sku: "LEITE-PAST-001",
+                categoria: "Laticínio",
+                descricao: "Leite pasteurizado, 1 litro, procedência Fazenda Gamma",
+                preco: "4.50",
+                dataFabricacao: new Date("2025-05-10"),
+                dataValidade: new Date("2025-05-17"),
+                unidadeMedida: UMED.LITRO,
+                codigoBarras: "7891000000030",
+                ncm: "04012010",
+                pesoUnidade: "1.000",
+                tags: ["leite", "pasteurizado"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                loteId: loteMap["Lote Leite 2025-01"],
+                criadoPorId: usuarioMap["Juliana Correia"],
+                nome: "Queijo Minas Frescal 200g",
+                sku: "QUEIJO-MINAS-200",
+                categoria: "Laticínio",
+                descricao: "Queijo Minas fresco - 200g (produção local)",
+                preco: "16.00",
+                dataFabricacao: new Date("2025-05-05"),
+                dataValidade: new Date("2025-05-20"),
+                unidadeMedida: UMED.UNIDADE,
+                codigoBarras: "7891000000031",
+                ncm: "04063010",
+                pesoUnidade: "0.200",
+                tags: ["queijo", "fresco"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                loteId: loteMap["Lote Leite 2025-02"],
+                criadoPorId: usuarioMap["Juliana Correia"],
+                nome: "Iogurte Natural 500g",
+                sku: "IOGURTE-NAT-500",
+                categoria: "Laticínio",
+                descricao: "Iogurte natural sem açúcar - pote 500g",
+                preco: "7.50",
+                dataFabricacao: new Date("2025-05-12"),
+                dataValidade: new Date("2025-05-22"),
+                unidadeMedida: UMED.UNIDADE,
+                codigoBarras: "7891000000032",
+                ncm: "04031000",
+                pesoUnidade: "0.500",
+                tags: ["iogurte", "natural"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            // Casa Útil Mercado (produtos diversos pequenos) - origem variada (ex.: Fazendas / Unidade Teste)
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                origemUnidadeId: unidadeMap["Fazenda Beta"],
+                loteId: loteMap["Lote Trigo 2025-01"],
+                criadoPorId: usuarioMap["Roberto Barros"],
+                nome: "Farinha de Trigo Tipo 1 1kg",
+                sku: "FARIN-TRIG-1KG",
+                categoria: "Alimentos",
+                descricao: "Farinha de trigo tipo 1 - pacote 1kg (produção local / moagem a partir do lote)",
+                preco: "6.80",
+                dataFabricacao: new Date("2025-04-15"),
+                dataValidade: new Date("2026-04-15"),
+                unidadeMedida: UMED.KG,
+                codigoBarras: "7891000000040",
+                ncm: "11010000",
+                pesoUnidade: "1.000",
+                tags: ["farinha", "trigo"],
+                impostos: { icms: 12.0 }
+            },
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                origemUnidadeId: unidadeMap["Unidade Teste"],
+                loteId: loteMap["Lote Teste 01"],
+                criadoPorId: usuarioMap["Roberto Barros"],
+                nome: "Sabão em Pó 1kg (marca local)",
+                sku: "SABAO-PO-1KG",
+                categoria: "Higiene",
+                descricao: "Sabão em pó embalagem 1kg - marca local/teste",
+                preco: "9.50",
+                dataFabricacao: new Date("2025-03-01"),
+                dataValidade: new Date("2027-03-01"),
+                unidadeMedida: UMED.UNIDADE,
+                codigoBarras: "7891000000041",
+                ncm: "34021300",
+                pesoUnidade: "1.000",
+                tags: ["limpeza"],
+                impostos: { icms: 12.0, pis: 1.65, cofins: 7.6 }
+            },
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                origemUnidadeId: unidadeMap["Fazenda Alpha"],
+                loteId: loteMap["Lote Milho 2025-01"],
+                criadoPorId: usuarioMap["Roberto Barros"],
+                nome: "Milho Para Pipoca 1kg",
+                sku: "MILHO-PIPE-1KG",
+                categoria: "Alimentos",
+                descricao: "Milho seco para consumo/uso doméstico - 1kg",
+                preco: "7.20",
+                dataFabricacao: new Date("2025-04-01"),
+                dataValidade: new Date("2026-04-01"),
+                unidadeMedida: UMED.KG,
+                codigoBarras: "7891000000042",
+                ncm: "10059011",
+                pesoUnidade: "1.000",
+                tags: ["milho", "seco"],
+                impostos: { icms: 12.0 }
+            }
         ];
+
         await prisma.produto.createMany({ data: produtosData, skipDuplicates: true });
         let produtosDb = await prisma.produto.findMany();
         const produtoMap = Object.fromEntries(produtosDb.map(p => [p.sku, p.id]));
@@ -873,29 +1065,6 @@ async function main() {
         //                 });
         //                 console.log("Saídas criadas.");
 
-        //                 // ===== Sessões e ResetSenha (exemplos) =====
-        //                 // console.log("Criando sessão e reset de senha...");
-        //                 // await prisma.sessao.create({
-        //                 //     data: {
-        //                 //         id: "session_example_1",
-        //                 //         usuarioId: usuarioMap["Julia Alves"],
-        //                 //         refreshTokenHash: "hash_exemplo_refreshtoken",
-        //                 //         userAgent: "seed-script/1.0",
-        //                 //         ip: "127.0.0.1",
-        //                 //         createdAt: new Date(),
-        //                 //         expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
-        //                 //         revoked: false,
-        //                 //     },
-        //                 // });
-
-        //                 // await prisma.resetSenha.create({
-        //                 //     data: {
-        //                 //         usuarioId: usuarioMap["Julia Alves"],
-        //                 //         codigoReset: "123456",
-        //                 //         codigoExpira: new Date(Date.now() + 60 * 60 * 1000),
-        //                 //         usado: false,
-        //                 //     },
-        //                 // });
 
         console.log("SEED finalizado com sucesso!");
     } catch (error) {

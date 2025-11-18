@@ -9,7 +9,7 @@ import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usua
 import { consultarLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { verContratosController, listarFornecedoresController, calcularFornecedoresController, listarFornecedoresController, verContratosController } from "../controllers/fornecedores/fornecedoresController.js";
+import { verContratosController, listarFornecedoresController, calcularFornecedoresController, verContratosController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
