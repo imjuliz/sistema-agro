@@ -4,17 +4,17 @@ export async function getAtividadeLoteTipoPlantioController(req, res) {
     try {
         const { tipo } = req.params.tipo;
         const atividadeLote = await getAtividadeLoteTipoPlantio(tipo);
-        return {
+        return res.status(200).json({
             sucesso: true,
             atividadeLote,
             message: "Atividades do lote listadas com sucesso!!"
-        }
+        })
     } catch (error) {
-        return {
+        return res.status(500).json({
             sucesso: false,
             erro: "Erro ao listar atividades do lote",
             detalhes: error.message
-        }
+        })
     }
 }
 

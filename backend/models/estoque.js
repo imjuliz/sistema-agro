@@ -72,13 +72,29 @@ export async function getEstoqueProximoValorMin(quantidade) {
   }
 }
 
-export async function getValorEstoque(valor_estoque) {
+export async function getValorEstoquePorProduto(produtoId) {
   try {
-    const estoque = await prisma.estoque.findMany({ valor_estoque });
+    const produto = await prisma.produto.findUnique({
+      where: { id: Number(produtoId) },
+      include: {
+        estoques: true
+      }
+    });
+
+    if (!produto) return null;
+
+    const estoque = produto.estoques[0]; // estoque único por unidadeId + produtoId
+
+    const valor_total = estoque.quantidade * produto.preco;
+
     return {
-      sucesso: true,
-      estoque,
-      message: "Estoque listado com sucesso.",
+      produto: {
+        id: produto.id,
+        nome: produto.nome,
+        preco: produto.preco
+      },
+      quantidade: estoque.quantidade,
+      valor_total
     };
   } catch (error) {
     return {
@@ -89,15 +105,18 @@ export async function getValorEstoque(valor_estoque) {
   }
 }
 
-export async function getEstoquePorProduto(estoque) { //td errado
+export async function getEstoquePorCategoria(categoria) { 
   try {
-    const produtos = await prisma.estoque.findMany({
-      where: { 
-        estoque: {
-          
+    const estoque = await prisma.estoque.findMany({
+      where: {
+        produto: {
+          categoria: categoria
         }
-       },
-    })
+      },
+      include: {
+        produto: true, // opcional: traz informações do produto junto
+      }
+    });
     return {
       sucesso: true,
       estoque,

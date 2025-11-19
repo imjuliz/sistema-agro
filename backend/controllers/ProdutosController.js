@@ -1,4 +1,4 @@
-import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
+import { getProdutos, getProdutosPelaCategoria, getProdutoLotePorId, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
 import { produtoSchema } from "../schemas/produtoSchema.js";
 
 export async function getProdutosController(req, res) {
@@ -33,6 +33,33 @@ export async function getProdutosPelaCategoriaController(req, res) {
       erro: "Erro ao listar produtos de animalia.",
       detalhes: error.message, // opcional, para debug
     };
+  }
+}
+
+export async function getProdutoLotePorIdController(req, res) {
+  try {
+  const { loteId } = req.params;
+  
+  // Validações
+  if(!loteId) {
+    return res.status(400).json({erro: "Lote não encontrado."})
+  }
+  if(isNaN(loteId)) {
+    return res.status(400).json({erro: "Lote precisa ser um numero."})
+  }
+
+  const produto = await getProdutoLotePorId(loteId);
+  return res.status(200).json({
+    sucesso: true,
+    produto,
+    message: "Produto listado com sucesso."
+  })
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao listar produto.",
+      detalhes: error.message
+    })
   }
 }
 

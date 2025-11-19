@@ -11,11 +11,11 @@ export async function getLoteController(req, res) {
       message: "Lotes listados com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }
 
@@ -34,11 +34,11 @@ export async function getLoteAtividadeController(req, res) {
       message: "Lotes ativos listados com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes ativos.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }
 
@@ -52,11 +52,11 @@ export async function getLotePorAnimaliaIdController(req, res) {
       message: "Lotes de animalia listados com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes de animalia.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }
 
@@ -68,37 +68,49 @@ export async function getLoteRentabilidadeController(req, res) {
     const animal = await getAnimaisPorId(id_animal);
     const rentabilidade = lote.quantidade * animal.custo;
     const lote_rentabilidade = await getLoteRentabilidade(id_lote, rentabilidade);
-    return {
+    return res.status(200).json({
       sucesso: true,
       lote_rentabilidade,
       message: "Lotes com rentabilidade listados com sucesso."
-    }
+    })
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes com rentabilidade.",
       detalhes: error.message // opcional, para debug
-    }
+    })
   }
 }
 
 export async function getLotePorDataCriacaoController(req, res) {
   const { ano } = req.body;
-  const { id_produto } = req.query;
+  const { produtoId } = req.query;
   try {
-    const produto = await getProdutoPorId(id_produto);
-    const lote = await getLotePorDataCriacao(produto, ano);
-    return {
+    //Validações
+    if(isNaN(ano) || isNaN(produtoId)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Ano ou produtoId precisa ser um numero."
+      })
+    }
+    if (!ano || !produtoId) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Ano ou produtoId precisa ser informado."
+      })
+    }
+    const lote = await getLotePorDataCriacao(ano, produtoId );
+    return res.status(200).json({
       sucesso: true,
       lote,
       message: "Lotes criados na data listados com sucesso."
-    }
+    })
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes criados na data.",
       detalhes: error.message // opcional, para debug
-    }
+    })
   }
 }
 
@@ -112,11 +124,11 @@ export async function getLotePorIdController(req, res) {
       message: "Lote listado com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lote.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }
 
@@ -127,7 +139,9 @@ export async function getLotePorDataColheitaController(req, res) {
     const data_colheita = await getPlantioPorId(id_plantio);
     const lote = await getLotePorDataColheita(data_colheita.data_colheita);
   } catch (error) {
-    
+    return res.status(500).json({
+      
+    })
   }
 }
 
@@ -141,11 +155,11 @@ export async function createLoteController(req, res) {
       message: "Lote criado com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao criar lote.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }
 
@@ -160,11 +174,11 @@ export async function updateLoteController(req, res) {
       message: "Lote atualizado com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao atualizar lote.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }
 
@@ -178,10 +192,10 @@ export async function deleteLoteController(req, res) {
       message: "Lote deletado com sucesso.",
     };
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao deletar lote.",
       detalhes: error.message, // opcional, para debug
-    };
+    })
   }
 }

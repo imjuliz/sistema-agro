@@ -35,6 +35,35 @@ export async function getProdutosPelaCategoria(categoria) {
   }
 }
 
+export async function getProdutoLotePorId(loteId) {
+  try {
+    const produto_lote = await prisma.produto.findFirst({
+      where: { loteId: loteId },
+      select: {
+        nome: true,
+        sku: true,
+        categoria: true,
+        descricao: true,
+        preco: true, 
+        dataFabricacao: true,
+        dataValidade: true,
+        unidadeMedida: true
+      }
+    })
+    return {
+      sucesso: true,
+      produto_lote,
+      message: "Produto encontrado com sucesso."
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao encontrar produto.",
+      detalhes: error.message
+    }
+  }
+}
+
 export async function getProdutoPorId(id) {
   try {
     const produto = await prisma.produto.findUnique({
