@@ -15,7 +15,7 @@ export function EsqueciForm({ className, ...props }) {
             <div className="grid gap-6">
                 <div className="grid gap-3">
                     <Label htmlFor="email" className={'text-black dark:text-white'}>Email</Label>
-                    <Input id="email" type="email" placeholder="m@example.com" className={'text-white w-100'} required />
+                    <Input id="email" type="email" placeholder="m@example.com" className={'text-white w-[100%]'} required />
                 </div><a href="/verificacao">
                     <Button type="submit" className="w-full bg-black text-white mt-15 dark:bg-white dark:text-black">Enviar código</Button></a>
             </div>
@@ -39,11 +39,11 @@ export function RedefinirForm({ className, ...props }) {
             <div className="grid gap-6">
                 <div className="grid gap-3">
                     <Label htmlFor="Senha" className={'text-black dark:text-white'}>Senha</Label>
-                    <Input id="senha" type="text" placeholder="" className={'text-black w-100 dark:text-white'} required />
+                    <Input id="senha" type="text" placeholder="" className={'text-black w-[100%] dark:text-white'} required />
                 </div>
                 <div className="grid gap-3">
                     <Label htmlFor="Confirmar senha" className={'text-black dark:text-white'}>Confirme sua senha</Label>
-                    <Input id="senhaConfirmada" type="password" placeholder="" className={'text-black w-100 dark:text-white'} required />
+                    <Input id="senhaConfirmada" type="password" placeholder="" className={'text-black w-[100%] dark:text-white'} required />
                 </div><a href="/verificacao">
                     <Button type="submit" className="w-full bg-black text-white mt-15 dark:bg-white dark:text-black">
                         Redefinir</Button></a>

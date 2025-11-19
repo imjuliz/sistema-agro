@@ -43,13 +43,6 @@ const defaultFeatures = [
     },
 ];
 
-// const defaultStats = [
-//     { number: "10M+", label: "Professionals Empowered" },
-//     { number: "150+", label: "Countries Reached" },
-//     { number: "98%", label: "Client Satisfaction" },
-//     { number: "24/7", label: "Support Available" },
-// ];
-
 export default function sobreNos({
     // Hero section - inline defaults for simple strings
     badgeText = "Conheça a RuralTech",
@@ -118,7 +111,7 @@ export default function sobreNos({
             description: "Confira nosso guia de início rápido para desenvolvedores.",
             linkText: "Contatar vendas",
             linkHref: "#",
-            highlight: false, // esse ficará com fundo cinza claro
+            highlight: false, 
         },
     ];
 
@@ -240,88 +233,18 @@ export default function sobreNos({
                     </div>
                 </div>
                 {/* cards */}
-                {/* <div className="grid gap-8 md:grid-cols-4">
-                    {stats.map((stat, index) => (
-                        <div key={index} className="flex flex-col items-center rounded-lg border border-border p-6 text-center">
-                            <p className="text-3xl font-bold md:text-4xl">{stat.number}</p>
-                            <p className="text-sm text-muted-foreground">{stat.label}</p>
-                        </div>
-                    ))}
-                </div> */}
                 {/* fale conosco */}
-                {/* <div className="overflow-hidden rounded-lg bg-gradient-to-br from-muted/80 to-muted/30 p-6 md:p-10">
-                    <h2 className="mb-3 text-3xl font-bold md:text-4xl">Fale conosco</h2>
-                    <div>
-                        <Grid container spacing={2}>
-                            <Grid size={4}>
-                                <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'transparent' }}>
-                                    <nav aria-label="main mailbox folders">
-                                        <Divider />
-                                        <List>
-                                            <ListItem disablePadding>
-                                                <ListItemButton onClick={() => handleCopy("+55 11 99999-8888")}>
-                                                    <ListItemIcon>
-                                                        <WhatsAppIcon sx={{ color: green[900] }} />
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="Whatsapp:" />
-                                                    <ListItemText sx={{ opacity: 0.5 }} primary="+55 11 99999-8888" />
-                                                </ListItemButton>
-                                            </ListItem>
-
-                                            <ListItem disablePadding>
-                                                <ListItemButton onClick={() => handleCopy("ruralTech@email.com")}>
-                                                    <ListItemIcon>
-                                                        <EmailIcon sx={{ color: green[900] }} />
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="E-mail:" />
-                                                    <ListItemText sx={{ opacity: 0.5 }} primary="ruralTech@email.com" />
-                                                </ListItemButton>
-                                            </ListItem>
-
-                                            <ListItem disablePadding>
-                                                <ListItemButton onClick={() => handleCopy("(11) 4002-8922")}>
-                                                    <ListItemIcon>
-                                                        <LocalPhoneIcon sx={{ color: green[900] }} />
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="Telefone:" />
-                                                    <ListItemText sx={{ opacity: 0.5 }} primary="(11) 4002-8922" />
-                                                </ListItemButton>
-                                            </ListItem>
-                                        </List>
-                                    </nav>
-                                </Box>
-                            </Grid>
-                            <Grid size={8}>
-                                <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'transparent' }}>
-                                    <nav aria-label="main mailbox folders">
-                                        <List>
-                                            <ListItem disablePadding>
-                                                <ListItemButton onClick={() => handleCopy("R. Santo André, 680 - Boa Vista, São Caetano do Sul/SP")}>
-                                                    <ListItemIcon>
-                                                        <FmdGoodIcon sx={{ color: green[900] }} />
-                                                    </ListItemIcon>
-                                                    <ListItemText sx={{ whiteSpace: "noWrap" }} primary="Endereço 1:" />
-                                                    <ListItemText sx={{ opacity: 0.5, whiteSpace: "noWrap", marginLeft: 10 }} primary="R. Santo André, 680 - Boa Vista, São Caetano do Sul/SP" />
-                                                </ListItemButton>
-                                            </ListItem>
-
-                                            <ListItem disablePadding>
-                                                <ListItemButton onClick={() => handleCopy("R. Boa Vista, 825 - Boa Vista, São Caetano do Sul/SP")}>
-                                                    <ListItemIcon>
-                                                        <FmdGoodIcon sx={{ color: green[900] }} />
-                                                    </ListItemIcon>
-                                                    <ListItemText sx={{ whiteSpace: "noWrap" }} primary="Endereço 2:" />
-                                                    <ListItemText sx={{ opacity: 0.5, whiteSpace: "noWrap", marginLeft: 10 }} primary="R. Boa Vista, 825 - Boa Vista, São Caetano do Sul/SP" />
-                                                </ListItemButton>
-                                            </ListItem>
-                                        </List>
-                                    </nav>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </div>
-                </div> */}
-
+                {/* <List>
+                        <ListItem disablePadding>
+                            <ListItemButton onClick={() => handleCopy("+55 11 99999-8888")}>
+                                <ListItemIcon>
+                                    <WhatsAppIcon sx={{ color: green[900] }} />
+                                </ListItemIcon>
+                                <ListItemText primary="Whatsapp:" />
+                                <ListItemText sx={{ opacity: 0.5 }} primary="+55 11 99999-8888" />
+                            </ListItemButton>
+                        </ListItem>
+                </List>*/}
                 <div className="bg-background min-h-screen">
                     <div className="mx-auto  px-4 py-12 sm:px-6 lg:px-8">
                         <div className="grid items-start gap-16 lg:grid-cols-2">
@@ -376,29 +299,17 @@ export default function sobreNos({
                             {/* Right Column - Hero Image */}
                             <div className="relative h-full">
                                 <div className="overflow-hidden h-full rounded-2xl shadow-lg">
-                                    {/* <img
-                                        src="https://plus.unsplash.com/premium_photo-1716603741447-7fcd7ddeba39?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                                        alt="Wind turbine over coastal landscape representing sustainable energy solutions"
-                                        className="h-full w-full object-cover"
-                                    /> */}
-
                                     <iframe title="Localização" width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086302231854!2d-122.40107092459283!3d37.77665667198132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858088d35df8e9%3A0xc8b2b3c0b48a0b49!2s123%20Market%20St%2C%20San%20Francisco%2C%20CA%2094103!5e0!3m2!1spt-BR!2sbr!4v1680293848340!5m2!1spt-BR!2sbr"
                                     ></iframe>
                                 </div>
                             </div>
-
-
                         </div>
                         <section className="w-full py-12">
                             <div className="mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {cards.map((card, index) => (
                                     <div key={index} className={`flex flex-row gap-4 items-center text-center p-4 rounded-xl border transition-colors ${card.highlight ? "bg-neutral-50 dark:bg-neutral-800" : "bg-white dark:bg-neutral-900"} hover:bg-neutral-100 dark:hover:bg-neutral-800`}>
                                         {card.icon}
-                                        <a href={card.linkHref} className="text-sm font-semibold text-neutral-900 dark:text-white hover:underline">{card.title} →</a>
-                                        {/* <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{card.description}</p>
-                                        <a  className="mt-4 text-sm font-medium text-neutral-900 dark:text-white hover:underline">
-                                            {card.title} 
-                                        </a> */}
+                                        <a href={card.linkHref} className="text-sm font-semibold text-neutral-900 dark:text-white hover:underline">{card.title}</a>
                                     </div>
                                 ))}
                             </div>
