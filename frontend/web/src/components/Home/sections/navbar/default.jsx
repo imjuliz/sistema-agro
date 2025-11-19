@@ -2,22 +2,20 @@ import { Menu } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {Navbar as NavbarComponent,NavbarLeft,NavbarRight,} from "@/components/ui/navbar";
+import { Navbar as NavbarComponent, NavbarLeft, NavbarRight, } from "@/components/ui/navbar";
 import Navigation from "@/components/ui/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Navbar({
-  logo = <img src={'/img/ruraltech-logo.svg'} className="h-6"/>,
+  logo = <img src={'/img/ruraltech-logo.svg'} className="h-6" />,
   name = "RuralTech",
-  // homeUrl = siteConfig.url,
   homeUrl = '/',
   mobileLinks = [
-    // { text: "Para você", href: siteConfig.url },
     { text: "Sobre nós", href: '/sobreNos' },
     { text: "Blog", href: '/blog' },
   ],
   actions = [
-    { text: "Criar conta", href: '/cadastrar', isButton: true, variant:'outline' },
+    // { text: "Criar conta", href: '/cadastrar', isButton: true, variant: 'outline' },
     {
       text: "Entrar",
       href: '/login',
@@ -35,10 +33,7 @@ export default function Navbar({
       <div className="max-w-container relative mx-auto">
         <NavbarComponent>
           <NavbarLeft>
-            <a href={homeUrl} className="flex items-center gap-2 text-xl font-bold">
-              {logo}
-              {name}
-            </a>
+            <a href={homeUrl} className="flex items-center gap-2 text-xl font-bold">{logo}{name}</a>
             {showNavigation && (customNavigation || <Navigation />)}
           </NavbarLeft>
           <NavbarRight>
@@ -51,11 +46,7 @@ export default function Navbar({
                     {action.iconRight}
                   </a>
                 </Button>
-              ) : (
-                <a key={index} href={action.href} className="hidden text-sm md:block">
-                  {action.text}
-                </a>
-              )
+              ) : (<a key={index} href={action.href} className="hidden text-sm md:block">{action.text}</a>)
             )}
             <Sheet>
               <SheetTrigger asChild>

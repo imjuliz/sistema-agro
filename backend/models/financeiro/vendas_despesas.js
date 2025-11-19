@@ -1,4 +1,7 @@
 import prisma from '../../prisma/client.js';
+import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
 export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
@@ -334,3 +337,134 @@ export async function listarSaidasPorUnidade(unidadeId) {
     }
 }
 
+// ----------- 18/11/2025
+export const criarNotaFiscal = async (data) => {
+  try {
+    const { caixaId, usuarioId, unidadeId, itens, pagamento } = data;
+
+    // 1 — Validar unidade
+    const unidade = await prisma.Unidade.findUnique({where: { id: Number(unidadeId) }});
+
+    if (!unidade) {
+      return {
+        sucesso: false,
+        erro: "Unidade não encontrada"
+      };
+    }
+
+    // 2 — Validar caixa
+    const caixa = await prisma.Caixa.findUnique({where: { id: Number(caixaId) }});
+
+    if (!caixa || caixa.unidadeId !== Number(unidadeId)) {return {sucesso: false,erro: "Caixa não pertence à unidade especificada"};}
+
+    // 3 — Criar venda
+    const venda = await prisma.Venda.create({
+      data: {caixaId,usuarioId,unidadeId,pagamento,total: 0 }
+    });
+
+    let totalVenda = 0;
+    const itensCriados = [];
+
+    // 4 — Criar itens + movimentar estoque
+    for (const item of itens) {
+      const subtotal = (item.quantidade * item.precoUnitario) - item.desconto;
+      totalVenda += subtotal;
+
+      // Criar item
+      const novoItem = await prisma.ItemVenda.create({
+        data: {
+          vendaId: venda.id,
+          produtoId: item.produtoId,
+          quantidade: item.quantidade,
+          precoUnitario: item.precoUnitario,
+          desconto: item.desconto,
+          subtotal
+        }
+      });
+
+      itensCriados.push(novoItem);
+
+      // Buscar estoque da unidade
+      const estoque = await prisma.Estoque.findFirst({
+        where: {unidadeId: Number(unidadeId),produtoId: item.produtoId}
+      });
+
+      if (!estoque) {
+        return {
+          sucesso: false,
+          erro: `Produto ${item.produtoId} não está no estoque desta unidade`
+        };
+      }
+
+      // Atualizar estoque
+      await prisma.Estoque.update({
+        where: { id: estoque.id },
+        data: {quantidade: estoque.quantidade - item.quantidade}
+      });
+
+      // Registrar movimento
+      await prisma.EstoqueMovimento.create({
+        data: {
+          estoqueId: estoque.id,
+          tipoMovimento: "SAIDA",
+          quantidade: item.quantidade,
+          vendaId: venda.id,
+          origemUnidadeId: unidadeId
+        }
+      });
+    }
+
+    // 5 — Atualizar total
+    await prisma.Venda.update({where: { id: venda.id },data: { total: totalVenda } });
+
+    // 6 — Criar PDF
+    const filePath = path.join(process.cwd(), `nota_fiscal_${venda.id}.pdf`);
+    const doc = new PDFDocument();
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    // Cabeçalho
+    doc.fontSize(22).text("NOTA FISCAL", { align: "center" }).moveDown();
+    doc.fontSize(12).text(`Venda: ${venda.id}`);
+    doc.text(`Unidade: ${unidadeId}`);
+    doc.text(`Caixa: ${caixaId}`);
+    doc.text(`Usuário: ${usuarioId}`);
+    doc.text(`Pagamento: ${pagamento}`);
+    doc.text(`Data: ${new Date().toLocaleString("pt-BR")}`);
+    doc.moveDown();
+
+    // Itens
+    doc.fontSize(16).text("Itens da Nota:").moveDown(0.5);
+
+    itensCriados.forEach((i) => {
+      doc.fontSize(12)
+        .text(`Produto ID: ${i.produtoId}`)
+        .text(`Quantidade: ${i.quantidade}`)
+        .text(`Preço: R$ ${i.precoUnitario}`)
+        .text(`Desconto: R$ ${i.desconto}`)
+        .text(`Subtotal: R$ ${i.subtotal}`)
+        .moveDown();
+    });
+
+    doc.fontSize(16).text(`TOTAL: R$ ${totalVenda}`, { align: "right" });
+
+    doc.end();
+
+    await new Promise((resolve) => stream.on("finish", resolve));
+
+    return {
+      sucesso: true,
+      venda,
+      itens: itensCriados,
+      total: totalVenda,
+      pdfPath: filePath
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao criar nota fiscal",
+      detalhes: error.message
+    };
+  }
+};
