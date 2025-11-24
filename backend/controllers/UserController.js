@@ -61,10 +61,10 @@ export async function meController(req, res) {
   try {
     // sua middleware já definiu req.usuario = { id, email, perfil }
     const usuarioContext = req.usuario;
-    if (!usuarioContext || !usuarioContext.id) {return res.status(401).json({ mensagem: 'Não autorizado' });}
+    if (!usuarioContext || !usuarioContext.id) { return res.status(401).json({ mensagem: 'Não autorizado' }); }
 
     const usuario = await getUserById(usuarioContext.id);
-    if (!usuario) {return res.status(404).json({ mensagem: 'Usuário não encontrado' });}
+    if (!usuario) { return res.status(404).json({ mensagem: 'Usuário não encontrado' }); }
 
     // Retorna o usuário em campo "usuario" — consistente com outros endpoints que você usa
     return res.status(200).json({ usuario });
@@ -168,7 +168,7 @@ export async function refreshController(req, res) {
     // console.log("[refreshController] token recebido (len):", String(token).length);
 
     let hashed;
-    try {hashed = hashToken(token); }
+    try { hashed = hashToken(token); }
     catch (e) {
       console.error("[refreshController] erro ao hashear token:", e);
       return res.status(500).json({ error: "Erro interno ao processar token" });
@@ -185,7 +185,8 @@ export async function refreshController(req, res) {
     try {
       sessao = await prisma.sessao.findUnique({
         where: { refreshTokenHash: hashed },
-        include: { usuario: true },
+        // include: { usuario: true },
+        include: { usuario: { include: { perfil: true } } }
       });
     } catch (e) {
       console.error("[refreshController] erro ao consultar prisma.sessao:", e.stack ?? e);
@@ -215,7 +216,7 @@ export async function refreshController(req, res) {
     console.log("[refreshController] usuario associado:", { id: user.id, email: user.email });
 
     let accessToken;
-    try {accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion });}
+    try { accessToken = generateAccessToken({ id: user.id, email: user.email, tokenVersion: user.tokenVersion }); }
     catch (e) {
       console.error("[refreshController] erro ao gerar access token:", e.stack ?? e);
       return res.status(500).json({ error: "Erro interno ao gerar access token" });
@@ -251,7 +252,17 @@ export async function refreshController(req, res) {
     res.cookie(COOKIE_NAME, newRefreshToken, cookieOptions);
     console.log("[refreshController] refresh rotacionado com sucesso. sessaoId:", sessao.id);
 
-    return res.json({ accessToken });
+    // return res.json({ accessToken });
+    return res.json({
+      accessToken,
+      usuario: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        perfil: user.perfil?.funcao ?? null
+      }
+    });
+
   } catch (err) {
     // log detalhado para encontrar raiz do problema
     console.error("refreshController - erro não tratado:", err.stack ?? err);

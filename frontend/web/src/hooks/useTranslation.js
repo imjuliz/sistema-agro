@@ -10,7 +10,7 @@ export function TranslationProvider({ children }) {
 
   const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
   const TRANSLATE_ENDPOINT = `${BACKEND_BASE}translate`;
-  console.log(TRANSLATE_ENDPOINT)
+  // console.log(TRANSLATE_ENDPOINT)
 
   useEffect(() => {
     const savedLang = localStorage.getItem('idioma') || 'pt-BR';

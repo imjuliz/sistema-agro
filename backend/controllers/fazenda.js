@@ -1,7 +1,7 @@
-import prisma from "../../prisma/client.js";
+import prisma from '../prisma/client.js';
 import PDFDocument from "pdfkit";
-import { verificarProducaoLote } from "../../services/lote/verificarProducao.js";
-import { calcularMediaProducaoPorLote, buscarAtividadesLoteService, buscarProducaoLoteService } from "../models/Fazendas.js";
+import { verificarProducaoLote } from "../models/fazendas.js";
+import { calcularMediaProducaoPorLote, buscarAtividadesLoteService, buscarProducaoLoteService } from "../models/fazendas.js";
 
 export const verificarProducaoLoteController = async (req, res) => {
   try {

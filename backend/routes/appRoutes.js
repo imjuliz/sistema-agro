@@ -6,14 +6,13 @@ import { auth } from '../middlewares/authMiddleware.js'
 import { translateText } from '../controllers/TranslateController.js';
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { consultarLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { verContratosController, listarFornecedoresController, calcularFornecedoresController, verContratosController } from "../controllers/fornecedores/fornecedoresController.js";
+import { verContratosController, listarFornecedoresController, calcularFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
-    listarSaidasPorUnidadeController, calcularFornecedoresController, somarDiariaController, somarSaidasController, calcularLucroController,
+    listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController
 } from "../controllers/financeiro/financeiroController.js";
 
