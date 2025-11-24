@@ -138,7 +138,7 @@ export default function Catalogo() {
             <div className="flex gap-4 mb-6">
                 <div className="relative w-full">
                     <svg className="w-5 h-5 absolute top-3 left-3 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
-                    <Input placeholder="Buscar produto..." className="pl-9 w-100" value={busca} onChange={(e) => setBusca(e.target.value)} />
+                    <Input placeholder="Buscar produto..." className="pl-9 " value={busca} onChange={(e) => setBusca(e.target.value)} />
                 </div>
 
                 <Select onValueChange={setFiltro}>

@@ -1,6 +1,5 @@
 // import PrismaClient from '../../PrismaClient/client'
-// import prisma from '../../prisma/client.js'
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../prisma/client.js'
 
 //DASHBOARD ------------------------------------------------------------------------------------------------------------------
 //MOSTRA O SALDO FINAL DO DIA DA UNIDADE --

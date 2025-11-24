@@ -1,4 +1,4 @@
-
+import { calcularFornecedores, verContratos } from "../../models/unidade-de-venda/fornecedores.js";
 
 export const listarFornecedoresController = async (req, res) => {
   try {
