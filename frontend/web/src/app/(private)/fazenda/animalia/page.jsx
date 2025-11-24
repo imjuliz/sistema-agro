@@ -9,7 +9,7 @@ export default function Page() {
         <div className="flex-1"><SectionCards /></div>
       </div>
       <div className="flex justify-between gap-8 w-full">
-        <div className="flex-1"><ChartPieDonut/></div>
+        <div className="hidden flex-1 xl:block"><ChartPieDonut/></div>
         <div className="flex-1"><TableDemo/></div>
       </div>
        <div className="flex justify-between items-start gap-8 w-full">

@@ -10,8 +10,8 @@ export default function Page() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <ChartAreaInteractive />
           <div className="px-4 lg:px-6 flex flex-row gap-6">
-            <div className="w-1/3"><ChartPieDonut /></div>
-            <div className="w-2/3"><ComparisonTable /></div>
+            <div className="w-1/3 hidden xl:block"><ChartPieDonut /></div>
+            <div className="w-full xl:w-2/3"><ComparisonTable /></div>
           </div>
         </div>
         <div className="justify-center W-100%"><FlexiFilterTable /></div>

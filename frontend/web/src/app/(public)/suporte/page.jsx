@@ -1,9 +1,32 @@
 //uma página de termos de uso com indice para rapida navegação
-import {Accordion,AccordionContent,AccordionItem,AccordionTrigger,} from "@/components/ui/accordion"
+"use client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
 
 export default function Suporte() {
+    const [mensagem, setMensagem] = useState("");
+    const [enviando, setEnviando] = useState(false);
+    const [ok, setOk] = useState(false);
+
+    async function enviar() {
+        setEnviando(true);
+
+        const req = await fetch("/api/enviar-duvida", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mensagem }),
+        });
+
+        const res = await req.json();
+        setEnviando(false);
+
+        if (res.sucesso) {
+            setOk(true);
+            setMensagem("");
+        }
+    }
     return (
         <>
             <main className=' open-sans text-lg flex  justify-center pt-[150px] pb-[150px] bg-stone-250 dark:bg-stone-950 '>
@@ -45,11 +68,14 @@ export default function Suporte() {
                         </Accordion>
                     </div>
                     {/* envie sua duvida */}
-                    <div className=" ">
+                    <div>
                         <h2 className="text-2xl font-bold pb-5">Envie sua dúvida</h2>
                         <div className="grid w-full gap-5">
-                            <Textarea placeholder="Escreva sua dúvida aqui" className="h-100 !text-lg" />
-                            <Button className="!text-lg">Enviar</Button>
+                            <Textarea value={mensagem} onChange={(e) => setMensagem(e.target.value)} placeholder="Escreva sua dúvida aqui" className="h-100 !text-lg"/>
+                            <Button disabled={enviando} onClick={enviar} className="!text-lg">
+                                {enviando ? "Enviando..." : "Enviar"}
+                            </Button>
+                            {ok && <p className="text-green-600">Sua dúvida foi enviada!</p>}
                         </div>
                     </div>
                 </div>

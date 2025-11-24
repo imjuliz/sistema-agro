@@ -9,8 +9,8 @@ export default function Page() {
         <div className="flex-1"><SectionCards /></div>
       </div>
       <div className="flex justify-between gap-8 w-full">
-        <div className="flex-1"><TableDemo/></div>
-        <div className="flex-1"><ChartLineMultiple/></div>
+        <div className="flex-[0.4] xl:flex-1"><TableDemo/></div>
+        <div className="flex-[0.6] xl:flex-1 hidden lg:block"><ChartLineMultiple/></div>
       </div>
        <div className="flex justify-between items-start gap-8 w-full">
         <div className="flex-1 flex flex-col justify-end mt-10"><TableDemo2/></div>

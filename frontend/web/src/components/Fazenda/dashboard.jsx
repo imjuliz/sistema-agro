@@ -27,9 +27,6 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Lucros</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">R$6.790</CardTitle>
-          <CardAction>
-            <Badge variant="outline"><IconTrendingUp />+20%</Badge>
-          </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">Lucros subiram em 20% <IconTrendingDown className="size-4" /></div>
@@ -46,10 +43,9 @@ export function SectionCards() {
   );
 }
 
-
 export function SectionCards2() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-8 min-w-2xl mx-auto">
+    <div className=" 2xl:grid grid-cols-1 md:grid-cols-2 gap-4 px-8 mx-auto">
       <div className="flex flex-col justify-between gap-4 w-full">
         <Card className="flex-1 h-full p-6 min-h-[220px]">
           <CardHeader>
