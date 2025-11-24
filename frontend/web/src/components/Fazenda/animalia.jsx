@@ -13,18 +13,14 @@ import { Layers, TriangleAlert, TrendingUpDown } from 'lucide-react'
 
 export function SectionCards() {
     return (
-        <div className="grid grid-cols-4 md:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="h-fit p-0">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg">
-                            <Layers className="size-10" />
-                        </div>
+                        <div className="p-2 rounded-lg"><Layers className="size-10" /></div>
                         <div>
                             <CardDescription>Animais ativos</CardDescription>
                             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">627</CardTitle>
-                            {/* <div className="text-2xl font-medium">150 ha</div>
-                                      <div className="text-sm text-muted-foreground">Área Total</div> */}
                         </div>
                     </div>
                 </CardContent>

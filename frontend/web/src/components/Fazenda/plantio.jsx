@@ -17,7 +17,7 @@ import { BarChart } from '@mui/x-charts/BarChart';
 
 export function SectionCards() {
     return (
-        <div className="grid grid-cols-4 md:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
+        <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Lotes disponíveis</CardDescription>
@@ -40,7 +40,7 @@ export function SectionCards() {
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Quantidade colhida</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">12T
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl columns lg:flex items-center justify-between">12T
                         <Select>
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
                             <SelectContent>
@@ -59,7 +59,7 @@ export function SectionCards() {
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Produção média por cultura</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">10T/ha
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl columns lg:flex items-center justify-between">10T/ha
                         <Select>
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
                             <SelectContent>

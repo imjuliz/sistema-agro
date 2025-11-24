@@ -60,10 +60,10 @@ export function SectionCards() {
             </CardTitle>
           ))
           )}
-          <CardAction><Badge variant="outline"><IconTrendingUp />+12.5%</Badge></CardAction>
+          <CardAction className="md:hidden"><Badge variant="outline"><IconTrendingUp/>+12.5%</Badge></CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">Saldo aumentou em 12,5%<IconTrendingUp className="size-4" /></div>
+          <div className="line-clamp-1 flex gap-2 font-medium">Saldo aumentou em 12,5%<IconTrendingUp className="size-4 " /></div>
           <div className="text-muted-foreground">Bom</div>
         </CardFooter>
       </Card>
@@ -77,7 +77,7 @@ export function SectionCards() {
             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl" key={user.id}>{user.nome ?? user}</CardTitle>
           ))
           )}
-          <CardAction><Badge variant="outline"><IconTrendingDown />-20%</Badge></CardAction>
+          <CardAction className="md:hidden"><Badge variant="outline"><IconTrendingDown />-20%</Badge></CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">Gastos caíram em 20% <IconTrendingDown className="size-4" /></div>
