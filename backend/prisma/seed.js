@@ -6,7 +6,7 @@ import prisma from "./client.js";
 import * as pkg from "./generated/client.ts";
 
 // Extrai enums
-const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao } = pkg;
+const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo } = pkg;
 
 // Fallbacks para enums
 const TP = TipoPerfil ?? {
@@ -40,7 +40,7 @@ const TANIMALIA = TipoAnimalia ?? { VACINACAO: "VACINACAO", VERMIFUGACAO: "VERMI
 const SPEDIDO = StatusPedido ?? { PENDENTE: "PENDENTE", ENVIADO: "ENVIADO", EM_TRANSITO: "EM_TRANSITO", ENTREGUE: "ENTREGUE", CANCELADO: "CANCELADO" };
 const SPROD = StatusProducao ?? { PLANEJADA: "PLANEJADA", EM_ANDAMENTO: "EM_ANDAMENTO", FINALIZADA: "FINALIZADA", CANCELADA: "CANCELADA", EM_ANALISE: "EM_ANALISE" };
 
-const CategoriaInsumo = {
+const CtgInsumo = CategoriaInsumo ?? {
     SEMENTE: "SEMENTE",
     FERTILIZANTE: "FERTILIZANTE",
     DEFENSIVO: "DEFENSIVO",
@@ -48,7 +48,8 @@ const CategoriaInsumo = {
     MEDICAMENTO: "MEDICAMENTO",
     SUPLEMENTO: "SUPLEMENTO",
     VACINA: "VACINA",
-    OUTROS: "OUTROS"
+    OUTROS: "OUTROS",
+    LATICINIOS: "LATICINIOS"
 };
 
 async function main() {
@@ -100,40 +101,229 @@ async function main() {
             { nome: "Lorena Oshiro", email: "lorenaoshiro2007@gmail.com", senha: senhaHash, telefone: "11987652001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Sabor do Campo Laticínios"], status: true },
             { nome: "Maria Del Rey", email: "mebdelrey@gmail.com", senha: senhaHash, telefone: "11987653001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Casa Útil Mercado"], status: true },
             { nome: "Richard Souza", email: "richardrrggts@gmail.com", senha: senhaHash, telefone: "11916694683", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
+            // gerente da loja
+            { nome: "Bruna Carvalho", email: "bru.carvalho@gmail.com", senha: senhaHash, telefone: "11988821353", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
             { nome: "Roberto Barros", email: "robertbarros01@gmail.com", senha: senhaHash, telefone: "11916683574", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["VerdeFresco Hortaliças"], status: true },
             { nome: "Renato Martins", email: "renato.martins@gmail.com", senha: senhaHash, telefone: "11944556677", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Loja Teste"], status: true },
-            { nome: "Juliana Correia", email: "correiajuh@gmail.com", senha: senhaHash, telefone: "11958283626", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Alpha"], status: true },
+            // funcionarios da loja
+            { nome: "Mariana Coelho", email: "mari.coelho@gmail.com", senha: senhaHash, telefone: "1199637392", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["Loja Teste"], status: true },
+            { nome: "Jonatas Silva", email: "jonatas91silva@gmail.com", senha: senhaHash, telefone: "11958251620", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["VerdeFresco Hortaliças"], status: true },
+            { nome: "Alice Chagas", email: "chagas.alice@gmail.com", senha: senhaHash, telefone: "11953821185", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["AgroBoi"], status: true },
+            { nome: "Marco Lucca Costa", email: "lucca.costa@gmail.com", senha: senhaHash, telefone: "11942221116", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["Casa Útil Mercado"], status: true },
+            { nome: "Lúcia Mello", email: "luciamello11@gmail.com", senha: senhaHash, telefone: "1190086499", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["Sabor do Campo Laticínios"], status: true },
+            // funcionarios da fazenda
+            { nome: "Bruno Tavares", email: "bruno.tavares@gmail.com", senha: senhaHash, telefone: "11987654321", perfilId: perfilMap["FUNCIONARIO_FAZENDA"], unidadeId: unidadeMap["Fazenda Teste"], status: true },
+            { nome: "Camila Duarte", email: "camila.duarte@gmail.com", senha: senhaHash, telefone: "11999887766", perfilId: perfilMap["FUNCIONARIO_FAZENDA"], unidadeId: unidadeMap["Fazenda Gamma"], status: true },
+            { nome: "Eduardo Lima", email: "edu.lima@gmail.com", senha: senhaHash, telefone: "11988776655", perfilId: perfilMap["FUNCIONARIO_FAZENDA"], unidadeId: unidadeMap["Fazenda Delta"], status: true },
+            { nome: "Fernanda Rocha", email: "fernanda.rocha@gmail.com", senha: senhaHash, telefone: "11977665544", perfilId: perfilMap["FUNCIONARIO_FAZENDA"], unidadeId: unidadeMap["Fazenda Alpha"], status: true },
+            { nome: "Rafael Nunes", email: "rafael.nunes@gmail.com", senha: senhaHash, telefone: "11966554433", perfilId: perfilMap["FUNCIONARIO_FAZENDA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
+            // gerentes de fazenda
+            { nome: "Usuario Ficticio", email: "user.teste@gmail.com", senha: senhaHash, telefone: "11995251689", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Teste"], status: true },
             { nome: "Otávio Viana", email: "otavio.viana89@gmail.com", senha: senhaHash, telefone: "11999215361", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Gamma"], status: true },
             { nome: "Kátia Oliveira", email: "oliveirakatia09@gmail.com", senha: senhaHash, telefone: "11924245261", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Delta"], status: true },
-            { nome: "Usuario Ficticio", email: "user.teste@gmail.com", senha: senhaHash, telefone: "11995251689", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Teste"], status: true },
+            { nome: "Juliana Correia", email: "correiajuh@gmail.com", senha: senhaHash, telefone: "11958283626", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Alpha"], status: true },
         ];
         await prisma.usuario.createMany({ data: usuariosData, skipDuplicates: true });
         const usuarios = await prisma.usuario.findMany();
         const usuarioMap = Object.fromEntries(usuarios.map(u => [u.nome, u.id]));
 
         // ===== 4. ATUALIZAR GERENTES DAS UNIDADES =====
-        console.log("4. Atualizando gerentes das unidades...");
-        await prisma.$transaction([
-            prisma.unidade.update({ where: { id: unidadeMap["RuralTech"] }, data: { gerenteId: usuarioMap["Julia Alves"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Fazenda Teste"] }, data: { gerenteId: usuarioMap["Usuario Ficticio"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Sabor do Campo Laticínios"] }, data: { gerenteId: usuarioMap["Lorena Oshiro"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Fazenda Gamma"] }, data: { gerenteId: usuarioMap["Otávio Viana"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Fazenda Beta"] }, data: { gerenteId: usuarioMap["Richard Souza"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Fazenda Delta"] }, data: { gerenteId: usuarioMap["Kátia Oliveira"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Casa Útil Mercado"] }, data: { gerenteId: usuarioMap["Maria Del Rey"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["VerdeFresco Hortaliças"] }, data: { gerenteId: usuarioMap["Roberto Barros"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Fazenda Alpha"] }, data: { gerenteId: usuarioMap["Juliana Correia"], matrizId: unidadeMap["RuralTech"] } }),
-            prisma.unidade.update({ where: { id: unidadeMap["Loja Teste"] }, data: { gerenteId: usuarioMap["Renato Martins"], matrizId: unidadeMap["RuralTech"] } })
-        ]);
+        console.log("Ajustando gerenteId nas unidades...");
+
+        await prisma.unidade.update({
+            where: { id: unidadeMap["RuralTech"] },
+            data: { gerenteId: usuarioMap["Julia Alves"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Fazenda Teste"] },
+            data: { gerenteId: usuarioMap["Usuario Ficticio"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Sabor do Campo Laticínios"] },
+            data: { gerenteId: usuarioMap["Lorena Oshiro"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Fazenda Gamma"] },
+            data: { gerenteId: usuarioMap["Otávio Viana"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Fazenda Beta"] },
+            data: { gerenteId: usuarioMap["Richard Souza"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Fazenda Delta"] },
+            data: { gerenteId: usuarioMap["Kátia Oliveira"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Casa Útil Mercado"] },
+            data: { gerenteId: usuarioMap["Maria Del Rey"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["AgroBoi"] },
+            data: { gerenteId: usuarioMap["Bruna Carvalho"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["VerdeFresco Hortaliças"] },
+            data: { gerenteId: usuarioMap["Roberto Barros"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Fazenda Alpha"] },
+            data: { gerenteId: usuarioMap["Juliana Correia"], matrizId: unidadeMap["RuralTech"] },
+        });
+        await prisma.unidade.update({
+            where: { id: unidadeMap["Loja Teste"] },
+            data: { gerenteId: usuarioMap["Renato Martins"], matrizId: unidadeMap["RuralTech"] },
+        });
+
+        console.log("gerenteId configurado para todas as unidades.");
 
         // ===== 5. FORNECEDORES EXTERNOS =====
         console.log("5. Criando fornecedores externos...");
         const fornecedoresData = [
-            { nomeEmpresa: "AgroFornecimentos Ltda", descricaoEmpresa: "Fornece rações e insumos", cnpjCpf: "12345678000190", email: "contato@agrofornece.com", telefone: "11999001122", endereco: "Rua do Agronegócio, 100", status: SF.ATIVO },
-            { nomeEmpresa: "NutriBov Distribuidora", descricaoEmpresa: "Distribuição de ração bovina e suplementos", cnpjCpf: "10111213000144", email: "vendas@nutribov.com", telefone: "11988882211", endereco: "Rua NutriBov, 123", status: SF.ATIVO },
-            { nomeEmpresa: "BovinoPrime Reprodutores", descricaoEmpresa: "Fornecimento de gado de corte e reprodutores", cnpjCpf: "23242526000177", email: "comercial@bovinoprime.com.br", telefone: "11993004567", endereco: "Rod. Rural BR-050, km 200", status: SF.ATIVO },
-            { nomeEmpresa: "Sementes Brasil", descricaoEmpresa: "Venda de sementes selecionadas", cnpjCpf: "11121314000155", email: "contato@sementesbrasil.com", telefone: "19997773344", endereco: "Av. Sementes, 200", status: SF.ATIVO },
-            { nomeEmpresa: "AgroLácteos Suprimentos", descricaoEmpresa: "Insumos para laticínios", cnpjCpf: "15161718000199", email: "vendas@agrolacteos.com", telefone: "11993334455", endereco: "Av. Laticínios, 45", status: SF.ATIVO },
+            {
+                nomeEmpresa: "AgroFornecimentos Ltda",
+                descricaoEmpresa: "Fornece rações e insumos",
+                cnpjCpf: "12345678000190",
+                email: "contato@agrofornece.com",
+                telefone: "11999001122",
+                endereco: "Rua do Agronegócio, 100",
+                status: SF.ATIVO,
+                // unidadeId: unidadeMap["Fazenda Alpha"],
+            },
+            {
+                nomeEmpresa: "NutriBov Distribuidora",
+                descricaoEmpresa: "Distribuição de ração bovina e suplementos",
+                cnpjCpf: "10111213000144",
+                email: "vendas@nutribov.com",
+                telefone: "11988882211",
+                endereco: "Rua NutriBov, 123",
+                status: SF.ATIVO,
+            },
+            {
+                nomeEmpresa: "BovinoPrime Reprodutores",
+                descricaoEmpresa: "Fornecimento de gado de corte e reprodutores certificados, com seleção genética.",
+                cnpjCpf: "23242526000177",
+                email: "comercial@bovinoprime.com.br",
+                telefone: "11993004567",
+                endereco: "Rod. Rural BR-050, km 200, Galpão 3",
+                status: SF.ATIVO,
+            },
+            // fazenda gamma
+            {
+                nomeEmpresa: "Sementes Brasil",
+                descricaoEmpresa: "Venda de sementes selecionadas",
+                cnpjCpf: "11121314000155",
+                email: "contato@sementesbrasil.com",
+                telefone: "19997773344",
+                endereco: "Av. Sementes, 200",
+                status: SF.ATIVO,
+            },
+            {
+                nomeEmpresa: "AgroGrãos Comercial",
+                descricaoEmpresa: "Comercialização de farelos e grãos",
+                cnpjCpf: "12131415000166",
+                email: "vendas@agrograos.com",
+                telefone: "21996664455",
+                endereco: "Rua Grãos, 50",
+                status: SF.ATIVO,
+            },
+            // fazenda delta
+            {
+                nomeEmpresa: "FertSul Distribuição",
+                descricaoEmpresa: "Distribuição de fertilizantes e corretivos",
+                cnpjCpf: "13141516000177",
+                email: "contato@fertsul.com",
+                telefone: "51995555566",
+                endereco: "Av. Fertilizantes, 300",
+                status: SF.ATIVO,
+            },
+            {
+                nomeEmpresa: "BioInsumos Ltda",
+                descricaoEmpresa: "Produtos biológicos e microbianos",
+                cnpjCpf: "14151617000188",
+                email: "contato@bioinsumos.com",
+                telefone: "51994446677",
+                endereco: "Rua Bio, 77",
+                status: SF.ATIVO,
+            },
+            // fazenda beta
+            {
+                nomeEmpresa: "AgroLácteos Suprimentos",
+                descricaoEmpresa: "Insumos para laticínios: coalho, culturas lácteas, consumíveis de processo e embalagens.",
+                cnpjCpf: "15161718000199",
+                email: "vendas@agrolacteos.com",
+                telefone: "11993334455",
+                endereco: "Av. Laticínios, 45",
+                status: SF.ATIVO,
+                // unidadeId: null // fornecedor externo
+            },
+            {
+                nomeEmpresa: "Lácteos & Tecnologia Ltda",
+                descricaoEmpresa: "Fornece starter cultures, enzimas, embalagens térmicas e equipamentos de pequeno porte para produção de queijo e iogurte.",
+                cnpjCpf: "16171819000100",
+                email: "contato@lacteostec.com.br",
+                telefone: "11992223344",
+                endereco: "Rua do Leite, 200",
+                status: SF.ATIVO,
+                // unidadeId: null
+            },
+            {
+                nomeEmpresa: "AgroBov Genetics",
+                descricaoEmpresa: "Fornecedor de animais reprodutores, touros de alto desempenho e serviços de inseminação artificial.",
+                cnpjCpf: "17181920000111",
+                email: "contato@agrobovgenetics.com.br",
+                telefone: "11991112233",
+                endereco: "Estrada da Cria, 500",
+                status: SF.ATIVO,
+                // unidadeId: null
+            },
+            {
+                nomeEmpresa: "VetBov Serviços e Insumos",
+                descricaoEmpresa: "Vacinas, medicamentos veterinários, assistência técnica e serviços de saúde animal.",
+                cnpjCpf: "18192021000122",
+                email: "vendas@vetbov.com.br",
+                telefone: "11994445566",
+                endereco: "Rua Veterinária, 77",
+                status: SF.ATIVO,
+                // unidadeId: null
+            },
+            // unidade teste
+            {
+                nomeEmpresa: "PastosVerde Nutrição Animal",
+                descricaoEmpresa: "Produção e fornecimento de silagem, feno e suplementos minerais para bovinos.",
+                cnpjCpf: "19192122000133",
+                email: "contato@pastosverde.com.br",
+                telefone: "11993332211",
+                endereco: "Rodovia Rural, km 12",
+                status: SF.ATIVO,
+            },
+            {
+                nomeEmpresa: "GenBov Melhoramento Genético",
+                descricaoEmpresa: "Serviços de melhoramento genético, inseminação artificial e fornecimento de animais reprodutores.",
+                cnpjCpf: "20212223000144",
+                email: "vendas@genbov.com.br",
+                telefone: "11992221100",
+                endereco: "Estrada da Pecuária, 88",
+                status: SF.ATIVO,
+            },
+            {
+                nomeEmpresa: "AgroVet Saúde Animal",
+                descricaoEmpresa: "Medicamentos veterinários, vacinas e kits de diagnóstico para rebanhos bovinos.",
+                cnpjCpf: "21222324000155",
+                email: "contato@agrovetsaude.com.br",
+                telefone: "11991114455",
+                endereco: "Av. Veterinária, 300",
+                status: SF.ATIVO,
+            },
+            {
+                nomeEmpresa: "CampoForte Equipamentos",
+                descricaoEmpresa: "Equipamentos para manejo de gado: balanças, troncos de contenção e bebedouros automáticos.",
+                cnpjCpf: "22232425000166",
+                email: "suporte@campoforte.com.br",
+                telefone: "11990002233",
+                endereco: "Rua Agroindústria, 150",
+                status: SF.ATIVO,
+            },
         ];
         await prisma.fornecedorExterno.createMany({ data: fornecedoresData, skipDuplicates: true });
         const fornecedoresDb = await prisma.fornecedorExterno.findMany();
@@ -142,15 +332,273 @@ async function main() {
         // ===== 6. CONTRATOS =====
         console.log("6. Criando contratos...");
         const contratosData = [
-            // FAZENDAS com fornecedores externos
-            { unidadeId: unidadeMap["Fazenda Alpha"], fornecedorExternoId: fornecedorMap["AgroFornecimentos Ltda"], dataInicio: new Date("2024-01-01"), dataEnvio: new Date("2024-01-05T08:00:00.000Z"), status: SCON.ATIVO, frequenciaEntregas: FREQ.MENSALMENTE, unidadeMedida: UMED.SACA, diaPagamento: "30", formaPagamento: TPAG.PIX },
-            { unidadeId: unidadeMap["Fazenda Alpha"], fornecedorExternoId: fornecedorMap["BovinoPrime Reprodutores"], dataInicio: new Date("2025-02-01"), dataEnvio: new Date("2025-02-03T08:00:00.000Z"), status: SCON.ATIVO, frequenciaEntregas: FREQ.MENSALMENTE, unidadeMedida: UMED.CABECA, diaPagamento: "20", formaPagamento: TPAG.PIX },
-            { unidadeId: unidadeMap["Fazenda Beta"], fornecedorExternoId: fornecedorMap["AgroLácteos Suprimentos"], dataInicio: new Date("2024-07-15"), dataEnvio: new Date("2024-07-18T08:00:00.000Z"), status: SCON.ATIVO, frequenciaEntregas: FREQ.MENSALMENTE, unidadeMedida: UMED.UNIDADE, diaPagamento: "10", formaPagamento: TPAG.PIX },
+            // ----------------------------------------------------------
+            // FAZENDAS
+            // externos -> Faz. Alpha
+            {
+                unidadeId: unidadeMap["Fazenda Alpha"],
+                fornecedorExternoId: fornecedorMap["AgroFornecimentos Ltda"],
+                dataInicio: new Date("2024-01-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-01-05T08:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "30",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Alpha"],
+                fornecedorExternoId: fornecedorMap["NutriBov Distribuidora"],
+                dataInicio: new Date("2024-02-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-02-03T07:30:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "15",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Alpha"],
+                fornecedorExternoId: fornecedorMap["BovinoPrime Reprodutores"],
+                dataInicio: new Date("2025-02-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-02-03T08:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "20",
+                formaPagamento: TPAG.PIX,
+            },
+            // externos -> Faz. Gamma
+            {
+                unidadeId: unidadeMap["Fazenda Gamma"],
+                fornecedorExternoId: fornecedorMap["Sementes Brasil"],
+                dataInicio: new Date("2024-03-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-03-05T09:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE, // fallback
+                diaPagamento: "10",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Gamma"],
+                fornecedorExternoId: fornecedorMap["AgroGrãos Comercial"],
+                dataInicio: new Date("2024-04-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-04-03T08:30:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "05",
+                formaPagamento: TPAG.PIX,
+            },
 
-            // LOJAS com fornecedores internos (fazendas)
-            { unidadeId: unidadeMap["VerdeFresco Hortaliças"], fornecedorUnidadeId: unidadeMap["Fazenda Delta"], dataInicio: new Date("2025-05-01"), dataEnvio: new Date("2025-05-02T06:00:00.000Z"), status: SCON.ATIVO, frequenciaEntregas: FREQ.SEMANALMENTE, unidadeMedida: UMED.UNIDADE, diaPagamento: "15", formaPagamento: TPAG.PIX },
-            { unidadeId: unidadeMap["AgroBoi"], fornecedorUnidadeId: unidadeMap["Fazenda Alpha"], dataInicio: new Date("2025-05-10"), dataEnvio: new Date("2025-05-12T08:00:00.000Z"), status: SCON.ATIVO, frequenciaEntregas: FREQ.MENSALMENTE, unidadeMedida: UMED.SACA, diaPagamento: "30", formaPagamento: TPAG.PIX },
-            { unidadeId: unidadeMap["Sabor do Campo Laticínios"], fornecedorUnidadeId: unidadeMap["Fazenda Beta"], dataInicio: new Date("2025-05-05"), dataEnvio: new Date("2025-05-06T07:30:00.000Z"), status: SCON.ATIVO, frequenciaEntregas: FREQ.SEMANALMENTE, unidadeMedida: UMED.LITRO, diaPagamento: "30", formaPagamento: TPAG.PIX },
+            // externos -> Faz. Delta
+            {
+                unidadeId: unidadeMap["Fazenda Delta"],
+                fornecedorExternoId: fornecedorMap["FertSul Distribuição"],
+                dataInicio: new Date("2024-01-15T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-01-20T06:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "20",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Delta"],
+                fornecedorExternoId: fornecedorMap["BioInsumos Ltda"],
+                dataInicio: new Date("2024-02-10T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-02-12T07:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "10",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // externos -> Fazenda Beta
+            {
+                unidadeId: unidadeMap["Fazenda Beta"],
+                fornecedorExternoId: fornecedorMap["AgroLácteos Suprimentos"],
+                dataInicio: new Date("2024-07-15T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-07-18T08:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "10",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Beta"],
+                fornecedorExternoId: fornecedorMap["Lácteos & Tecnologia Ltda"],
+                dataInicio: new Date("2024-07-20T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-07-22T07:30:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "15",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Beta"],
+                fornecedorExternoId: fornecedorMap["AgroBov Genetics"],
+                dataInicio: new Date("2024-09-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-09-03T06:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.TRIMESTRAL, // inseminação/troca genética não é mensal
+                diaPagamento: "30",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Beta"],
+                fornecedorExternoId: fornecedorMap["VetBov Serviços e Insumos"],
+                dataInicio: new Date("2024-08-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-08-05T07:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "15",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // Fazenda Teste <- PastosVerde Nutrição Animal (silagem, feno, suplementos minerais)
+            {
+                unidadeId: unidadeMap["Fazenda Teste"],
+                fornecedorExternoId: fornecedorMap["PastosVerde Nutrição Animal"],
+                dataInicio: new Date("2024-10-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-10-03T09:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "10",
+                formaPagamento: TPAG.PIX,
+            },
+            // Fazenda Teste <- GenBov Melhoramento Genético (inseminação e consultoria)
+            {
+                unidadeId: unidadeMap["Fazenda Teste"],
+                fornecedorExternoId: fornecedorMap["GenBov Melhoramento Genético"],
+                dataInicio: new Date("2024-11-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-11-04T08:30:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.TRIMESTRAL,
+                diaPagamento: "20",
+                formaPagamento: TPAG.PIX,
+            },
+            // Fazenda Teste <- AgroVet Saúde Animal (medicamentos e vacinas)
+            {
+                unidadeId: unidadeMap["Fazenda Teste"],
+                fornecedorExternoId: fornecedorMap["AgroVet Saúde Animal"],
+                dataInicio: new Date("2024-12-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2024-12-05T07:45:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "25",
+                formaPagamento: TPAG.PIX,
+            },
+            // Fazenda Teste <- CampoForte Equipamentos (balanças, troncos, bebedouros)
+            {
+                unidadeId: unidadeMap["Fazenda Teste"],
+                fornecedorExternoId: fornecedorMap["CampoForte Equipamentos"],
+                dataInicio: new Date("2025-01-10T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-01-12T10:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.SEMESTRAL,
+                diaPagamento: "05",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // -------------------------------------------------------
+            // LOJAS
+            // VerdeFresco Hortaliças (vende hortaliças) <- fornecedor: Fazenda Delta
+            {
+                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Delta"],
+                dataInicio: new Date("2025-05-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-05-02T06:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.SEMANALMENTE,
+                diaPagamento: "15",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // AgroBoi (vende gado/insumos) <- fornecedor: Fazenda Alpha
+            {
+                unidadeId: unidadeMap["AgroBoi"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
+                dataInicio: new Date("2025-05-10T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-05-12T08:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "30",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // Casa Útil Mercado (produtos diversos) <- fornecedores variados (ex.: usa fazendas para apresentação do usuário Maria)
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Gamma"],
+                dataInicio: new Date("2025-04-15T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-04-18T09:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "15",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
+                dataInicio: new Date("2025-04-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-04-03T08:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "30",
+                formaPagamento: TPAG.PIX,
+            },
+            {
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
+                dataInicio: new Date("2025-03-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-03-02T09:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "05",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // Sabor do Campo Laticínios (laticínios) <- fornecedor: Fazenda Beta
+            {
+                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Beta"],
+                dataInicio: new Date("2025-05-05T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-05-06T07:30:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.SEMANALMENTE,
+                diaPagamento: "30",
+                formaPagamento: TPAG.PIX,
+            },
+
+            // Loja Teste (laticínios e carne) <- fornecedor: Fazenda Teste
+            {
+                unidadeId: unidadeMap["Loja Teste"],
+                fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
+                dataInicio: new Date("2025-06-01T00:00:00.000Z"),
+                dataFim: null,
+                dataEnvio: new Date("2025-06-03T10:00:00.000Z"),
+                status: SCON.ATIVO,
+                frequenciaEntregas: FREQ.MENSALMENTE,
+                diaPagamento: "10",
+                formaPagamento: TPAG.PIX,
+            },
         ];
         await prisma.contrato.createMany({ data: contratosData, skipDuplicates: true });
         const contratosDb = await prisma.contrato.findMany();
@@ -163,121 +611,2130 @@ async function main() {
         // ===== 7. FORNECEDOR ITEMS (Itens dos Contratos) =====
         console.log("7. Criando itens dos contratos...");
         const fornecedorItemsData = [
-            // Fazenda Alpha - AgroFornecimentos (insumos)
-            { contratoId: contratoMap[`${unidadeMap["Fazenda Alpha"]}-${fornecedorMap["AgroFornecimentos Ltda"]}`], nome: "Ração Bovino Engorda 50kg", categoria: ["Ração"], unidadeMedida: UMED.SACA, quantidade: "200", precoUnitario: "260.00", ativo: true },
-            { contratoId: contratoMap[`${unidadeMap["Fazenda Alpha"]}-${fornecedorMap["AgroFornecimentos Ltda"]}`], nome: "Suplemento Mineral 5kg", categoria: ["Suplemento"], unidadeMedida: UMED.KG, quantidade: "500", precoUnitario: "42.00", ativo: true },
+            // ===== insumos que NAO vao p producao. São pra representar o que vai ser fornecido no contrato, APENAS =====
+            // Fazenda Alpha → AgroFornecimentos Ltda
+            {
+                contratoId: contratoMap["Fazenda Alpha - AgroFornecimentos Ltda"],
+                // sku: "RACAO-BOV-050",
+                nome: "Ração Bovino Engorda 50kg",
+                categoria: ["Ração"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "200", // 200 sacas/mês (10 toneladas)
+                precoUnitario: "260.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-20"),
+            },
+            // Fazenda Alpha → NutriBov Distribuidora
+            {
+                contratoId: contratoMap["Fazenda Alpha - NutriBov Distribuidora"],
+                // sku: "SUP-MIN-BOV-005",
+                nome: "Suplemento Mineral Bovino 5kg",
+                categoria: ["Suplemento"],
+                unidadeMedida: UMED.KG,
+                quantidade: "500",
+                precoUnitario: "42.00",
+                ativo: true,
+                criadoEm: new Date("2025-02-01"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Alpha - NutriBov Distribuidora"],
+                // sku: "BLOCO-MIN-BOV-010",
+                nome: "Bloco Mineral Bovino 10kg",
+                categoria: ["Suplemento"],
+                unidadeMedida: UMED.KG,
+                quantidade: "300", // 300 blocos/mês
+                precoUnitario: "95.00",
+                ativo: true,
+                criadoEm: new Date("2025-02-10"),
+            },
 
-            // Fazenda Alpha - BovinoPrime (animais)
-            { contratoId: contratoMap[`${unidadeMap["Fazenda Alpha"]}-${fornecedorMap["BovinoPrime Reprodutores"]}`], nome: "Boi Nelore Reprodutor", raca: "Nelore", categoria: ["Animal", "Reprodutor"], unidadeMedida: UMED.CABECA, quantidade: "8", precoUnitario: "13500.00", ativo: true },
+            // Fazenda Gamma → Sementes Brasil
+            {
+                contratoId: contratoMap["Fazenda Gamma - Sementes Brasil"],
+                // sku: "SEED-SOJA-020",
+                nome: "Semente Soja Alta Germinacao 20kg",
+                categoria: ["Sementes"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "150", // 150 sacas/mês
+                precoUnitario: "320.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-10"),
+            },
+            // Fazenda Gamma → AgroGrãos Comercial
+            {
+                contratoId: contratoMap["Fazenda Gamma - AgroGrãos Comercial"],
+                // sku: "FARELO-SOJA-025",
+                nome: "Farelo de Soja 25kg",
+                categoria: ["Insumos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "400", // 400 sacas/mês
+                precoUnitario: "130.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-10"),
+            },
+            // Fazenda Gamma → FertSul Distribuição
+            {
+                contratoId: contratoMap["Fazenda Gamma - Sementes Brasil"],
+                // sku: "CALC-AG-040",
+                nome: "Calcario Agricola 40kg",
+                categoria: ["Corretivo"],
+                unidadeMedida: UMED.KG,
+                quantidade: "1000", // 40 toneladas/mês
+                precoUnitario: "75.00",
+                ativo: true,
+                criadoEm: new Date("2025-02-15"),
+            },
 
-            // Fazenda Beta - AgroLácteos (insumos)
-            { contratoId: contratoMap[`${unidadeMap["Fazenda Beta"]}-${fornecedorMap["AgroLácteos Suprimentos"]}`], nome: "Coalho Líquido 1L", categoria: ["Coagulação"], unidadeMedida: UMED.LITRO, quantidade: "50", precoUnitario: "85.00", ativo: true },
-            { contratoId: contratoMap[`${unidadeMap["Fazenda Beta"]}-${fornecedorMap["AgroLácteos Suprimentos"]}`], nome: "Cultura Láctea 10g", categoria: ["Fermento"], unidadeMedida: UMED.G, quantidade: "200", precoUnitario: "32.00", ativo: true },
+            // Fazenda Delta → FertSul Distribuição
+            {
+                contratoId: contratoMap["Fazenda Delta - FertSul Distribuição"],
+                // sku: "NPK-20520-025",
+                nome: "NPK 20-05-20 25kg",
+                categoria: ["Fertilizantes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "600", // 15 toneladas/mês
+                precoUnitario: "95.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-10"),
+            },
 
-            // VerdeFresco - Fazenda Delta (produtos)
-            { contratoId: contratoMap[`${unidadeMap["VerdeFresco Hortaliças"]}-${unidadeMap["Fazenda Delta"]}`], nome: "Alface Crespa (maço)", categoria: ["Hortaliça"], unidadeMedida: UMED.UNIDADE, quantidade: "1500", precoUnitario: "2.50", ativo: true },
-            { contratoId: contratoMap[`${unidadeMap["VerdeFresco Hortaliças"]}-${unidadeMap["Fazenda Delta"]}`], nome: "Tomate Carmem (kg)", categoria: ["Hortaliça"], unidadeMedida: UMED.KG, quantidade: "500", precoUnitario: "6.80", ativo: true },
+            // Fazenda Delta → BioInsumos Ltda
+            {
+                contratoId: contratoMap["Fazenda Delta - BioInsumos Ltda"],
+                // sku: "COMPO-MIC-010",
+                nome: "Composto Microbiano 10kg",
+                categoria: ["Adubo"],
+                unidadeMedida: UMED.KG,
+                quantidade: "200", // 2 toneladas/mês
+                precoUnitario: "48.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-01"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Delta - BioInsumos Ltda"],
+                // sku: "INOC-SOJA-001",
+                nome: "Inoculante Microbiano para Soja 1L",
+                categoria: ["Inoculante"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "300", // 300 litros/mês
+                precoUnitario: "38.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-12"),
+            },
 
-            // AgroBoi - Fazenda Alpha (produtos)
-            { contratoId: contratoMap[`${unidadeMap["AgroBoi"]}-${unidadeMap["Fazenda Alpha"]}`], nome: "Carne Bovina Dianteiro (kg)", categoria: ["Carne"], unidadeMedida: UMED.KG, quantidade: "1000", precoUnitario: "38.00", ativo: true },
+            // Fazenda Beta → AgroLácteos Suprimentos
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
+                // sku: "COALHO-LIQ-001",
+                nome: "Coalho Líquido para Queijo 1L",
+                categoria: ["Coagulação"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "50", // 50 litros/mês
+                precoUnitario: "85.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-01"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
+                // sku: "CULT-LACT-010",
+                nome: "Cultura Láctea Termófila 10g",
+                categoria: ["Fermento"],
+                unidadeMedida: UMED.G,
+                quantidade: "200", // 200 doses/mês
+                precoUnitario: "32.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-02"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
+                // sku: "EMBAL-LEITE-1L",
+                nome: "Embalagem Plástica para Leite 1L (pacote c/ 100)",
+                categoria: ["Embalagem"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "100", // 100 pacotes/mês
+                precoUnitario: "55.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-05"),
+            },
 
-            // Sabor do Campo - Fazenda Beta (produtos)
-            { contratoId: contratoMap[`${unidadeMap["Sabor do Campo Laticínios"]}-${unidadeMap["Fazenda Beta"]}`], nome: "Leite Pasteurizado 1L", categoria: ["Laticínio"], unidadeMedida: UMED.LITRO, quantidade: "2000", precoUnitario: "4.50", ativo: true },
-            { contratoId: contratoMap[`${unidadeMap["Sabor do Campo Laticínios"]}-${unidadeMap["Fazenda Beta"]}`], nome: "Queijo Minas Frescal 500g", categoria: ["Laticínio"], unidadeMedida: UMED.KG, quantidade: "300", precoUnitario: "25.00", ativo: true },
+            // Fazenda Beta → Lácteos & Tecnologia Ltda
+            {
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
+                // sku: "START-YOG-005",
+                nome: "Starter Culture para Iogurte 5g",
+                categoria: ["Fermento"],
+                unidadeMedida: UMED.G,
+                quantidade: "150", // 150 doses/mês
+                precoUnitario: "27.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-03"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
+                // sku: "ENZ-QUEIJO-020",
+                nome: "Enzima Lipase para Queijo 20ml",
+                categoria: ["Enzimas"],
+                unidadeMedida: UMED.ML,
+                quantidade: "80", // 80 frascos/mês
+                precoUnitario: "19.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-04"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
+                // sku: "POTE-YOG-200ML",
+                nome: "Pote Plástico 200ml para Iogurte (caixa c/ 50)",
+                categoria: ["Embalagem"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "60", // 60 caixas/mês
+                precoUnitario: "34.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-06"),
+            },
+
+            // Fazenda Beta → AgroBov Genetics
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                // sku: "SEME-STR-001",
+                nome: "Sêmen Bovino (dose - straw) - Alta Fertilidade",
+                categoria: ["Genética", "Sêmen"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "100", // 100 doses/mês
+                precoUnitario: "120.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-03"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                // sku: "SERV-IAF-001",
+                nome: "Serviço Inseminação Artificial (por cabeça)",
+                categoria: ["Serviço"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "50", // 50 serviços/mês
+                precoUnitario: "250.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-04")
+            },
+            // Fazenda Beta → VetBov Serviços e Insumos
+            {
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
+                // sku: "VAC-BRU-010",
+                nome: "Vacina Brucelose (dose)",
+                categoria: ["Vacina"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "300", // 300 doses/mês
+                precoUnitario: "18.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-05")
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
+                // sku: "ANTIPAR-50ML",
+                nome: "Antiparasitário Oral 50ml (dose unitária)",
+                categoria: ["Medicamento"],
+                unidadeMedida: UMED.ML,
+                quantidade: "200", // 200 doses/mês
+                precoUnitario: "12.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-06")
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
+                // sku: "KIT-SAN-001",
+                nome: "Kit Sanidade (antiparasitário + vitaminas) - por animal",
+                categoria: ["Kit", "Sanidade"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "150", // 150 kits/mês
+                precoUnitario: "35.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-07")
+            },
+
+            // Fazenda Teste → PastosVerde Nutrição Animal
+            {
+                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
+                // sku: "SILAGEM-MILHO-500KG",
+                nome: "Silagem de Milho 500kg",
+                categoria: ["Nutrição Animal"],
+                unidadeMedida: UMED.KG,
+                quantidade: "5000", // 5 toneladas/mês
+                precoUnitario: "480.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-10"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
+                // sku: "FENO-CAPIM-BALE",
+                nome: "Fardo de Feno de Capim 25kg",
+                categoria: ["Nutrição Animal"],
+                unidadeMedida: UMED.KG,
+                quantidade: "2000", // 2 toneladas/mês
+                precoUnitario: "95.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-11"),
+            },
+
+            // Fazenda Teste → GenBov Melhoramento Genético
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                // sku: "SEMEN-TOURO-ALTA",
+                nome: "Sêmen de Touro Alta Performance (dose)",
+                categoria: ["Genética"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "80", // 80 doses/mês
+                precoUnitario: "250.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-15"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                // sku: "SERV-INSEM-001",
+                nome: "Serviço de Inseminação Artificial",
+                categoria: ["Serviço"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "40", // 40 serviços/mês
+                precoUnitario: "500.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-16"),
+            },
+
+            // Fazenda Teste → AgroVet Saúde Animal
+            {
+                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
+                // sku: "VACINA-FOOT-AND-MOUTH",
+                nome: "Vacina contra Febre Aftosa (dose)",
+                categoria: ["Vacinas"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "400", // 400 doses/mês
+                precoUnitario: "22.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-20"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
+                // sku: "ANTIBIOTICO-BOV-100ML",
+                nome: "Antibiótico Bovino 100ml",
+                categoria: ["Medicamentos"],
+                unidadeMedida: UMED.ML,
+                quantidade: "150", // 150 frascos/mês
+                precoUnitario: "75.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-21"),
+            },
+
+            // Fazenda Teste → CampoForte Equipamentos
+            {
+                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
+                // sku: "BALANCA-BOV-500KG",
+                nome: "Balança Eletrônica para Bovinos até 500kg",
+                categoria: ["Equipamentos"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "5", // 5 unidades/mês
+                precoUnitario: "3500.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-25"),
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
+                // sku: "TRONCO-CONTENCAO-001",
+                nome: "Tronco de Contenção Bovino",
+                categoria: ["Equipamentos"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "3", // 3 unidades/mês
+                precoUnitario: "7200.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-26"),
+            },
+
+            // ANIMAIS --------------------------------------------
+            // ----------------------- FAZENDA ALPHA
+            {
+                contratoId: contratoMap["Fazenda Alpha - BovinoPrime Reprodutores"],
+                // sku: "BOI-NEL-ALPHA-001",
+                nome: "Boi Nelore Reprodutor (macho adulto)",
+                raca: "Nelore",
+                categoria: ["Animal", "Reprodutor"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "8",
+                precoUnitario: "13500.00",
+                ativo: true,
+                criadoEm: new Date("2025-02-04")
+            },
+            // ----------------------- FAZENDA BETA
+            // AgroBov Genetics -> animais e genética
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                // sku: "TOURO-NEL-001",
+                nome: "Touro Nelore Reprodutor - 1 (macho adulto)",
+                raca: "Nelore",
+                categoria: ["Animal", "Reprodutor"],
+                unidadeMedida: UMED.CABECA, // cabeça
+                quantidade: "2", // 
+                precoUnitario: "15000.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-01")
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                // sku: "VACA-HOL-001",
+                nome: "Vaca Holandesa - Reposição (fêmea adulta pronta para ordenha)",
+                raca: "Holandesa",
+                categoria: ["Animal", "Reprodução"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "5",
+                precoUnitario: "6500.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-02")
+            },
+
+            // -------------------- UNIDADE TESTE
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                // sku: "TOURO-NELORE-002",
+                nome: "Touro Nelore Reprodutor (macho adulto)",
+                raca: "Nelore",
+                categoria: ["Animal", "Reprodutor"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "1",
+                precoUnitario: "16000.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-10")
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                // sku: "VACA-HOLANDESA-002",
+                nome: "Vaca Holandesa (fêmea adulta pronta para ordenha)",
+                raca: "Holandesa",
+                categoria: ["Animal", "Reprodução"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "3", // 10 vacas/mês
+                precoUnitario: "7000.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-11")
+            },
+
+            // PRODUTOS
+            // Fazenda Alpha → AgroBoi (carne bovina)
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                // sku: "CARNE-DIANT-001",
+                nome: "Carne bovina dianteiro (kg)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "1000", // 1000 kg/mês
+                precoUnitario: "38.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-10")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                // sku: "CARNE-TRASEIRO-001",
+                nome: "Carne bovina traseiro (kg)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "800", // 800 kg/mês
+                precoUnitario: "45.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-11")
+            },
+
+            // Fazenda Gamma → Casa Útil Mercado (grãos)
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                // sku: "SOJA-SACA-60KG",
+                nome: "Soja em saca 60kg",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "500", // 500 sacas/mês
+                precoUnitario: "180.00",
+                ativo: true,
+                criadoEm: new Date("2025-02-01")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                // sku: "MILHO-SACA-60KG",
+                nome: "Milho em saca 60kg",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "400", // 400 sacas/mês
+                precoUnitario: "150.00",
+                ativo: true,
+                criadoEm: new Date("2025-02-02")
+            },
+
+            // Fazenda Beta → Sabor do Campo Laticínios (laticínios)
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                // sku: "LEITE-PASTEUR-1L",
+                nome: "Leite pasteurizado 1L",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "2000", // 2000 litros/mês
+                precoUnitario: "4.50",
+                ativo: true,
+                criadoEm: new Date("2025-03-01")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                // sku: "QUEIJO-MINAS-500G",
+                nome: "Queijo Minas Frescal 500g",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.KG,
+                quantidade: "300", // 300 kg/mês
+                precoUnitario: "25.00",
+                ativo: true,
+                criadoEm: new Date("2025-03-02")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                // sku: "IOGURTE-NATURAL-170G",
+                nome: "Iogurte natural 170g",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1000", // 1000 unidades/mês
+                precoUnitario: "3.20",
+                ativo: true,
+                criadoEm: new Date("2025-03-03")
+            },
+
+            // Fazenda Delta → VerdeFresco Hortaliças (hortaliças)
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                // sku: "ALFACE-CRESPA-UN",
+                nome: "Alface crespa unidade",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1500", // 1500 unidades/mês
+                precoUnitario: "2.50",
+                ativo: true,
+                criadoEm: new Date("2025-04-01")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                // sku: "TOMATE-CAIXA-20KG",
+                nome: "Tomate caixa 20kg",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.KG,
+                quantidade: "500", // 500 caixas (20kg cada) ≈ 10 toneladas/mês
+                precoUnitario: "80.00",
+                ativo: true,
+                criadoEm: new Date("2025-04-02")
+            },
+
+            // Loja Teste (laticínios e carne) <- fornecedor: Fazenda Teste
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                // sku: "LEITE-TESTE-1L",
+                nome: "Leite pasteurizado 1L (teste)",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "500", // 500 litros/mês
+                precoUnitario: "4.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-01")
+            },
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                // sku: "QUEIJO-TESTE-500G",
+                nome: "Queijo fresco 500g (teste)",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.KG,
+                quantidade: "100", // 100 kg/mês
+                precoUnitario: "22.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-01")
+            },
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                // sku: "CARNE-BOVINA-TESTE-1KG",
+                nome: "Carne bovina corte dianteiro (teste)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "200", // 200 kg/mês
+                precoUnitario: "40.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-01")
+            },
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                // sku: "CARNE-BOVINA-TESTE-TRASEIRO",
+                nome: "Carne bovina corte traseiro (teste)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "150", // 150 kg/mês
+                precoUnitario: "48.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-01")
+            }
         ];
-        await prisma.fornecedorItem.createMany({ data: fornecedorItemsData, skipDuplicates: true });
-        const fornecedorItemsDb = await prisma.fornecedorItem.findMany();
+
+        const insumosContratosItens = [
+            {
+                contratoId: contratoMap["AgroLácteos Suprimentos - Fazenda Beta"],
+                raca: null,
+                nome: "Culturas lácteas (starter) - pacote",
+                categoria: ["Insumo", "Laticínios", "Culturas"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "200",
+                precoUnitario: "45.00",
+                ativo: true,
+                criadoEm: new Date("2024-07-15")
+            },
+            {
+                contratoId: contratoMap["AgroLácteos Suprimentos - Fazenda Beta"],
+                raca: null,
+                nome: "Embalagem PET 1L (unidade)",
+                categoria: ["Insumo", "Embalagem"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "5000",
+                precoUnitario: "0.85",
+                ativo: true,
+                criadoEm: new Date("2024-07-15")
+            },
+            {
+                contratoId: contratoMap["AgroLácteos Suprimentos - Fazenda Beta"],
+                raca: null,
+                nome: "Etiquetas / rótulos (pacote 1000 uni)",
+                categoria: ["Insumo", "Embalagem"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "200",
+                precoUnitario: "30.00",
+                ativo: true,
+                criadoEm: new Date("2024-07-15")
+            },
+
+            // ---------------- Fazenda Beta <- Lácteos & Tecnologia Ltda ----------------
+            {
+                contratoId: contratoMap["Lácteos & Tecnologia Ltda - Fazenda Beta"],
+                raca: null,
+                nome: "Filtro micro/ultra para pasteurização (unidade)",
+                categoria: ["Insumo", "Equipamento", "Processamento"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "10",
+                precoUnitario: "420.00",
+                ativo: true,
+                criadoEm: new Date("2024-07-20")
+            },
+            {
+                contratoId: contratoMap["Lácteos & Tecnologia Ltda - Fazenda Beta"],
+                raca: null,
+                nome: "Produto de limpeza CIP (litro)",
+                categoria: ["Insumo", "Higiene"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "300",
+                precoUnitario: "6.50",
+                ativo: true,
+                criadoEm: new Date("2024-07-20")
+            },
+            {
+                contratoId: contratoMap["Lácteos & Tecnologia Ltda - Fazenda Beta"],
+                raca: null,
+                nome: "Kits de calibragem Válvulas / sensores (unidade)",
+                categoria: ["Insumo", "Manutenção", "Peças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "25",
+                precoUnitario: "95.00",
+                ativo: true,
+                criadoEm: new Date("2024-07-20")
+            },
+
+            // ---------------- Fazenda Beta <- AgroBov Genetics (genética) ----------------
+            {
+                contratoId: contratoMap["AgroBov Genetics - Fazenda Beta"],
+                raca: "Holandês",
+                nome: "Sêmen congelado Holandês (ampola)",
+                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "120",
+                precoUnitario: "85.00",
+                ativo: true,
+                criadoEm: new Date("2024-09-01")
+            },
+            {
+                contratoId: contratoMap["AgroBov Genetics - Fazenda Beta"],
+                raca: "Holandês",
+                nome: "Embrião (Holandês) - unidade",
+                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "30",
+                precoUnitario: "420.00",
+                ativo: true,
+                criadoEm: new Date("2024-09-01")
+            },
+            // {
+            //     contratoId: contratoMap["AgroBov Genetics - Fazenda Beta"],
+            //     raca: null,
+            //     nome: "Sessão de inseminação / consultoria (serviço, unidade)",
+            //     categoria: ["Serviço", "Genética", "Inseminação"],
+            //     unidadeMedida: UMED.UNIDADE,
+            //     quantidade: "12",
+            //     precoUnitario: "180.00",
+            //     ativo: true,
+            //     criadoEm: new Date("2024-09-01")
+            // },
+
+            // ---------------- Fazenda Beta <- VetBov Serviços e Insumos ----------------
+            {
+                contratoId: contratoMap["VetBov Serviços e Insumos - Fazenda Beta"],
+                raca: null,
+                nome: "Vacina contra brucelose (dose)",
+                categoria: ["Insumo", "Sanidade", "Vacina"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "200",
+                precoUnitario: "6.50",
+                ativo: true,
+                criadoEm: new Date("2024-08-01")
+            },
+            {
+                contratoId: contratoMap["VetBov Serviços e Insumos - Fazenda Beta"],
+                raca: null,
+                nome: "Antibiótico injetável (frasco)",
+                categoria: ["Insumo", "Sanidade", "Medicamento"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "100",
+                precoUnitario: "28.00",
+                ativo: true,
+                criadoEm: new Date("2024-08-01")
+            },
+            {
+                contratoId: contratoMap["VetBov Serviços e Insumos - Fazenda Beta"],
+                raca: null,
+                nome: "Seringas agulha (pacote 100 uni)",
+                categoria: ["Insumo", "Sanidade", "Materiais"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "60",
+                precoUnitario: "12.00",
+                ativo: true,
+                criadoEm: new Date("2024-08-01")
+            },
+
+            // ---------------- Fazenda Teste <- PastosVerde Nutrição Animal ----------------
+            {
+                contratoId: contratoMap["PastosVerde Nutrição Animal - Fazenda Teste"],
+                raca: null,
+                nome: "Feno (fardo 20kg)",
+                categoria: ["Insumo", "Forragem"],
+                unidadeMedida: UMED.KG,
+                quantidade: "20000",
+                precoUnitario: "0.18",
+                ativo: true,
+                criadoEm: new Date("2024-10-01")
+            },
+            {
+                contratoId: contratoMap["PastosVerde Nutrição Animal - Fazenda Teste"],
+                raca: null,
+                nome: "Silagem (ton)",
+                categoria: ["Insumo", "Forragem"],
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "10",
+                quantidade: "50000",
+                precoUnitario: "0.08",
+                ativo: true,
+                criadoEm: new Date("2024-10-01")
+            },
+            {
+                contratoId: contratoMap["PastosVerde Nutrição Animal - Fazenda Teste"],
+                raca: null,
+                nome: "Suplemento mineral (kg)",
+                categoria: ["Insumo", "Suplemento"],
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "5",
+                quantidade: "10",
+                precoUnitario: "3.20",
+                ativo: true,
+                criadoEm: new Date("2024-10-01")
+            },
+
+            // ---------------- Fazenda Teste <- GenBov Melhoramento Genético ----------------
+            {
+                contratoId: contratoMap["GenBov Melhoramento Genético - Fazenda Teste"],
+                raca: "Angus",
+                nome: "Sêmen congelado Angus (ampola)",
+                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "6",
+                precoUnitario: "75.00",
+                ativo: true,
+                criadoEm: new Date("2024-11-01")
+            },
+            // {
+            //     contratoId: contratoMap["GenBov Melhoramento Genético - Fazenda Teste"],
+            //     raca: "Angus",
+            //     nome: "Sessão de inseminação / consultoria (unidade)",
+            //     categoria: ["Serviço", "Genética", "Inseminação"],
+            //     unidadeMedida: UMED.UNIDADE,
+            //     quantidade: "20",
+            //     precoUnitario: "150.00",
+            //     ativo: true,
+            //     criadoEm: new Date("2024-11-01")
+            // },
+
+            // ---------------- Fazenda Teste <- AgroVet Saúde Animal ----------------
+            {
+                contratoId: contratoMap["AgroVet Saúde Animal - Fazenda Teste"],
+                raca: null,
+                nome: "Vacina múltipla (dose)",
+                categoria: ["Insumo", "Sanidade", "Vacina"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "30",
+                precoUnitario: "5.50",
+                ativo: true,
+                criadoEm: new Date("2024-12-01")
+            },
+            {
+                contratoId: contratoMap["AgroVet Saúde Animal - Fazenda Teste"],
+                raca: null,
+                nome: "Antiparasitário oral (unidade embalagem)",
+                categoria: ["Insumo", "Sanidade", "Medicamento"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "30",
+                precoUnitario: "22.00",
+                ativo: true,
+                criadoEm: new Date("2024-12-01")
+            },
+            {
+                contratoId: contratoMap["AgroVet Saúde Animal - Fazenda Teste"],
+                raca: null,
+                nome: "Kits de primeiros socorros (unidade)",
+                categoria: ["Insumo", "Sanidade", "Materiais"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "10",
+                precoUnitario: "48.00",
+                ativo: true,
+                criadoEm: new Date("2024-12-01")
+            },
+
+            // ---------------- Fazenda Teste <- CampoForte Equipamentos ----------------
+            {
+                contratoId: contratoMap["CampoForte Equipamentos - Fazenda Teste"],
+                raca: null,
+                nome: "Balança de piso animal (unidade)",
+                categoria: ["Equipamento", "Pesagem"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "4",
+                precoUnitario: "7200.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-10")
+            },
+            {
+                contratoId: contratoMap["CampoForte Equipamentos - Fazenda Teste"],
+                raca: null,
+                nome: "Tronco / brete de contenção (unidade)",
+                categoria: ["Equipamento", "Handling"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "3",
+                precoUnitario: "2500.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-10")
+            },
+            {
+                contratoId: contratoMap["CampoForte Equipamentos - Fazenda Teste"],
+                raca: null,
+                nome: "Bebedouro automático (unidade)",
+                categoria: ["Equipamento", "Água"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "2",
+                precoUnitario: "520.00",
+                ativo: true,
+                criadoEm: new Date("2025-01-10")
+            }
+        ];
+        await prisma.contratoItens.createMany({ data: insumosContratosItens, skipDuplicates: true });
+
+        const animaisContratosItens = [
+            // ----- Animais / Reprodutores por contrato -----
+            // BovinoPrime Reprodutores — Fazenda Alpha
+            {
+                contratoId: contratoMap["Fazenda Alpha - BovinoPrime Reprodutores"],
+                raca: "Nelore",
+                nome: "Touro reprodutor Nelore (adulto)",
+                categoria: ["Animal", "Reprodutor", "Bovino"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "8",
+                precoUnitario: "3200.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-01")
+            },
+            {
+                contratoId: contratoMap["Fazenda Alpha - BovinoPrime Reprodutores"],
+                raca: "Nelore",
+                nome: "Vaca reprodutora Nelore (multipar)",
+                categoria: ["Animal", "Reprodutor", "Bovino"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "25",
+                precoUnitario: "2100.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-02")
+            },
+            {
+                contratoId: contratoMap["Fazenda Alpha - BovinoPrime Reprodutores"],
+                raca: "Nelore",
+                nome: "Bezerro reprodutor (macho, desmama)",
+                categoria: ["Animal", "Reprodutor", "Bovino"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "12",
+                precoUnitario: "850.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-03")
+            },
+
+            // AgroBov Genetics — Fazenda Beta
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                raca: "Holandês",
+                nome: "Touro reprodutor Holandês (semen/animal)",
+                categoria: ["Animal", "Reprodutor", "Leiteiro"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "6",
+                precoUnitario: "4200.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-04")
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                raca: "Holandês",
+                nome: "Vaca reprodutora Holandesa (multipar)",
+                categoria: ["Animal", "Reprodutor", "Leiteiro"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "18",
+                precoUnitario: "2400.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-05")
+            },
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                raca: "Jersey",
+                nome: "Embrião Jersey (unidade)",
+                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "40",
+                precoUnitario: "350.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-06")
+            },
+
+            // GenBov Melhoramento Genético — Fazenda Teste
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                raca: "Angus",
+                nome: "Touro reprodutor Angus (adulto, PO)",
+                categoria: ["Animal", "Reprodutor", "Bovino", "Genética"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "5",
+                precoUnitario: "5500.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-07")
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                raca: "Angus",
+                nome: "Vaca reprodutora Angus (multipar, PO)",
+                categoria: ["Animal", "Reprodutor", "Bovino", "Genética"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "15",
+                precoUnitario: "3200.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-08")
+            },
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                raca: "Angus",
+                nome: "Sêmen congelado Angus (ampola)",
+                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
+                unidadeMedida: UMED.CABECA,
+                quantidade: "200",
+                precoUnitario: "75.00",
+                ativo: true,
+                criadoEm: new Date("2025-09-09")
+            }
+
+        ];
+        await prisma.contratoItens.createMany({ data: animaisContratosItens, skipDuplicates: true });
+
+        const produtosContratosItens = [
+            // ----------------- AgroBoi - Fazenda Alpha -----------------
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Gado bovino vivo (cabeça)",
+                categoria: ["Pecuária"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "120",
+                precoUnitario: "950.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-01")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Carcaça bovina inteira (kg)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "3000",
+                precoUnitario: "30.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-02")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Miúdos bovinos (kg)",
+                categoria: ["Carne", "Miúdos"],
+                unidadeMedida: UMED.KG,
+                quantidade: "200",
+                precoUnitario: "10.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-03")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Couro bovino cru (unidade)",
+                categoria: ["Subprodutos"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "100",
+                precoUnitario: "110.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-04")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Ossos bovinos (kg)",
+                categoria: ["Subprodutos"],
+                unidadeMedida: UMED.KG,
+                quantidade: "400",
+                precoUnitario: "2.50",
+                ativo: true,
+                criadoEm: new Date("2025-06-05")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Sebo bovino bruto (kg)",
+                categoria: ["Subprodutos"],
+                unidadeMedida: UMED.KG,
+                quantidade: "300",
+                precoUnitario: "6.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-06")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Sangue bovino para subprodutos (L)",
+                categoria: ["Subprodutos"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "500",
+                precoUnitario: "1.20",
+                ativo: true,
+                criadoEm: new Date("2025-06-07")
+            },
+
+            // cortes
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Coxão mole (kg)",
+                categoria: ["Carne", "Cortes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "350",
+                precoUnitario: "40.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-08")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Alcatra (kg)",
+                categoria: ["Carne", "Cortes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "220",
+                precoUnitario: "55.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-09")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Contrafilé (kg)",
+                categoria: ["Carne", "Cortes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "260",
+                precoUnitario: "60.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-10")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Costela ripa (kg)",
+                categoria: ["Carne", "Cortes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "180",
+                precoUnitario: "28.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-11")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Maminha (kg)",
+                categoria: ["Carne", "Cortes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "140",
+                precoUnitario: "47.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-12")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Picanha (kg)",
+                categoria: ["Carne", "Cortes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "100",
+                precoUnitario: "85.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-13")
+            },
+
+            // processados / industrializados
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Carne moída (kg)",
+                categoria: ["Carne", "Processados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "800",
+                precoUnitario: "25.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-14")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Carne para hambúrguer (mistura 80/20) (kg)",
+                categoria: ["Carne", "Processados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "400",
+                precoUnitario: "23.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-15")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Hambúrguer congelado 120g (caixa)",
+                categoria: ["Carne", "Processados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1200",
+                precoUnitario: "5.50",
+                ativo: true,
+                criadoEm: new Date("2025-06-16")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Linguiça bovina artesanal (kg)",
+                categoria: ["Carne", "Processados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "250",
+                precoUnitario: "30.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-17")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Charque (kg)",
+                categoria: ["Carne", "Processados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "90",
+                precoUnitario: "32.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-18")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Carne desidratada (kg)",
+                categoria: ["Carne", "Processados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "60",
+                precoUnitario: "120.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-19")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Sebo industrializado (kg)",
+                categoria: ["Subprodutos", "Industrializados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "180",
+                precoUnitario: "9.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-20")
+            },
+            {
+                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
+                nome: "Couro curtido (m²)",
+                categoria: ["Subprodutos", "Industrializados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "60",
+                precoUnitario: "150.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-21")
+            },
+
+            // ----------------- Casa Útil Mercado - Fazenda Gamma -----------------
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Soja grão (saca 60kg)",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "800",
+                precoUnitario: "185.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-22")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Milho grão (saca 60kg)",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "700",
+                precoUnitario: "155.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-23")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Trigo (saca 50kg)",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "300",
+                precoUnitario: "162.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-24")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Feijão carioca (saca 30kg)",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "180",
+                precoUnitario: "225.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-25")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Sorgo (saca 50kg)",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "140",
+                precoUnitario: "95.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-26")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Casca de soja (subproduto) (kg)",
+                categoria: ["Subprodutos"],
+                unidadeMedida: UMED.KG,
+                quantidade: "2000",
+                precoUnitario: "0.80",
+                ativo: true,
+                criadoEm: new Date("2025-06-27")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Farelo de soja bruto (saca 40kg)",
+                categoria: ["Derivados", "Rações"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "600",
+                precoUnitario: "100.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-28")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Óleo de soja bruto (L)",
+                categoria: ["Derivados", "Óleos"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "3000",
+                precoUnitario: "5.50",
+                ativo: true,
+                criadoEm: new Date("2025-06-29")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Óleo de soja refinado (L)",
+                categoria: ["Derivados", "Óleos"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "2500",
+                precoUnitario: "7.00",
+                ativo: true,
+                criadoEm: new Date("2025-06-30")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Fubá de milho 1kg (pacote)",
+                categoria: ["Grãos", "Farinha"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "4000",
+                precoUnitario: "3.20",
+                ativo: true,
+                criadoEm: new Date("2025-07-01")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Fubá de milho 5kg (pacote)",
+                categoria: ["Grãos", "Farinha"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1200",
+                precoUnitario: "14.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-02")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Milho triturado (ração) 25kg",
+                categoria: ["Rações"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "800",
+                precoUnitario: "78.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-03")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Ração de engorda (mistura milho+farelo) 25kg",
+                categoria: ["Rações"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "700",
+                precoUnitario: "92.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-04")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Farinha de trigo 1kg (pacote)",
+                categoria: ["Grãos", "Farinha"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "2500",
+                precoUnitario: "4.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-05")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Farelo de trigo (saca 25kg)",
+                categoria: ["Rações"],
+                unidadeMedida: UMED.SACA,
+                quantidade: "400",
+                precoUnitario: "68.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-06")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Feijão limpo e selecionado 1kg (pacote)",
+                categoria: ["Grãos"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1800",
+                precoUnitario: "8.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-07")
+            },
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                nome: "Grãos embalados a vácuo (diversos) (unidade)",
+                categoria: ["Grãos", "Embalados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1200",
+                precoUnitario: "6.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-08")
+            },
+
+            // ----------------- Sabor do Campo Laticínios - Fazenda Beta -----------------
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite cru tipo A (L)",
+                categoria: ["Laticínios", "Crú"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "5000",
+                precoUnitario: "1.20",
+                ativo: true,
+                criadoEm: new Date("2025-07-09")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite cru tipo B (L)",
+                categoria: ["Laticínios", "Crú"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "2000",
+                precoUnitario: "0.95",
+                ativo: true,
+                criadoEm: new Date("2025-07-10")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Nata / creme do leite (kg)",
+                categoria: ["Laticínios", "Crú"],
+                unidadeMedida: UMED.KG,
+                quantidade: "300",
+                precoUnitario: "18.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-11")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Soro de leite (L)",
+                categoria: ["Laticínios", "Subprodutos"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "1200",
+                precoUnitario: "0.30",
+                ativo: true,
+                criadoEm: new Date("2025-07-12")
+            },
+
+            // beneficiados / embalagens
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite pasteurizado 1L",
+                categoria: ["Laticínios", "Processados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "3500",
+                precoUnitario: "4.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-13")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite pasteurizado 2L",
+                categoria: ["Laticínios", "Processados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "1200",
+                precoUnitario: "8.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-14")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite UHT 1L",
+                categoria: ["Laticínios", "Processados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "2000",
+                precoUnitario: "4.20",
+                ativo: true,
+                criadoEm: new Date("2025-07-15")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite integral 1L",
+                categoria: ["Laticínios", "Processados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "1800",
+                precoUnitario: "4.80",
+                ativo: true,
+                criadoEm: new Date("2025-07-16")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite desnatado 1L",
+                categoria: ["Laticínios", "Processados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "900",
+                precoUnitario: "4.60",
+                ativo: true,
+                criadoEm: new Date("2025-07-17")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Leite sem lactose 1L",
+                categoria: ["Laticínios", "Processados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "400",
+                precoUnitario: "6.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-18")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Creme de leite 200ml",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "900",
+                precoUnitario: "3.80",
+                ativo: true,
+                criadoEm: new Date("2025-07-19")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Manteiga 200g",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "700",
+                precoUnitario: "12.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-20")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Manteiga 500g",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "320",
+                precoUnitario: "28.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-21")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Ricota fresca (kg)",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "120",
+                precoUnitario: "26.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-22")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Minas padrão (kg)",
+                categoria: ["Laticínios", "Queijos"],
+                unidadeMedida: UMED.KG,
+                quantidade: "250",
+                precoUnitario: "30.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-23")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Queijo mussarela (peça 3kg)",
+                categoria: ["Laticínios", "Queijos"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "80",
+                precoUnitario: "110.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-24")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Queijo mussarela (barra 1kg)",
+                categoria: ["Laticínios", "Queijos"],
+                unidadeMedida: UMED.KG,
+                quantidade: "220",
+                precoUnitario: "38.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-25")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Queijo parmesão (peça 1kg)",
+                categoria: ["Laticínios", "Queijos"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "60",
+                precoUnitario: "95.00",
+                ativo: true,
+                criadoEm: new Date("2025-07-26")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Iogurte natural 170g",
+                categoria: ["Laticínios", "Iogurtes"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1600",
+                precoUnitario: "3.20",
+                ativo: true,
+                criadoEm: new Date("2025-07-27")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Iogurte sabor morango 170g",
+                categoria: ["Laticínios", "Iogurtes"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1200",
+                precoUnitario: "3.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-28")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Iogurte sabor coco 170g",
+                categoria: ["Laticínios", "Iogurtes"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "800",
+                precoUnitario: "3.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-29")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Iogurte garrafa 1L",
+                categoria: ["Laticínios", "Iogurtes"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "400",
+                precoUnitario: "9.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-30")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Requeijão cremoso 200g",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "900",
+                precoUnitario: "8.50",
+                ativo: true,
+                criadoEm: new Date("2025-07-31")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Doce de leite pastoso 400g",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "420",
+                precoUnitario: "18.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-01")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Doce de leite em barra 300g",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "260",
+                precoUnitario: "15.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-02")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Kefir líquido 1L",
+                categoria: ["Laticínios", "Fermentados"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "220",
+                precoUnitario: "7.50",
+                ativo: true,
+                criadoEm: new Date("2025-08-03")
+            },
+            {
+                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
+                nome: "Coalhada fresca (kg)",
+                categoria: ["Laticínios", "Derivados"],
+                unidadeMedida: UMED.KG,
+                quantidade: "140",
+                precoUnitario: "20.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-04")
+            },
+
+            // ----------------- VerdeFresco Hortaliças - Fazenda Delta -----------------
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Alface crespa (unidade)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "2500",
+                precoUnitario: "2.50",
+                ativo: true,
+                criadoEm: new Date("2025-08-05")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Alface americana (unidade)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "1200",
+                precoUnitario: "3.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-06")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Alface roxa (unidade)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "600",
+                precoUnitario: "3.50",
+                ativo: true,
+                criadoEm: new Date("2025-08-07")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Rúcula (maço)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "800",
+                precoUnitario: "2.80",
+                ativo: true,
+                criadoEm: new Date("2025-08-08")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Couve manteiga (maço)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "700",
+                precoUnitario: "2.20",
+                ativo: true,
+                criadoEm: new Date("2025-08-09")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Tomate caixa 20kg",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.KG,
+                quantidade: "600",
+                precoUnitario: "80.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-10")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Tomate cereja caixa 5kg",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.KG,
+                quantidade: "200",
+                precoUnitario: "65.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-11")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Pepino japonês (unidade)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.UNIDADE,
+                quantidade: "900",
+                precoUnitario: "3.80",
+                ativo: true,
+                criadoEm: new Date("2025-08-12")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Abobrinha italiana (kg)",
+                categoria: ["Hortaliças"],
+                unidadeMedida: UMED.KG,
+                quantidade: "400",
+                precoUnitario: "6.50",
+                ativo: true,
+                criadoEm: new Date("2025-08-13")
+            },
+            {
+                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
+                nome: "Cenoura (kg)",
+                categoria: ["Hortaliças", "Raízes"],
+                unidadeMedida: UMED.KG,
+                quantidade: "700",
+                precoUnitario: "3.20",
+                ativo: true,
+                criadoEm: new Date("2025-08-14")
+            },
+
+            // ----------------- Loja Teste - Fazenda Teste (manter itens de teste completos) -----------------
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                nome: "Leite pasteurizado 1L (teste)",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.LITRO,
+                quantidade: "500",
+                precoUnitario: "4.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-15")
+            },
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                nome: "Queijo fresco 500g (teste)",
+                categoria: ["Laticínios"],
+                unidadeMedida: UMED.KG,
+                quantidade: "100",
+                precoUnitario: "22.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-16")
+            },
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                nome: "Carne bovina corte dianteiro (teste)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "200",
+                precoUnitario: "40.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-17")
+            },
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                nome: "Carne bovina corte traseiro (teste)",
+                categoria: ["Carne"],
+                unidadeMedida: UMED.KG,
+                quantidade: "150",
+                precoUnitario: "48.00",
+                ativo: true,
+                criadoEm: new Date("2025-08-18")
+            }
+        ];
+        await prisma.contratoItens.createMany({ data: produtosContratosItens, skipDuplicates: true });
+        const fornecedorItemsDb = await prisma.contratoItens.findMany();
 
         // ===== 8. PEDIDOS BASEADOS NOS CONTRATOS =====
-        console.log("8. Criando pedidos baseados nos contratos...");
+        const pedidosSeed = [
+            // Fazenda Beta <- AgroBov Genetics (frequencia: TRIMESTRAL)
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
+                origemFornecedorExternoId: fornecedorMap["AgroBov Genetics"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Beta"],
+                criadoPorId: usuarioMap["Richard Souza"],
 
-        // Função para calcular próxima data de entrega
-        function calcularProximaData(dataBase, frequencia) {
-            const data = new Date(dataBase);
-            switch (frequencia) {
-                case FREQ.SEMANALMENTE: data.setDate(data.getDate() + 7); break;
-                case FREQ.MENSALMENTE: data.setMonth(data.getMonth() + 1); break;
-                case FREQ.TRIMESTRAL: data.setMonth(data.getMonth() + 3); break;
-                default: data.setMonth(data.getMonth() + 1); break;
+                // Próximo envio = dataEnvio base 2024-09-03T06:00:00Z + 3 meses => 2024-12-03T06:00:00Z
+                dataPedido: new Date("2024-12-01T09:00:00.000Z"),
+                dataEnvio: new Date("2024-12-03T06:00:00.000Z"),
+                dataRecebimento: new Date("2024-12-04T06:00:00.000Z"),
+                documentoReferencia: "Romaneio-AGB-20241203",
+                observacoes: "Pedido automático gerado pelo seed — genética (touro/vacas/embriões).",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Beta <- VetBov Serviços e Insumos (MENSAL)
+            {
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
+                origemFornecedorExternoId: fornecedorMap["VetBov Serviços e Insumos"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Beta"],
+                criadoPorId: usuarioMap["Richard Souza"],
+
+                // base 2024-08-05T07:00:00Z + 1 mês => 2024-09-05T07:00:00Z
+                dataPedido: new Date("2024-09-03T09:00:00.000Z"),
+                dataEnvio: new Date("2024-09-05T07:00:00.000Z"),
+                dataRecebimento: new Date("2024-09-06T07:00:00.000Z"),
+                documentoReferencia: "Nota-VET-20240905",
+                observacoes: "Vacinas e medicamentos mensais",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Beta <- AgroLácteos Suprimentos (MENSAL)
+            {
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
+                origemFornecedorExternoId: fornecedorMap["AgroLácteos Suprimentos"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Beta"],
+                criadoPorId: usuarioMap["Richard Souza"],
+
+                // base 2024-07-18T08:00:00Z + 1 mês => 2024-08-18T08:00:00Z
+                dataPedido: new Date("2024-08-15T09:00:00.000Z"),
+                dataEnvio: new Date("2024-08-18T08:00:00.000Z"),
+                dataRecebimento: new Date("2024-08-19T08:00:00.000Z"),
+                documentoReferencia: "Romaneio-AGL-20240818",
+                observacoes: "Insumos para laticínios (culturas, embalagens)",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Beta <- Lácteos & Tecnologia Ltda (MENSAL)
+            {
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
+                origemFornecedorExternoId: fornecedorMap["Lácteos & Tecnologia Ltda"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Beta"],
+                criadoPorId: usuarioMap["Richard Souza"],
+
+                // base 2024-07-22T07:30:00Z + 1 mês => 2024-08-22T07:30:00Z
+                dataPedido: new Date("2024-08-20T09:00:00.000Z"),
+                dataEnvio: new Date("2024-08-22T07:30:00.000Z"),
+                dataRecebimento: new Date("2024-08-23T07:30:00.000Z"),
+                documentoReferencia: "Romaneio-LAT-20240822",
+                observacoes: "Equipamentos / starters / enzimas",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Teste <- PastosVerde Nutrição Animal (MENSAL)
+            {
+                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
+                origemFornecedorExternoId: fornecedorMap["PastosVerde Nutrição Animal"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Teste"],
+                criadoPorId: usuarioMap["Usuario Ficticio"],
+
+                // base 2024-10-03T09:00:00Z + 1 mês => 2024-11-03T09:00:00Z
+                dataPedido: new Date("2024-11-01T09:00:00.000Z"),
+                dataEnvio: new Date("2024-11-03T09:00:00.000Z"),
+                dataRecebimento: new Date("2024-11-04T09:00:00.000Z"),
+                documentoReferencia: "Romaneio-PVS-20241103",
+                observacoes: "Silagem / feno mensais",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Teste <- GenBov Melhoramento Genético (TRIMESTRAL)
+            {
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
+                origemFornecedorExternoId: fornecedorMap["GenBov Melhoramento Genético"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Teste"],
+                criadoPorId: usuarioMap["Usuario Ficticio"],
+
+                // base 2024-11-04T08:30:00Z + 3 meses => 2025-02-04T08:30:00Z
+                dataPedido: new Date("2025-02-02T09:00:00.000Z"),
+                dataEnvio: new Date("2025-02-04T08:30:00.000Z"),
+                dataRecebimento: new Date("2025-02-05T08:30:00.000Z"),
+                documentoReferencia: "Romaneio-GEN-20250204",
+                observacoes: "Inseminação / material genético (trimestral)",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Teste <- AgroVet Saúde Animal (MENSAL)
+            {
+                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
+                origemFornecedorExternoId: fornecedorMap["AgroVet Saúde Animal"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Teste"],
+                criadoPorId: usuarioMap["Usuario Ficticio"],
+
+                // base 2024-12-05T07:45:00Z + 1 mês => 2025-01-05T07:45:00Z
+                dataPedido: new Date("2024-12-30T09:00:00.000Z"),
+                dataEnvio: new Date("2025-01-05T07:45:00.000Z"),
+                dataRecebimento: new Date("2025-01-06T07:45:00.000Z"),
+                documentoReferencia: "Romaneio-AGV-20250105",
+                observacoes: "Vacinas e medicamentos",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // Fazenda Teste <- CampoForte Equipamentos (SEMESTRAL)
+            {
+                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
+                origemFornecedorExternoId: fornecedorMap["CampoForte Equipamentos"],
+                origemUnidadeId: null,
+                destinoUnidadeId: unidadeMap["Fazenda Teste"],
+                criadoPorId: usuarioMap["Usuario Ficticio"],
+
+                // base 2025-01-12T10:00:00Z + 6 meses => 2025-07-12T10:00:00Z
+                dataPedido: new Date("2025-07-10T09:00:00.000Z"),
+                dataEnvio: new Date("2025-07-12T10:00:00.000Z"),
+                dataRecebimento: new Date("2025-07-13T10:00:00.000Z"),
+                documentoReferencia: "Romaneio-CFE-20250712",
+                status: SPEDIDO.ENTREGUE,
+                observacoes: "Equipamentos (entrega semestral)"
             }
-            return data;
-        }
-
-        const pedidosData = [];
-        const pedidoItemsData = [];
-
-        for (const contrato of contratosDb) {
-            const dataPedido = new Date(contrato.dataInicio);
-            const dataEnvio = new Date(contrato.dataEnvio);
-            const dataRecebimento = new Date(dataEnvio);
-            dataRecebimento.setDate(dataRecebimento.getDate() + 1); // +24 horas
-
-            // Buscar itens do contrato
-            const itensContrato = fornecedorItemsDb.filter(fi => fi.contratoId === contrato.id);
-
-            // Criar pedido
-            const pedido = await prisma.pedido.create({
-                data: {
-                    contratoId: contrato.id,
-                    origemFornecedorExternoId: contrato.fornecedorExternoId,
-                    origemUnidadeId: contrato.fornecedorUnidadeId,
-                    destinoUnidadeId: contrato.unidadeId,
-                    criadoPorId: usuarioMap["Julia Alves"],
-                    dataPedido: dataPedido,
-                    dataEnvio: dataEnvio,
-                    dataRecebimento: dataRecebimento,
-                    status: SPEDIDO.ENTREGUE,
-                    documentoReferencia: `PED-${contrato.id}-${Date.now()}`,
-                    tipoTransporte: TTRANS.RODOVIARIO,
-                    observacoes: `Pedido gerado automaticamente baseado no contrato ${contrato.id}`
-                }
-            });
-
-            // Calcular valor total
-            let valorTotal = 0;
-
-            // Criar itens do pedido baseados nos itens do contrato
-            for (const itemContrato of itensContrato) {
-                const quantidade = parseFloat(itemContrato.quantidade);
-                const precoUnitario = parseFloat(itemContrato.precoUnitario);
-                const custoTotal = quantidade * precoUnitario;
-                valorTotal += custoTotal;
-
-                pedidoItemsData.push({
-                    pedidoId: pedido.id,
-                    fornecedorItemId: itemContrato.id,
-                    quantidade: quantidade.toString(),
-                    unidadeMedida: itemContrato.unidadeMedida,
-                    precoUnitario: precoUnitario.toString(),
-                    custoTotal: custoTotal.toString(),
-                    observacoes: `Item do contrato ${contrato.id}`
-                });
-            }
-
-            // Atualizar valor total do pedido
-            await prisma.pedido.update({
-                where: { id: pedido.id },
-                data: { valorTotal: valorTotal.toString() }
-            });
-
-            pedidosData.push(pedido);
-        }
-
-        // Inserir itens dos pedidos
-        await prisma.pedidoItem.createMany({ data: pedidoItemsData, skipDuplicates: true });
-        const pedidosDb = await prisma.pedido.findMany();
-
-        // ===== 9. INSUMOS =====
-        console.log("9. Criando insumos...");
-        const insumosData = [
-            { nome: "Ração Bovino Engorda", sku: "RACAO-BOV-050", categoria: CategoriaInsumo.RACAO, unidadeBase: UMED.SACA, fornecedorId: fornecedorMap["AgroFornecimentos Ltda"], ativo: true },
-            { nome: "Suplemento Mineral Bovino", sku: "SUP-MIN-BOV-005", categoria: CategoriaInsumo.SUPLEMENTO, unidadeBase: UMED.KG, fornecedorId: fornecedorMap["AgroFornecimentos Ltda"], ativo: true },
-            { nome: "Coalho Líquido", sku: "COALHO-LIQ-001", categoria: CategoriaInsumo.OUTROS, unidadeBase: UMED.LITRO, fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], ativo: true },
-            { nome: "Cultura Láctea", sku: "CULT-LACT-010", categoria: CategoriaInsumo.OUTROS, unidadeBase: UMED.G, fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], ativo: true },
         ];
-        await prisma.insumo.createMany({ data: insumosData, skipDuplicates: true });
-        const insumosDb = await prisma.insumo.findMany();
-        const insumoMap = Object.fromEntries(insumosDb.map(i => [i.nome, i.id]));
+        await prisma.pedido.createMany({ data: pedidosSeed, skipDuplicates: true });
+
+        async function seedPedidoItems(prisma) {
+            // helper: encontra pedido pelo documentoReferencia
+            async function findPedidoByDoc(docRef) {
+                return prisma.pedido.findFirst({ where: { documentoReferencia: docRef } });
+            }
+
+            // helper: encontra fornecedor/contrato item pelo nome exato
+            async function findContratoItemByName(nome) {
+                return prisma.contratoItens.findFirst({ where: { nome } });
+            }
+
+            // -- resolvemos os pedidos existentes pelo documentoReferencia que você usou --
+            const pedidoAgroBov = await findPedidoByDoc("Romaneio-AGB-20241203");
+            const pedidoVetBov = await findPedidoByDoc("Nota-VET-20240905");
+            const pedidoAgroLacteos = await findPedidoByDoc("Romaneio-AGL-20240818");
+            const pedidoLaticosTec = await findPedidoByDoc("Romaneio-LAT-20240822");
+            const pedidoPastosVerde = await findPedidoByDoc("Romaneio-PVS-20241103");
+            const pedidoGenBov = await findPedidoByDoc("Romaneio-GEN-20250204");
+            const pedidoAgroVet = await findPedidoByDoc("Romaneio-AGV-20250105");
+            const pedidoCampoForte = await findPedidoByDoc("Romaneio-CFE-20250712");
+
+            // checagem rápida (falha explícita se algum pedido não for encontrado)
+            const missing = [
+                ["AGROBOV", pedidoAgroBov],
+                ["VETBOV", pedidoVetBov],
+                ["AGROLÁCTEOS", pedidoAgroLacteos],
+                ["LÁCTEOS TEC", pedidoLaticosTec],
+                ["PASTOSVERDE", pedidoPastosVerde],
+                ["GENBOV", pedidoGenBov],
+                ["AGROVET", pedidoAgroVet],
+                ["CAMPOFORTE", pedidoCampoForte],
+            ].filter(([k, v]) => !v).map(([k]) => k);
+
+            if (missing.length) {
+                console.warn("Aviso: não encontrou pedidos para:", missing.join(", "),
+                    "\nVerifique documentoReferencia nos pedidos antes de criar itens.");
+                // você pode optar por continuar; aqui continuarei mas itens ligados a pedidos não encontrados serão omitidos
+            }
+
+            // -- função utilitária para criar entrada de item (busca fornecedorItem para pegar id) --
+            async function makeItem(pedido, itemNome, quantidade, unidadeMedida, precoUnitario, observacoes = null) {
+                if (!pedido) return null;
+                const contratoItem = await findContratoItemByName(itemNome);
+                if (!contratoItem) {
+                    console.warn("ContratoItem não encontrado para:", itemNome);
+                    return null;
+                }
+                const custoTotal = (Number(quantidade) * Number(precoUnitario)).toFixed(2);
+                return {
+                    pedidoId: pedido.id,
+                    fornecedorItemId: contratoItem.id,
+                    quantidade: String(quantidade),
+                    unidadeMedida,
+                    precoUnitario: String(precoUnitario),
+                    custoTotal: String(custoTotal),
+                    observacoes
+                };
+            }
+
+            // === Definição dos itens por pedido (quantidades propostas) ===
+            const itensPromises = [
+
+                // --- AgroBov Genetics (Fazenda Beta) - animais/genética ---
+                makeItem(pedidoAgroBov, "Touro reprodutor Holandês (semen/animal)", 2, UMED.CABECA, "4200.00"),
+                makeItem(pedidoAgroBov, "Vaca reprodutora Holandesa (multipar)", 5, UMED.CABECA, "2400.00"),
+                makeItem(pedidoAgroBov, "Embrião Jersey (unidade)", 10, UMED.UNIDADE, "350.00"),
+                makeItem(pedidoAgroBov, "Sêmen congelado Holandês (ampola)", 20, UMED.UNIDADE, "85.00"),
+                makeItem(pedidoAgroBov, "Embrião (Holandês) - unidade", 5, UMED.UNIDADE, "420.00"),
+                makeItem(pedidoAgroBov, "Sessão de inseminação / consultoria (serviço, unidade)", 3, UMED.UNIDADE, "180.00"),
+
+                // --- VetBov Serviços e Insumos (Fazenda Beta) - sanidade ---
+                makeItem(pedidoVetBov, "Vacina contra brucelose (dose)", 100, UMED.UNIDADE, "6.50"),
+                makeItem(pedidoVetBov, "Antibiótico injetável (frasco)", 20, UMED.UNIDADE, "28.00"),
+                makeItem(pedidoVetBov, "Seringas agulha (pacote 100 uni)", 10, UMED.UNIDADE, "12.00"),
+
+                // --- AgroLácteos Suprimentos (Fazenda Beta) - insumos laticínios ---
+                makeItem(pedidoAgroLacteos, "Culturas lácteas (starter) - pacote", 50, UMED.UNIDADE, "45.00"),
+                makeItem(pedidoAgroLacteos, "Embalagem PET 1L (unidade)", 1000, UMED.UNIDADE, "0.85"),
+                makeItem(pedidoAgroLacteos, "Etiquetas / rótulos (pacote 1000 uni)", 2, UMED.UNIDADE, "30.00"),
+
+                // --- Lácteos & Tecnologia Ltda (Fazenda Beta) - equipamentos / consumíveis ---
+                makeItem(pedidoLaticosTec, "Filtro micro/ultra para pasteurização (unidade)", 1, UMED.UNIDADE, "420.00"),
+                makeItem(pedidoLaticosTec, "Produto de limpeza CIP (litro)", 50, UMED.LITRO, "6.50"),
+                makeItem(pedidoLaticosTec, "Kits de calibragem Válvulas / sensores (unidade)", 2, UMED.UNIDADE, "95.00"),
+
+                // --- PastosVerde (Fazenda Teste) - forragem ---
+                makeItem(pedidoPastosVerde, "Silagem (kg)", 5000, UMED.KG, "0.08"), // ex.: 5t
+                makeItem(pedidoPastosVerde, "Feno (fardo 20kg)", 300, UMED.UNIDADE, "95.00"),
+                makeItem(pedidoPastosVerde, "Suplemento mineral (kg)", 500, UMED.KG, "3.20"),
+
+                // --- GenBov Melhoramento Genético (Fazenda Teste) - genética ---
+                makeItem(pedidoGenBov, "Sêmen congelado Angus (ampola)", 30, UMED.UNIDADE, "75.00"),
+                makeItem(pedidoGenBov, "Sessão de inseminação / consultoria (unidade)", 6, UMED.UNIDADE, "150.00"),
+
+                // --- AgroVet Saúde Animal (Fazenda Teste) - sanidade ---
+                makeItem(pedidoAgroVet, "Vacina múltipla (dose)", 100, UMED.UNIDADE, "5.50"),
+                makeItem(pedidoAgroVet, "Antiparasitário oral (unidade embalagem)", 50, UMED.UNIDADE, "22.00"),
+                makeItem(pedidoAgroVet, "Kits de primeiros socorros (unidade)", 5, UMED.UNIDADE, "48.00"),
+
+                // --- CampoForte Equipamentos (Fazenda Teste) - equipamentos (semestre) ---
+                makeItem(pedidoCampoForte, "Balança de piso animal (unidade)", 1, UMED.UNIDADE, "7200.00"),
+                makeItem(pedidoCampoForte, "Tronco / brete de contenção (unidade)", 1, UMED.UNIDADE, "2500.00"),
+                makeItem(pedidoCampoForte, "Bebedouro automático (unidade)", 4, UMED.UNIDADE, "520.00")
+            ];
+
+            // resolve todas as promises (algumas may return null if pedido/item não encontrado)
+            const itensResolved = (await Promise.all(itensPromises)).filter(Boolean);
+
+            if (!itensResolved.length) {
+                console.warn("Nenhum PedidoItem a inserir (verifique pedidos / nomes dos ContratoItens).");
+                return;
+            }
+
+            // Inserir os itens com createMany (skip duplicates)
+            await prisma.pedidoItem.createMany({
+                data: itensResolved,
+                skipDuplicates: true
+            });
+
+            console.log("PedidoItems inseridos:", itensResolved.length);
+        }
+
+        await seedPedidoItems(prisma);
+
+
+        function gerarInsumos({ nome, prefixoSku, quantidade, unidadeId, fornecedorId, categoria, unidadeBase, dataEntrada }) {
+            const itens = [];
+
+            for (let i = 1; i <= quantidade; i++) {
+                itens.push({ nome, sku: `${prefixoSku}-${String(i).padStart(3, "0")}`, unidadeId, categoria, unidadeBase, fornecedorId, ativo: true, observacoes: null, dataEntrada, dataSaida: null, });
+            }
+            return itens;
+        }
+
+        // AgroLácteos Suprimentos - Fazenda Beta
+        const insumosData = gerarInsumos({ nome: "Culturas lácteas (starter) - pacote", prefixoSku: "INS-FAZBET-CLA", quantidade: 200, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: new Date("2024-08-19T08:00:00.000Z") });
+
+        const embalagensPET = gerarInsumos({ nome: "Embalagem PET 1L (unidade)", prefixoSku: "INS-FAZBET-EP1", quantidade: 5000, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: new Date("2024-08-19T08:00:00.000Z") });
+
+        const etiquetasRotulos = gerarInsumos({ nome: "Etiquetas / rótulos (pacote 1000 uni)", prefixoSku: "INS-FAZBET-ETQ", quantidade: 200, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: new Date("2024-08-19T08:00:00.000Z") });
+
+        // ---------------- Fazenda Beta <- Lácteos & Tecnologia Ltda ----------------
+        const dataEntradaPedidoLaticos = new Date("2024-08-23T07:30:00.000Z"); // dataRecebimento do pedido Lácteos & Tecnologia Ltda
+        // 1) Filtro micro/ultra para pasteurização (10 unidades)
+        const filtrosPasteurizacao = gerarInsumos({ nome: "Filtro micro/ultra para pasteurização (unidade)", prefixoSku: "INS-FAZBET-FILT", quantidade: 10, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["Lácteos & Tecnologia Ltda"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaPedidoLaticos });
+        // 2) Produto de limpeza CIP (300 litros)
+        const produtoCIP = gerarInsumos({ nome: "Produto de limpeza CIP (litro)", prefixoSku: "INS-FAZBET-CIP", quantidade: 300, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["Lácteos & Tecnologia Ltda"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.LITRO, dataEntrada: dataEntradaPedidoLaticos });
+        // 3) Kits de calibragem Válvulas / sensores (25 unidades)
+        const kitsCalibragem = gerarInsumos({ nome: "Kits de calibragem Válvulas / sensores (unidade)", prefixoSku: "INS-FAZBET-KIT", quantidade: 25, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["Lácteos & Tecnologia Ltda"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaPedidoLaticos });
+
+        // ---------------- Fazenda Beta <- AgroBov Genetics (genética) ----------------
+        const dataEntradaAgroBov = new Date("2024-12-04T06:00:00.000Z");
+        // --- 1) Sêmen congelado Holandês (120 unidades / ampolas) ---
+        const semenHolandes = gerarInsumos({ nome: "Sêmen congelado Holandês (ampola)", prefixoSku: "INS-AGB-SEM", quantidade: 120, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroBov Genetics"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroBov });
+        // --- 2) Embrião (Holandês) - unidade (30 unidades) ---
+        const embriaoHolandes = gerarInsumos({ nome: "Embrião (Holandês) - unidade", prefixoSku: "INS-AGB-EMB", quantidade: 30, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroBov Genetics"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroBov });
+
+        // Fazenda Beta <- VetBov Serviços e Insumos
+        const dataEntradaVetBov = new Date("2024-09-05T07:00:00.000Z");
+        const vacinaBrucelose = gerarInsumos({ nome: "Vacina contra brucelose (dose)", prefixoSku: "INS-VTB-VAC", quantidade: 200, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["VetBov Serviços e Insumos"], categoria: CtgInsumo.VACINA, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaVetBov });
+        // --- 2) Antibiótico injetável (frasco) — 100 unidades ---
+        const antibioticoInjetavel = gerarInsumos({ nome: "Antibiótico injetável (frasco)", prefixoSku: "INS-VTB-ANT", quantidade: 100, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["VetBov Serviços e Insumos"], categoria: CtgInsumo.MEDICAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaVetBov });
+        // --- 3) Seringas agulha (pacote 100 uni) — 60 unidades ---
+        const seringasAgulha = gerarInsumos({
+            nome: "Seringas agulha (pacote 100 uni)",
+            prefixoSku: "INS-VTB-SRG", quantidade: 60, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["VetBov Serviços e Insumos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaVetBov
+        });
+
+        // ---------------- Fazenda Teste <- PastosVerde Nutrição Animal ----------------
+        const dataEntradaPastosVerde = new Date("2024-11-04T09:00:00.000Z");
+        const fenoFardos = gerarInsumos({ nome: "Feno (fardo 20kg)", prefixoSku: "INS-TST-FENO", quantidade: 20000, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["PastosVerde Nutrição Animal"], categoria: CtgInsumo.FORRAGEM, unidadeBase: UMED.KG, dataEntrada: dataEntradaPastosVerde });
+
+        const silagem = gerarInsumos({ nome: "Silagem (ton)", prefixoSku: "INS-TST-SILG", quantidade: 50000, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["PastosVerde Nutrição Animal"], categoria: CtgInsumo.FORRAGEM, unidadeBase: UMED.KG, dataEntrada: dataEntradaPastosVerde });
+
+        const suplementoMineral = gerarInsumos({ nome: "Suplemento mineral (kg)", prefixoSku: "INS-TST-SUPM", quantidade: 2500, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["PastosVerde Nutrição Animal"], categoria: CtgInsumo.SUPLEMENTO, unidadeBase: UMED.KG, dataEntrada: dataEntradaPastosVerde });
+        // ---------------- Fazenda Teste <- GenBov Melhoramento Genético ----------------
+        const dataEntradaGenBov = new Date("2025-02-05T08:30:00.000Z");
+        const semenAngus = gerarInsumos({ nome: "Sêmen congelado Angus (ampola)", prefixoSku: "INS-TST-GNB-SEM", quantidade: 160, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["GenBov Melhoramento Genético"], categoria: CtgInsumo.MATERIALGENETICO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaGenBov });
+
+        const sessoesGenetica = gerarInsumos({ nome: "Sessão de inseminação / consultoria (unidade)", prefixoSku: "INS-TST-GNB-SVC", quantidade: 20, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["GenBov Melhoramento Genético"], categoria: CtgInsumo.SERVICO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaGenBov });
+
+        // ---------------- Fazenda Teste <- AgroVet Saúde Animal ----------------
+        const dataEntradaAgroVet = new Date("2025-01-06T07:45:00.000Z");
+        const vacinaMultipla = gerarInsumos({ nome: "Vacina múltipla (dose)", prefixoSku: "INS-TST-AGV-VAC", quantidade: 300, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["AgroVet Saúde Animal"], categoria: CtgInsumo.VACINA, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroVet });
+
+        const antiparasitario = gerarInsumos({
+            nome: "Antiparasitário oral (unidade embalagem)",
+            prefixoSku: "INS-TST-AGV-ANT", quantidade: 180, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["AgroVet Saúde Animal"], categoria: CtgInsumo.MEDICAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroVet
+        });
+
+        const kitsPrimeirosSocorros = gerarInsumos({ nome: "Kits de primeiros socorros (unidade)", prefixoSku: "INS-TST-AGV-KIT", quantidade: 30, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["AgroVet Saúde Animal"], categoria: CtgInsumo.MATERIALSANITARIO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroVet });
+
+        // ---------------- Fazenda Teste <- CampoForte Equipamentos ----------------
+        const dataEntradaCampoForte = new Date("2025-07-13T10:00:00.000Z");
+        const balancasPiso = gerarInsumos({ nome: "Balança de piso animal (unidade)", prefixoSku: "INS-TST-CF-BAL", quantidade: 4, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["CampoForte Equipamentos"], categoria: CtgInsumo.EQUIPAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaCampoForte });
+
+        const troncosBrete = gerarInsumos({ nome: "Tronco / brete de contenção (unidade)", prefixoSku: "INS-TST-CF-TRN", quantidade: 6, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["CampoForte Equipamentos"], categoria: CtgInsumo.HARDWARE, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaCampoForte });
+
+        const bebedouros = gerarInsumos({
+            nome: "Bebedouro automático (unidade)",
+            prefixoSku: "INS-TST-CF-BEB", quantidade: 12, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["CampoForte Equipamentos"], categoria: CtgInsumo.EQUIPAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaCampoForte
+        });
+
+        await prisma.insumo.createMany({
+            data: [
+                ...insumosData,
+                ...embalagensPET,
+                ...etiquetasRotulos,
+                ...filtrosPasteurizacao,
+                ...produtoCIP,
+                ...kitsCalibragem,
+                ...semenHolandes,
+                ...embriaoHolandes,
+                ...vacinaBrucelose,
+                ...antibioticoInjetavel,
+                ...seringasAgulha,
+                ...fenoFardos,
+                ...silagem,
+                ...suplementoMineral,
+                ...semenAngus,
+                ...sessoesGenetica,
+                ...vacinaMultipla,
+                ...antiparasitario,
+                ...kitsPrimeirosSocorros,
+                ...balancasPiso,
+                ...troncosBrete,
+                ...bebedouros
+            ],
+            skipDuplicates: true
+        });
+
+
+
+
 
         // ===== 10. ESTOQUE E MOVIMENTAÇÃO (Entrada de insumos/animais) =====
         console.log("10. Registrando entrada no estoque...");

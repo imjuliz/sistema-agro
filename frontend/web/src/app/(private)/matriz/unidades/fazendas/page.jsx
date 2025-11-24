@@ -69,7 +69,7 @@ export default function FazendasPage() {
         async function fetchFazendas() {
             setLoading(true);
             try {
-                const res = await fetch(`${API_URL}unidades/fazendas`, {
+                const res = await fetch(`${API_URL}fazendas`, {
                     credentials: "include",
                 });
                 const data = await res.json();
@@ -199,7 +199,7 @@ export default function FazendasPage() {
                 </header>
 
                 {/* METRICS */}
-                <div className="grid grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-3 gap-4 mb-8">
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
                         <CardHeader><CardTitle>Total de Fazendas</CardTitle></CardHeader>
                         <CardContent>
@@ -224,20 +224,13 @@ export default function FazendasPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-                        <CardHeader><CardTitle>IoT (média)</CardTitle></CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">RAnDOM%</div>
-                            <div className="text-sm text-muted-foreground mt-1">NÃO SEI O QUE COLOCAR AQUI</div>
-                        </CardContent>
-                    </Card>
                 </div>
 
                 {/* Filters + cards */}
                 <Card className={"mb-8"}>
                     <CardHeader>
                         <CardTitle className={"mb-4"}>Lista de Fazendas</CardTitle>
-                        <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+                        <div className="flex items-center justify-between pb-3 border-b dark:border-neutral-800 border-neutral-200">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <Input placeholder="Buscar unidades, cidade ou responsável" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
@@ -365,7 +358,7 @@ export default function FazendasPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {paged.map(u => (
                                         <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`}>
-                                            <div className="bg-card border border-neutral-800 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
+                                            <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
                                                         <Avatar><AvatarFallback>F</AvatarFallback></Avatar>

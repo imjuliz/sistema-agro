@@ -16,6 +16,7 @@ import {
     somarEntradaMensalController, listarVendasController
 } from "../controllers/financeiro/financeiroController.js";
 
+
 // tradução
 router.post('/translate', translateText)
 

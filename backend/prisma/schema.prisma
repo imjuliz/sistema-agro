@@ -64,7 +64,7 @@ model Unidade {
   lotes          Lote[]
   caixas         Caixa[]
   vendas         Venda[]
-  // fornecedoresItens FornecedorItem[] @relation("FornecedorItem_Unidade")
+  // fornecedoresItens ContratoItens[] @relation("FornecedorItem_Unidade")
   saidas         Financeiro[]
   animais        Animal[]
   plantio        Plantio[]
@@ -82,6 +82,7 @@ model Unidade {
   pedidosComoDestino      Pedido[]           @relation("PedidoDestino")
   // pedidoFornecedorUnidade Pedido[]           @relation("PedidoFornecedorUnidade")
   // fornecedorProduto       FornecedorProduto[]
+  insumos                 Insumo[]
 
   @@index([matrizId])
   @@index([gerenteId])
@@ -118,7 +119,7 @@ model Usuario {
   saidas              Financeiro[]
   atvdLote            AtvdLote[]
   atvdAgricola        AtvdAgricola[]   @relation("UsuarioAtvdPlantio")
-  atvdAnimalia       AtvdAnimalia[]   @relation("UsuarioAtvdAnimalia")
+  atvdAnimalia        AtvdAnimalia[]   @relation("UsuarioAtvdAnimalia")
   sessoes             Sessao[]
   produtos            Produto[]        @relation("ProdutoCriador")
   producao            Producao[]
@@ -195,7 +196,7 @@ model Produto {
   lote          Lote?              @relation(fields: [loteId], references: [id], onDelete: Restrict)
   itensVendas   ItemVenda[]
   producao      Producao[]
-  // fornecedores  FornecedorItem[]   @relation("FornecedorItem_Produto")
+  // fornecedores  ContratoItens[]   @relation("FornecedorItem_Produto")
   pedidoItems   PedidoItem[]
 
   @@index([unidadeId])
@@ -212,15 +213,19 @@ model Insumo {
   id           Int              @id @default(autoincrement())
   nome         String           @db.VarChar(255)
   sku          String?          @db.VarChar(100)
+  unidadeId    Int              @map("unidade_id")
   categoria    CategoriaInsumo? // ex: SEMENTE, FERTILIZANTE, RAÇÃO, MEDICAMENTO
   unidadeBase  UnidadesDeMedida // ex: KG, L, UN 
   fornecedorId Int
   ativo        Boolean          @default(true)
   observacoes  String?          @db.Text
+  dataEntrada  DateTime?        @map("data_entrada")
+  dataSaida    DateTime?        @map("data_saida")
 
   // estoqueMovimentos EstoqueMovimento[]  // se você usa controle de estoque
   pedidoItems   PedidoItem[]
   estoque       Estoque[]
+  unidade       Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
   // fornecedorProduto FornecedorProduto[]
   atvdAnimalias AtvdAnimalia[]
   atvdAgricolas AtvdAgricola[]
@@ -294,7 +299,7 @@ model FornecedorExterno {
   atualizadoEm     DateTime         @default(now()) @updatedAt @map("atualizado_em")
 
   // relações
-  // produtos          FornecedorItem[]    @relation("Fornecedor_Item_Externo")
+  // produtos          ContratoItens[]    @relation("Fornecedor_Item_Externo")
   produtosRecebidos Produto[]  @relation("FornecedorProdutosRecebidos") // acessar diretamente produtos que tiveram este fornecedor como origem
   contratos         Contrato[] @relation("ContratoFornecedorExterno")
   pedidos           Pedido[]
@@ -305,27 +310,26 @@ model FornecedorExterno {
 
 // relacao entre Unidade e Fornecedor (interno ou externo)
 model Contrato {
-  id                  Int              @id @default(autoincrement())
-  unidadeId           Int              @map("unidade_id") // loja (sempre unidade: pode ser LOJA ou FAZENDA quando a unidade contrata)
+  id                  Int            @id @default(autoincrement())
+  unidadeId           Int            @map("unidade_id") // loja (sempre unidade: pode ser LOJA ou FAZENDA quando a unidade contrata)
   // fornecedor pode ser:
-  fornecedorUnidadeId Int?             @map("fornecedor_unidade_id") // - interno: fornecedorUnidadeId -> Unidade (fazenda)
-  fornecedorExternoId Int?             @map("fornecedor_externo_id") // - externo: fornecedorExternoId -> Fornecedor (empresa)
-  dataInicio          DateTime         @map("data_inicio") // inicio do contrato
-  dataFim             DateTime?        @map("data_fim") // fim do contrato
-  dataEnvio           DateTime         @map("data_envio") // envio dos produtos
+  fornecedorUnidadeId Int?           @map("fornecedor_unidade_id") // - interno: fornecedorUnidadeId -> Unidade (fazenda)
+  fornecedorExternoId Int?           @map("fornecedor_externo_id") // - externo: fornecedorExternoId -> Fornecedor (empresa)
+  dataInicio          DateTime       @map("data_inicio") // inicio do contrato
+  dataFim             DateTime?      @map("data_fim") // fim do contrato
+  dataEnvio           DateTime       @map("data_envio") // envio dos produtos
   status              StatusContrato
-  frequenciaEntregas  FrequenciaEnum   @map("frequencia_entregas")
-  unidadeMedida       UnidadesDeMedida @map("unidade_medida")
-  diaPagamento        String           @map("dia_pagamento") @db.VarChar(100)
-  formaPagamento      TipoPagamento    @map("forma_pagamento")
-  valorTotal          Decimal?         @map("valor_total") @db.Decimal(12, 2)
+  frequenciaEntregas  FrequenciaEnum @map("frequencia_entregas")
+  diaPagamento        String         @map("dia_pagamento") @db.VarChar(100)
+  formaPagamento      TipoPagamento  @map("forma_pagamento")
+  valorTotal          Decimal?       @map("valor_total") @db.Decimal(12, 2)
   // qtndItens           Int
 
   // relações
   unidade           Unidade            @relation("ContratoUnidade", fields: [unidadeId], references: [id], onDelete: Restrict)
   fornecedorInterno Unidade?           @relation("ContratoFornecedorInterno", fields: [fornecedorUnidadeId], references: [id], onDelete: Restrict) // fornecedor interno: relação com Unidade (fazenda) - nullable
   fornecedorExterno FornecedorExterno? @relation("ContratoFornecedorExterno", fields: [fornecedorExternoId], references: [id], onDelete: Restrict) // fornecedor externo: relação com Fornecedor 
-  itens             FornecedorItem[]   @relation("ContratoItens")
+  itens             ContratoItens[]    @relation("ContratoItens")
   pedidos           Pedido[]
 
   @@index([status])
@@ -338,12 +342,12 @@ model Contrato {
 }
 
 // relação entre o contrato e itens fornecidos
-model FornecedorItem {
+model ContratoItens {
   id            Int               @id @default(autoincrement())
   contratoId    Int               @map("contrato_id") // se pertence a um contrato específico
   // sku           String?           @db.VarChar(100)
   raca          String?
-  especie       String?
+  pesoUnidade  Decimal?          @db.Decimal(14, 3)
   nome          String?           @db.VarChar(255)
   categoria     Json?
   unidadeMedida UnidadesDeMedida?
@@ -358,7 +362,7 @@ model FornecedorItem {
   pedidoItems PedidoItem[]
 
   @@index([contratoId])
-  @@map("fornecedor_item")
+  @@map("contrato_itens")
 }
 
 model Pedido {
@@ -417,11 +421,11 @@ model PedidoItem {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  pedido         Pedido          @relation("PedidoItens", fields: [pedidoId], references: [id], onDelete: Cascade)
-  fornecedorItem FornecedorItem? @relation(fields: [fornecedorItemId], references: [id], onDelete: SetNull)
-  produto        Produto?        @relation(fields: [produtoId], references: [id], onDelete: SetNull)
-  insumo         Insumo?         @relation(fields: [insumoId], references: [id], onDelete: SetNull)
-  lote           Lote?           @relation(fields: [loteId], references: [id], onDelete: SetNull)
+  pedido         Pedido         @relation("PedidoItens", fields: [pedidoId], references: [id], onDelete: Cascade)
+  fornecedorItem ContratoItens? @relation(fields: [fornecedorItemId], references: [id], onDelete: SetNull)
+  produto        Produto?       @relation(fields: [produtoId], references: [id], onDelete: SetNull)
+  insumo         Insumo?        @relation(fields: [insumoId], references: [id], onDelete: SetNull)
+  lote           Lote?          @relation(fields: [loteId], references: [id], onDelete: SetNull)
   // fornecedorProduto FornecedorProduto[]
 
   @@index([pedidoId])
