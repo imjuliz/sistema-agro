@@ -39,7 +39,6 @@ const SPLANT = StatusPlantacao ?? { EM_DESENVOLVIMENTO: "EM_DESENVOLVIMENTO", CO
 const TANIMALIA = TipoAnimalia ?? { VACINACAO: "VACINACAO", VERMIFUGACAO: "VERMIFUGACAO", ANTIBIOTICO: "ANTIBIOTICO", TESTE_TUBERCULOSE: "TESTE_TUBERCULOSE", TESTE_BRUCELOSE: "TESTE_BRUCELOSE", SANIDADE_GERAL: "SANIDADE_GERAL", NUTRICAO: "NUTRICAO", SUPLEMENTACAO: "SUPLEMENTACAO", CONSUMO_RACAO: "CONSUMO_RACAO", AJUSTE_DIETA: "AJUSTE_DIETA", INSEMINACAO: "INSEMINACAO", MONITORAMENTO_CIO: "MONITORAMENTO_CIO", MONITORAMENTO_GESTACAO: "MONITORAMENTO_GESTACAO", PARTO: "PARTO", SECAGEM: "SECAGEM", TOURO_MANEJO: "TOURO_MANEJO", MANEJO_GERAL: "MANEJO_GERAL", MANEJO_PESAGEM: "MANEJO_PESAGEM", MANEJO_CARREIRA: "MANEJO_CARREIRA", MOVIMENTACAO_INTERNA: "MOVIMENTACAO_INTERNA", SEPARACAO_LOTE: "SEPARACAO_LOTE", ORDENHA_TESTE: "ORDENHA_TESTE", ORDENHA_DIARIA: "ORDENHA_DIARIA", COLETA_LEITE_AMOSTRA: "COLETA_LEITE_AMOSTRA", AVALIACAO_MASTITE: "AVALIACAO_MASTITE", RECEBIMENTO: "RECEBIMENTO", TRANSFERENCIA: "TRANSFERENCIA", VENDA_ANIMAL: "VENDA_ANIMAL", BAIXA_ANIMAL: "BAIXA_ANIMAL", BANHO: "BANHO", HIGIENIZACAO_AMBIENTE: "HIGIENIZACAO_AMBIENTE", TRATAMENTO_PE: "TRATAMENTO_PE", CURATIVO: "CURATIVO", OCORRENCIA: "OCORRENCIA", TRATAMENTO_URGENCIA: "TRATAMENTO_URGENCIA" };
 const SPEDIDO = StatusPedido ?? { PENDENTE: "PENDENTE", ENVIADO: "ENVIADO", EM_TRANSITO: "EM_TRANSITO", ENTREGUE: "ENTREGUE", CANCELADO: "CANCELADO" };
 const SPROD = StatusProducao ?? { PLANEJADA: "PLANEJADA", EM_ANDAMENTO: "EM_ANDAMENTO", FINALIZADA: "FINALIZADA", CANCELADA: "CANCELADA", EM_ANALISE: "EM_ANALISE" };
-
 const CtgInsumo = CategoriaInsumo ?? {
     SEMENTE: "SEMENTE",
     FERTILIZANTE: "FERTILIZANTE",
@@ -98,13 +97,13 @@ async function main() {
 
         const usuariosData = [
             { nome: "Julia Alves", email: "juliaalvesdeo447@gmail.com", senha: senhaHash, telefone: "11987651001", perfilId: perfilMap["GERENTE_MATRIZ"], unidadeId: unidadeMap["RuralTech"], status: true },
-            { nome: "Lorena Oshiro", email: "lorenaoshiro2007@gmail.com", senha: senhaHash, telefone: "11987652001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Sabor do Campo Laticínios"], status: true },
+            { nome: "Lorena Oshiroo", email: "renato.martins@gmail.com", senha: senhaHash, telefone: "11987652001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Sabor do Campo Laticínios"], status: true },
             { nome: "Maria Del Rey", email: "mebdelrey@gmail.com", senha: senhaHash, telefone: "11987653001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Casa Útil Mercado"], status: true },
             { nome: "Richard Souza", email: "richardrrggts@gmail.com", senha: senhaHash, telefone: "11916694683", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
             // gerente da loja
             { nome: "Bruna Carvalho", email: "bru.carvalho@gmail.com", senha: senhaHash, telefone: "11988821353", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
             { nome: "Roberto Barros", email: "robertbarros01@gmail.com", senha: senhaHash, telefone: "11916683574", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["VerdeFresco Hortaliças"], status: true },
-            { nome: "Renato Martins", email: "renato.martins@gmail.com", senha: senhaHash, telefone: "11944556677", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Loja Teste"], status: true },
+            { nome: "Lorena Oshiro", email: "lorenaoshiro2007@gmail.com", senha: senhaHash, telefone: "11944556677", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Loja Teste"], status: true },
             // funcionarios da loja
             { nome: "Mariana Coelho", email: "mari.coelho@gmail.com", senha: senhaHash, telefone: "1199637392", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["Loja Teste"], status: true },
             { nome: "Jonatas Silva", email: "jonatas91silva@gmail.com", senha: senhaHash, telefone: "11958251620", perfilId: perfilMap["FUNCIONARIO_LOJA"], unidadeId: unidadeMap["VerdeFresco Hortaliças"], status: true },
@@ -140,7 +139,7 @@ async function main() {
         });
         await prisma.unidade.update({
             where: { id: unidadeMap["Sabor do Campo Laticínios"] },
-            data: { gerenteId: usuarioMap["Lorena Oshiro"], matrizId: unidadeMap["RuralTech"] },
+            data: { gerenteId: usuarioMap["Lorena Oshiroo"], matrizId: unidadeMap["RuralTech"] },
         });
         await prisma.unidade.update({
             where: { id: unidadeMap["Fazenda Gamma"] },
@@ -172,7 +171,7 @@ async function main() {
         });
         await prisma.unidade.update({
             where: { id: unidadeMap["Loja Teste"] },
-            data: { gerenteId: usuarioMap["Renato Martins"], matrizId: unidadeMap["RuralTech"] },
+            data: { gerenteId: usuarioMap["Lorena Oshiro"], matrizId: unidadeMap["RuralTech"] },
         });
 
         console.log("gerenteId configurado para todas as unidades.");
@@ -601,603 +600,65 @@ async function main() {
             },
         ];
         await prisma.contrato.createMany({ data: contratosData, skipDuplicates: true });
-        const contratosDb = await prisma.contrato.findMany();
+        console.log("Contratos criados (seed).");
+        const contratosDb = await prisma.contrato.findMany({
+            include: {
+                unidade: true,
+                fornecedorExterno: true,
+                fornecedorInterno: true
+            }
+        });
+
         const contratoMap = {};
+
         for (const c of contratosDb) {
-            const key = `${c.unidadeId}-${c.fornecedorExternoId || c.fornecedorUnidadeId}`;
-            contratoMap[key] = c.id;
+            const unidadeNome =
+                c.unidade?.nome?.trim() || "SEM_UNIDADE";
+
+            const fornecedorNome =
+                c.fornecedorExterno?.nomeEmpresa?.trim() ||
+                c.fornecedorInterno?.nome?.trim() ||
+                "SEM_FORNECEDOR";
+
+            const chave = `${unidadeNome} - ${fornecedorNome}`;
+            contratoMap[chave] = c.id;
         }
 
         // ===== 7. FORNECEDOR ITEMS (Itens dos Contratos) =====
         console.log("7. Criando itens dos contratos...");
-        const fornecedorItemsData = [
-            // ===== insumos que NAO vao p producao. São pra representar o que vai ser fornecido no contrato, APENAS =====
-            // Fazenda Alpha → AgroFornecimentos Ltda
-            {
-                contratoId: contratoMap["Fazenda Alpha - AgroFornecimentos Ltda"],
-                // sku: "RACAO-BOV-050",
-                nome: "Ração Bovino Engorda 50kg",
-                categoria: ["Ração"],
-                unidadeMedida: UMED.SACA,
-                quantidade: "200", // 200 sacas/mês (10 toneladas)
-                precoUnitario: "260.00",
-                ativo: true,
-                criadoEm: new Date("2025-01-20"),
-            },
-            // Fazenda Alpha → NutriBov Distribuidora
-            {
-                contratoId: contratoMap["Fazenda Alpha - NutriBov Distribuidora"],
-                // sku: "SUP-MIN-BOV-005",
-                nome: "Suplemento Mineral Bovino 5kg",
-                categoria: ["Suplemento"],
-                unidadeMedida: UMED.KG,
-                quantidade: "500",
-                precoUnitario: "42.00",
-                ativo: true,
-                criadoEm: new Date("2025-02-01"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Alpha - NutriBov Distribuidora"],
-                // sku: "BLOCO-MIN-BOV-010",
-                nome: "Bloco Mineral Bovino 10kg",
-                categoria: ["Suplemento"],
-                unidadeMedida: UMED.KG,
-                quantidade: "300", // 300 blocos/mês
-                precoUnitario: "95.00",
-                ativo: true,
-                criadoEm: new Date("2025-02-10"),
-            },
-
-            // Fazenda Gamma → Sementes Brasil
-            {
-                contratoId: contratoMap["Fazenda Gamma - Sementes Brasil"],
-                // sku: "SEED-SOJA-020",
-                nome: "Semente Soja Alta Germinacao 20kg",
-                categoria: ["Sementes"],
-                unidadeMedida: UMED.SACA,
-                quantidade: "150", // 150 sacas/mês
-                precoUnitario: "320.00",
-                ativo: true,
-                criadoEm: new Date("2025-01-10"),
-            },
-            // Fazenda Gamma → AgroGrãos Comercial
-            {
-                contratoId: contratoMap["Fazenda Gamma - AgroGrãos Comercial"],
-                // sku: "FARELO-SOJA-025",
-                nome: "Farelo de Soja 25kg",
-                categoria: ["Insumos"],
-                unidadeMedida: UMED.SACA,
-                quantidade: "400", // 400 sacas/mês
-                precoUnitario: "130.00",
-                ativo: true,
-                criadoEm: new Date("2025-08-10"),
-            },
-            // Fazenda Gamma → FertSul Distribuição
-            {
-                contratoId: contratoMap["Fazenda Gamma - Sementes Brasil"],
-                // sku: "CALC-AG-040",
-                nome: "Calcario Agricola 40kg",
-                categoria: ["Corretivo"],
-                unidadeMedida: UMED.KG,
-                quantidade: "1000", // 40 toneladas/mês
-                precoUnitario: "75.00",
-                ativo: true,
-                criadoEm: new Date("2025-02-15"),
-            },
-
-            // Fazenda Delta → FertSul Distribuição
-            {
-                contratoId: contratoMap["Fazenda Delta - FertSul Distribuição"],
-                // sku: "NPK-20520-025",
-                nome: "NPK 20-05-20 25kg",
-                categoria: ["Fertilizantes"],
-                unidadeMedida: UMED.KG,
-                quantidade: "600", // 15 toneladas/mês
-                precoUnitario: "95.00",
-                ativo: true,
-                criadoEm: new Date("2025-01-10"),
-            },
-
-            // Fazenda Delta → BioInsumos Ltda
-            {
-                contratoId: contratoMap["Fazenda Delta - BioInsumos Ltda"],
-                // sku: "COMPO-MIC-010",
-                nome: "Composto Microbiano 10kg",
-                categoria: ["Adubo"],
-                unidadeMedida: UMED.KG,
-                quantidade: "200", // 2 toneladas/mês
-                precoUnitario: "48.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-01"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Delta - BioInsumos Ltda"],
-                // sku: "INOC-SOJA-001",
-                nome: "Inoculante Microbiano para Soja 1L",
-                categoria: ["Inoculante"],
-                unidadeMedida: UMED.LITRO,
-                quantidade: "300", // 300 litros/mês
-                precoUnitario: "38.00",
-                ativo: true,
-                criadoEm: new Date("2025-01-12"),
-            },
-
-            // Fazenda Beta → AgroLácteos Suprimentos
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
-                // sku: "COALHO-LIQ-001",
-                nome: "Coalho Líquido para Queijo 1L",
-                categoria: ["Coagulação"],
-                unidadeMedida: UMED.LITRO,
-                quantidade: "50", // 50 litros/mês
-                precoUnitario: "85.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-01"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
-                // sku: "CULT-LACT-010",
-                nome: "Cultura Láctea Termófila 10g",
-                categoria: ["Fermento"],
-                unidadeMedida: UMED.G,
-                quantidade: "200", // 200 doses/mês
-                precoUnitario: "32.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-02"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
-                // sku: "EMBAL-LEITE-1L",
-                nome: "Embalagem Plástica para Leite 1L (pacote c/ 100)",
-                categoria: ["Embalagem"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "100", // 100 pacotes/mês
-                precoUnitario: "55.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-05"),
-            },
-
-            // Fazenda Beta → Lácteos & Tecnologia Ltda
-            {
-                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
-                // sku: "START-YOG-005",
-                nome: "Starter Culture para Iogurte 5g",
-                categoria: ["Fermento"],
-                unidadeMedida: UMED.G,
-                quantidade: "150", // 150 doses/mês
-                precoUnitario: "27.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-03"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
-                // sku: "ENZ-QUEIJO-020",
-                nome: "Enzima Lipase para Queijo 20ml",
-                categoria: ["Enzimas"],
-                unidadeMedida: UMED.ML,
-                quantidade: "80", // 80 frascos/mês
-                precoUnitario: "19.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-04"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
-                // sku: "POTE-YOG-200ML",
-                nome: "Pote Plástico 200ml para Iogurte (caixa c/ 50)",
-                categoria: ["Embalagem"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "60", // 60 caixas/mês
-                precoUnitario: "34.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-06"),
-            },
-
-            // Fazenda Beta → AgroBov Genetics
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
-                // sku: "SEME-STR-001",
-                nome: "Sêmen Bovino (dose - straw) - Alta Fertilidade",
-                categoria: ["Genética", "Sêmen"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "100", // 100 doses/mês
-                precoUnitario: "120.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-03"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
-                // sku: "SERV-IAF-001",
-                nome: "Serviço Inseminação Artificial (por cabeça)",
-                categoria: ["Serviço"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "50", // 50 serviços/mês
-                precoUnitario: "250.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-04")
-            },
-            // Fazenda Beta → VetBov Serviços e Insumos
-            {
-                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
-                // sku: "VAC-BRU-010",
-                nome: "Vacina Brucelose (dose)",
-                categoria: ["Vacina"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "300", // 300 doses/mês
-                precoUnitario: "18.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-05")
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
-                // sku: "ANTIPAR-50ML",
-                nome: "Antiparasitário Oral 50ml (dose unitária)",
-                categoria: ["Medicamento"],
-                unidadeMedida: UMED.ML,
-                quantidade: "200", // 200 doses/mês
-                precoUnitario: "12.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-06")
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
-                // sku: "KIT-SAN-001",
-                nome: "Kit Sanidade (antiparasitário + vitaminas) - por animal",
-                categoria: ["Kit", "Sanidade"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "150", // 150 kits/mês
-                precoUnitario: "35.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-07")
-            },
-
-            // Fazenda Teste → PastosVerde Nutrição Animal
-            {
-                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
-                // sku: "SILAGEM-MILHO-500KG",
-                nome: "Silagem de Milho 500kg",
-                categoria: ["Nutrição Animal"],
-                unidadeMedida: UMED.KG,
-                quantidade: "5000", // 5 toneladas/mês
-                precoUnitario: "480.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-10"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
-                // sku: "FENO-CAPIM-BALE",
-                nome: "Fardo de Feno de Capim 25kg",
-                categoria: ["Nutrição Animal"],
-                unidadeMedida: UMED.KG,
-                quantidade: "2000", // 2 toneladas/mês
-                precoUnitario: "95.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-11"),
-            },
-
-            // Fazenda Teste → GenBov Melhoramento Genético
-            {
-                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
-                // sku: "SEMEN-TOURO-ALTA",
-                nome: "Sêmen de Touro Alta Performance (dose)",
-                categoria: ["Genética"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "80", // 80 doses/mês
-                precoUnitario: "250.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-15"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
-                // sku: "SERV-INSEM-001",
-                nome: "Serviço de Inseminação Artificial",
-                categoria: ["Serviço"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "40", // 40 serviços/mês
-                precoUnitario: "500.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-16"),
-            },
-
-            // Fazenda Teste → AgroVet Saúde Animal
-            {
-                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
-                // sku: "VACINA-FOOT-AND-MOUTH",
-                nome: "Vacina contra Febre Aftosa (dose)",
-                categoria: ["Vacinas"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "400", // 400 doses/mês
-                precoUnitario: "22.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-20"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
-                // sku: "ANTIBIOTICO-BOV-100ML",
-                nome: "Antibiótico Bovino 100ml",
-                categoria: ["Medicamentos"],
-                unidadeMedida: UMED.ML,
-                quantidade: "150", // 150 frascos/mês
-                precoUnitario: "75.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-21"),
-            },
-
-            // Fazenda Teste → CampoForte Equipamentos
-            {
-                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
-                // sku: "BALANCA-BOV-500KG",
-                nome: "Balança Eletrônica para Bovinos até 500kg",
-                categoria: ["Equipamentos"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "5", // 5 unidades/mês
-                precoUnitario: "3500.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-25"),
-            },
-            {
-                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
-                // sku: "TRONCO-CONTENCAO-001",
-                nome: "Tronco de Contenção Bovino",
-                categoria: ["Equipamentos"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "3", // 3 unidades/mês
-                precoUnitario: "7200.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-26"),
-            },
-
-            // ANIMAIS --------------------------------------------
-            // ----------------------- FAZENDA ALPHA
-            {
-                contratoId: contratoMap["Fazenda Alpha - BovinoPrime Reprodutores"],
-                // sku: "BOI-NEL-ALPHA-001",
-                nome: "Boi Nelore Reprodutor (macho adulto)",
-                raca: "Nelore",
-                categoria: ["Animal", "Reprodutor"],
-                unidadeMedida: UMED.CABECA,
-                quantidade: "8",
-                precoUnitario: "13500.00",
-                ativo: true,
-                criadoEm: new Date("2025-02-04")
-            },
-            // ----------------------- FAZENDA BETA
-            // AgroBov Genetics -> animais e genética
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
-                // sku: "TOURO-NEL-001",
-                nome: "Touro Nelore Reprodutor - 1 (macho adulto)",
-                raca: "Nelore",
-                categoria: ["Animal", "Reprodutor"],
-                unidadeMedida: UMED.CABECA, // cabeça
-                quantidade: "2", // 
-                precoUnitario: "15000.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-01")
-            },
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
-                // sku: "VACA-HOL-001",
-                nome: "Vaca Holandesa - Reposição (fêmea adulta pronta para ordenha)",
-                raca: "Holandesa",
-                categoria: ["Animal", "Reprodução"],
-                unidadeMedida: UMED.CABECA,
-                quantidade: "5",
-                precoUnitario: "6500.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-02")
-            },
-
-            // -------------------- UNIDADE TESTE
-            {
-                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
-                // sku: "TOURO-NELORE-002",
-                nome: "Touro Nelore Reprodutor (macho adulto)",
-                raca: "Nelore",
-                categoria: ["Animal", "Reprodutor"],
-                unidadeMedida: UMED.CABECA,
-                quantidade: "1",
-                precoUnitario: "16000.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-10")
-            },
-            {
-                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
-                // sku: "VACA-HOLANDESA-002",
-                nome: "Vaca Holandesa (fêmea adulta pronta para ordenha)",
-                raca: "Holandesa",
-                categoria: ["Animal", "Reprodução"],
-                unidadeMedida: UMED.CABECA,
-                quantidade: "3", // 10 vacas/mês
-                precoUnitario: "7000.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-11")
-            },
-
-            // PRODUTOS
-            // Fazenda Alpha → AgroBoi (carne bovina)
-            {
-                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
-                // sku: "CARNE-DIANT-001",
-                nome: "Carne bovina dianteiro (kg)",
-                categoria: ["Carne"],
-                unidadeMedida: UMED.KG,
-                quantidade: "1000", // 1000 kg/mês
-                precoUnitario: "38.00",
-                ativo: true,
-                criadoEm: new Date("2025-01-10")
-            },
-            {
-                contratoId: contratoMap["AgroBoi - Fazenda Alpha"],
-                // sku: "CARNE-TRASEIRO-001",
-                nome: "Carne bovina traseiro (kg)",
-                categoria: ["Carne"],
-                unidadeMedida: UMED.KG,
-                quantidade: "800", // 800 kg/mês
-                precoUnitario: "45.00",
-                ativo: true,
-                criadoEm: new Date("2025-01-11")
-            },
-
-            // Fazenda Gamma → Casa Útil Mercado (grãos)
-            {
-                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
-                // sku: "SOJA-SACA-60KG",
-                nome: "Soja em saca 60kg",
-                categoria: ["Grãos"],
-                unidadeMedida: UMED.SACA,
-                quantidade: "500", // 500 sacas/mês
-                precoUnitario: "180.00",
-                ativo: true,
-                criadoEm: new Date("2025-02-01")
-            },
-            {
-                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
-                // sku: "MILHO-SACA-60KG",
-                nome: "Milho em saca 60kg",
-                categoria: ["Grãos"],
-                unidadeMedida: UMED.SACA,
-                quantidade: "400", // 400 sacas/mês
-                precoUnitario: "150.00",
-                ativo: true,
-                criadoEm: new Date("2025-02-02")
-            },
-
-            // Fazenda Beta → Sabor do Campo Laticínios (laticínios)
-            {
-                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
-                // sku: "LEITE-PASTEUR-1L",
-                nome: "Leite pasteurizado 1L",
-                categoria: ["Laticínios"],
-                unidadeMedida: UMED.LITRO,
-                quantidade: "2000", // 2000 litros/mês
-                precoUnitario: "4.50",
-                ativo: true,
-                criadoEm: new Date("2025-03-01")
-            },
-            {
-                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
-                // sku: "QUEIJO-MINAS-500G",
-                nome: "Queijo Minas Frescal 500g",
-                categoria: ["Laticínios"],
-                unidadeMedida: UMED.KG,
-                quantidade: "300", // 300 kg/mês
-                precoUnitario: "25.00",
-                ativo: true,
-                criadoEm: new Date("2025-03-02")
-            },
-            {
-                contratoId: contratoMap["Sabor do Campo Laticínios - Fazenda Beta"],
-                // sku: "IOGURTE-NATURAL-170G",
-                nome: "Iogurte natural 170g",
-                categoria: ["Laticínios"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "1000", // 1000 unidades/mês
-                precoUnitario: "3.20",
-                ativo: true,
-                criadoEm: new Date("2025-03-03")
-            },
-
-            // Fazenda Delta → VerdeFresco Hortaliças (hortaliças)
-            {
-                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
-                // sku: "ALFACE-CRESPA-UN",
-                nome: "Alface crespa unidade",
-                categoria: ["Hortaliças"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "1500", // 1500 unidades/mês
-                precoUnitario: "2.50",
-                ativo: true,
-                criadoEm: new Date("2025-04-01")
-            },
-            {
-                contratoId: contratoMap["VerdeFresco Hortaliças - Fazenda Delta"],
-                // sku: "TOMATE-CAIXA-20KG",
-                nome: "Tomate caixa 20kg",
-                categoria: ["Hortaliças"],
-                unidadeMedida: UMED.KG,
-                quantidade: "500", // 500 caixas (20kg cada) ≈ 10 toneladas/mês
-                precoUnitario: "80.00",
-                ativo: true,
-                criadoEm: new Date("2025-04-02")
-            },
-
-            // Loja Teste (laticínios e carne) <- fornecedor: Fazenda Teste
-            {
-                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
-                // sku: "LEITE-TESTE-1L",
-                nome: "Leite pasteurizado 1L (teste)",
-                categoria: ["Laticínios"],
-                unidadeMedida: UMED.LITRO,
-                quantidade: "500", // 500 litros/mês
-                precoUnitario: "4.00",
-                ativo: true,
-                criadoEm: new Date("2025-06-01")
-            },
-            {
-                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
-                // sku: "QUEIJO-TESTE-500G",
-                nome: "Queijo fresco 500g (teste)",
-                categoria: ["Laticínios"],
-                unidadeMedida: UMED.KG,
-                quantidade: "100", // 100 kg/mês
-                precoUnitario: "22.00",
-                ativo: true,
-                criadoEm: new Date("2025-06-01")
-            },
-            {
-                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
-                // sku: "CARNE-BOVINA-TESTE-1KG",
-                nome: "Carne bovina corte dianteiro (teste)",
-                categoria: ["Carne"],
-                unidadeMedida: UMED.KG,
-                quantidade: "200", // 200 kg/mês
-                precoUnitario: "40.00",
-                ativo: true,
-                criadoEm: new Date("2025-06-01")
-            },
-            {
-                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
-                // sku: "CARNE-BOVINA-TESTE-TRASEIRO",
-                nome: "Carne bovina corte traseiro (teste)",
-                categoria: ["Carne"],
-                unidadeMedida: UMED.KG,
-                quantidade: "150", // 150 kg/mês
-                precoUnitario: "48.00",
-                ativo: true,
-                criadoEm: new Date("2025-06-01")
-            }
-        ];
-
         const insumosContratosItens = [
             {
-                contratoId: contratoMap["AgroLácteos Suprimentos - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
                 raca: null,
                 nome: "Culturas lácteas (starter) - pacote",
                 categoria: ["Insumo", "Laticínios", "Culturas"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "200",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.020", // 20 g por pacote
+                quantidade: "10", // antes: 20
                 precoUnitario: "45.00",
                 ativo: true,
                 criadoEm: new Date("2024-07-15")
             },
             {
-                contratoId: contratoMap["AgroLácteos Suprimentos - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
                 raca: null,
                 nome: "Embalagem PET 1L (unidade)",
                 categoria: ["Insumo", "Embalagem"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "5000",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.035", // ~35 g por garrafa vazia
+                quantidade: "100", // antes: 500
                 precoUnitario: "0.85",
                 ativo: true,
                 criadoEm: new Date("2024-07-15")
             },
             {
-                contratoId: contratoMap["AgroLácteos Suprimentos - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - AgroLácteos Suprimentos"],
                 raca: null,
                 nome: "Etiquetas / rótulos (pacote 1000 uni)",
                 categoria: ["Insumo", "Embalagem"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "200",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.500", // 0.5 kg por pacote 1000 uni
+                quantidade: "10", // antes: 20
                 precoUnitario: "30.00",
                 ativo: true,
                 criadoEm: new Date("2024-07-15")
@@ -1205,34 +666,37 @@ async function main() {
 
             // ---------------- Fazenda Beta <- Lácteos & Tecnologia Ltda ----------------
             {
-                contratoId: contratoMap["Lácteos & Tecnologia Ltda - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
                 raca: null,
                 nome: "Filtro micro/ultra para pasteurização (unidade)",
                 categoria: ["Insumo", "Equipamento", "Processamento"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "10",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.800", // 800 g
+                quantidade: "1", // antes: 2
                 precoUnitario: "420.00",
                 ativo: true,
                 criadoEm: new Date("2024-07-20")
             },
             {
-                contratoId: contratoMap["Lácteos & Tecnologia Ltda - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
                 raca: null,
                 nome: "Produto de limpeza CIP (litro)",
                 categoria: ["Insumo", "Higiene"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "300",
+                pesoUnidade: "1", // 1 kg por litro aproximado
+                quantidade: "20", // antes: 50
                 precoUnitario: "6.50",
                 ativo: true,
                 criadoEm: new Date("2024-07-20")
             },
             {
-                contratoId: contratoMap["Lácteos & Tecnologia Ltda - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - Lácteos & Tecnologia Ltda"],
                 raca: null,
                 nome: "Kits de calibragem Válvulas / sensores (unidade)",
                 categoria: ["Insumo", "Manutenção", "Peças"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "25",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.500", // 500 g
+                quantidade: "2", // antes: 5
                 precoUnitario: "95.00",
                 ativo: true,
                 criadoEm: new Date("2024-07-20")
@@ -1240,69 +704,63 @@ async function main() {
 
             // ---------------- Fazenda Beta <- AgroBov Genetics (genética) ----------------
             {
-                contratoId: contratoMap["AgroBov Genetics - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
                 raca: "Holandês",
                 nome: "Sêmen congelado Holandês (ampola)",
                 categoria: ["Animal", "Reprodutor", "MaterialGenético"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "120",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.005", // 5 g por ampola (aprox.)
+                quantidade: "6", // antes: 12
                 precoUnitario: "85.00",
                 ativo: true,
                 criadoEm: new Date("2024-09-01")
             },
             {
-                contratoId: contratoMap["AgroBov Genetics - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
                 raca: "Holandês",
                 nome: "Embrião (Holandês) - unidade",
                 categoria: ["Animal", "Reprodutor", "MaterialGenético"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "30",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.002", // 2 g (conteúdo criogênico leve)
+                quantidade: "1", // antes: 3
                 precoUnitario: "420.00",
                 ativo: true,
                 criadoEm: new Date("2024-09-01")
             },
-            // {
-            //     contratoId: contratoMap["AgroBov Genetics - Fazenda Beta"],
-            //     raca: null,
-            //     nome: "Sessão de inseminação / consultoria (serviço, unidade)",
-            //     categoria: ["Serviço", "Genética", "Inseminação"],
-            //     unidadeMedida: UMED.UNIDADE,
-            //     quantidade: "12",
-            //     precoUnitario: "180.00",
-            //     ativo: true,
-            //     criadoEm: new Date("2024-09-01")
-            // },
 
             // ---------------- Fazenda Beta <- VetBov Serviços e Insumos ----------------
             {
-                contratoId: contratoMap["VetBov Serviços e Insumos - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
                 raca: null,
                 nome: "Vacina contra brucelose (dose)",
                 categoria: ["Insumo", "Sanidade", "Vacina"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "200",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.020", // 20 g por dose (frasco/seringa)
+                quantidade: "20", // antes: 50
                 precoUnitario: "6.50",
                 ativo: true,
                 criadoEm: new Date("2024-08-01")
             },
             {
-                contratoId: contratoMap["VetBov Serviços e Insumos - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
                 raca: null,
                 nome: "Antibiótico injetável (frasco)",
                 categoria: ["Insumo", "Sanidade", "Medicamento"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "100",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.200", // 200 g
+                quantidade: "8", // antes: 20
                 precoUnitario: "28.00",
                 ativo: true,
                 criadoEm: new Date("2024-08-01")
             },
             {
-                contratoId: contratoMap["VetBov Serviços e Insumos - Fazenda Beta"],
+                contratoId: contratoMap["Fazenda Beta - VetBov Serviços e Insumos"],
                 raca: null,
                 nome: "Seringas agulha (pacote 100 uni)",
                 categoria: ["Insumo", "Sanidade", "Materiais"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "60",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.200", // 200 g por pacote
+                quantidade: "5", // antes: 10
                 precoUnitario: "12.00",
                 ativo: true,
                 criadoEm: new Date("2024-08-01")
@@ -1310,36 +768,37 @@ async function main() {
 
             // ---------------- Fazenda Teste <- PastosVerde Nutrição Animal ----------------
             {
-                contratoId: contratoMap["PastosVerde Nutrição Animal - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
                 raca: null,
                 nome: "Feno (fardo 20kg)",
                 categoria: ["Insumo", "Forragem"],
                 unidadeMedida: UMED.KG,
-                quantidade: "20000",
+                pesoUnidade: "20", // 20 kg por fardo
+                quantidade: "400", // antes: 2000
                 precoUnitario: "0.18",
                 ativo: true,
                 criadoEm: new Date("2024-10-01")
             },
             {
-                contratoId: contratoMap["PastosVerde Nutrição Animal - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
                 raca: null,
-                nome: "Silagem (ton)",
+                nome: "Silagem",
                 categoria: ["Insumo", "Forragem"],
                 unidadeMedida: UMED.KG,
                 pesoUnidade: "10",
-                quantidade: "50000",
+                quantidade: "800", // antes: 5000
                 precoUnitario: "0.08",
                 ativo: true,
                 criadoEm: new Date("2024-10-01")
             },
             {
-                contratoId: contratoMap["PastosVerde Nutrição Animal - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - PastosVerde Nutrição Animal"],
                 raca: null,
                 nome: "Suplemento mineral (kg)",
                 categoria: ["Insumo", "Suplemento"],
                 unidadeMedida: UMED.KG,
                 pesoUnidade: "5",
-                quantidade: "10",
+                quantidade: "1", // antes: 2
                 precoUnitario: "3.20",
                 ativo: true,
                 criadoEm: new Date("2024-10-01")
@@ -1347,58 +806,51 @@ async function main() {
 
             // ---------------- Fazenda Teste <- GenBov Melhoramento Genético ----------------
             {
-                contratoId: contratoMap["GenBov Melhoramento Genético - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
                 raca: "Angus",
                 nome: "Sêmen congelado Angus (ampola)",
                 categoria: ["Animal", "Reprodutor", "MaterialGenético"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "6",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.005",
+                quantidade: "1", // antes: 6
                 precoUnitario: "75.00",
                 ativo: true,
                 criadoEm: new Date("2024-11-01")
             },
-            // {
-            //     contratoId: contratoMap["GenBov Melhoramento Genético - Fazenda Teste"],
-            //     raca: "Angus",
-            //     nome: "Sessão de inseminação / consultoria (unidade)",
-            //     categoria: ["Serviço", "Genética", "Inseminação"],
-            //     unidadeMedida: UMED.UNIDADE,
-            //     quantidade: "20",
-            //     precoUnitario: "150.00",
-            //     ativo: true,
-            //     criadoEm: new Date("2024-11-01")
-            // },
 
             // ---------------- Fazenda Teste <- AgroVet Saúde Animal ----------------
             {
-                contratoId: contratoMap["AgroVet Saúde Animal - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
                 raca: null,
                 nome: "Vacina múltipla (dose)",
                 categoria: ["Insumo", "Sanidade", "Vacina"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "30",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.020",
+                quantidade: "3", // antes: 6
                 precoUnitario: "5.50",
                 ativo: true,
                 criadoEm: new Date("2024-12-01")
             },
             {
-                contratoId: contratoMap["AgroVet Saúde Animal - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
                 raca: null,
                 nome: "Antiparasitário oral (unidade embalagem)",
                 categoria: ["Insumo", "Sanidade", "Medicamento"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "30",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.100",
+                quantidade: "3", // antes: 6
                 precoUnitario: "22.00",
                 ativo: true,
                 criadoEm: new Date("2024-12-01")
             },
             {
-                contratoId: contratoMap["AgroVet Saúde Animal - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - AgroVet Saúde Animal"],
                 raca: null,
                 nome: "Kits de primeiros socorros (unidade)",
                 categoria: ["Insumo", "Sanidade", "Materiais"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "10",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "0.500",
+                quantidade: "1", // antes: 2
                 precoUnitario: "48.00",
                 ativo: true,
                 criadoEm: new Date("2024-12-01")
@@ -1406,51 +858,57 @@ async function main() {
 
             // ---------------- Fazenda Teste <- CampoForte Equipamentos ----------------
             {
-                contratoId: contratoMap["CampoForte Equipamentos - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
                 raca: null,
                 nome: "Balança de piso animal (unidade)",
                 categoria: ["Equipamento", "Pesagem"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "4",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "120", // kg aproximado
+                quantidade: "1", // antes: 1 (reduzido anteriormente)
                 precoUnitario: "7200.00",
                 ativo: true,
                 criadoEm: new Date("2025-01-10")
             },
             {
-                contratoId: contratoMap["CampoForte Equipamentos - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
                 raca: null,
                 nome: "Tronco / brete de contenção (unidade)",
                 categoria: ["Equipamento", "Handling"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "3",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "200",
+                quantidade: "1", // antes: 1
                 precoUnitario: "2500.00",
                 ativo: true,
                 criadoEm: new Date("2025-01-10")
             },
             {
-                contratoId: contratoMap["CampoForte Equipamentos - Fazenda Teste"],
+                contratoId: contratoMap["Fazenda Teste - CampoForte Equipamentos"],
                 raca: null,
                 nome: "Bebedouro automático (unidade)",
                 categoria: ["Equipamento", "Água"],
-                unidadeMedida: UMED.UNIDADE,
-                quantidade: "2",
+                unidadeMedida: UMED.KG,
+                pesoUnidade: "15.000",
+                quantidade: "1", // antes: 1
                 precoUnitario: "520.00",
                 ativo: true,
                 criadoEm: new Date("2025-01-10")
             }
         ];
+
         await prisma.contratoItens.createMany({ data: insumosContratosItens, skipDuplicates: true });
 
         const animaisContratosItens = [
-            // ----- Animais / Reprodutores por contrato -----
+            // --------------------------------------------------------
             // BovinoPrime Reprodutores — Fazenda Alpha
+            // --------------------------------------------------------
             {
                 contratoId: contratoMap["Fazenda Alpha - BovinoPrime Reprodutores"],
                 raca: "Nelore",
                 nome: "Touro reprodutor Nelore (adulto)",
                 categoria: ["Animal", "Reprodutor", "Bovino"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "8",
+                pesoUnidade: "850",   // peso médio de um touro Nelore adulto
+                quantidade: "2",          // antes: 8
                 precoUnitario: "3200.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-01")
@@ -1461,7 +919,8 @@ async function main() {
                 nome: "Vaca reprodutora Nelore (multipar)",
                 categoria: ["Animal", "Reprodutor", "Bovino"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "25",
+                pesoUnidade: "550",   // vaca adulta
+                quantidade: "6",          // antes: 25
                 precoUnitario: "2100.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-02")
@@ -1472,20 +931,24 @@ async function main() {
                 nome: "Bezerro reprodutor (macho, desmama)",
                 categoria: ["Animal", "Reprodutor", "Bovino"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "12",
+                pesoUnidade: "180",   // peso médio bezerro desmama
+                quantidade: "4",          // antes: 12
                 precoUnitario: "850.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-03")
             },
 
+            // --------------------------------------------------------
             // AgroBov Genetics — Fazenda Beta
+            // --------------------------------------------------------
             {
                 contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
                 raca: "Holandês",
-                nome: "Touro reprodutor Holandês (semen/animal)",
+                nome: "Touro reprodutor Holandês",
                 categoria: ["Animal", "Reprodutor", "Leiteiro"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "6",
+                pesoUnidade: "900",   // touro Holandês adulto
+                quantidade: "2",          // antes: 6
                 precoUnitario: "4200.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-04")
@@ -1493,34 +956,27 @@ async function main() {
             {
                 contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
                 raca: "Holandês",
-                nome: "Vaca reprodutora Holandesa (multipar)",
+                nome: "Vaca reprodutora Holandesa",
                 categoria: ["Animal", "Reprodutor", "Leiteiro"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "18",
+                pesoUnidade: "650",
+                quantidade: "5",          // antes: 18
                 precoUnitario: "2400.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-05")
             },
-            {
-                contratoId: contratoMap["Fazenda Beta - AgroBov Genetics"],
-                raca: "Jersey",
-                nome: "Embrião Jersey (unidade)",
-                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
-                unidadeMedida: UMED.CABECA,
-                quantidade: "40",
-                precoUnitario: "350.00",
-                ativo: true,
-                criadoEm: new Date("2025-09-06")
-            },
 
+            // --------------------------------------------------------
             // GenBov Melhoramento Genético — Fazenda Teste
+            // --------------------------------------------------------
             {
                 contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
                 raca: "Angus",
                 nome: "Touro reprodutor Angus (adulto, PO)",
                 categoria: ["Animal", "Reprodutor", "Bovino", "Genética"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "5",
+                pesoUnidade: "950",   // touro PO Angus adulto
+                quantidade: "1",          // antes: 5
                 precoUnitario: "5500.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-07")
@@ -1531,24 +987,14 @@ async function main() {
                 nome: "Vaca reprodutora Angus (multipar, PO)",
                 categoria: ["Animal", "Reprodutor", "Bovino", "Genética"],
                 unidadeMedida: UMED.CABECA,
-                quantidade: "15",
+                pesoUnidade: "600", //KG
+                quantidade: "4",          // antes: 15
                 precoUnitario: "3200.00",
                 ativo: true,
                 criadoEm: new Date("2025-09-08")
             },
-            {
-                contratoId: contratoMap["Fazenda Teste - GenBov Melhoramento Genético"],
-                raca: "Angus",
-                nome: "Sêmen congelado Angus (ampola)",
-                categoria: ["Animal", "Reprodutor", "MaterialGenético"],
-                unidadeMedida: UMED.CABECA,
-                quantidade: "200",
-                precoUnitario: "75.00",
-                ativo: true,
-                criadoEm: new Date("2025-09-09")
-            }
-
         ];
+
         await prisma.contratoItens.createMany({ data: animaisContratosItens, skipDuplicates: true });
 
         const produtosContratosItens = [
@@ -1558,7 +1004,8 @@ async function main() {
                 nome: "Gado bovino vivo (cabeça)",
                 categoria: ["Pecuária"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "120",
+                pesoUnidade: "450.000",   // peso médio por cabeça (kg)
+                quantidade: "5",          // antes: 20
                 precoUnitario: "950.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-01")
@@ -1568,7 +1015,8 @@ async function main() {
                 nome: "Carcaça bovina inteira (kg)",
                 categoria: ["Carne"],
                 unidadeMedida: UMED.KG,
-                quantidade: "3000",
+                pesoUnidade: "1.000",
+                quantidade: "120",        // antes: 500
                 precoUnitario: "30.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-02")
@@ -1578,7 +1026,8 @@ async function main() {
                 nome: "Miúdos bovinos (kg)",
                 categoria: ["Carne", "Miúdos"],
                 unidadeMedida: UMED.KG,
-                quantidade: "200",
+                pesoUnidade: "1.000",
+                quantidade: "12",         // antes: 40
                 precoUnitario: "10.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-03")
@@ -1588,7 +1037,8 @@ async function main() {
                 nome: "Couro bovino cru (unidade)",
                 categoria: ["Subprodutos"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "100",
+                pesoUnidade: "12.000",
+                quantidade: "5",          // antes: 20
                 precoUnitario: "110.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-04")
@@ -1598,7 +1048,8 @@ async function main() {
                 nome: "Ossos bovinos (kg)",
                 categoria: ["Subprodutos"],
                 unidadeMedida: UMED.KG,
-                quantidade: "400",
+                pesoUnidade: "1.000",
+                quantidade: "20",         // antes: 80
                 precoUnitario: "2.50",
                 ativo: true,
                 criadoEm: new Date("2025-06-05")
@@ -1608,7 +1059,8 @@ async function main() {
                 nome: "Sebo bovino bruto (kg)",
                 categoria: ["Subprodutos"],
                 unidadeMedida: UMED.KG,
-                quantidade: "300",
+                pesoUnidade: "1.000",
+                quantidade: "15",         // antes: 60
                 precoUnitario: "6.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-06")
@@ -1618,7 +1070,8 @@ async function main() {
                 nome: "Sangue bovino para subprodutos (L)",
                 categoria: ["Subprodutos"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "500",
+                pesoUnidade: "1.000",
+                quantidade: "30",         // antes: 120
                 precoUnitario: "1.20",
                 ativo: true,
                 criadoEm: new Date("2025-06-07")
@@ -1630,7 +1083,8 @@ async function main() {
                 nome: "Coxão mole (kg)",
                 categoria: ["Carne", "Cortes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "350",
+                pesoUnidade: "1.000",
+                quantidade: "20",         // antes: 70
                 precoUnitario: "40.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-08")
@@ -1640,7 +1094,8 @@ async function main() {
                 nome: "Alcatra (kg)",
                 categoria: ["Carne", "Cortes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "220",
+                pesoUnidade: "1.000",
+                quantidade: "12",         // antes: 44
                 precoUnitario: "55.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-09")
@@ -1650,7 +1105,8 @@ async function main() {
                 nome: "Contrafilé (kg)",
                 categoria: ["Carne", "Cortes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "260",
+                pesoUnidade: "1.000",
+                quantidade: "15",         // antes: 52
                 precoUnitario: "60.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-10")
@@ -1660,7 +1116,8 @@ async function main() {
                 nome: "Costela ripa (kg)",
                 categoria: ["Carne", "Cortes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "180",
+                pesoUnidade: "1.000",
+                quantidade: "8",          // antes: 36
                 precoUnitario: "28.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-11")
@@ -1670,7 +1127,8 @@ async function main() {
                 nome: "Maminha (kg)",
                 categoria: ["Carne", "Cortes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "140",
+                pesoUnidade: "1.000",
+                quantidade: "10",         // antes: 28
                 precoUnitario: "47.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-12")
@@ -1680,7 +1138,8 @@ async function main() {
                 nome: "Picanha (kg)",
                 categoria: ["Carne", "Cortes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "100",
+                pesoUnidade: "1.000",
+                quantidade: "6",          // antes: 20
                 precoUnitario: "85.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-13")
@@ -1692,7 +1151,8 @@ async function main() {
                 nome: "Carne moída (kg)",
                 categoria: ["Carne", "Processados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "800",
+                pesoUnidade: "1.000",
+                quantidade: "40",         // antes: 160
                 precoUnitario: "25.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-14")
@@ -1702,7 +1162,8 @@ async function main() {
                 nome: "Carne para hambúrguer (mistura 80/20) (kg)",
                 categoria: ["Carne", "Processados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "400",
+                pesoUnidade: "1.000",
+                quantidade: "20",         // antes: 80
                 precoUnitario: "23.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-15")
@@ -1712,7 +1173,8 @@ async function main() {
                 nome: "Hambúrguer congelado 120g (caixa)",
                 categoria: ["Carne", "Processados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1200",
+                pesoUnidade: "0.120",
+                quantidade: "50",         // antes: 240
                 precoUnitario: "5.50",
                 ativo: true,
                 criadoEm: new Date("2025-06-16")
@@ -1722,7 +1184,8 @@ async function main() {
                 nome: "Linguiça bovina artesanal (kg)",
                 categoria: ["Carne", "Processados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "250",
+                pesoUnidade: "1.000",
+                quantidade: "12",         // antes: 50
                 precoUnitario: "30.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-17")
@@ -1732,7 +1195,8 @@ async function main() {
                 nome: "Charque (kg)",
                 categoria: ["Carne", "Processados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "90",
+                pesoUnidade: "1.000",
+                quantidade: "4",          // antes: 18
                 precoUnitario: "32.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-18")
@@ -1742,7 +1206,8 @@ async function main() {
                 nome: "Carne desidratada (kg)",
                 categoria: ["Carne", "Processados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "60",
+                pesoUnidade: "1.000",
+                quantidade: "2",          // antes: 12
                 precoUnitario: "120.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-19")
@@ -1752,7 +1217,8 @@ async function main() {
                 nome: "Sebo industrializado (kg)",
                 categoria: ["Subprodutos", "Industrializados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "180",
+                pesoUnidade: "1.000",
+                quantidade: "8",          // antes: 36
                 precoUnitario: "9.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-20")
@@ -1762,7 +1228,8 @@ async function main() {
                 nome: "Couro curtido (m²)",
                 categoria: ["Subprodutos", "Industrializados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "60",
+                pesoUnidade: "2.500",
+                quantidade: "3",          // antes: 12
                 precoUnitario: "150.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-21")
@@ -1774,7 +1241,8 @@ async function main() {
                 nome: "Soja grão (saca 60kg)",
                 categoria: ["Grãos"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "800",
+                pesoUnidade: "60.000",
+                quantidade: "40",         // antes: 160
                 precoUnitario: "185.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-22")
@@ -1784,7 +1252,8 @@ async function main() {
                 nome: "Milho grão (saca 60kg)",
                 categoria: ["Grãos"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "700",
+                pesoUnidade: "60.000",
+                quantidade: "35",         // antes: 140
                 precoUnitario: "155.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-23")
@@ -1794,7 +1263,8 @@ async function main() {
                 nome: "Trigo (saca 50kg)",
                 categoria: ["Grãos"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "300",
+                pesoUnidade: "50.000",
+                quantidade: "15",         // antes: 60
                 precoUnitario: "162.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-24")
@@ -1804,7 +1274,8 @@ async function main() {
                 nome: "Feijão carioca (saca 30kg)",
                 categoria: ["Grãos"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "180",
+                pesoUnidade: "30.000",
+                quantidade: "9",          // antes: 36
                 precoUnitario: "225.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-25")
@@ -1814,7 +1285,8 @@ async function main() {
                 nome: "Sorgo (saca 50kg)",
                 categoria: ["Grãos"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "140",
+                pesoUnidade: "50.000",
+                quantidade: "7",          // antes: 28
                 precoUnitario: "95.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-26")
@@ -1824,7 +1296,8 @@ async function main() {
                 nome: "Casca de soja (subproduto) (kg)",
                 categoria: ["Subprodutos"],
                 unidadeMedida: UMED.KG,
-                quantidade: "2000",
+                pesoUnidade: "1.000",
+                quantidade: "80",         // antes: 400
                 precoUnitario: "0.80",
                 ativo: true,
                 criadoEm: new Date("2025-06-27")
@@ -1834,7 +1307,8 @@ async function main() {
                 nome: "Farelo de soja bruto (saca 40kg)",
                 categoria: ["Derivados", "Rações"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "600",
+                pesoUnidade: "40.000",
+                quantidade: "24",         // antes: 120
                 precoUnitario: "100.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-28")
@@ -1844,7 +1318,8 @@ async function main() {
                 nome: "Óleo de soja bruto (L)",
                 categoria: ["Derivados", "Óleos"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "3000",
+                pesoUnidade: "1.000",
+                quantidade: "120",        // antes: 600
                 precoUnitario: "5.50",
                 ativo: true,
                 criadoEm: new Date("2025-06-29")
@@ -1854,7 +1329,8 @@ async function main() {
                 nome: "Óleo de soja refinado (L)",
                 categoria: ["Derivados", "Óleos"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "2500",
+                pesoUnidade: "1.000",
+                quantidade: "100",        // antes: 500
                 precoUnitario: "7.00",
                 ativo: true,
                 criadoEm: new Date("2025-06-30")
@@ -1864,7 +1340,8 @@ async function main() {
                 nome: "Fubá de milho 1kg (pacote)",
                 categoria: ["Grãos", "Farinha"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "4000",
+                pesoUnidade: "1.000",
+                quantidade: "160",        // antes: 800
                 precoUnitario: "3.20",
                 ativo: true,
                 criadoEm: new Date("2025-07-01")
@@ -1874,7 +1351,8 @@ async function main() {
                 nome: "Fubá de milho 5kg (pacote)",
                 categoria: ["Grãos", "Farinha"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1200",
+                pesoUnidade: "5.000",
+                quantidade: "48",         // antes: 240
                 precoUnitario: "14.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-02")
@@ -1884,7 +1362,8 @@ async function main() {
                 nome: "Milho triturado (ração) 25kg",
                 categoria: ["Rações"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "800",
+                pesoUnidade: "25.000",
+                quantidade: "32",         // antes: 160
                 precoUnitario: "78.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-03")
@@ -1894,7 +1373,8 @@ async function main() {
                 nome: "Ração de engorda (mistura milho+farelo) 25kg",
                 categoria: ["Rações"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "700",
+                pesoUnidade: "25.000",
+                quantidade: "28",         // antes: 140
                 precoUnitario: "92.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-04")
@@ -1904,7 +1384,8 @@ async function main() {
                 nome: "Farinha de trigo 1kg (pacote)",
                 categoria: ["Grãos", "Farinha"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "2500",
+                pesoUnidade: "1.000",
+                quantidade: "100",        // antes: 500
                 precoUnitario: "4.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-05")
@@ -1914,7 +1395,8 @@ async function main() {
                 nome: "Farelo de trigo (saca 25kg)",
                 categoria: ["Rações"],
                 unidadeMedida: UMED.SACA,
-                quantidade: "400",
+                pesoUnidade: "25.000",
+                quantidade: "16",         // antes: 80
                 precoUnitario: "68.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-06")
@@ -1924,7 +1406,8 @@ async function main() {
                 nome: "Feijão limpo e selecionado 1kg (pacote)",
                 categoria: ["Grãos"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1800",
+                pesoUnidade: "1.000",
+                quantidade: "72",         // antes: 360
                 precoUnitario: "8.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-07")
@@ -1934,7 +1417,8 @@ async function main() {
                 nome: "Grãos embalados a vácuo (diversos) (unidade)",
                 categoria: ["Grãos", "Embalados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1200",
+                pesoUnidade: "0.500",
+                quantidade: "48",         // antes: 240
                 precoUnitario: "6.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-08")
@@ -1946,7 +1430,8 @@ async function main() {
                 nome: "Leite cru tipo A (L)",
                 categoria: ["Laticínios", "Crú"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "5000",
+                pesoUnidade: "1.000",
+                quantidade: "200",        // antes: 1000
                 precoUnitario: "1.20",
                 ativo: true,
                 criadoEm: new Date("2025-07-09")
@@ -1956,7 +1441,8 @@ async function main() {
                 nome: "Leite cru tipo B (L)",
                 categoria: ["Laticínios", "Crú"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "2000",
+                pesoUnidade: "1.000",
+                quantidade: "80",         // antes: 400
                 precoUnitario: "0.95",
                 ativo: true,
                 criadoEm: new Date("2025-07-10")
@@ -1966,7 +1452,8 @@ async function main() {
                 nome: "Nata / creme do leite (kg)",
                 categoria: ["Laticínios", "Crú"],
                 unidadeMedida: UMED.KG,
-                quantidade: "300",
+                pesoUnidade: "1.000",
+                quantidade: "12",         // antes: 60
                 precoUnitario: "18.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-11")
@@ -1976,7 +1463,8 @@ async function main() {
                 nome: "Soro de leite (L)",
                 categoria: ["Laticínios", "Subprodutos"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "1200",
+                pesoUnidade: "1.000",
+                quantidade: "48",         // antes: 240
                 precoUnitario: "0.30",
                 ativo: true,
                 criadoEm: new Date("2025-07-12")
@@ -1988,7 +1476,8 @@ async function main() {
                 nome: "Leite pasteurizado 1L",
                 categoria: ["Laticínios", "Processados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "3500",
+                pesoUnidade: "1.000",
+                quantidade: "140",        // antes: 700
                 precoUnitario: "4.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-13")
@@ -1998,7 +1487,8 @@ async function main() {
                 nome: "Leite pasteurizado 2L",
                 categoria: ["Laticínios", "Processados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "1200",
+                pesoUnidade: "2.000",
+                quantidade: "48",         // antes: 240
                 precoUnitario: "8.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-14")
@@ -2008,7 +1498,8 @@ async function main() {
                 nome: "Leite UHT 1L",
                 categoria: ["Laticínios", "Processados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "2000",
+                pesoUnidade: "1.000",
+                quantidade: "80",         // antes: 400
                 precoUnitario: "4.20",
                 ativo: true,
                 criadoEm: new Date("2025-07-15")
@@ -2018,7 +1509,8 @@ async function main() {
                 nome: "Leite integral 1L",
                 categoria: ["Laticínios", "Processados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "1800",
+                pesoUnidade: "1.000",
+                quantidade: "72",         // antes: 360
                 precoUnitario: "4.80",
                 ativo: true,
                 criadoEm: new Date("2025-07-16")
@@ -2028,7 +1520,8 @@ async function main() {
                 nome: "Leite desnatado 1L",
                 categoria: ["Laticínios", "Processados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "900",
+                pesoUnidade: "1.000",
+                quantidade: "36",         // antes: 180
                 precoUnitario: "4.60",
                 ativo: true,
                 criadoEm: new Date("2025-07-17")
@@ -2038,7 +1531,8 @@ async function main() {
                 nome: "Leite sem lactose 1L",
                 categoria: ["Laticínios", "Processados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "400",
+                pesoUnidade: "1.000",
+                quantidade: "16",         // antes: 80
                 precoUnitario: "6.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-18")
@@ -2048,7 +1542,8 @@ async function main() {
                 nome: "Creme de leite 200ml",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "900",
+                pesoUnidade: "0.200",
+                quantidade: "36",         // antes: 180
                 precoUnitario: "3.80",
                 ativo: true,
                 criadoEm: new Date("2025-07-19")
@@ -2058,7 +1553,8 @@ async function main() {
                 nome: "Manteiga 200g",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "700",
+                pesoUnidade: "0.200",
+                quantidade: "28",         // antes: 140
                 precoUnitario: "12.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-20")
@@ -2068,7 +1564,8 @@ async function main() {
                 nome: "Manteiga 500g",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "320",
+                pesoUnidade: "0.500",
+                quantidade: "12",         // antes: 64
                 precoUnitario: "28.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-21")
@@ -2078,7 +1575,8 @@ async function main() {
                 nome: "Ricota fresca (kg)",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "120",
+                pesoUnidade: "1.000",
+                quantidade: "6",          // antes: 24
                 precoUnitario: "26.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-22")
@@ -2088,7 +1586,8 @@ async function main() {
                 nome: "Minas padrão (kg)",
                 categoria: ["Laticínios", "Queijos"],
                 unidadeMedida: UMED.KG,
-                quantidade: "250",
+                pesoUnidade: "1.000",
+                quantidade: "12",         // antes: 50
                 precoUnitario: "30.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-23")
@@ -2098,7 +1597,8 @@ async function main() {
                 nome: "Queijo mussarela (peça 3kg)",
                 categoria: ["Laticínios", "Queijos"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "80",
+                pesoUnidade: "3.000",
+                quantidade: "4",          // antes: 16
                 precoUnitario: "110.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-24")
@@ -2108,7 +1608,8 @@ async function main() {
                 nome: "Queijo mussarela (barra 1kg)",
                 categoria: ["Laticínios", "Queijos"],
                 unidadeMedida: UMED.KG,
-                quantidade: "220",
+                pesoUnidade: "1.000",
+                quantidade: "11",         // antes: 44
                 precoUnitario: "38.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-25")
@@ -2118,7 +1619,8 @@ async function main() {
                 nome: "Queijo parmesão (peça 1kg)",
                 categoria: ["Laticínios", "Queijos"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "60",
+                pesoUnidade: "1.000",
+                quantidade: "3",          // antes: 12
                 precoUnitario: "95.00",
                 ativo: true,
                 criadoEm: new Date("2025-07-26")
@@ -2128,7 +1630,8 @@ async function main() {
                 nome: "Iogurte natural 170g",
                 categoria: ["Laticínios", "Iogurtes"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1600",
+                pesoUnidade: "0.170",
+                quantidade: "64",         // antes: 320
                 precoUnitario: "3.20",
                 ativo: true,
                 criadoEm: new Date("2025-07-27")
@@ -2138,7 +1641,8 @@ async function main() {
                 nome: "Iogurte sabor morango 170g",
                 categoria: ["Laticínios", "Iogurtes"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1200",
+                pesoUnidade: "0.170",
+                quantidade: "48",         // antes: 240
                 precoUnitario: "3.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-28")
@@ -2148,7 +1652,8 @@ async function main() {
                 nome: "Iogurte sabor coco 170g",
                 categoria: ["Laticínios", "Iogurtes"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "800",
+                pesoUnidade: "0.170",
+                quantidade: "32",         // antes: 160
                 precoUnitario: "3.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-29")
@@ -2158,7 +1663,8 @@ async function main() {
                 nome: "Iogurte garrafa 1L",
                 categoria: ["Laticínios", "Iogurtes"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "400",
+                pesoUnidade: "1.000",
+                quantidade: "16",         // antes: 80
                 precoUnitario: "9.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-30")
@@ -2168,7 +1674,8 @@ async function main() {
                 nome: "Requeijão cremoso 200g",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "900",
+                pesoUnidade: "0.200",
+                quantidade: "36",         // antes: 180
                 precoUnitario: "8.50",
                 ativo: true,
                 criadoEm: new Date("2025-07-31")
@@ -2178,7 +1685,8 @@ async function main() {
                 nome: "Doce de leite pastoso 400g",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "420",
+                pesoUnidade: "0.400",
+                quantidade: "17",         // antes: 84
                 precoUnitario: "18.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-01")
@@ -2188,7 +1696,8 @@ async function main() {
                 nome: "Doce de leite em barra 300g",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "260",
+                pesoUnidade: "0.300",
+                quantidade: "10",         // antes: 52
                 precoUnitario: "15.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-02")
@@ -2198,7 +1707,8 @@ async function main() {
                 nome: "Kefir líquido 1L",
                 categoria: ["Laticínios", "Fermentados"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "220",
+                pesoUnidade: "1.000",
+                quantidade: "9",          // antes: 44
                 precoUnitario: "7.50",
                 ativo: true,
                 criadoEm: new Date("2025-08-03")
@@ -2208,7 +1718,8 @@ async function main() {
                 nome: "Coalhada fresca (kg)",
                 categoria: ["Laticínios", "Derivados"],
                 unidadeMedida: UMED.KG,
-                quantidade: "140",
+                pesoUnidade: "1.000",
+                quantidade: "6",          // antes: 28
                 precoUnitario: "20.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-04")
@@ -2220,7 +1731,8 @@ async function main() {
                 nome: "Alface crespa (unidade)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "2500",
+                pesoUnidade: "0.200",
+                quantidade: "100",        // antes: 500
                 precoUnitario: "2.50",
                 ativo: true,
                 criadoEm: new Date("2025-08-05")
@@ -2230,7 +1742,8 @@ async function main() {
                 nome: "Alface americana (unidade)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "1200",
+                pesoUnidade: "0.250",
+                quantidade: "48",         // antes: 240
                 precoUnitario: "3.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-06")
@@ -2240,7 +1753,8 @@ async function main() {
                 nome: "Alface roxa (unidade)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "600",
+                pesoUnidade: "0.220",
+                quantidade: "24",         // antes: 120
                 precoUnitario: "3.50",
                 ativo: true,
                 criadoEm: new Date("2025-08-07")
@@ -2250,7 +1764,8 @@ async function main() {
                 nome: "Rúcula (maço)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "800",
+                pesoUnidade: "0.150",
+                quantidade: "32",         // antes: 160
                 precoUnitario: "2.80",
                 ativo: true,
                 criadoEm: new Date("2025-08-08")
@@ -2260,7 +1775,8 @@ async function main() {
                 nome: "Couve manteiga (maço)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "700",
+                pesoUnidade: "0.250",
+                quantidade: "28",         // antes: 140
                 precoUnitario: "2.20",
                 ativo: true,
                 criadoEm: new Date("2025-08-09")
@@ -2270,7 +1786,8 @@ async function main() {
                 nome: "Tomate caixa 20kg",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.KG,
-                quantidade: "600",
+                pesoUnidade: "20.000",
+                quantidade: "24",         // antes: 120
                 precoUnitario: "80.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-10")
@@ -2280,7 +1797,8 @@ async function main() {
                 nome: "Tomate cereja caixa 5kg",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.KG,
-                quantidade: "200",
+                pesoUnidade: "5.000",
+                quantidade: "8",          // antes: 40
                 precoUnitario: "65.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-11")
@@ -2290,7 +1808,8 @@ async function main() {
                 nome: "Pepino japonês (unidade)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.UNIDADE,
-                quantidade: "900",
+                pesoUnidade: "0.200",
+                quantidade: "36",         // antes: 180
                 precoUnitario: "3.80",
                 ativo: true,
                 criadoEm: new Date("2025-08-12")
@@ -2300,7 +1819,8 @@ async function main() {
                 nome: "Abobrinha italiana (kg)",
                 categoria: ["Hortaliças"],
                 unidadeMedida: UMED.KG,
-                quantidade: "400",
+                pesoUnidade: "1.000",
+                quantidade: "16",         // antes: 80
                 precoUnitario: "6.50",
                 ativo: true,
                 criadoEm: new Date("2025-08-13")
@@ -2310,7 +1830,8 @@ async function main() {
                 nome: "Cenoura (kg)",
                 categoria: ["Hortaliças", "Raízes"],
                 unidadeMedida: UMED.KG,
-                quantidade: "700",
+                pesoUnidade: "1.000",
+                quantidade: "28",         // antes: 140
                 precoUnitario: "3.20",
                 ativo: true,
                 criadoEm: new Date("2025-08-14")
@@ -2322,7 +1843,8 @@ async function main() {
                 nome: "Leite pasteurizado 1L (teste)",
                 categoria: ["Laticínios"],
                 unidadeMedida: UMED.LITRO,
-                quantidade: "500",
+                pesoUnidade: "1.000",
+                quantidade: "20",         // antes: 100
                 precoUnitario: "4.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-15")
@@ -2332,7 +1854,8 @@ async function main() {
                 nome: "Queijo fresco 500g (teste)",
                 categoria: ["Laticínios"],
                 unidadeMedida: UMED.KG,
-                quantidade: "100",
+                pesoUnidade: "0.500",
+                quantidade: "4",          // antes: 20
                 precoUnitario: "22.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-16")
@@ -2342,7 +1865,8 @@ async function main() {
                 nome: "Carne bovina corte dianteiro (teste)",
                 categoria: ["Carne"],
                 unidadeMedida: UMED.KG,
-                quantidade: "200",
+                pesoUnidade: "1",
+                quantidade: "10",         // antes: 40
                 precoUnitario: "40.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-17")
@@ -2352,7 +1876,8 @@ async function main() {
                 nome: "Carne bovina corte traseiro (teste)",
                 categoria: ["Carne"],
                 unidadeMedida: UMED.KG,
-                quantidade: "150",
+                pesoUnidade: "1",
+                quantidade: "8",          // antes: 30
                 precoUnitario: "48.00",
                 ativo: true,
                 criadoEm: new Date("2025-08-18")
@@ -2497,7 +2022,42 @@ async function main() {
                 documentoReferencia: "Romaneio-CFE-20250712",
                 status: SPEDIDO.ENTREGUE,
                 observacoes: "Equipamentos (entrega semestral)"
+            },
+
+            // === PEDIDOS: Loja Teste (recebe de Fazenda Teste) ===
+            {
+                contratoId: contratoMap["Loja Teste - Fazenda Teste"],
+                origemFornecedorExternoId: null,
+                origemUnidadeId: unidadeMap["Fazenda Teste"],   // fornecedor é unidade Fazenda Teste
+                destinoUnidadeId: unidadeMap["Loja Teste"],
+                criadoPorId: usuarioMap["Usuario Ficticio"],
+
+                // base: entrega mensal configurada em contratosData (envio 2025-06-03T10:00:00Z)
+                dataPedido: new Date("2025-06-01T09:00:00.000Z"),
+                dataEnvio: new Date("2025-06-03T10:00:00.000Z"),
+                dataRecebimento: new Date("2025-06-03T12:30:00.000Z"),
+                documentoReferencia: "Romaneio-LOJA-20250603",
+                observacoes: "Pedido mensal para Loja Teste — laticínios e cortes (seed).",
+                status: SPEDIDO.ENTREGUE,
+            },
+
+            // === PEDIDO: Casa Útil Mercado (recebe de Fazenda Gamma) ===
+            {
+                contratoId: contratoMap["Casa Útil Mercado - Fazenda Gamma"],
+                origemFornecedorExternoId: null,
+                origemUnidadeId: unidadeMap["Fazenda Gamma"],
+                destinoUnidadeId: unidadeMap["Casa Útil Mercado"], // ou "Casa Útil Mercado" conforme seu mapa
+                criadoPorId: usuarioMap["Maria Del Rey"],
+
+                // base: contratosData mostra envio em 2025-04-18T09:00:00Z
+                dataPedido: new Date("2025-04-16T09:00:00.000Z"),
+                dataEnvio: new Date("2025-04-18T09:00:00.000Z"),
+                dataRecebimento: new Date("2025-04-18T11:45:00.000Z"),
+                documentoReferencia: "Romaneio-CU-20250418",
+                observacoes: "Pedido seed para Casa Útil Mercado — grãos e derivados.",
+                status: SPEDIDO.ENTREGUE,
             }
+
         ];
         await prisma.pedido.createMany({ data: pedidosSeed, skipDuplicates: true });
 
@@ -2508,11 +2068,43 @@ async function main() {
             }
 
             // helper: encontra fornecedor/contrato item pelo nome exato
+            // Busca robusta por nome de contratoItem
             async function findContratoItemByName(nome) {
-                return prisma.contratoItens.findFirst({ where: { nome } });
+                if (!nome) return null;
+                const raw = nome.trim();
+
+                // 1) tentativa exata case-insensitive
+                let r = await prisma.contratoItens.findFirst({
+                    where: { nome: { equals: raw, mode: "insensitive" } }
+                });
+                if (r) return r;
+
+                // 2) tentativa contains (parte do texto) - útil para "Touro reprodutor Holandês (adulto)"
+                r = await prisma.contratoItens.findFirst({
+                    where: { nome: { contains: raw, mode: "insensitive" } }
+                });
+                if (r) return r;
+
+                // 3) tentativa invertida: procura itens cujo nome contém a palavra-chave principal (ex.: 'Touro', 'Silagem')
+                const keywords = raw.split(/\s+/).filter(Boolean).slice(0, 3);
+                for (const kw of keywords) {
+                    const cand = await prisma.contratoItens.findFirst({
+                        where: { nome: { contains: kw, mode: "insensitive" } }
+                    });
+                    if (cand) return cand;
+                }
+
+                // DEBUG: lista os primeiros candidatos parecidos (ajuda a ver por quê não encontrou)
+                const candidates = await prisma.contratoItens.findMany({
+                    where: { nome: { contains: raw.split(/\s+/)[0], mode: "insensitive" } },
+                    take: 10
+                });
+                console.warn("findContratoItemByName: nenhum match exato para:", nome, "— candidatos:", candidates.map(c => c.nome));
+                return null;
             }
 
-            // -- resolvemos os pedidos existentes pelo documentoReferencia que você usou --
+
+            // resolvemos os pedidos existentes pelo documentoReferencia
             const pedidoAgroBov = await findPedidoByDoc("Romaneio-AGB-20241203");
             const pedidoVetBov = await findPedidoByDoc("Nota-VET-20240905");
             const pedidoAgroLacteos = await findPedidoByDoc("Romaneio-AGL-20240818");
@@ -2521,8 +2113,10 @@ async function main() {
             const pedidoGenBov = await findPedidoByDoc("Romaneio-GEN-20250204");
             const pedidoAgroVet = await findPedidoByDoc("Romaneio-AGV-20250105");
             const pedidoCampoForte = await findPedidoByDoc("Romaneio-CFE-20250712");
+            const pedidoLoja = await findPedidoByDoc("Romaneio-LOJA-20250603");
+            const pedidoCasa = await findPedidoByDoc("Romaneio-CU-20250418");
 
-            // checagem rápida (falha explícita se algum pedido não for encontrado)
+            // checagem rápida
             const missing = [
                 ["AGROBOV", pedidoAgroBov],
                 ["VETBOV", pedidoVetBov],
@@ -2532,15 +2126,17 @@ async function main() {
                 ["GENBOV", pedidoGenBov],
                 ["AGROVET", pedidoAgroVet],
                 ["CAMPOFORTE", pedidoCampoForte],
+                ["LOJA", pedidoLoja],
+                ["CASA", pedidoCasa]
             ].filter(([k, v]) => !v).map(([k]) => k);
 
             if (missing.length) {
                 console.warn("Aviso: não encontrou pedidos para:", missing.join(", "),
                     "\nVerifique documentoReferencia nos pedidos antes de criar itens.");
-                // você pode optar por continuar; aqui continuarei mas itens ligados a pedidos não encontrados serão omitidos
+                // continuação permitida — itens ligados a pedidos não encontrados serão omitidos
             }
 
-            // -- função utilitária para criar entrada de item (busca fornecedorItem para pegar id) --
+            // utilitário para criar entrada de item (busca contratoItem para pegar id)
             async function makeItem(pedido, itemNome, quantidade, unidadeMedida, precoUnitario, observacoes = null) {
                 if (!pedido) return null;
                 const contratoItem = await findContratoItemByName(itemNome);
@@ -2560,53 +2156,71 @@ async function main() {
                 };
             }
 
-            // === Definição dos itens por pedido (quantidades propostas) ===
+            // === Itens por pedido (quantidades ajustadas para NÃO ULTRAPASSAR contrato) ===
             const itensPromises = [
 
                 // --- AgroBov Genetics (Fazenda Beta) - animais/genética ---
-                makeItem(pedidoAgroBov, "Touro reprodutor Holandês (semen/animal)", 2, UMED.CABECA, "4200.00"),
-                makeItem(pedidoAgroBov, "Vaca reprodutora Holandesa (multipar)", 5, UMED.CABECA, "2400.00"),
-                makeItem(pedidoAgroBov, "Embrião Jersey (unidade)", 10, UMED.UNIDADE, "350.00"),
-                makeItem(pedidoAgroBov, "Sêmen congelado Holandês (ampola)", 20, UMED.UNIDADE, "85.00"),
-                makeItem(pedidoAgroBov, "Embrião (Holandês) - unidade", 5, UMED.UNIDADE, "420.00"),
-                makeItem(pedidoAgroBov, "Sessão de inseminação / consultoria (serviço, unidade)", 3, UMED.UNIDADE, "180.00"),
+                // observação: quantidades reduzidas para os valores acordados em ContratoItens
+                makeItem(pedidoAgroBov, "Touro reprodutor Holandês", 2, UMED.CABECA, "4200.00"), // antes:2
+                makeItem(pedidoAgroBov, "Vaca reprodutora Holandesa", 5, UMED.CABECA, "2400.00"),   // antes:5
+                makeItem(pedidoAgroBov, "Sêmen congelado Holandês (ampola)", 6, UMED.UNIDADE, "85.00"),       // antes:20 -> ajustado para contrato:6
+                makeItem(pedidoAgroBov, "Embrião (Holandês) - unidade", 1, UMED.UNIDADE, "420.00"),          // antes:5 -> ajustado para contrato:1
+                // removed "Sessão de inseminação / consultoria" — não havia ContratoItem claro com esse nome
 
                 // --- VetBov Serviços e Insumos (Fazenda Beta) - sanidade ---
-                makeItem(pedidoVetBov, "Vacina contra brucelose (dose)", 100, UMED.UNIDADE, "6.50"),
-                makeItem(pedidoVetBov, "Antibiótico injetável (frasco)", 20, UMED.UNIDADE, "28.00"),
-                makeItem(pedidoVetBov, "Seringas agulha (pacote 100 uni)", 10, UMED.UNIDADE, "12.00"),
+                makeItem(pedidoVetBov, "Vacina contra brucelose (dose)", 20, UMED.UNIDADE, "6.50"),        // antes:100 -> ajustado para contrato:20
+                makeItem(pedidoVetBov, "Antibiótico injetável (frasco)", 8, UMED.UNIDADE, "28.00"),      // antes:20 -> ajustado para contrato:8
+                makeItem(pedidoVetBov, "Seringas agulha (pacote 100 uni)", 5, UMED.UNIDADE, "12.00"),     // antes:10 -> ajustado para contrato:5
 
                 // --- AgroLácteos Suprimentos (Fazenda Beta) - insumos laticínios ---
-                makeItem(pedidoAgroLacteos, "Culturas lácteas (starter) - pacote", 50, UMED.UNIDADE, "45.00"),
-                makeItem(pedidoAgroLacteos, "Embalagem PET 1L (unidade)", 1000, UMED.UNIDADE, "0.85"),
-                makeItem(pedidoAgroLacteos, "Etiquetas / rótulos (pacote 1000 uni)", 2, UMED.UNIDADE, "30.00"),
+                makeItem(pedidoAgroLacteos, "Culturas lácteas (starter) - pacote", 10, UMED.UNIDADE, "45.00"),   // antes:50 -> contrato:10
+                makeItem(pedidoAgroLacteos, "Embalagem PET 1L (unidade)", 100, UMED.UNIDADE, "0.85"),            // antes:1000 -> contrato:100
+                makeItem(pedidoAgroLacteos, "Etiquetas / rótulos (pacote 1000 uni)", 10, UMED.UNIDADE, "30.00"),  // antes:2 -> contrato:10 (optei por pedir o total do contrato)
 
                 // --- Lácteos & Tecnologia Ltda (Fazenda Beta) - equipamentos / consumíveis ---
-                makeItem(pedidoLaticosTec, "Filtro micro/ultra para pasteurização (unidade)", 1, UMED.UNIDADE, "420.00"),
-                makeItem(pedidoLaticosTec, "Produto de limpeza CIP (litro)", 50, UMED.LITRO, "6.50"),
-                makeItem(pedidoLaticosTec, "Kits de calibragem Válvulas / sensores (unidade)", 2, UMED.UNIDADE, "95.00"),
+                makeItem(pedidoLaticosTec, "Filtro micro/ultra para pasteurização (unidade)", 1, UMED.UNIDADE, "420.00"), // antes:1
+                makeItem(pedidoLaticosTec, "Produto de limpeza CIP (litro)", 20, UMED.LITRO, "6.50"),                     // antes:50 -> contrato:20
+                makeItem(pedidoLaticosTec, "Kits de calibragem Válvulas / sensores (unidade)", 2, UMED.UNIDADE, "95.00"),   // antes:2
 
                 // --- PastosVerde (Fazenda Teste) - forragem ---
-                makeItem(pedidoPastosVerde, "Silagem (kg)", 5000, UMED.KG, "0.08"), // ex.: 5t
-                makeItem(pedidoPastosVerde, "Feno (fardo 20kg)", 300, UMED.UNIDADE, "95.00"),
-                makeItem(pedidoPastosVerde, "Suplemento mineral (kg)", 500, UMED.KG, "3.20"),
+                makeItem(pedidoPastosVerde, "Silagem", 800, UMED.KG, "0.08"),              // antes:5000 -> contrato:800
+                makeItem(pedidoPastosVerde, "Feno (fardo 20kg)", 400, UMED.UNIDADE, "95.00"),  // antes:300 -> contrato:400 (pedi total do contrato)
+                makeItem(pedidoPastosVerde, "Suplemento mineral (kg)", 1, UMED.KG, "3.20"),    // antes:500 -> contrato:1
 
                 // --- GenBov Melhoramento Genético (Fazenda Teste) - genética ---
-                makeItem(pedidoGenBov, "Sêmen congelado Angus (ampola)", 30, UMED.UNIDADE, "75.00"),
-                makeItem(pedidoGenBov, "Sessão de inseminação / consultoria (unidade)", 6, UMED.UNIDADE, "150.00"),
+                // existe duplicidade entre "insumos" e "animais" para sêmen; aqui usei a quantidade maior acordada (animals array)
+                makeItem(pedidoGenBov, "Sêmen congelado Angus (ampola)", 20, UMED.UNIDADE, "75.00"), // antes:30 -> ajustado para contrato (20)
+                // removed session item if not present explicitamente
 
                 // --- AgroVet Saúde Animal (Fazenda Teste) - sanidade ---
-                makeItem(pedidoAgroVet, "Vacina múltipla (dose)", 100, UMED.UNIDADE, "5.50"),
-                makeItem(pedidoAgroVet, "Antiparasitário oral (unidade embalagem)", 50, UMED.UNIDADE, "22.00"),
-                makeItem(pedidoAgroVet, "Kits de primeiros socorros (unidade)", 5, UMED.UNIDADE, "48.00"),
+                makeItem(pedidoAgroVet, "Vacina múltipla (dose)", 3, UMED.UNIDADE, "5.50"),               // antes:100 -> contrato:3
+                makeItem(pedidoAgroVet, "Antiparasitário oral (unidade embalagem)", 3, UMED.UNIDADE, "22.00"), // antes:50 -> contrato:3
+                makeItem(pedidoAgroVet, "Kits de primeiros socorros (unidade)", 1, UMED.UNIDADE, "48.00"), // antes:5 -> contrato:1
 
                 // --- CampoForte Equipamentos (Fazenda Teste) - equipamentos (semestre) ---
-                makeItem(pedidoCampoForte, "Balança de piso animal (unidade)", 1, UMED.UNIDADE, "7200.00"),
-                makeItem(pedidoCampoForte, "Tronco / brete de contenção (unidade)", 1, UMED.UNIDADE, "2500.00"),
-                makeItem(pedidoCampoForte, "Bebedouro automático (unidade)", 4, UMED.UNIDADE, "520.00")
+                makeItem(pedidoCampoForte, "Balança de piso animal (unidade)", 1, UMED.UNIDADE, "7200.00"),  // antes:1
+                makeItem(pedidoCampoForte, "Tronco / brete de contenção (unidade)", 1, UMED.UNIDADE, "2500.00"), // antes:1
+                makeItem(pedidoCampoForte, "Bebedouro automático (unidade)", 1, UMED.UNIDADE, "520.00"), // antes:4 -> ajustado para contrato:1
+
+                // === Itens para Loja Teste (usando exatamente os itens do seu produtosContratosItens para Loja Teste) ===
+                makeItem(pedidoLoja, "Leite pasteurizado 1L (teste)", "20", UMED.LITRO, "4.00"),
+                makeItem(pedidoLoja, "Queijo fresco 500g (teste)", "4", UMED.KG, "22.00"),
+                makeItem(pedidoLoja, "Carne bovina corte dianteiro (teste)", "10", UMED.KG, "40.00"),
+                makeItem(pedidoLoja, "Carne bovina corte traseiro (teste)", "8", UMED.KG, "48.00"),
+
+                // === Itens para Casa Útil Mercado (escolha representativa; quantidades não ultrapassam contratos) ===
+                makeItem(pedidoCasa, "Soja grão (saca 60kg)", "10", UMED.SACA, "185.00"),
+                makeItem(pedidoCasa, "Milho grão (saca 60kg)", "8", UMED.SACA, "155.00"),
+                makeItem(pedidoCasa, "Trigo (saca 50kg)", "4", UMED.SACA, "162.00"),
+                makeItem(pedidoCasa, "Feijão carioca (saca 30kg)", "2", UMED.SACA, "225.00"),
+                makeItem(pedidoCasa, "Óleo de soja refinado (L)", "20", UMED.LITRO, "7.00"),
+                makeItem(pedidoCasa, "Farelo de soja bruto (saca 40kg)", "6", UMED.SACA, "100.00"),
+                makeItem(pedidoCasa, "Fubá de milho 1kg (pacote)", "20", UMED.UNIDADE, "3.20"),
+                makeItem(pedidoCasa, "Milho triturado (ração) 25kg", "5", UMED.SACA, "78.00"),
+
             ];
 
-            // resolve todas as promises (algumas may return null if pedido/item não encontrado)
+            // resolve todas as promises (algumas podem retornar null se pedido/item não encontrado)
             const itensResolved = (await Promise.all(itensPromises)).filter(Boolean);
 
             if (!itensResolved.length) {
@@ -2625,509 +2239,295 @@ async function main() {
 
         await seedPedidoItems(prisma);
 
+        // === ESTOQUES DAS UNIDADES ===
+        const estoques = [
+            {
 
-        function gerarInsumos({ nome, prefixoSku, quantidade, unidadeId, fornecedorId, categoria, unidadeBase, dataEntrada }) {
-            const itens = [];
+                unidadeId: unidadeMap["Fazenda Beta"],
+                descricao: "Estoque principal - Fazenda Beta",
+                qntdItens: 0,
+            },
+            {
+                unidadeId: unidadeMap["Fazenda Teste"],
+                descricao: "Estoque principal - Fazenda Teste",
+                qntdItens: 0,
+            },
+            {
 
-            for (let i = 1; i <= quantidade; i++) {
-                itens.push({ nome, sku: `${prefixoSku}-${String(i).padStart(3, "0")}`, unidadeId, categoria, unidadeBase, fornecedorId, ativo: true, observacoes: null, dataEntrada, dataSaida: null, });
-            }
-            return itens;
+                unidadeId: unidadeMap["Loja Teste"],
+                descricao: "Estoque principal - Loja Teste",
+                qntdItens: 0,
+            },
+            {
+
+                unidadeId: unidadeMap["Casa Útil Mercado"],
+                descricao: "Estoque principal - Casa Útil Mercado",
+                qntdItens: 0,
+
+            },
+        ];
+
+        await prisma.estoque.createMany({ data: estoques, skipDuplicates: true })
+
+
+        // Assumo: existe `prisma` instanciado e constantes UMED (UnidadesDeMedida) já disponíveis.
+        // adapte nomes/enum se necessário.
+
+        function slugifyForSku(text) {
+            return String(text || "ITEM")
+                .toUpperCase()
+                .replace(/[^A-Z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, "")
+                .slice(0, 30);
         }
 
-        // AgroLácteos Suprimentos - Fazenda Beta
-        const insumosData = gerarInsumos({ nome: "Culturas lácteas (starter) - pacote", prefixoSku: "INS-FAZBET-CLA", quantidade: 200, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: new Date("2024-08-19T08:00:00.000Z") });
+        /**
+         * Gera um array de objetos prontos para inserir em estoque_produto
+         * a partir de um pedidoItem (1 registro por unidade recebida).
+         */
+        function gerarEntradasDeEstoqueParaPedidoItem({
+            pedido,
+            pedidoItem,
+            estoqueId,
+            prefixo = null,
+            dataEntrada = null
+        }) {
+            const qty = Number(pedidoItem.quantidade ?? pedidoItem.quantidade) || 0;
+            if (qty <= 0) return [];
 
-        const embalagensPET = gerarInsumos({ nome: "Embalagem PET 1L (unidade)", prefixoSku: "INS-FAZBET-EP1", quantidade: 5000, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: new Date("2024-08-19T08:00:00.000Z") });
+            const baseNome =
+                (pedidoItem.fornecedorItem && pedidoItem.fornecedorItem.nome) ||
+                pedidoItem.nome ||
+                "Item do pedido";
 
-        const etiquetasRotulos = gerarInsumos({ nome: "Etiquetas / rótulos (pacote 1000 uni)", prefixoSku: "INS-FAZBET-ETQ", quantidade: 200, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroLácteos Suprimentos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: new Date("2024-08-19T08:00:00.000Z") });
+            const pesoUnidade =
+                pedidoItem.fornecedorItem?.pesoUnidade ?? pedidoItem.pesoUnidade ?? null;
 
-        // ---------------- Fazenda Beta <- Lácteos & Tecnologia Ltda ----------------
-        const dataEntradaPedidoLaticos = new Date("2024-08-23T07:30:00.000Z"); // dataRecebimento do pedido Lácteos & Tecnologia Ltda
-        // 1) Filtro micro/ultra para pasteurização (10 unidades)
-        const filtrosPasteurizacao = gerarInsumos({ nome: "Filtro micro/ultra para pasteurização (unidade)", prefixoSku: "INS-FAZBET-FILT", quantidade: 10, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["Lácteos & Tecnologia Ltda"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaPedidoLaticos });
-        // 2) Produto de limpeza CIP (300 litros)
-        const produtoCIP = gerarInsumos({ nome: "Produto de limpeza CIP (litro)", prefixoSku: "INS-FAZBET-CIP", quantidade: 300, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["Lácteos & Tecnologia Ltda"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.LITRO, dataEntrada: dataEntradaPedidoLaticos });
-        // 3) Kits de calibragem Válvulas / sensores (25 unidades)
-        const kitsCalibragem = gerarInsumos({ nome: "Kits de calibragem Válvulas / sensores (unidade)", prefixoSku: "INS-FAZBET-KIT", quantidade: 25, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["Lácteos & Tecnologia Ltda"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaPedidoLaticos });
+            const precoUnitario =
+                pedidoItem.precoUnitario ??
+                pedidoItem.fornecedorItem?.precoUnitario ??
+                null;
 
-        // ---------------- Fazenda Beta <- AgroBov Genetics (genética) ----------------
-        const dataEntradaAgroBov = new Date("2024-12-04T06:00:00.000Z");
-        // --- 1) Sêmen congelado Holandês (120 unidades / ampolas) ---
-        const semenHolandes = gerarInsumos({ nome: "Sêmen congelado Holandês (ampola)", prefixoSku: "INS-AGB-SEM", quantidade: 120, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroBov Genetics"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroBov });
-        // --- 2) Embrião (Holandês) - unidade (30 unidades) ---
-        const embriaoHolandes = gerarInsumos({ nome: "Embrião (Holandês) - unidade", prefixoSku: "INS-AGB-EMB", quantidade: 30, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["AgroBov Genetics"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroBov });
+            // unidadeBase (enum) — tente pegar do pedidoItem, se não existir use do fornecedorItem,
+            // ou fallback para 'UNIDADE' (adeque conforme seu enum).
+            const unidadeBase =
+                pedidoItem.unidadeMedida ??
+                pedidoItem.fornecedorItem?.unidadeMedida ??
+                "UNIDADE";
 
-        // Fazenda Beta <- VetBov Serviços e Insumos
-        const dataEntradaVetBov = new Date("2024-09-05T07:00:00.000Z");
-        const vacinaBrucelose = gerarInsumos({ nome: "Vacina contra brucelose (dose)", prefixoSku: "INS-VTB-VAC", quantidade: 200, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["VetBov Serviços e Insumos"], categoria: CtgInsumo.VACINA, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaVetBov });
-        // --- 2) Antibiótico injetável (frasco) — 100 unidades ---
-        const antibioticoInjetavel = gerarInsumos({ nome: "Antibiótico injetável (frasco)", prefixoSku: "INS-VTB-ANT", quantidade: 100, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["VetBov Serviços e Insumos"], categoria: CtgInsumo.MEDICAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaVetBov });
-        // --- 3) Seringas agulha (pacote 100 uni) — 60 unidades ---
-        const seringasAgulha = gerarInsumos({
-            nome: "Seringas agulha (pacote 100 uni)",
-            prefixoSku: "INS-VTB-SRG", quantidade: 60, unidadeId: unidadeMap["Fazenda Beta"], fornecedorId: fornecedorMap["VetBov Serviços e Insumos"], categoria: CtgInsumo.OUTROS, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaVetBov
-        });
+            const fornecedorUnidadeId = pedido.origemUnidadeId ?? null;
+            const fornecedorExternoId = pedido.origemFornecedorExternoId ?? null;
 
-        // ---------------- Fazenda Teste <- PastosVerde Nutrição Animal ----------------
-        const dataEntradaPastosVerde = new Date("2024-11-04T09:00:00.000Z");
-        const fenoFardos = gerarInsumos({ nome: "Feno (fardo 20kg)", prefixoSku: "INS-TST-FENO", quantidade: 20000, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["PastosVerde Nutrição Animal"], categoria: CtgInsumo.FORRAGEM, unidadeBase: UMED.KG, dataEntrada: dataEntradaPastosVerde });
+            const prefix = prefixo || slugifyForSku(baseNome);
 
-        const silagem = gerarInsumos({ nome: "Silagem (ton)", prefixoSku: "INS-TST-SILG", quantidade: 50000, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["PastosVerde Nutrição Animal"], categoria: CtgInsumo.FORRAGEM, unidadeBase: UMED.KG, dataEntrada: dataEntradaPastosVerde });
-
-        const suplementoMineral = gerarInsumos({ nome: "Suplemento mineral (kg)", prefixoSku: "INS-TST-SUPM", quantidade: 2500, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["PastosVerde Nutrição Animal"], categoria: CtgInsumo.SUPLEMENTO, unidadeBase: UMED.KG, dataEntrada: dataEntradaPastosVerde });
-        // ---------------- Fazenda Teste <- GenBov Melhoramento Genético ----------------
-        const dataEntradaGenBov = new Date("2025-02-05T08:30:00.000Z");
-        const semenAngus = gerarInsumos({ nome: "Sêmen congelado Angus (ampola)", prefixoSku: "INS-TST-GNB-SEM", quantidade: 160, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["GenBov Melhoramento Genético"], categoria: CtgInsumo.MATERIALGENETICO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaGenBov });
-
-        const sessoesGenetica = gerarInsumos({ nome: "Sessão de inseminação / consultoria (unidade)", prefixoSku: "INS-TST-GNB-SVC", quantidade: 20, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["GenBov Melhoramento Genético"], categoria: CtgInsumo.SERVICO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaGenBov });
-
-        // ---------------- Fazenda Teste <- AgroVet Saúde Animal ----------------
-        const dataEntradaAgroVet = new Date("2025-01-06T07:45:00.000Z");
-        const vacinaMultipla = gerarInsumos({ nome: "Vacina múltipla (dose)", prefixoSku: "INS-TST-AGV-VAC", quantidade: 300, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["AgroVet Saúde Animal"], categoria: CtgInsumo.VACINA, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroVet });
-
-        const antiparasitario = gerarInsumos({
-            nome: "Antiparasitário oral (unidade embalagem)",
-            prefixoSku: "INS-TST-AGV-ANT", quantidade: 180, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["AgroVet Saúde Animal"], categoria: CtgInsumo.MEDICAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroVet
-        });
-
-        const kitsPrimeirosSocorros = gerarInsumos({ nome: "Kits de primeiros socorros (unidade)", prefixoSku: "INS-TST-AGV-KIT", quantidade: 30, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["AgroVet Saúde Animal"], categoria: CtgInsumo.MATERIALSANITARIO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaAgroVet });
-
-        // ---------------- Fazenda Teste <- CampoForte Equipamentos ----------------
-        const dataEntradaCampoForte = new Date("2025-07-13T10:00:00.000Z");
-        const balancasPiso = gerarInsumos({ nome: "Balança de piso animal (unidade)", prefixoSku: "INS-TST-CF-BAL", quantidade: 4, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["CampoForte Equipamentos"], categoria: CtgInsumo.EQUIPAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaCampoForte });
-
-        const troncosBrete = gerarInsumos({ nome: "Tronco / brete de contenção (unidade)", prefixoSku: "INS-TST-CF-TRN", quantidade: 6, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["CampoForte Equipamentos"], categoria: CtgInsumo.HARDWARE, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaCampoForte });
-
-        const bebedouros = gerarInsumos({
-            nome: "Bebedouro automático (unidade)",
-            prefixoSku: "INS-TST-CF-BEB", quantidade: 12, unidadeId: unidadeMap["Fazenda Teste"], fornecedorId: fornecedorMap["CampoForte Equipamentos"], categoria: CtgInsumo.EQUIPAMENTO, unidadeBase: UMED.UNIDADE, dataEntrada: dataEntradaCampoForte
-        });
-
-        await prisma.insumo.createMany({
-            data: [
-                ...insumosData,
-                ...embalagensPET,
-                ...etiquetasRotulos,
-                ...filtrosPasteurizacao,
-                ...produtoCIP,
-                ...kitsCalibragem,
-                ...semenHolandes,
-                ...embriaoHolandes,
-                ...vacinaBrucelose,
-                ...antibioticoInjetavel,
-                ...seringasAgulha,
-                ...fenoFardos,
-                ...silagem,
-                ...suplementoMineral,
-                ...semenAngus,
-                ...sessoesGenetica,
-                ...vacinaMultipla,
-                ...antiparasitario,
-                ...kitsPrimeirosSocorros,
-                ...balancasPiso,
-                ...troncosBrete,
-                ...bebedouros
-            ],
-            skipDuplicates: true
-        });
-
-
-
-
-
-        // ===== 10. ESTOQUE E MOVIMENTAÇÃO (Entrada de insumos/animais) =====
-        console.log("10. Registrando entrada no estoque...");
-
-        for (const pedido of pedidosDb) {
-            const pedidoItems = await prisma.pedidoItem.findMany({
-                where: { pedidoId: pedido.id },
-                include: { fornecedorItem: true }
-            });
-
-            for (const item of pedidoItems) {
-                const fornecedorItem = item.fornecedorItem;
-
-                // Verificar se é animal, insumo ou produto
-                if (fornecedorItem.categoria?.includes("Animal")) {
-                    // ===== ANIMAIS =====
-                    console.log("10.1. Criando animais...");
-                    const quantidade = parseInt(fornecedorItem.quantidade);
-
-                    for (let i = 0; i < quantidade; i++) {
-                        await prisma.animal.create({
-                            data: {
-                                animal: fornecedorItem.nome,
-                                raca: fornecedorItem.raca || "Indefinida",
-                                sku: `ANI-${fornecedorItem.id}-${i}-${Date.now()}`,
-                                dataEntrada: pedido.dataRecebimento,
-                                fornecedorId: pedido.origemFornecedorExternoId,
-                                quantidade: 1,
-                                tipo: TAN.ABATE,
-                                custo: parseFloat(fornecedorItem.precoUnitario),
-                                unidadeId: pedido.destinoUnidadeId
-                            }
-                        });
-                    }
-
-                } else if (fornecedorItem.categoria?.some(cat =>
-                    ["Ração", "Suplemento", "Coagulação", "Fermento"].includes(cat))) {
-                    // ===== INSUMOS NO ESTOQUE =====
-                    const insumo = insumosDb.find(i => i.nome === fornecedorItem.nome);
-                    if (insumo) {
-                        let estoque = await prisma.estoque.findFirst({
-                            where: {
-                                unidadeId: pedido.destinoUnidadeId,
-                                insumoId: insumo.id
-                            }
-                        });
-
-                        if (!estoque) {
-                            estoque = await prisma.estoque.create({
-                                data: {
-                                    unidadeId: pedido.destinoUnidadeId,
-                                    insumoId: insumo.id,
-                                    quantidade: parseInt(fornecedorItem.quantidade),
-                                    estoqueMinimo: 10
-                                }
-                            });
-                        } else {
-                            await prisma.estoque.update({
-                                where: { id: estoque.id },
-                                data: {
-                                    quantidade: {
-                                        increment: parseInt(fornecedorItem.quantidade)
-                                    }
-                                }
-                            });
-                        }
-
-                        // Registrar movimento de entrada
-                        await prisma.estoqueMovimento.create({
-                            data: {
-                                estoqueId: estoque.id,
-                                tipoMovimento: TM.ENTRADA,
-                                quantidade: parseInt(fornecedorItem.quantidade),
-                                pedidoId: pedido.id,
-                                origemUnidadeId: pedido.origemUnidadeId,
-                                destinoUnidadeId: pedido.destinoUnidadeId,
-                                data: pedido.dataRecebimento
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        // ===== 11. LOTES =====
-        console.log("11. Criando lotes...");
-
-        // Buscar animais criados
-        const animaisDb = await prisma.animal.findMany();
-
-        // Agrupar animais por unidade e tipo para criar lotes
-        const animaisPorUnidade = {};
-        animaisDb.forEach(animal => {
-            const key = `${animal.unidadeId}-${animal.raca}`;
-            if (!animaisPorUnidade[key]) {
-                animaisPorUnidade[key] = [];
-            }
-            animaisPorUnidade[key].push(animal);
-        });
-
-        const lotesData = [];
-        const loteMap = {};
-
-        for (const [key, animais] of Object.entries(animaisPorUnidade)) {
-            const [unidadeId, raca] = key.split('-');
-            const responsavel = await prisma.usuario.findFirst({
-                where: { unidadeId: parseInt(unidadeId) }
-            });
-
-            const lote = await prisma.lote.create({
-                data: {
-                    nome: `Lote ${raca} - ${new Date().toISOString().split('T')[0]}`,
-                    unidadeId: parseInt(unidadeId),
-                    responsavelId: responsavel.id,
-                    tipo: TL.GADO,
-                    qntdItens: animais.length,
-                    preco: 0,
-                    unidadeMedida: UMED.CABECA,
-                    dataCriacao: new Date(),
-                    statusQualidade: SQ.PROPRIO
-                }
-            });
-
-            loteMap[key] = lote.id;
-            lotesData.push(lote);
-
-            // Associar animais ao lote
-            for (const animal of animais) {
-                await prisma.animal.update({
-                    where: { id: animal.id },
-                    data: { loteId: lote.id }
+            const entries = [];
+            for (let i = 1; i <= qty; i++) {
+                entries.push({
+                    nome: baseNome,
+                    sku: `${prefix}-${String(i).padStart(4, "0")}`,
+                    marca: null,
+                    estoqueId,
+                    produtoId: null,
+                    producaoId: null,
+                    loteId: null,
+                    precoUnitario: precoUnitario !== null ? String(precoUnitario) : null,
+                    pesoUnidade: pesoUnidade !== undefined && pesoUnidade !== null ? String(pesoUnidade) : null,
+                    validade: null,
+                    unidadeBase,
+                    pedidoId: pedido.id,
+                    pedidoItemId: pedidoItem.id,
+                    fornecedorUnidadeId,
+                    fornecedorExternoId,
+                    dataEntrada: dataEntrada ?? pedido.dataRecebimento ?? new Date(),
+                    dataSaida: null
                 });
             }
+            return entries;
         }
 
-        // ===== 12. ATIVIDADES ANIMALIA =====
-        console.log("12. Criando atividades animalia...");
+        /**
+         * Main: cria registros em estoque_produto a partir dos pedidos entregues (documentoReferences listados).
+         */
+        async function seedEstoqueProdutosFromDeliveredPedidos(prisma) {
+            // lista dos documentos de pedido que você usou no seed (adapte se houver mais)
+            const docRefs = [
+                "Romaneio-AGB-20241203",
+                "Nota-VET-20240905",
+                "Romaneio-AGL-20240818",
+                "Romaneio-LAT-20240822",
+                "Romaneio-PVS-20241103",
+                "Romaneio-GEN-20250204",
+                "Romaneio-AGV-20250105",
+                "Romaneio-CFE-20250712",
+                "Romaneio-LOJA-20250603",
+                "Romaneio-CU-20250418"
+            ];
 
-        for (const lote of lotesData) {
-            const animaisDoLote = await prisma.animal.findMany({
-                where: { loteId: lote.id }
+            // puxa pedidos e itens. Ajuste include se seus nomes de relação forem diferentes.
+            const pedidos = await prisma.pedido.findMany({
+                where: { documentoReferencia: { in: docRefs } },
+                include: {
+                    // ajuste para o nome exato da relação em seu schema: aqui uso 'itens' (visto em model Pedido: itens PedidoItem[])
+                    itens: { include: { fornecedorItem: true } },
+                    contrato: true,
+                    fornecedorExterno: true,
+                    origemUnidade: true,
+                    destinoUnidade: true,
+                    criadoPor: true
+                }
             });
 
-            // Buscar insumos disponíveis na unidade
-            const estoqueUnidade = await prisma.estoque.findMany({
-                where: { unidadeId: lote.unidadeId },
-                include: { insumo: true }
-            });
+            if (!pedidos || pedidos.length === 0) {
+                console.warn("Nenhum pedido encontrado para as referências informadas.");
+                return;
+            }
 
-            for (const animal of animaisDoLote) {
-                // Para cada animal no lote, criar a mesma atividade
-                if (estoqueUnidade.length > 0) {
-                    const insumoAleatorio = estoqueUnidade[Math.floor(Math.random() * estoqueUnidade.length)];
+            const allEntries = [];
 
-                    await prisma.atvdAnimalia.create({
-                        data: {
-                            animalId: animal.id,
-                            insumoId: insumoAleatorio.insumoId,
-                            descricao: `Atividade de manejo para ${animal.animal} ${animal.raca}`,
-                            tipo: TANIMALIA.VACINACAO,
-                            loteId: lote.id,
-                            dataInicio: new Date(),
-                            responsavelId: lote.responsavelId,
-                            status: SATVDA.CONCLUIDA
-                        }
+            for (const pedido of pedidos) {
+                // determine destino: ache o Estoque da unidade destino
+                const destinoUnidadeId = pedido.destinoUnidadeId ?? (pedido.destinoUnidade ? pedido.destinoUnidade.id : null);
+                if (!destinoUnidadeId) {
+                    console.warn("Pedido sem destinoUnidadeId:", pedido.documentoReferencia);
+                    continue;
+                }
+
+                const estoque = await prisma.estoque.findFirst({ where: { unidadeId: destinoUnidadeId } });
+                if (!estoque) {
+                    console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, " (pedido)", pedido.documentoReferencia);
+                    continue;
+                }
+
+                // Relação/shape de pedidoItem pode variar (pedido.pedidoItem ou pedido.pedidoItems)
+                const items = pedido.pedidoItem ?? pedido.pedidoItems ?? [];
+                if (!items.length) {
+                    console.warn("Pedido sem itens:", pedido.documentoReferencia);
+                    continue;
+                }
+
+                for (const pi of items) {
+                    // normalizar campo quantidade (string ou number)
+                    const qtd = Number(pi.quantidade ?? pi.quantidadeSolicitada ?? 0);
+                    if (isNaN(qtd) || qtd <= 0) {
+                        console.warn("Quantidade inválida em pedidoItem:", pi.id, "do pedido", pedido.documentoReferencia);
+                        continue;
+                    }
+
+                    // prefixo sku baseado no nome do item e id do pedido para evitar colisões
+                    const prefix = slugifyForSku((pi.fornecedorItem && pi.fornecedorItem.nome) || pi.nome || `PED${pedido.id}-ITEM${pi.id}`);
+
+                    const entradas = gerarEntradasDeEstoqueParaPedidoItem({
+                        pedido,
+                        pedidoItem: pi,
+                        estoqueId: estoque.id,
+                        prefixo: prefix,
+                        dataEntrada: pedido.dataRecebimento ?? new Date()
                     });
 
-                    // Registrar saída do insumo usado
-                    if (insumoAleatorio) {
-                        await prisma.estoque.update({
-                            where: { id: insumoAleatorio.id },
-                            data: { quantidade: { decrement: 1 } }
-                        });
+                    // opcional: limite máximo por item pra evitar criar milhões acidentalmente
+                    // se quiser habilitar, descomente a próxima linha e ajuste o limite.
+                    // if (entradas.length > 5000) entradas.length = 5000;
 
-                        await prisma.estoqueMovimento.create({
-                            data: {
-                                estoqueId: insumoAleatorio.id,
-                                tipoMovimento: TM.SAIDA,
-                                quantidade: 1,
-                                origemUnidadeId: lote.unidadeId,
-                                data: new Date()
-                            }
-                        });
-                    }
+                    allEntries.push(...entradas);
                 }
             }
-        }
 
-        // ===== 13. PRODUÇÃO =====
-        console.log("13. Criando produções...");
-
-        // Buscar contratos onde a unidade é fornecedora (fazenda fornecendo para lojas)
-        const contratosFornecedores = await prisma.contrato.findMany({
-            where: { fornecedorUnidadeId: { not: null } },
-            include: { fornecedorInterno: true, itens: true }
-        });
-
-        for (const contrato of contratosFornecedores) {
-            const fazenda = contrato.fornecedorInterno;
-            const lotesFazenda = await prisma.lote.findMany({
-                where: { unidadeId: fazenda.id }
-            });
-
-            for (const itemContrato of contrato.itens) {
-                // Criar produção baseada nos itens do contrato
-                if (lotesFazenda.length > 0) {
-                    const lote = lotesFazenda[0]; // Usar primeiro lote disponível
-
-                    const producao = await prisma.producao.create({
-                        data: {
-                            loteId: lote.id,
-                            tipoProduto: itemContrato.nome,
-                            quantidadeBruta: parseFloat(itemContrato.quantidade),
-                            quantidadeLiquida: parseFloat(itemContrato.quantidade) * 0.95, // 5% de perda
-                            unidadeMedida: itemContrato.unidadeMedida,
-                            dataInicio: new Date(),
-                            dataFim: new Date(Date.now() + 24 * 60 * 60 * 1000), // +1 dia
-                            status: SPROD.FINALIZADA,
-                            responsavelId: lote.responsavelId,
-                            destinoUnidadeId: contrato.unidadeId, // Loja destino
-                            observacoes: `Produção baseada no contrato ${contrato.id}`
-                        }
-                    });
-
-                    // Registrar no estoque da fazenda
-                    let estoqueProducao = await prisma.estoque.findFirst({
-                        where: {
-                            unidadeId: fazenda.id,
-                            loteId: lote.id
-                        }
-                    });
-
-                    if (!estoqueProducao) {
-                        estoqueProducao = await prisma.estoque.create({
-                            data: {
-                                unidadeId: fazenda.id,
-                                loteId: lote.id,
-                                quantidade: parseInt(producao.quantidadeLiquida),
-                                estoqueMinimo: 0
-                            }
-                        });
-                    }
-
-                    // Movimento de entrada da produção
-                    await prisma.estoqueMovimento.create({
-                        data: {
-                            estoqueId: estoqueProducao.id,
-                            tipoMovimento: TM.ENTRADA,
-                            quantidade: parseInt(producao.quantidadeLiquida),
-                            producaoId: producao.id,
-                            origemUnidadeId: fazenda.id,
-                            data: new Date()
-                        }
-                    });
-                }
+            if (!allEntries.length) {
+                console.warn("Nenhuma entrada de estoque a criar a partir dos pedidos consultados.");
+                return;
             }
-        }
 
-        // ===== 14. PEDIDOS DAS PRODUÇÕES =====
-        console.log("14. Criando pedidos das produções...");
-
-        for (const contrato of contratosFornecedores) {
-            const proximaDataEnvio = calcularProximaData(contrato.dataEnvio, contrato.frequenciaEntregas);
-            const proximaDataRecebimento = new Date(proximaDataEnvio);
-            proximaDataRecebimento.setDate(proximaDataRecebimento.getDate() + 1);
-
-            // Criar pedido
-            const pedidoProducao = await prisma.pedido.create({
-                data: {
-                    contratoId: contrato.id,
-                    origemUnidadeId: contrato.fornecedorUnidadeId,
-                    destinoUnidadeId: contrato.unidadeId,
-                    criadoPorId: usuarioMap["Julia Alves"],
-                    dataPedido: new Date(),
-                    dataEnvio: proximaDataEnvio,
-                    dataRecebimento: proximaDataRecebimento,
-                    status: SPEDIDO.ENTREGUE,
-                    documentoReferencia: `PED-PROD-${contrato.id}-${Date.now()}`,
-                    tipoTransporte: TTRANS.RODOVIARIO
-                }
-            });
-
-            let valorTotalProducao = 0;
-
-            // Criar itens do pedido baseados na produção
-            for (const itemContrato of contrato.itens) {
-                const quantidade = parseFloat(itemContrato.quantidade);
-                const precoUnitario = parseFloat(itemContrato.precoUnitario);
-                const custoTotal = quantidade * precoUnitario;
-                valorTotalProducao += custoTotal;
-
-                await prisma.pedidoItem.create({
-                    data: {
-                        pedidoId: pedidoProducao.id,
-                        fornecedorItemId: itemContrato.id,
-                        quantidade: quantidade.toString(),
-                        unidadeMedida: itemContrato.unidadeMedida,
-                        precoUnitario: precoUnitario.toString(),
-                        custoTotal: custoTotal.toString()
-                    }
+            // Inserir em lotes para não exceder limites
+            const BATCH = 1000;
+            for (let i = 0; i < allEntries.length; i += BATCH) {
+                const batch = allEntries.slice(i, i + BATCH);
+                // Ajuste: createMany espera os nomes exatos das colunas — use exatamente os campos do seu model.
+                await prisma.estoqueProduto.createMany({
+                    data: batch,
+                    skipDuplicates: true
                 });
+                console.log(`Inseridos ${batch.length} registros de estoque_produto (batch ${Math.floor(i / BATCH) + 1}).`);
             }
 
-            // Atualizar valor total
-            await prisma.pedido.update({
-                where: { id: pedidoProducao.id },
-                data: { valorTotal: valorTotalProducao.toString() }
-            });
-
-            // ===== 15. ESTOQUE DAS LOJAS =====
-            console.log("15. Registrando estoque nas lojas...");
-
-            for (const itemContrato of contrato.itens) {
-                // Buscar ou criar estoque na loja
-                let estoqueLoja = await prisma.estoque.findFirst({
-                    where: {
-                        unidadeId: contrato.unidadeId, // ID da loja
-                        loteId: null // Produto final, não insumo
-                    }
-                });
-
-                if (!estoqueLoja) {
-                    estoqueLoja = await prisma.estoque.create({
-                        data: {
-                            unidadeId: contrato.unidadeId,
-                            loteId: null,
-                            quantidade: parseInt(itemContrato.quantidade),
-                            estoqueMinimo: 10
-                        }
-                    });
-                }
-
-                // Movimento de entrada na loja
-                await prisma.estoqueMovimento.create({
-                    data: {
-                        estoqueId: estoqueLoja.id,
-                        tipoMovimento: TM.ENTRADA,
-                        quantidade: parseInt(itemContrato.quantidade),
-                        pedidoId: pedidoProducao.id,
-                        origemUnidadeId: contrato.fornecedorUnidadeId,
-                        destinoUnidadeId: contrato.unidadeId,
-                        data: proximaDataRecebimento
-                    }
-                });
-
-                // ===== 16. RETIRAR METADE DO ESTOQUE E CRIAR PRODUTOS =====
-                console.log("16. Retirando metade do estoque e criando produtos...");
-
-                const quantidadeRetirada = Math.floor(parseInt(itemContrato.quantidade) / 2);
-
-                if (quantidadeRetirada > 0) {
-                    // Atualizar estoque da loja
-                    await prisma.estoque.update({
-                        where: { id: estoqueLoja.id },
-                        data: { quantidade: { decrement: quantidadeRetirada } }
-                    });
-
-                    // Movimento de saída (venda/consumo)
-                    await prisma.estoqueMovimento.create({
-                        data: {
-                            estoqueId: estoqueLoja.id,
-                            tipoMovimento: TM.SAIDA,
-                            quantidade: quantidadeRetirada,
-                            origemUnidadeId: contrato.unidadeId,
-                            data: new Date()
-                        }
-                    });
-
-                    // Criar produtos para venda (metade da quantidade)
-                    for (let i = 0; i < quantidadeRetirada; i++) {
-                        await prisma.produto.create({
-                            data: {
-                                unidadeId: contrato.unidadeId,
-                                origemUnidadeId: contrato.fornecedorUnidadeId,
-                                nome: itemContrato.nome,
-                                sku: `VENDA-${itemContrato.id}-${i}-${Date.now()}`,
-                                categoria: itemContrato.categoria?.[0] || "Geral",
-                                descricao: `Produto para venda - ${itemContrato.nome}`,
-                                preco: parseFloat(itemContrato.precoUnitario) * 1.2, // 20% markup
-                                dataFabricacao: new Date(),
-                                dataValidade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                                unidadeMedida: itemContrato.unidadeMedida,
-                                isForSale: true
-                            }
-                        });
-                    }
-                }
-            }
+            console.log("Finalizado: total de entradas criadas:", allEntries.length);
         }
 
-        // ===== 17. CAIXAS =====
-        console.log("17. Criando caixas...");
+        // Exemplo de chamada:
+        await seedEstoqueProdutosFromDeliveredPedidos(prisma);
 
+
+
+        const animals = [
+            // Fazenda Beta: 4 vacas Holandesas (agreguei 4 registros repetidos em 1)
+            {
+                animal: "Vaca reprodutora Holandesa",
+                raca: "Holandês",
+                sku: "ANM-FAZ8-HOL-0001",
+                dataEntrada: new Date("2025-09-05T00:00:00.000Z"),
+                fornecedorId: null,
+                quantidade: 5,
+                tipo: TAN.REPRODUCAO,    // ver nota sobre enums
+                custo: 2400.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+
+            // Fazenda Beta: (se houver um touro Holandês separado) ex.: 1 touro
+            // (se você não tinha o touro aqui, remova este bloco)
+            {
+                animal: "Touro reprodutor Holandês",
+                raca: "Holandês",
+                sku: "ANM-FAZ8-HOL-0002",
+                dataEntrada: new Date("2025-09-01T00:00:00.000Z"),
+                fornecedorId: null,
+                quantidade: 2,
+                tipo: TAN.REPRODUCAO,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+
+            // Fazenda Teste: 1 touro Angus (carne bovina )
+            {
+                animal: "Touro reprodutor Angus (adulto, PO)",
+                raca: "Angus",
+                sku: "ANM-FAZ10-ANG-0001",
+                dataEntrada: new Date("2025-09-07T00:00:00.000Z"),
+                fornecedorId: null,
+                quantidade: 1,
+                tipo: TAN.ABATE,
+                custo: 5500.00,
+                unidadeId: unidadeMap['Fazenda Teste'],
+                loteId: null
+            },
+
+            // Fazenda Teste: 5 vacas Angus (agreguei os 5 registros idênticos) (leite e queijo)
+            {
+                animal: "Vaca reprodutora Angus (multipar, PO)",
+                raca: "Angus",
+                sku: "ANM-FAZ10-ANG-0002",
+                dataEntrada: new Date("2025-09-08T00:00:00.000Z"),
+                fornecedorId: null,
+                quantidade: 5,
+                tipo: TAN.ORDENHA,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Teste'],
+                loteId: null
+            }
+        ];
+
+        await prisma.animal.createMany({ data: animals, skipDuplicates: true });
+
+
+        // criar lote
+
+        // atvd animalia + producao
+
+        // pedidos loja
+
+        // estoque loja
+
+        // CAIXAS
         const lojas = unidades.filter(u => u.tipo === TU.LOJA);
 
         for (const loja of lojas) {
@@ -3151,10 +2551,432 @@ async function main() {
             }
         }
 
-        console.log("✅ SEED CONCLUÍDO COM SUCESSO! Todas as etapas foram executadas na ordem correta.");
+        // produtos a venda
+
+        // venda
+
+        // itens venda
+
+
+        // // ===== 10. ESTOQUE E MOVIMENTAÇÃO (Entrada de insumos/animais) =====
+        // console.log("10. Registrando entrada no estoque...");
+
+        // for (const pedido of pedidosDb) {
+        //     const pedidoItems = await prisma.pedidoItem.findMany({
+        //         where: { pedidoId: pedido.id },
+        //         include: { fornecedorItem: true }
+        //     });
+
+        //     for (const item of pedidoItems) {
+        //         const fornecedorItem = item.fornecedorItem;
+
+        //         // Verificar se é animal, insumo ou produto
+        //         if (fornecedorItem.categoria?.includes("Animal")) {
+        //             // ===== ANIMAIS =====
+        //             console.log("10.1. Criando animais...");
+        //             const quantidade = parseInt(fornecedorItem.quantidade);
+
+        //             for (let i = 0; i < quantidade; i++) {
+        //                 await prisma.animal.create({
+        //                     data: {
+        //                         animal: fornecedorItem.nome,
+        //                         raca: fornecedorItem.raca || "Indefinida",
+        //                         sku: `ANI-${fornecedorItem.id}-${i}-${Date.now()}`,
+        //                         dataEntrada: pedido.dataRecebimento,
+        //                         fornecedorId: pedido.origemFornecedorExternoId,
+        //                         quantidade: 1,
+        //                         tipo: TAN.ABATE,
+        //                         custo: parseFloat(fornecedorItem.precoUnitario),
+        //                         unidadeId: pedido.destinoUnidadeId
+        //                     }
+        //                 });
+        //             }
+
+        //         } else if (fornecedorItem.categoria?.some(cat =>
+        //             ["Ração", "Suplemento", "Coagulação", "Fermento"].includes(cat))) {
+        //             // ===== INSUMOS NO ESTOQUE =====
+        //             const insumo = insumosDb.find(i => i.nome === fornecedorItem.nome);
+        //             if (insumo) {
+        //                 let estoque = await prisma.estoque.findFirst({
+        //                     where: {
+        //                         unidadeId: pedido.destinoUnidadeId,
+        //                         insumoId: insumo.id
+        //                     }
+        //                 });
+
+        //                 if (!estoque) {
+        //                     estoque = await prisma.estoque.create({
+        //                         data: {
+        //                             unidadeId: pedido.destinoUnidadeId,
+        //                             insumoId: insumo.id,
+        //                             quantidade: parseInt(fornecedorItem.quantidade),
+        //                             estoqueMinimo: 10
+        //                         }
+        //                     });
+        //                 } else {
+        //                     await prisma.estoque.update({
+        //                         where: { id: estoque.id },
+        //                         data: {
+        //                             quantidade: {
+        //                                 increment: parseInt(fornecedorItem.quantidade)
+        //                             }
+        //                         }
+        //                     });
+        //                 }
+
+        //                 // Registrar movimento de entrada
+        //                 await prisma.estoqueMovimento.create({
+        //                     data: {
+        //                         estoqueId: estoque.id,
+        //                         tipoMovimento: TM.ENTRADA,
+        //                         quantidade: parseInt(fornecedorItem.quantidade),
+        //                         pedidoId: pedido.id,
+        //                         origemUnidadeId: pedido.origemUnidadeId,
+        //                         destinoUnidadeId: pedido.destinoUnidadeId,
+        //                         data: pedido.dataRecebimento
+        //                     }
+        //                 });
+        //             }
+        //         }
+        //     }
+        // }
+
+        // // ===== 11. LOTES =====
+        // console.log("11. Criando lotes...");
+
+        // // Buscar animais criados
+        // const animaisDb = await prisma.animal.findMany();
+
+        // // Agrupar animais por unidade e tipo para criar lotes
+        // const animaisPorUnidade = {};
+        // animaisDb.forEach(animal => {
+        //     const key = `${animal.unidadeId}-${animal.raca}`;
+        //     if (!animaisPorUnidade[key]) {
+        //         animaisPorUnidade[key] = [];
+        //     }
+        //     animaisPorUnidade[key].push(animal);
+        // });
+
+        // const lotesData = [];
+        // const loteMap = {};
+
+        // for (const [key, animais] of Object.entries(animaisPorUnidade)) {
+        //     const [unidadeId, raca] = key.split('-');
+        //     const responsavel = await prisma.usuario.findFirst({
+        //         where: { unidadeId: parseInt(unidadeId) }
+        //     });
+
+        //     const lote = await prisma.lote.create({
+        //         data: {
+        //             nome: `Lote ${raca} - ${new Date().toISOString().split('T')[0]}`,
+        //             unidadeId: parseInt(unidadeId),
+        //             responsavelId: responsavel.id,
+        //             tipo: TL.GADO,
+        //             qntdItens: animais.length,
+        //             preco: 0,
+        //             unidadeMedida: UMED.CABECA,
+        //             dataCriacao: new Date(),
+        //             statusQualidade: SQ.PROPRIO
+        //         }
+        //     });
+
+        //     loteMap[key] = lote.id;
+        //     lotesData.push(lote);
+
+        //     // Associar animais ao lote
+        //     for (const animal of animais) {
+        //         await prisma.animal.update({
+        //             where: { id: animal.id },
+        //             data: { loteId: lote.id }
+        //         });
+        //     }
+        // }
+
+        // // ===== 12. ATIVIDADES ANIMALIA =====
+        // console.log("12. Criando atividades animalia...");
+
+        // for (const lote of lotesData) {
+        //     const animaisDoLote = await prisma.animal.findMany({
+        //         where: { loteId: lote.id }
+        //     });
+
+        //     // Buscar insumos disponíveis na unidade
+        //     const estoqueUnidade = await prisma.estoque.findMany({
+        //         where: { unidadeId: lote.unidadeId },
+        //         include: { insumo: true }
+        //     });
+
+        //     for (const animal of animaisDoLote) {
+        //         // Para cada animal no lote, criar a mesma atividade
+        //         if (estoqueUnidade.length > 0) {
+        //             const insumoAleatorio = estoqueUnidade[Math.floor(Math.random() * estoqueUnidade.length)];
+
+        //             await prisma.atvdAnimalia.create({
+        //                 data: {
+        //                     animalId: animal.id,
+        //                     insumoId: insumoAleatorio.insumoId,
+        //                     descricao: `Atividade de manejo para ${animal.animal} ${animal.raca}`,
+        //                     tipo: TANIMALIA.VACINACAO,
+        //                     loteId: lote.id,
+        //                     dataInicio: new Date(),
+        //                     responsavelId: lote.responsavelId,
+        //                     status: SATVDA.CONCLUIDA
+        //                 }
+        //             });
+
+        //             // Registrar saída do insumo usado
+        //             if (insumoAleatorio) {
+        //                 await prisma.estoque.update({
+        //                     where: { id: insumoAleatorio.id },
+        //                     data: { quantidade: { decrement: 1 } }
+        //                 });
+
+        //                 await prisma.estoqueMovimento.create({
+        //                     data: {
+        //                         estoqueId: insumoAleatorio.id,
+        //                         tipoMovimento: TM.SAIDA,
+        //                         quantidade: 1,
+        //                         origemUnidadeId: lote.unidadeId,
+        //                         data: new Date()
+        //                     }
+        //                 });
+        //             }
+        //         }
+        //     }
+        // }
+
+        // // ===== 13. PRODUÇÃO =====
+        // console.log("13. Criando produções...");
+
+        // // Buscar contratos onde a unidade é fornecedora (fazenda fornecendo para lojas)
+        // const contratosFornecedores = await prisma.contrato.findMany({
+        //     where: { fornecedorUnidadeId: { not: null } },
+        //     include: { fornecedorInterno: true, itens: true }
+        // });
+
+        // for (const contrato of contratosFornecedores) {
+        //     const fazenda = contrato.fornecedorInterno;
+        //     const lotesFazenda = await prisma.lote.findMany({
+        //         where: { unidadeId: fazenda.id }
+        //     });
+
+        //     for (const itemContrato of contrato.itens) {
+        //         // Criar produção baseada nos itens do contrato
+        //         if (lotesFazenda.length > 0) {
+        //             const lote = lotesFazenda[0]; // Usar primeiro lote disponível
+
+        //             const producao = await prisma.producao.create({
+        //                 data: {
+        //                     loteId: lote.id,
+        //                     tipoProduto: itemContrato.nome,
+        //                     quantidadeBruta: parseFloat(itemContrato.quantidade),
+        //                     quantidadeLiquida: parseFloat(itemContrato.quantidade) * 0.95, // 5% de perda
+        //                     unidadeMedida: itemContrato.unidadeMedida,
+        //                     dataInicio: new Date(),
+        //                     dataFim: new Date(Date.now() + 24 * 60 * 60 * 1000), // +1 dia
+        //                     status: SPROD.FINALIZADA,
+        //                     responsavelId: lote.responsavelId,
+        //                     destinoUnidadeId: contrato.unidadeId, // Loja destino
+        //                     observacoes: `Produção baseada no contrato ${contrato.id}`
+        //                 }
+        //             });
+
+        //             // Registrar no estoque da fazenda
+        //             let estoqueProducao = await prisma.estoque.findFirst({
+        //                 where: {
+        //                     unidadeId: fazenda.id,
+        //                     loteId: lote.id
+        //                 }
+        //             });
+
+        //             if (!estoqueProducao) {
+        //                 estoqueProducao = await prisma.estoque.create({
+        //                     data: {
+        //                         unidadeId: fazenda.id,
+        //                         loteId: lote.id,
+        //                         quantidade: parseInt(producao.quantidadeLiquida),
+        //                         estoqueMinimo: 0
+        //                     }
+        //                 });
+        //             }
+
+        //             // Movimento de entrada da produção
+        //             await prisma.estoqueMovimento.create({
+        //                 data: {
+        //                     estoqueId: estoqueProducao.id,
+        //                     tipoMovimento: TM.ENTRADA,
+        //                     quantidade: parseInt(producao.quantidadeLiquida),
+        //                     producaoId: producao.id,
+        //                     origemUnidadeId: fazenda.id,
+        //                     data: new Date()
+        //                 }
+        //             });
+        //         }
+        //     }
+        // }
+
+        // // ===== 14. PEDIDOS DAS PRODUÇÕES =====
+        // console.log("14. Criando pedidos das produções...");
+
+        // for (const contrato of contratosFornecedores) {
+        //     const proximaDataEnvio = calcularProximaData(contrato.dataEnvio, contrato.frequenciaEntregas);
+        //     const proximaDataRecebimento = new Date(proximaDataEnvio);
+        //     proximaDataRecebimento.setDate(proximaDataRecebimento.getDate() + 1);
+
+        //     // Criar pedido
+        //     const pedidoProducao = await prisma.pedido.create({
+        //         data: {
+        //             contratoId: contrato.id,
+        //             origemUnidadeId: contrato.fornecedorUnidadeId,
+        //             destinoUnidadeId: contrato.unidadeId,
+        //             criadoPorId: usuarioMap["Julia Alves"],
+        //             dataPedido: new Date(),
+        //             dataEnvio: proximaDataEnvio,
+        //             dataRecebimento: proximaDataRecebimento,
+        //             status: SPEDIDO.ENTREGUE,
+        //             documentoReferencia: `PED-PROD-${contrato.id}-${Date.now()}`,
+        //             tipoTransporte: TTRANS.RODOVIARIO
+        //         }
+        //     });
+
+        //     let valorTotalProducao = 0;
+
+        //     // Criar itens do pedido baseados na produção
+        //     for (const itemContrato of contrato.itens) {
+        //         const quantidade = parseFloat(itemContrato.quantidade);
+        //         const precoUnitario = parseFloat(itemContrato.precoUnitario);
+        //         const custoTotal = quantidade * precoUnitario;
+        //         valorTotalProducao += custoTotal;
+
+        //         await prisma.pedidoItem.create({
+        //             data: {
+        //                 pedidoId: pedidoProducao.id,
+        //                 fornecedorItemId: itemContrato.id,
+        //                 quantidade: quantidade.toString(),
+        //                 unidadeMedida: itemContrato.unidadeMedida,
+        //                 precoUnitario: precoUnitario.toString(),
+        //                 custoTotal: custoTotal.toString()
+        //             }
+        //         });
+        //     }
+
+        //     // Atualizar valor total
+        //     await prisma.pedido.update({
+        //         where: { id: pedidoProducao.id },
+        //         data: { valorTotal: valorTotalProducao.toString() }
+        //     });
+
+        //     // ===== 15. ESTOQUE DAS LOJAS =====
+        //     console.log("15. Registrando estoque nas lojas...");
+
+        //     for (const itemContrato of contrato.itens) {
+        //         // Buscar ou criar estoque na loja
+        //         let estoqueLoja = await prisma.estoque.findFirst({
+        //             where: {
+        //                 unidadeId: contrato.unidadeId, // ID da loja
+        //                 loteId: null // Produto final, não insumo
+        //             }
+        //         });
+
+        //         if (!estoqueLoja) {
+        //             estoqueLoja = await prisma.estoque.create({
+        //                 data: {
+        //                     unidadeId: contrato.unidadeId,
+        //                     loteId: null,
+        //                     quantidade: parseInt(itemContrato.quantidade),
+        //                     estoqueMinimo: 10
+        //                 }
+        //             });
+        //         }
+
+        //         // Movimento de entrada na loja
+        //         await prisma.estoqueMovimento.create({
+        //             data: {
+        //                 estoqueId: estoqueLoja.id,
+        //                 tipoMovimento: TM.ENTRADA,
+        //                 quantidade: parseInt(itemContrato.quantidade),
+        //                 pedidoId: pedidoProducao.id,
+        //                 origemUnidadeId: contrato.fornecedorUnidadeId,
+        //                 destinoUnidadeId: contrato.unidadeId,
+        //                 data: proximaDataRecebimento
+        //             }
+        //         });
+
+        //         // ===== 16. RETIRAR METADE DO ESTOQUE E CRIAR PRODUTOS =====
+        //         console.log("16. Retirando metade do estoque e criando produtos...");
+
+        //         const quantidadeRetirada = Math.floor(parseInt(itemContrato.quantidade) / 2);
+
+        //         if (quantidadeRetirada > 0) {
+        //             // Atualizar estoque da loja
+        //             await prisma.estoque.update({
+        //                 where: { id: estoqueLoja.id },
+        //                 data: { quantidade: { decrement: quantidadeRetirada } }
+        //             });
+
+        //             // Movimento de saída (venda/consumo)
+        //             await prisma.estoqueMovimento.create({
+        //                 data: {
+        //                     estoqueId: estoqueLoja.id,
+        //                     tipoMovimento: TM.SAIDA,
+        //                     quantidade: quantidadeRetirada,
+        //                     origemUnidadeId: contrato.unidadeId,
+        //                     data: new Date()
+        //                 }
+        //             });
+
+        //             // Criar produtos para venda (metade da quantidade)
+        //             for (let i = 0; i < quantidadeRetirada; i++) {
+        //                 await prisma.produto.create({
+        //                     data: {
+        //                         unidadeId: contrato.unidadeId,
+        //                         origemUnidadeId: contrato.fornecedorUnidadeId,
+        //                         nome: itemContrato.nome,
+        //                         sku: `VENDA-${itemContrato.id}-${i}-${Date.now()}`,
+        //                         categoria: itemContrato.categoria?.[0] || "Geral",
+        //                         descricao: `Produto para venda - ${itemContrato.nome}`,
+        //                         preco: parseFloat(itemContrato.precoUnitario) * 1.2, // 20% markup
+        //                         dataFabricacao: new Date(),
+        //                         dataValidade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        //                         unidadeMedida: itemContrato.unidadeMedida,
+        //                         isForSale: true
+        //                     }
+        //                 });
+        //             }
+        //         }
+        //     }
+        // }
+
+        // // ===== 17. CAIXAS =====
+        // console.log("17. Criando caixas...");
+
+        // const lojas = unidades.filter(u => u.tipo === TU.LOJA);
+
+        // for (const loja of lojas) {
+        //     const gerenteLoja = await prisma.usuario.findFirst({
+        //         where: {
+        //             unidadeId: loja.id,
+        //             perfilId: perfilMap["GERENTE_LOJA"]
+        //         }
+        //     });
+
+        //     if (gerenteLoja) {
+        //         await prisma.caixa.create({
+        //             data: {
+        //                 unidadeId: loja.id,
+        //                 usuarioId: gerenteLoja.id,
+        //                 status: true, // Aberto
+        //                 saldoInicial: 1000.00, // Saldo inicial padrão
+        //                 abertoEm: new Date()
+        //             }
+        //         });
+        //     }
+        // }
+
+        console.log(" SEED CONCLUÍDO COM SUCESSO! Todas as etapas foram executadas na ordem correta.");
 
     } catch (error) {
-        console.error("❌ Erro durante seed:", error);
+        console.error(" Erro durante seed:", error);
         process.exit(1);
     } finally {
         await prisma.$disconnect();
