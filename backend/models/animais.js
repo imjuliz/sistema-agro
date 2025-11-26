@@ -2,7 +2,7 @@ import prisma from "../prisma/client.js";
 
 export async function getAnimais() {
   try {
-    const animais = await prisma.animais.findMany();
+    const animais = await prisma.animal.findMany();
     return {
       sucesso: true,
       animais,
@@ -19,7 +19,7 @@ export async function getAnimais() {
 
 export async function getAnimaisPelaRaca(raca) {
   try {
-    const animais_raca = await prisma.animais.findMany({
+    const animais_raca = await prisma.animal.findMany({
       where: {
         raca: raca,
       },
@@ -40,7 +40,7 @@ export async function getAnimaisPelaRaca(raca) {
 
 export async function getAnimaisPorId(id) {
   try {
-    const animais = await prisma.animais.findUnique({
+    const animais = await prisma.animal.findUnique({
       where: { id },
     })
     return {
@@ -59,7 +59,7 @@ export async function getAnimaisPorId(id) {
 
 export async function createAnimais(data) {
   try {
-    const animais = await prisma.animais.create({
+    const animais = await prisma.animal.create({
       data: {
         animal: data.animal,
         raca: data.raca,
@@ -84,7 +84,7 @@ export async function createAnimais(data) {
 
 export async function updateAnimais(id, data) {
   try {
-    const animais = await prisma.animais.update({
+    const animais = await prisma.animal.update({
       where: { id },
       data: {
         animal: data.animal,
@@ -110,7 +110,7 @@ export async function updateAnimais(id, data) {
 
 export async function deleteAnimais(id) {
   try {
-    await prisma.animais.delete({
+    await prisma.animal.delete({
       where: { id: parseInt(id) },
     })
     return {

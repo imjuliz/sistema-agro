@@ -1,8 +1,8 @@
-import { getAtividadeLoteTipoPlantio } from "../models/atividadeLote.js";
+import { getAtividadeLoteTipoPlantio, createAtividadeLote } from "../models/atividadeLote.js";
 
 export async function getAtividadeLoteTipoPlantioController(req, res) {
     try {
-        const { tipo } = req.params.tipo;
+        const { tipo } = req.query;
         const atividadeLote = await getAtividadeLoteTipoPlantio(tipo);
         return res.status(200).json({
             sucesso: true,

@@ -9,7 +9,7 @@ import {
     deleteLoteController,
     getLotePorDataCriacaoController,
   } from "../controllers/LoteController.js";
-import { getAtividadeLoteTipoPlantioController } from "../controllers/AtividadeLoteController.js";
+import { getAtividadeLoteTipoPlantioController, createAtividadeLoteController } from "../controllers/AtividadeLoteController.js";
 import express from "express";
 import { auth } from "../middleware/auth.js";
 
@@ -26,6 +26,7 @@ router.delete("/:id", auth(["gerente_fazenda"]), deleteLoteController);
 router.get("/dataCriacao/:dataCriacao", auth(["gerente_matriz", "gerente_fazenda"]), getLotePorDataCriacaoController);
 
 // atividadesLote
-router.get("/atividadeLote:tipo", getAtividadeLoteTipoPlantioController);
+router.get("/atividadeLote", auth([ "gerente_fazenda"]), getAtividadeLoteTipoPlantioController);
+router.post("/atividadeLote", auth([ "gerente_fazenda"]), createAtividadeLoteController);
 
 export default router;
