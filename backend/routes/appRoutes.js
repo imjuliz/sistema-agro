@@ -21,11 +21,7 @@ import {
 router.post("/translate", translateText);
 
 // rotas usadas para loja --------------------------------------------------------------------
-router.get(
-  "/vendas/ultimos-6-meses",
-  auth,
-  contarVendasPorMesUltimos6MesesController
-);
+router.get("/vendas/ultimos-6-meses",auth,contarVendasPorMesUltimos6MesesController);
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
@@ -44,10 +40,7 @@ router.get("/produtos", auth, listarProdutosController);
 router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/estoque/listar", auth, listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
-router.get(
-  "/lote/:loteId/media-producao",
-  calcularMediaProducaoPorLoteController
-);
+router.get("/lote/:loteId/media-producao",calcularMediaProducaoPorLoteController);
 
 //relatório
 router.get("/relatorio/lote/:loteId", gerarRelatorioLoteController);

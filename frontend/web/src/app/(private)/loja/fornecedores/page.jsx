@@ -25,7 +25,7 @@ export default function FornecedoresLoja() {
             </div>
             <div className="space-y-6 flex flex-col gap-12">
                 {/* cards / kpis / indicadores */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
                     <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
                         <CardHeader>
                             <CardDescription>Contratos Ativos</CardDescription>
@@ -44,17 +44,6 @@ export default function FornecedoresLoja() {
                                 3
                             </CardTitle>
                             <CardAction><Clock /></CardAction>
-                        </CardHeader>
-                    </Card>
-                    <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
-                        <CardHeader>
-                            <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
-                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                                24
-                            </CardTitle>
-                            <CardAction>
-                                <CheckCircle />
-                            </CardAction>
                         </CardHeader>
                     </Card>
                 </div>

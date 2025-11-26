@@ -7,11 +7,7 @@ import path from "path";
 export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
     try {
         const saidas = await prisma.Saidas.findMany({ 
-            where: { unidadeId: Number(unidadeId) ,
-                tipo,
-                data
-            }, 
-
+            where: { unidadeId: Number(unidadeId), tipo, data}, 
         })
         return ({
             sucesso: true,
@@ -44,7 +40,6 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
                 message: "Nenhum item encontrado para esta unidade.",
             };
         }
-
         const produtoMaisVendido = resultado[0];
         const produto = await prisma.produto.findUnique({ // Busca informações do produto
             where: { id: produtoMaisVendido.produtoId, },
@@ -54,7 +49,6 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
                 descricao: true,
             },
         });
-
         return {
             sucesso: true,
             produto: {
@@ -104,7 +98,6 @@ export const somarSaidas = async (unidadeId) => {
     from "Saidas"
     where date("data") = CURRENT_DATE
     and "unidadeId" = ${unidadeId}`;
-
     return result[0]?.total ?? 0;
 }
 

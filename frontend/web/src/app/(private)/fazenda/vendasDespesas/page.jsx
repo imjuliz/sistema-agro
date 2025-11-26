@@ -12,15 +12,16 @@ export default function Page() {
                 <div className="flex-1 flex flex-col justify-end mt-10"><GraficoDeBarras /></div>
             </div>
              <div className="flex justify-between gap-8 w-full mb-10">
-                <div className="flex-1"><TableDemo2 /></div>
+                {/* <div className="flex-1"><TableDemo2 /></div> */}
+                <div className="flex-1"><GraficoPizza /></div>
                 <div className="flex-1"><EnvioLotes /></div>
             </div>
             <div className="flex justify-between gap-8 w-full">
-                <div className="flex-1"><GraficoPizza /></div>
+                <div className="flex-1 flex flex-col justify-end"><TabelaSobDemanda /></div>
                 <div className="flex-1"><TabelaSaidas /></div>
             </div>
              <div className="flex justify-between items-start gap-8 w-full mb-10">
-                <div className="flex-1 flex flex-col justify-end mt-10"><TabelaSobDemanda /></div>
+                
             </div>
         </div>
     )

@@ -45,8 +45,6 @@ export const somarQtdTotalEstoque = async (unidadeId) => { //ok
     }
 };
 
-
-
 //listagem do estoque 
 export async function getEstoque(unidadeId) { //ok
     try {
@@ -75,12 +73,9 @@ export const reporEstoque = async (dados) => {
                 quantidade: Number(dados.quantidade)
             }
         });
-
         return {sucesso: true,saida: novaSaida};
-
-    } catch (error) {
-        return {sucesso: false,erro: error.message};
     }
+    catch (error) {return {sucesso: false,erro: error.message}}
 };
 
 //PRODUTOS
@@ -235,9 +230,7 @@ export const listarAtividadesLote = async (unidadeId) => {
 
 export const consultarLote = async (unidadeId, loteId) => {
     try {
-        const atividadesLote = await prisma.atividadesLote.findMany({
-            where: {loteId,unidadeId : Number(unidadeId),}
-        });
+        const atividadesLote = await prisma.atividadesLote.findMany({where: {loteId,unidadeId : Number(unidadeId),}});
 
         return {
             sucesso: true,
@@ -251,7 +244,4 @@ export const consultarLote = async (unidadeId, loteId) => {
             detalhes: error.message
         }
     }
-}
-
-export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId) => {
 }

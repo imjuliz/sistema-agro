@@ -10,18 +10,11 @@ export async function cadastrarSe({ nome, email, senha }) {
   const hash = await hashPassword(senha);
 
   // busca o perfil gerente_fazenda
-  const perfil = await prisma.perfil.findFirst({
-    where: { funcao: "GERENTE_FAZENDA" },
-  });
-  if (!perfil) {
-    throw new Error("Perfil gerente_fazenda não encontrado");
-  }
+  const perfil = await prisma.perfil.findFirst({where: { funcao: "GERENTE_FAZENDA" },});
+  if (!perfil) {throw new Error("Perfil gerente_fazenda não encontrado");}
 
   // cria usuário
-  const usuario = await prisma.usuario.create({
-    data: { nome, email, senha: hash, perfilId: perfil.id },
-  });
-
+  const usuario = await prisma.usuario.create({data: { nome, email, senha: hash, perfilId: perfil.id },});
   return usuario;
 }
 
@@ -123,9 +116,7 @@ export async function login(email, senha) {
       return { sucesso: false, erro: "Senha inválida" };
     }
 
-    if (user.status === false || user.status === "inativo") {
-      return { sucesso: false, erro: "Usuário inativo" };
-    }
+    if (user.status === false || user.status === "inativo") {return { sucesso: false, erro: "Usuário inativo" };}
 
     // Perfil como string (nome)
     const perfilFuncao = user.perfil?.funcao ?? null;
@@ -171,12 +162,9 @@ export async function esqSenha(email, codigo, expira) {
   try {
     const user = await prisma.usuarios.findUnique({ where: { email: email } });
 
-    if (!user) {
-      return res.status(401).json({ error: "Usuário não encontrado" });
-    }
-    if (user.status === "inativo") {
-      throw new Error("Usuário inativo");
-    } // Verificar se o usuário está ativo
+    if (!user) {return res.status(401).json({ error: "Usuário não encontrado" });}
+    // Verificar se o usuário está ativo
+    if (user.status === "inativo") {throw new Error("Usuário inativo");} 
 
     // Salvar no banco junto com a validade (10 minutos)
     await prisma.reset_senhas.create({
@@ -210,17 +198,11 @@ export async function codigo(codigo_reset) {
       where: { codigo_reset: codigo_reset },
     });
 
-    if (!resetSenha) {
-      throw new Error("Código inválido");
-    }
+    if (!resetSenha) {throw new Error("Código inválido");}
 
     const expirado = resetSenha.codigo_expira < new Date();
-    if (expirado) {
-      throw new Error("Código expirado");
-    }
-    if (resetSenha.usado) {
-      throw new Error("Código utilizado");
-    }
+    if (expirado) {throw new Error("Código expirado");}
+    if (resetSenha.usado) {throw new Error("Código utilizado");}
 
     return {
       sucesso: true,

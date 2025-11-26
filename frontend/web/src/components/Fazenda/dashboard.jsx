@@ -6,11 +6,11 @@ import { useState } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { useTheme } from "next-themes";
 //ui
-import { Badge } from "@/components/ui/badge"
-import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card,  CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Calendar } from "../ui/calendar"
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 //mui
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -18,7 +18,6 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import ArticleIcon from '@mui/icons-material/Article';
 import PersonIcon from '@mui/icons-material/Person';
 import CreateIcon from '@mui/icons-material/Create';
-
 
 export function SectionCards() {
   return (
@@ -28,10 +27,6 @@ export function SectionCards() {
           <CardDescription>Lucros</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">R$6.790</CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">Lucros subiram em 20% <IconTrendingDown className="size-4" /></div>
-          <div className="text-muted-foreground">Bom</div>
-        </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
@@ -52,12 +47,6 @@ export function SectionCards2() {
             <CardDescription>Próxima Colheita</CardDescription>
             <CardTitle className="text-2xl font-semibold">Milho - 25/10</CardTitle>
           </CardHeader>
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="flex gap-2 font-medium">
-              Lucros subiram em 20% <IconTrendingUp className="size-4" />
-            </div>
-            <div className="text-muted-foreground">Bom</div>
-          </CardFooter>
         </Card>
         <Stack spacing={2} direction="column" justifyContent="end">
           <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
@@ -73,10 +62,6 @@ export function SectionCards2() {
             <CardDescription>Talhões Ativos</CardDescription>
             <CardTitle className="text-2xl font-semibold">37</CardTitle>
           </CardHeader>
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="flex gap-2 font-medium">Lucros subiram em 20%</div>
-            <div className="text-muted-foreground">Bom</div>
-          </CardFooter>
         </Card>
         <Stack spacing={2} direction="column" justifyContent="end">
           <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
@@ -97,63 +82,26 @@ export function SectionCards3() {
       <div className="flex flex-col justify-between gap-4 w-full">
         <Card className="flex-1 h-full p-6 min-h-[220px]">
           <CardHeader>
-            <CardDescription>Próxima Colheita</CardDescription>
-            <CardTitle className="text-2xl font-semibold">Milho - 25/10</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Próximo envio</CardTitle>
+            <CardTitle className="text-2xl font-semibold">31/10</CardTitle>
           </CardHeader>
           <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="flex gap-2 font-medium">Lucros subiram em 20% <IconTrendingUp className="size-4" /></div>
-            <div className="text-muted-foreground">Bom</div>
+            <div className="text-muted-foreground">Loja agronipa</div>
           </CardFooter>
         </Card>
-        <Stack spacing={2} direction="column" justifyContent="end">
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
-            <CreateIcon /> Nova atividade
-          </Button>
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
-            <ArticleIcon />Gerar relatório</Button>
-        </Stack>
       </div>
       <div className="flex flex-col justify-between gap-4">
         <Card className="flex-1 h-full p-6 min-h-[220px]">
           <CardHeader>
-            <CardDescription>Talhões Ativos</CardDescription>
-            <CardTitle className="text-2xl font-semibold">37</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Tarefas pendentes</CardTitle>
+            <CardTitle className="text-2xl font-semibold">10</CardTitle>
           </CardHeader>
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="flex gap-2 font-medium">Lucros subiram em 20%</div>
-            <div className="text-muted-foreground">Bom</div>
-          </CardFooter>
         </Card>
-        <Stack spacing={2} direction="column" justifyContent="end">
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
-            <PersonIcon />Registrar funcionário
-          </Button>
-          <Button variant="outlined" sx={{ color: '#738C16', borderColor: '#738C16', '&:hover': { borderColor: '#5c6f12' } }}>
-            <CreateIcon />Nova tarefa
-          </Button>
-        </Stack>
       </div>
     </div>
   );
 }
 export const description = "A donut chart"
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 90, fill: "var(--color-other)" },
-]
-
-const chartConfig = {
-  visitors: { label: "Visitors", },
-  chrome: { label: "Chrome", color: "var(--chart-1)", },
-  safari: { label: "Safari", color: "var(--chart-2)", },
-  firefox: { label: "Firefox", color: "var(--chart-3)", },
-  edge: { label: "Edge", color: "var(--chart-4)", },
-  other: { label: "Other", color: "var(--chart-5)", },
-}
-
 export function ChartPieDonut() {
   return (
     <Card className="flex flex-col w-full max-w-[500px] h-[400px]">
@@ -179,12 +127,7 @@ export function GraficoDeBarras() {
   return (
     <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-4">
       <BarChart xAxis={[
-          {
-            data: ["Vegetais", "Frutas", "Animália"],
-            scaleType: "band",
-            tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000", },
-            labelStyle: { fill: isDark ? "#ffffff" : "#000000", },
-          },
+          { data: ["Vegetais", "Frutas", "Animália"], scaleType: "band", tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000"}, labelStyle: { fill: isDark ? "#ffffff" : "#000000"}},
         ]}
         yAxis={[{ width: 50, tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000", }, },]}
         series={[{ data: [4, 3, 5], color: "#99BF0F" }, { data: [1, 6, 3], color: "#738C16" },]}
@@ -203,13 +146,6 @@ const formatDateRange2 = (from, to) => {
   const options = { hour: '2-digit', minute: '2-digit' };
   return `${from.toLocaleTimeString('pt-BR', options)} - ${to.toLocaleTimeString('pt-BR', options)}`;
 };
-
-const allEvents = [
-  { title: 'Team Sync Meeting', from: '2025-06-12T12:00:00Z', to: '2025-06-12T13:00:00Z' },
-  { title: 'Design Review', from: '2025-06-12T14:30:00Z', to: '2025-06-12T15:30:00Z' },
-  { title: 'Reunião de Alinhamento', from: '2025-10-17T13:00:00Z', to: '2025-10-17T14:00:00Z' },
-  { title: 'Apresentação Trimestral', from: '2025-10-17T18:00:00Z', to: '2025-10-17T19:30:00Z' },
-];
 
 export const CalendarEventListDemo = () => {
   const [date, setDate] = useState(new Date());
@@ -233,9 +169,7 @@ export const CalendarEventListDemo = () => {
             {filteredEvents.length > 0 ? (filteredEvents.map(event => (
               <div key={event.title} className='bg-muted after:bg-primary/70 relative rounded-md p-2 pl-6 text-sm after:absolute after:inset-y-2 after:left-2 after:w-1 after:rounded-full'>
                 <div className='font-medium'>{event.title}</div>
-                <div className='text-muted-foreground text-xs'>
-                  {formatDateRange2(new Date(event.from), new Date(event.to))}
-                </div>
+                <div className='text-muted-foreground text-xs'>{formatDateRange2(new Date(event.from), new Date(event.to))}</div>
               </div>
             ))) : (<p className="text-sm text-muted-foreground p-2">Nenhum evento para este dia.</p>)}
           </div>
@@ -274,15 +208,6 @@ export function ItemVariant() {
     </div>
   )
 }
-
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
-
-const admins = [
-  { id: 1, nome: "Mariana Souza", email: "mariana@fazenda.com", telefone: "(11) 99999-1234" },
-  { id: 2, nome: "João Pereira", email: "joao@fazenda.com", telefone: "(11) 98888-5678" },
-  { id: 3, nome: "Carla Mendes", email: "carla@fazenda.com", telefone: "(31) 97777-4321" },
-  { id: 4, nome: "Lucas Andrade", email: "lucas@fazenda.com", telefone: "(21) 96666-8765" },
-]
 
 export function TableDemo() {
   return (

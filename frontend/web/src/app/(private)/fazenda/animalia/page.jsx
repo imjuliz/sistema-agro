@@ -1,4 +1,3 @@
-import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, TableDemo, TableDemo2, ChartPieDonut } from "@/components/Fazenda/animalia"
 export default function Page() {
