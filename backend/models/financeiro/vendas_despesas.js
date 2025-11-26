@@ -85,20 +85,19 @@ export const somarDiaria = async (unidadeId) => {//tem controller
     return result[0]?.total ?? 0;
 };
 
-export const somarEntradaMensal = async (unidadeId) => { //nao funciona
+export const somarEntradaMensal = async (unidadeId) => { // Acho q agora funciona(ajuda do chatgpt)
     const result = await prisma.$queryRaw`
-    SELECT
-  TO_CHAR(DATE_TRUNC('month', "criado_em"), 'YYYY-MM') AS mes,
-  SUM("total") AS total_vendas
-FROM "vendas"
-WHERE "unidade_id" = 1  -- opcional
-GROUP BY DATE_TRUNC('month', "criado_em")
-ORDER BY mes DESC;`;
-
-    return result[0]?.total ?? 0;
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', "criado_em"), 'YYYY-MM') AS mes,
+        SUM("total") AS total_vendas
+      FROM "vendas"
+      WHERE "unidade_id" = ${unidadeId}
+      GROUP BY DATE_TRUNC('month', "criado_em")
+      ORDER BY mes DESC;
+    `;
+    return result[0]?.total_vendas ?? 0;
 }
-
-
+  
 export const somarSaidas = async (unidadeId) => {
     const result = await prisma.$queryRaw`
     SELECT COALESCE (SUM(valor), 0) AS total
@@ -109,29 +108,26 @@ export const somarSaidas = async (unidadeId) => {
     return result[0]?.total ?? 0;
 }
 
-export const calcularLucroDoMes = async (unidadeId) => {
-
-    const unidadeIdNum = Number(unidadeId); // força número
-
+export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
     const [vendas] = await prisma.$queryRaw`
     SELECT COALESCE(SUM(total), 0) AS total
     FROM "vendas"
-    WHERE "unidade_id" = ${unidadeIdNum}
+    WHERE "unidade_id" = ${unidadeId}
       AND DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
   `;
 
-    const [saidas] = await prisma.$queryRaw`
+  const [saidas] = await prisma.$queryRaw`
     SELECT COALESCE(SUM(valor), 0) AS total
     FROM "Saidas"
-    WHERE "unidadeId" = ${unidadeIdNum}
+    WHERE "unidadeId" = ${unidadeId}
       AND DATE_TRUNC('month', "data") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
   `;
 
-    return {
-        total_vendas: vendas.total,
-        total_saidas: saidas.total,
-        lucro: vendas.total - saidas.total,
-    };
+  return {
+    total_vendas: vendas.total,
+    total_saidas: saidas.total,
+    lucro: vendas.total - saidas.total,
+  };
 }
 
 export const listarVendas = async (unidadeId) => {

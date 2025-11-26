@@ -2,7 +2,8 @@
 export const translateText = async (req, res) => {
   try {
     const { text, to } = req.body;
-    if (!text || !to) return res.status(400).json({ error: "text and to are required" });
+    if (!text || !to)
+      return res.status(400).json({ error: "text and to are required" });
 
     const endpoint = process.env.AZURE_TRANSLATOR_ENDPOINT;
     const key = process.env.AZURE_TRANSLATOR_KEY;
@@ -10,7 +11,10 @@ export const translateText = async (req, res) => {
 
     if (!endpoint || !key) {return res.status(500).json({ error: "Translator not configured" });}
 
-    const url = `${endpoint.replace(/\/$/, "")}/translate?api-version=3.0&to=${encodeURIComponent(to)}`;
+    const url = `${endpoint.replace(
+      /\/$/,
+      ""
+    )}/translate?api-version=3.0&to=${encodeURIComponent(to)}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -26,7 +30,9 @@ export const translateText = async (req, res) => {
     if (!response.ok) {
       const textErr = await response.text();
       console.error("Azure translate error:", response.status, textErr);
-      return res.status(502).json({ error: "Translation service error", details: textErr });
+      return res
+        .status(502)
+        .json({ error: "Translation service error", details: textErr });
     }
 
     const data = await response.json();

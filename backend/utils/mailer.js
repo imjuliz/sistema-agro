@@ -1,24 +1,35 @@
-import { transporter } from '../config/nodemailer.js';
-import fs from 'fs/promises';
-import path from 'path';
+import { transporter } from "../config/nodemailer.js";
+import fs from "fs/promises";
+import path from "path";
 
 export async function sendResetPasswordEmail(to, token) {
-	const templatePath = path.join(
-		process.cwd(),
-		'src',
-		'resources',
-		'reset-password-email.html',
-	);
+  const templatePath = path.join(
+    process.cwd(),
+    "src",
+    "resources",
+    "reset-password-email.html"
+  );
 
-	const template = await fs.readFile(templatePath, 'utf-8');
-	let html;
+  const template = await fs.readFile(templatePath, "utf-8");
+  let html;
 
-	html = template.replace(/{{TOKEN}}/g, token);
-	html = html.replace(
-		/{{FRONTEND_BASE_URL}}/g,
-		process.env.FRONTEND_URL || 'http://localhost:3001',
-	);
+  html = template.replace(/{{TOKEN}}/g, token);
+  html = html.replace(
+    /{{FRONTEND_BASE_URL}}/g,
+    process.env.FRONTEND_URL || "http://localhost:3001"
+  );
 
+<<<<<<< HEAD
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to,
+    subject: "Redefinição de senha - ZELOS",
+    html,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+=======
 	const mailOptions = {
 		from: process.env.SMTP_USER,
 		to,
@@ -27,3 +38,4 @@ export async function sendResetPasswordEmail(to, token) {
 	};
 	await transporter.sendMail(mailOptions);
 }
+>>>>>>> main

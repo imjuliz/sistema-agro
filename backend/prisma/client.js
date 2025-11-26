@@ -16,6 +16,7 @@ const prisma =
 // Em dev (hot reload) armazena no global
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
+
 export default prisma;
 
 

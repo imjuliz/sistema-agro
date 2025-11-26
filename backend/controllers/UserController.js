@@ -12,7 +12,8 @@ dotenv.config();
 export async function cadastrarSeController(req, res) {
   try {
     const { nome, email, senha } = userSchema.partial().parse(req.body);
-    const id = req.usuario.id
+
+    console.log( nome, email, senha );
 
     if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
 
@@ -20,10 +21,10 @@ export async function cadastrarSeController(req, res) {
     const existingUser = await getUserByEmail(email);
     if (existingUser) { return res.status(400).json({ error: "Email já cadastrado" }); }
 
+    console.log("oi");
     const user = await cadastrarSe({ nome, email, senha });
 
     res.status(201).json({ message: "Usuário criado com sucesso", user });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -46,10 +47,10 @@ export const updateUsuarioController = async (req, res) => {
 }
 
 export const deletarUsuarioController = async (req, res) => {
-  const { userId } = req.params
+  const { userId } = req.params;
 
   try {
-    const resultado = await deletarUsuario(userId)
+    const resultado = await deletarUsuario(userId);
 
     if (!resultado.sucesso) { return res.status(400).json(resultado) }
 
@@ -372,7 +373,9 @@ export const codigoController = async (req, res) => {
   const { codigo_reset } = req.body;
   try {
     const criarCodigo = await codigo(codigo_reset);
-    res.status(200).json({ message: "Código verificado com sucesso", criarCodigo });
+    res
+      .status(200)
+      .json({ message: "Código verificado com sucesso", criarCodigo });
   } catch (error) {
     console.error("Erro ao buscar codigo:", error);
     res.status(500).json({ error: "Erro ao buscar codigo" });

@@ -1,12 +1,18 @@
-import {z} from 'zod';
+import { z } from "zod";
 
 const unidadeSchema = z.object({
-    idGerente: z.number(),
-    tipo: z.enum(['venda','producao']),
-    produtos: z.string(),
-    fundacao: z.date(),
-    status: z.enum(['ativo','inativo']),
-    renda: z.number(),
-})
+  nome: z.string(),
+  endereco: z.string(),
+  cidade: z.string().optional(),
+  estado: z.string().optional(),
+  cep: z.string().optional(),
+  areaTotal: z.number().optional(),
+  areaProdutiva: z.number().optional(),
+  longitude: z.number().optional(),
+  latitude: z.number().optional(),
+  descricaoCurta: z.string().optional(),
+  tipo: z.enum(["Matriz", "Fazenda", "Loja"]),
+  status: z.enum(["ATIVA", "INATIVA", "MANUTENCAO"])
+});
 
-export {unidadeSchema};
+export { unidadeSchema };
