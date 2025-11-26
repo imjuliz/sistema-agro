@@ -3,11 +3,9 @@ import React, { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { KanbanColumn } from './KanbanColumn';
-import { TaskCard } from './TaskCard';
 import { Button } from '@/components/ui/button';
 import { Plus, Settings, Filter, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-
 
 const initialColumns = [
   {
@@ -126,7 +124,7 @@ export function KanbanBoard() {
     };
 
     setColumns(prevColumns =>
-      prevColumns.map(column =>column.id === columnId ? { ...column, tasks: [...column.tasks, newTask] } : column)
+      prevColumns.map(column => column.id === columnId ? { ...column, tasks: [...column.tasks, newTask] } : column)
     );
   };
 
@@ -145,14 +143,14 @@ export function KanbanBoard() {
         <div className="bg-white border-b border-gray-200 px-6 py-4 dark:bg-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-200">Quadro de Projetos</h1>
+              <h1 className="text-sm whitespace-nowrap md:text-2xl font-semibold text-gray-900 dark:text-gray-200">Quadro de Projetos</h1>
               <p className="text-sm text-gray-600 mt-1 dark:text-gray-500">Organize seus afazeres</p>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="columns md:flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input placeholder="Pesquisar" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 w-64"/>
+                <Input placeholder="Pesquisar" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 w-64" />
               </div>
 
               <Button variant="outline" size="sm">
@@ -172,7 +170,7 @@ export function KanbanBoard() {
         <div className="flex-1 overflow-x-auto p-6 ">
           <div className="flex space-x-6 h-full min-w-max">
             {filteredColumns.map(column => (
-              <KanbanColumn key={column.id} column={column} onMoveTask={moveTask} onAddTask={() => addNewTask(column.id)}/>
+              <KanbanColumn key={column.id} column={column} onMoveTask={moveTask} onAddTask={() => addNewTask(column.id)} />
             ))}
           </div>
         </div>

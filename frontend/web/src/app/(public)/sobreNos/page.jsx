@@ -7,21 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Home/sections/footer/default";
 import Navbar from "@/components/Home/sections/navbar/default";
 import * as React from 'react';
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
 //icons-----
-import { Mail, Phone, BookOpen, MessageSquare, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, ArrowRight, User, Send } from "lucide-react";
+import { Mail, Phone, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, User, Send } from "lucide-react";
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import EmailIcon from '@mui/icons-material/Email';
-import LocalPhoneIcon from '@mui/icons-material/LocalPhone';
-import { green } from '@mui/material/colors';
-import FmdGoodIcon from '@mui/icons-material/FmdGood';
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 
@@ -126,7 +114,6 @@ export default function sobreNos({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
         // Reset form
         setFormData({
             firstName: "",
@@ -234,17 +221,6 @@ export default function sobreNos({
                 </div>
                 {/* cards */}
                 {/* fale conosco */}
-                {/* <List>
-                        <ListItem disablePadding>
-                            <ListItemButton onClick={() => handleCopy("+55 11 99999-8888")}>
-                                <ListItemIcon>
-                                    <WhatsAppIcon sx={{ color: green[900] }} />
-                                </ListItemIcon>
-                                <ListItemText primary="Whatsapp:" />
-                                <ListItemText sx={{ opacity: 0.5 }} primary="+55 11 99999-8888" />
-                            </ListItemButton>
-                        </ListItem>
-                </List>*/}
                 <div className="bg-background min-h-screen">
                     <div className="mx-auto  px-4 py-12 sm:px-6 lg:px-8">
                         <div className="grid items-start gap-16 lg:grid-cols-2">
@@ -289,13 +265,11 @@ export default function sobreNos({
                                             </Link>
                                         </label>
                                     </div>
-
                                     <Button type="submit" size="lg">
                                         Enviar<Send />
                                     </Button>
                                 </form>
                             </div>
-
                             {/* Right Column - Hero Image */}
                             <div className="relative h-full">
                                 <div className="overflow-hidden h-full rounded-2xl shadow-lg">
