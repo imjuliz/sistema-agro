@@ -28,7 +28,6 @@ export const somarQtdTotalEstoque = async (unidadeId) => { //ok
             _sum: { quantidade: true, },
             where: { unidadeId: Number(unidadeId) },
         });
-
         const total = resultado._sum.quantidade || 0;
 
         return {
@@ -77,16 +76,10 @@ export const reporEstoque = async (dados) => {
             }
         });
 
-        return {
-            sucesso: true,
-            saida: novaSaida
-        };
+        return {sucesso: true,saida: novaSaida};
 
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: error.message
-        };
+        return {sucesso: false,erro: error.message};
     }
 };
 
@@ -243,10 +236,7 @@ export const listarAtividadesLote = async (unidadeId) => {
 export const consultarLote = async (unidadeId, loteId) => {
     try {
         const atividadesLote = await prisma.atividadesLote.findMany({
-            where: {
-                loteId,
-                unidadeId : Number(unidadeId),
-            }
+            where: {loteId,unidadeId : Number(unidadeId),}
         });
 
         return {
@@ -263,8 +253,5 @@ export const consultarLote = async (unidadeId, loteId) => {
     }
 }
 
-
-
 export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId) => {
-    
 }
