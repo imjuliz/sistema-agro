@@ -20,40 +20,37 @@ import {
 
 export function NavMain({ items }) {
   return (
-    <SidebarGroup>
+   <SidebarGroup>
       <SidebarGroupLabel>Geral</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            defaultOpen={item.isActive}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <a href={item.url}>
-                  <SidebarMenuButton tooltip={item.title}>
-                  
-                    {item.icon && <item.icon />}
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <SidebarMenuItem key={item.title}>
+              <a href={item.url} className="w-full">
+                <SidebarMenuButton tooltip={item.title}>
+                  {Icon ? <Icon /> : null}
                   <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton></a>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
+                </SidebarMenuButton>
+              </a>
+
+              {/* Se houver subitens, mostra sempre (sem colapso) */}
+              {item.items?.length ? (
                 <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
+                  {item.items.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
+                        <a href={subItem.url} className="w-full">
                           <span>{subItem.title}</span>
+                        </a>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}
                 </SidebarMenuSub>
-              </CollapsibleContent>
+              ) : null}
             </SidebarMenuItem>
-          </Collapsible>
-        ))}
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   )

@@ -63,7 +63,6 @@ export async function updateUsuario(id, data) {
   }
 };
 
-
 export async function getUserById(id) {
   // Recebe id (number ou string), retorna null ou objeto com campos públicos
   const userId = Number(id);

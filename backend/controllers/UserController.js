@@ -133,6 +133,19 @@ export async function loginController(req, res) {
     res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
 
     // retornar usuario com perfil como string
+    // return res.status(200).json({
+    //   sucesso: true,
+    //   data: {
+    //     accessToken,
+    //     usuario: {
+    //       id: user.id,
+    //       nome: user.nome,
+    //       email: user.email,
+    //       perfil: user.perfil?.funcao ?? null,
+
+    //     },
+    //   },
+    // });
     return res.status(200).json({
       sucesso: true,
       data: {
@@ -141,8 +154,13 @@ export async function loginController(req, res) {
           id: user.id,
           nome: user.nome,
           email: user.email,
+          telefone: user.telefone ?? null,
+          ftPerfil: user.ftPerfil ?? null,
           perfil: user.perfil?.funcao ?? null,
-
+          unidadeId: user.unidadeId ?? null,
+          status: user.status ?? null,
+          criadoEm: user.criadoEm ?? null,
+          atualizadoEm: user.atualizadoEm ?? null
         },
       },
     });
@@ -253,16 +271,31 @@ export async function refreshController(req, res) {
     console.log("[refreshController] refresh rotacionado com sucesso. sessaoId:", sessao.id);
 
     // return res.json({ accessToken });
+    // return res.json({
+    //   accessToken,
+    //   usuario: {
+    //     id: user.id,
+    //     nome: user.nome,
+    //     email: user.email,
+    //     perfil: user.perfil?.funcao ?? null
+    //   }
+    // });
+    // Retornar accessToken e usuario com campos públicos (perfil como funcao)
     return res.json({
       accessToken,
       usuario: {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        perfil: user.perfil?.funcao ?? null
+        telefone: user.telefone ?? null,
+        ftPerfil: user.ftPerfil ?? null,
+        perfil: user.perfil?.funcao ?? null,
+        unidadeId: user.unidadeId ?? null,
+        status: user.status ?? null,
+        criadoEm: user.criadoEm ?? null,
+        atualizadoEm: user.atualizadoEm ?? null
       }
     });
-
   } catch (err) {
     // log detalhado para encontrar raiz do problema
     console.error("refreshController - erro não tratado:", err.stack ?? err);
