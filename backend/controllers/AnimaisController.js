@@ -39,8 +39,8 @@ export async function getAnimaisPelaRacaController(req, res) {
 }
 
 export async function getAnimaisPorIdController(req, res) {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
     const animais = await getAnimaisPorId(id);
     
     return res.status(200).json({
@@ -63,10 +63,10 @@ export async function createAnimaisController(req, res) {
     
     //Validações 
     if(isNaN(data.fonecedorId) || isNaN(data.unidadeId) || isNaN(data.loteId)) {
-      res.status(400).json({erro: "Fonecedor, Unidade ou Lote nao é um valor valido."})
+      res.status(400).json({message: "Fonecedor, Unidade ou Lote nao é um valor valido."})
     }
     if(!data.fonecedorId || !data.unidadeId || !data.loteId) {
-      res.status(400).json({erro: "Fonecedor, Unidade ou Lote nao encontrado."})
+      res.status(400).json({message: "Fonecedor, Unidade ou Lote nao encontrado."})
     }
     const animais = await createAnimais(data);
     
