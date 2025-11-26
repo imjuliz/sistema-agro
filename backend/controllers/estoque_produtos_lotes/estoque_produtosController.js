@@ -259,7 +259,6 @@ export const lotesPlantioController = async (req, res) => {
 //////////////////////
 // Função de 17/11 //
 ////////////////////
-
 //listar pedidos ---- Não testada
 export const listarPedidosController = async (req, res) => {
   try {

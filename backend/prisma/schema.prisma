@@ -807,8 +807,8 @@ model ItemVenda {
 
 model Financeiro {
   id        Int       @id @default(autoincrement())
-  usuarioId Int
-  unidadeId Int
+  usuarioId Int //a função deve puxar o id do usuário automaticamente
+  unidadeId Int //a função deve puxar o id da unidade automaticamente
   descricao String
   tipo      TipoSaida
   valor     Decimal   @db.Decimal(12, 2)
