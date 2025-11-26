@@ -339,7 +339,7 @@ model FornecedorExterno {
   contratos         Contrato[]       @relation("ContratoFornecedorExterno")
   pedidos           Pedido[]
   // fornecedorProduto FornecedorProduto[]
- estoqueProdutos   EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
+  estoqueProdutos   EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
 
   @@map("fornecedor_externo")
 }
@@ -367,6 +367,7 @@ model Contrato {
   fornecedorExterno FornecedorExterno? @relation("ContratoFornecedorExterno", fields: [fornecedorExternoId], references: [id], onDelete: Restrict) // fornecedor externo: relação com Fornecedor 
   itens             ContratoItens[]    @relation("ContratoItens")
   pedidos           Pedido[]
+  lotes             Lote[]
 
   @@index([status])
   @@index([dataInicio])
@@ -550,7 +551,6 @@ model Plantio {
 // MELHORAR - inseir mais colunas (cada atvd vai ter informações diferentes, qntd, tipo de agrotoxico, etc)
 model AtvdAgricola {
   id            Int             @id @default(autoincrement())
-  insumoId      Int             @map("insumo_id")
   descricao     String          @db.Text
   tipo          TipoAtvd
   loteId        Int
@@ -596,21 +596,21 @@ model AtvdAnimalia {
 }
 
 model Lote {
-  id                    Int              @id @default(autoincrement())
-  unidadeId             Int              @map("unidade_id")
-  responsavelId         Int              @map("responsavel_id")
-  nome                  String           @db.VarChar(255)
-  tipo                  TipoLote
-  qntdItens             Int?             @map("qntd_itens")
-  preco                 Decimal          @db.Decimal(10, 2)
-  unidadeMedida         UnidadesDeMedida @map("unidade_medida")
-  observacoes           String?          @db.Text
-  dataCriacao           DateTime         @default(now()) @map("data_criacao") // momento em que o lote passa a existir no sistema
-  dataColheita          DateTime?        @map("data_colheita") // momento em que o lote foi finalizado / colhido / encerrado
-  percentualAgrotoxicos Decimal?         @map("percentual_agrotoxicos") @db.Decimal(5, 3) // preenchido por leitura IoT ou cálculo
-  statusQualidade       StatusQualidade  @default(PROPRIO) @map("status_qualidade")
-  bloqueadoParaVenda    Boolean          @default(false) @map("bloqueado_para_venda")
-  statusVenda           Boolean          @default(false)
+  id                  Int              @id @default(autoincrement())
+  unidadeId           Int              @map("unidade_id")
+  responsavelId       Int              @map("responsavel_id")
+  nome                String           @db.VarChar(255)
+  tipo                TipoLote
+  qntdItens           Int?             @map("qntd_itens")
+  preco               Decimal          @db.Decimal(10, 2)
+  unidadeMedida       UnidadesDeMedida @map("unidade_medida")
+  observacoes         String?          @db.Text
+  statusQualidade     StatusQualidade  @default(PROPRIO) @map("status_qualidade")
+  bloqueadoParaVenda  Boolean          @default(false) @map("bloqueado_para_venda")
+  status              StatusLote?      @map("status_lote")
+  contratoId          Int?
+  dataEnvioReferencia DateTime?
+  itensEsperados      Json?            @map("itens_esperados")
 
   unidade                Unidade               @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
   responsavel            Usuario               @relation(fields: [responsavelId], references: [id], onDelete: Restrict)
@@ -627,12 +627,11 @@ model Lote {
   animals                Animal[]
   plantios               Plantio[]
   estoqueProdutos        EstoqueProduto[]
+  contrato               Contrato?             @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
   @@index([unidadeId])
   @@index([responsavelId])
   @@index([statusQualidade])
-  @@index([dataCriacao])
-  @@index([dataColheita])
   @@map("lote")
 }
 
@@ -1063,4 +1062,10 @@ enum TipoTransporte {
   FLUVIAL
   INTERNO
   OUTRO
+}
+
+enum StatusLote {
+  PENDENTE
+  PRONTO
+  ENVIADO
 }

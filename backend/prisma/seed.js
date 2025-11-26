@@ -6,7 +6,7 @@ import prisma from "./client.js";
 import * as pkg from "./generated/client.ts";
 
 // Extrai enums
-const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo } = pkg;
+const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote } = pkg;
 
 // Fallbacks para enums
 const TP = TipoPerfil ?? {
@@ -50,6 +50,7 @@ const CtgInsumo = CategoriaInsumo ?? {
     OUTROS: "OUTROS",
     LATICINIOS: "LATICINIOS"
 };
+const SLOTE = StatusLote ?? { PENDENTE: "PENDENTE", PRONTO: "PRONTO", ENVIADO: "ENVIADO" }
 
 async function main() {
     try {
@@ -2452,10 +2453,7 @@ async function main() {
             console.log("Finalizado: total de entradas criadas:", allEntries.length);
         }
 
-        // Exemplo de chamada:
         await seedEstoqueProdutosFromDeliveredPedidos(prisma);
-
-
 
         const animals = [
             // Fazenda Beta: 4 vacas Holandesas (agreguei 4 registros repetidos em 1)
@@ -2520,6 +2518,149 @@ async function main() {
 
 
         // criar lote
+        // --- 1) Fazenda Beta -> contrato "Sabor do Campo Laticínios - Fazenda Beta" ---
+        const contratoBetaKey = "Sabor do Campo Laticínios - Fazenda Beta";
+        const contratoBetaId = contratoMap[contratoBetaKey];
+        if (!contratoBetaId) throw new Error(`contratoMap faltando: ${contratoBetaKey}`);
+
+        // buscar todos itens do contrato Beta para mapear por nome (lowercase)
+        const itensContratoBeta = await prisma.contratoItens.findMany({ where: { contratoId: contratoBetaId } });
+        const mapItensBeta = {};
+        itensContratoBeta.forEach(i => { mapItensBeta[(i.nome || "").toLowerCase()] = i; });
+
+        const produtosBeta = [
+            { nome: "Leite cru tipo A (L)", quantidadeEsperada: 200, unidadeMedida: UMED.LITRO },
+            { nome: "Leite cru tipo B (L)", quantidadeEsperada: 80, unidadeMedida: UMED.LITRO },
+            { nome: "Nata / creme do leite (kg)", quantidadeEsperada: 12, unidadeMedida: UMED.KG },
+            { nome: "Soro de leite (L)", quantidadeEsperada: 48, unidadeMedida: UMED.LITRO },
+            { nome: "Leite pasteurizado 1L", quantidadeEsperada: 140, unidadeMedida: UMED.LITRO },
+            { nome: "Leite pasteurizado 2L", quantidadeEsperada: 48, unidadeMedida: UMED.LITRO },
+            { nome: "Leite UHT 1L", quantidadeEsperada: 80, unidadeMedida: UMED.LITRO },
+            { nome: "Leite integral 1L", quantidadeEsperada: 72, unidadeMedida: UMED.LITRO },
+            { nome: "Leite desnatado 1L", quantidadeEsperada: 36, unidadeMedida: UMED.LITRO },
+            { nome: "Leite sem lactose 1L", quantidadeEsperada: 16, unidadeMedida: UMED.LITRO },
+            { nome: "Creme de leite 200ml", quantidadeEsperada: 36, unidadeMedida: UMED.UNIDADE },
+            { nome: "Manteiga 200g", quantidadeEsperada: 28, unidadeMedida: UMED.UNIDADE },
+            { nome: "Manteiga 500g", quantidadeEsperada: 12, unidadeMedida: UMED.UNIDADE },
+            { nome: "Ricota fresca (kg)", quantidadeEsperada: 6, unidadeMedida: UMED.KG },
+            { nome: "Minas padrão (kg)", quantidadeEsperada: 12, unidadeMedida: UMED.KG },
+            { nome: "Queijo mussarela (peça 3kg)", quantidadeEsperada: 4, unidadeMedida: UMED.UNIDADE },
+            { nome: "Queijo mussarela (barra 1kg)", quantidadeEsperada: 11, unidadeMedida: UMED.KG },
+            { nome: "Queijo parmesão (peça 1kg)", quantidadeEsperada: 3, unidadeMedida: UMED.UNIDADE },
+            { nome: "Iogurte natural 170g", quantidadeEsperada: 64, unidadeMedida: UMED.UNIDADE },
+            { nome: "Iogurte sabor morango 170g", quantidadeEsperada: 48, unidadeMedida: UMED.UNIDADE },
+            { nome: "Iogurte sabor coco 170g", quantidadeEsperada: 32, unidadeMedida: UMED.UNIDADE },
+            { nome: "Iogurte garrafa 1L", quantidadeEsperada: 16, unidadeMedida: UMED.LITRO },
+            { nome: "Requeijão cremoso 200g", quantidadeEsperada: 36, unidadeMedida: UMED.UNIDADE },
+            { nome: "Doce de leite pastoso 400g", quantidadeEsperada: 17, unidadeMedida: UMED.UNIDADE },
+            { nome: "Doce de leite em barra 300g", quantidadeEsperada: 10, unidadeMedida: UMED.UNIDADE },
+            { nome: "Kefir líquido 1L", quantidadeEsperada: 9, unidadeMedida: UMED.LITRO },
+            { nome: "Coalhada fresca (kg)", quantidadeEsperada: 6, unidadeMedida: UMED.KG }
+        ];
+
+        const itensEsperadosBeta = produtosBeta.map(p => {
+            const encontrado = mapItensBeta[(p.nome || "").toLowerCase()];
+            return {
+                contratoItemId: encontrado ? encontrado.id : null,
+                contratoItemNome: p.nome,
+                produtoId: encontrado && encontrado.produtoId ? encontrado.produtoId : null,
+                quantidadeEsperada: p.quantidadeEsperada,
+                unidadeMedida: p.unidadeMedida,
+                dataEnvioReferencia: "2025-05-06T07:30:00.000Z"
+            };
+        });
+
+        const loteBeta = await prisma.lote.create({
+            data: {
+                unidadeId: unidadeMap["Fazenda Beta"],
+                responsavelId: usuarioMap["Richard Souza"] || usuarioMap["Admin"] || 1,
+                nome: "Lote Completo - Sabor do Campo - 2025-05-06",
+                tipo: TL.LEITE,
+                qntdItens: produtosBeta.length,
+                preco: 0,
+                unidadeMedida: UMED.UNIDADE,
+                observacoes: "Lote completo com todos os produtos combinados no contrato Sabor do Campo - Fazenda Beta",
+                status: SLOTE.PENDENTE,
+                contratoId: contratoBetaId,
+                dataEnvioReferencia: new Date("2025-05-06T07:30:00.000Z"),
+                itensEsperados: itensEsperadosBeta
+            }
+        });
+
+        console.log("Lote criado (Fazenda Beta):", loteBeta.id);
+
+        // --- 2) Fazenda Teste -> contrato "Loja Teste - Fazenda Teste" ---
+        const contratoLojaKey = "Loja Teste - Fazenda Teste";
+        const contratoLojaId = contratoMap[contratoLojaKey];
+        if (!contratoLojaId) throw new Error(`contratoMap faltando: ${contratoLojaKey}`);
+
+        const itensContratoLoja = await prisma.contratoItens.findMany({ where: { contratoId: contratoLojaId } });
+        const mapItensLoja = {};
+        itensContratoLoja.forEach(i => { mapItensLoja[(i.nome || "").toLowerCase()] = i; });
+
+        const produtosLoja = [
+            { nome: "Leite pasteurizado 1L (teste)", quantidadeEsperada: 20, unidadeMedida: UMED.LITRO },
+            { nome: "Queijo fresco 500g (teste)", quantidadeEsperada: 4, unidadeMedida: UMED.UNIDADE },
+            { nome: "Carne bovina corte dianteiro (teste)", quantidadeEsperada: 10, unidadeMedida: UMED.KG },
+            { nome: "Carne bovina corte traseiro (teste)", quantidadeEsperada: 8, unidadeMedida: UMED.KG }
+        ];
+
+        const itensEsperadosLoja = produtosLoja.map(p => {
+            const encontrado = mapItensLoja[(p.nome || "").toLowerCase()];
+            return {
+                contratoItemId: encontrado ? encontrado.id : null,
+                contratoItemNome: p.nome,
+                produtoId: encontrado && encontrado.produtoId ? encontrado.produtoId : null,
+                quantidadeEsperada: p.quantidadeEsperada,
+                unidadeMedida: p.unidadeMedida,
+                dataEnvioReferencia: "2025-06-03T10:00:00.000Z"
+            };
+        });
+
+        const loteLoja = await prisma.lote.create({
+            data: {
+                unidadeId: unidadeMap["Fazenda Teste"],
+                responsavelId: usuarioMap["Usuario Ficticio"] || 1,
+                nome: "Lote Completo - Loja Teste - 2025-06-03",
+                tipo: TL.OUTRO,
+                qntdItens: produtosLoja.length,
+                preco: 0,
+                unidadeMedida: UMED.UNIDADE,
+                observacoes: "Lote completo com itens combinados no contrato Loja Teste - Fazenda Teste",
+                status: SLOTE.PENDENTE,
+                contratoId: contratoLojaId,
+                dataEnvioReferencia: new Date("2025-06-03T10:00:00.000Z"),
+                itensEsperados: itensEsperadosLoja
+            }
+        });
+
+        console.log("Lote criado (Fazenda Teste - Loja Teste):", loteLoja.id);
+
+        // --- 3) Fazenda Teste -> contrato "Casa Útil Mercado - Fazenda Teste" (sem produtos listados) ---
+        const contratoCasaKey = "Casa Útil Mercado - Fazenda Teste";
+        const contratoCasaId = contratoMap[contratoCasaKey];
+
+        if (contratoCasaId) {
+            const loteCasa = await prisma.lote.create({
+                data: {
+                    unidadeId: unidadeMap["Fazenda Teste"],
+                    responsavelId: usuarioMap["Usuario Ficticio"] ,
+                    nome: "Lote - Casa Útil Mercado - 2025-03-02",
+                    tipo: TL.OUTRO,
+                    qntdItens: 0,
+                    preco: 0,
+                    unidadeMedida: UMED.UNIDADE,
+                    observacoes: "Lote criado (sem itens explícitos no seed) para contrato Casa Útil Mercado - preencha itensEsperados se desejar",
+                    status: SLOTE.PENDENTE,
+                    contratoId: contratoCasaId,
+                    dataEnvioReferencia: new Date("2025-03-02T09:00:00.000Z"),
+                    itensEsperados: []
+                }
+            });
+            console.log("Lote criado (Fazenda Teste - Casa Útil Mercado):", loteCasa.id);
+        } else {
+            console.log("Contrato Casa Útil Mercado - Fazenda Teste não encontrado no contratoMap; pulei criação do lote correspondente.");
+        }
 
         // atvd animalia + producao
 
