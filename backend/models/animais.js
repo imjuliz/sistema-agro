@@ -63,6 +63,8 @@ export async function createAnimais(data) {
       data: {
         animal: data.animal,
         raca: data.raca,
+        sku: data.sku,
+        dataEntrada: data.dataEntrada,
         quantidade: data.quantidade,
         tipo: data.tipo,
         unidadeId: data.unidadeId,
