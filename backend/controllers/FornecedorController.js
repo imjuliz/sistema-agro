@@ -2,8 +2,8 @@ import { listarFornecedores, updateFornecedor } from "../models/fornecedores.js"
 
 
 export async function listarFornecedoresController(req, res) {
-    const { unidadeId } = req.params
     try {
+        const { unidadeId } = req.params;
         const fornecedores = await listarFornecedores(unidadeId)
         return {
             sucesso: true,

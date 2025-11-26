@@ -58,7 +58,7 @@ export async function updateUsuario(id, data) {
       detalhes: error.message, // opcional, para debug
     };
   }
-}
+};
 
 export async function getUserById(id) {
   // Recebe id (number ou string), retorna null ou objeto com campos públicos

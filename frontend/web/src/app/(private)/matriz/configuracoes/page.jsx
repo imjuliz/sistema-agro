@@ -5,18 +5,20 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { User, CreditCard, Image as ImageIcon, Bell, Monitor, Info, Copy, ExternalLink, AlertTriangle } from "lucide-react";
+import { User, CreditCard, Image as ImageIcon, Bell, Monitor, AlertTriangle, Copy } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function SettingsPage() {
     usePerfilProtegido("GERENTE_MATRIZ");
+
+    const { user, loading, initialized } = useAuth();
 
     const { lang, changeLang } = useTranslation();
     const languageOptions = [
@@ -26,63 +28,117 @@ export default function SettingsPage() {
         { value: 'fr', label: 'Français' }
     ];
 
-    const [active, setActive] = useState("Perfil"); // Perfil | Empresa | Integracoes | Aparencia | Notificacoes | Billing | Display
+    const [active, setActive] = useState("Perfil");
     const [username, setUsername] = useState("agrotech_admin");
     const [telefone, setTelefone] = useState("");
-    const [emailSelect, setEmailSelect] = useState(""); // example selected email
+    const [emailSelect, setEmailSelect] = useState("");
     const [nome, setNome] = useState("");
     const [urls, setUrls] = useState(["https://agrotech.com.br"]);
     const [avatarUrl, setAvatarUrl] = useState("");
     const fileRef = useRef(null);
 
-    // Aparencia
     const [font, setFont] = useState("");
-    const [theme, setTheme] = useState("dark"); // light | dark
-
-    // Notifications
+    const [theme, setTheme] = useState("dark");
     const [emailNotifications, setEmailNotifications] = useState(true);
-
-    // Integrações (IoT)
-    const [iotEnabled, setIotEnabled] = useState(false);
-    const [deviceId, setDeviceId] = useState("");
-    const [iotThreshold, setIotThreshold] = useState(40); // percentagem padrão
-
-    // Edit modes
     const [profileEditing, setProfileEditing] = useState(false);
     const [companyEditing, setCompanyEditing] = useState(false);
-
-    // Empresa specific
     const [companyName, setCompanyName] = useState("");
     const [companyAvatarUrl, setCompanyAvatarUrl] = useState("");
 
+    // popula os estados quando user chegar (dep array estável - primitivos)
+    useEffect(() => {
+        if (!loading && user) {
+            setNome(user.nome ?? "");
+            const firstName = user.nome ? String(user.nome).split(' ')[0] : null;
+            setUsername(firstName || (user.email ? user.email.split('@')?.[0] : "") || "");
+            setEmailSelect(user.email ?? "");
+            setTelefone(user.telefone ?? "");
+            setAvatarUrl(user.avatarUrl ?? "");
+            // se backend não retorna urls ou companyName, mantenha defaults
+        }
+
+        if (!loading && !user) {
+            // limpar campos se não autenticado
+            setNome("");
+            setUsername("");
+            setEmailSelect("");
+            setTelefone("");
+            setAvatarUrl("");
+            setUrls(["https://agrotech.com.br"]);
+        }
+    }, [
+        loading,
+        user?.id,
+        user?.nome,
+        user?.email,
+        user?.telefone,
+        user?.avatarUrl
+    ]);
+
+    // handlers (mantidos)
     function handleAvatarChange(e) {
         const f = e.target.files?.[0];
         if (!f) return;
         const url = URL.createObjectURL(f);
         setAvatarUrl(url);
-        // Em app real: fazer upload para servidor e persistir URL
     }
-
     function handleCompanyAvatarChange(e) {
         const f = e.target.files?.[0];
         if (!f) return;
         const url = URL.createObjectURL(f);
         setCompanyAvatarUrl(url);
     }
-
     function addUrl() { setUrls((s) => [...s, ""]); }
-
     function updateUrl(index, value) { setUrls((s) => s.map((u, i) => (i === index ? value : u))); }
-
     function removeUrl(index) { setUrls((s) => s.filter((_, i) => i !== index)); }
-
-    function saveProfile() { setProfileEditing(false); } // chamar a API para salvar os dados
-
-    function cancelProfileEdit() { setProfileEditing(false); }  // reverter para valores salvos - atualmente apenas sai do modo edição
-
-    function saveCompany() { setCompanyEditing(false); } // Salvar dados da empresa
-
+    function saveProfile() { setProfileEditing(false); }
+    function cancelProfileEdit() { setProfileEditing(false); }
+    function saveCompany() { setCompanyEditing(false); }
     function cancelCompanyEdit() { setCompanyEditing(false); }
+
+    // --- Render de carregamento / não autenticado (diagnóstico)
+    if (!initialized || loading) {
+        return (
+            <div className="container mx-auto py-8">
+                <h1 className="text-2xl font-bold mb-2"><Transl>Configurações</Transl></h1>
+                <p className="text-muted-foreground mb-6"><Transl>Carregando informações do usuário…</Transl></p>
+
+                {/* debug útil temporário — remova em produção */}
+                <pre className="whitespace-pre-wrap text-xs mt-4 bg-muted p-4 rounded">
+                    {JSON.stringify({ loading, initialized, user: user ? { id: user.id, email: user.email, nome: user.nome } : null }, null, 2)}
+                </pre>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="container mx-auto py-8">
+                <h1 className="text-2xl font-bold mb-2"><Transl>Configurações</Transl></h1>
+                <p className="text-muted-foreground mb-6"><Transl>Usuário não autenticado.</Transl></p>
+            </div>
+        );
+    }
+
+    const regexTelefone = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+
+    function formatarTelefoneBR(tel) {
+        if (!tel) return "";
+
+        const digits = tel.replace(/\D/g, ""); // remove tudo que não é número
+
+        // 11 dígitos → celular: (11) 98765-4321
+        if (digits.length === 11) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+        }
+
+        // 10 dígitos → fixo: (11) 3876-4321
+        if (digits.length === 10) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+        }
+
+        return tel; // fallback: retorna como está
+    }
 
     return (
         <div className="container mx-auto py-8">
@@ -100,7 +156,6 @@ export default function SettingsPage() {
                         {[
                             { key: "Perfil", label: "Perfil", icon: User },
                             { key: "Empresa", label: "Empresa", icon: CreditCard },
-                            { key: "Integracoes", label: "Integrações", icon: Monitor },
                             { key: "Aparencia", label: "Aparência", icon: ImageIcon },
                             { key: "Notificacoes", label: "Notificações", icon: Bell }
                         ].map((it) => {
@@ -151,20 +206,7 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <Label className={"pb-3"} htmlFor="username"><Transl>Nome de usuário</Transl></Label>
-                                                {profileEditing ? (
-                                                    <>
-                                                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Nome público exibido no sistema.</Transl>
-                                                        </p>
-                                                    </>
-
-                                                ) : (<p className="text-sm text-foreground">{username || "—"}</p>)}
-                                            </div>
-
-                                            <div>
-                                                <Label className={"pb-3"} htmlFor="nome"><Transl>Nome completo</Transl></Label>
+                                                <Label className={"pb-3 font-bold"} htmlFor="nome"><Transl>Nome completo</Transl></Label>
                                                 {profileEditing ? (
                                                     <>
                                                         <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
@@ -178,41 +220,47 @@ export default function SettingsPage() {
                                             </div>
 
                                             <div>
-                                                <Label className={"pb-3"} htmlFor="emailSelect"><Transl>Email</Transl></Label>
+                                                <Label className="pb-3 font-bold" htmlFor="emailInput">
+                                                    <Transl>Email</Transl>
+                                                </Label>
+
                                                 {profileEditing ? (
                                                     <>
-                                                        <Select onValueChange={(v) => setEmailSelect(v)} value={emailSelect}>
-                                                            <SelectTrigger id="emailSelect" className="w-full">
-                                                                <SelectValue placeholder={<Transl>Selecione um email</Transl>} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="admin@agrotech.com">
-                                                                    admin@agrotech.com
-                                                                </SelectItem>
-                                                                <SelectItem value="contact@agrotech.com">
-                                                                    contato@agrotech.com
-                                                                </SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
+                                                        <Input
+                                                            id="emailInput"
+                                                            type="email"
+                                                            value={emailSelect}
+                                                            onChange={(e) => setEmailSelect(e.target.value)}
+                                                        />
                                                         <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Gerencie os emails verificados da empresa.</Transl>
+                                                            <Transl>Gerencie seus emails.</Transl>
                                                         </p>
                                                     </>
-                                                ) : (<p className="text-sm text-foreground">{emailSelect || "Email não informado"}</p>)}
+                                                ) : (
+                                                    <p className="text-sm text-foreground">
+                                                        {emailSelect || "Email não informado"}
+                                                    </p>
+                                                )}
                                             </div>
+
                                             <div>
-                                                <Label className={"pb-3"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
+                                                <Label className={"pb-3 font-bold"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
                                                 {profileEditing ? (
-                                                    <><Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+                                                    <><Input id="telefone" value={formatarTelefoneBR(telefone)} onChange={(e) => { const value = e.target.value; if (value === "" || regexTelefone.test(value)) { setTelefone(value); } }} />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Telefone de contato.</Transl>
                                                         </p>
                                                     </>
-                                                ) : (<p className="text-sm text-foreground">{telefone || "Telefone não informado"}</p>)}
+                                                ) : (
+                                                    <p className="text-sm text-foreground">
+                                                        {telefone ? formatarTelefoneBR(telefone) : "Telefone não informado"}
+                                                    </p>
+                                                )}
+
                                             </div>
 
-                                            <div>
-                                                <Label className={"pb-3"}>URLs</Label>
+                                            {/* <div>
+                                                <Label className={"pb-3 font-bold"}>URLs</Label>
                                                 <p className="text-sm text-muted-foreground mb-2">
                                                     <Transl>Adicione links do site da unidade, blog ou perfis sociais.</Transl>
                                                 </p>
@@ -235,7 +283,7 @@ export default function SettingsPage() {
                                                         </div>
                                                     ) : null}
                                                 </div>
-                                            </div>
+                                            </div> */}
 
                                             <div className="pt-3">
                                                 {profileEditing ? (
@@ -262,7 +310,7 @@ export default function SettingsPage() {
 
                                             {/* Nome da empresa */}
                                             <div className="">
-                                                <Label className={"pb-3"}><Transl>Nome da empresa</Transl></Label>
+                                                <Label className={"pb-3 font-bold"}><Transl>Nome da empresa</Transl></Label>
 
                                                 <div className="w-full max-w-md">
                                                     <div className="flex flex-col w-full items-start gap-2">
@@ -282,7 +330,7 @@ export default function SettingsPage() {
                                             <Separator className="my-4" />
                                             {/* URL da unidade */}
                                             <div>
-                                                <Label className={"pb-3"}>URLs</Label>
+                                                <Label className={"pb-3 font-bold"}>URLs</Label>
                                                 <p className="text-sm text-muted-foreground mb-2">
                                                     <Transl>Adicione links do site da unidade, blog ou perfis sociais.</Transl>
                                                 </p>
@@ -311,7 +359,7 @@ export default function SettingsPage() {
 
                                             {/* Avatar da empresa */}
                                             <div className="">
-                                                <Label className={"pb-3"}>
+                                                <Label className={"pb-3 font-bold"}>
                                                     <Transl>Avatar da empresa</Transl>
                                                 </Label>
 
@@ -345,7 +393,7 @@ export default function SettingsPage() {
 
                                             {/* Identificador da Unidade */}
                                             <div className="">
-                                                <Label className={"pb-3"}><Transl>ID da Unidade</Transl></Label>
+                                                <Label className={"pb-3 font-bold"}><Transl>ID da Unidade</Transl></Label>
 
                                                 <div className="w-full max-w-md">
                                                     <div className="flex flex-wrap items-center gap-2">
@@ -370,7 +418,7 @@ export default function SettingsPage() {
 
                                             {/* Ferramentas e transferências (ex.: Transferir Matriz) */}
                                             <div className="">
-                                                <Label className={"pb-3"}>
+                                                <Label className={"pb-3 font-bold"}>
                                                     <Transl>Transferência</Transl>
                                                 </Label>
                                                 <p className="text-sm text-muted-foreground mb-2">
@@ -392,7 +440,7 @@ export default function SettingsPage() {
 
                                             {/* Apagar empresa */}
                                             <div>
-                                                <Label className={"pb-3"}>
+                                                <Label className={"pb-3 font-bold"}>
                                                     <Transl>Deletar empresa</Transl>
                                                 </Label>
                                                 <Alert variant="destructive" className="mb-4 max-w-md">
@@ -421,56 +469,13 @@ export default function SettingsPage() {
                             </>
                         )}
 
-                        {/* ---------- INTEGRAÇÕES (IoT) ---------- */}
-                        {active === "Integracoes" && (
-                            <>
-                                <h2 className="text-lg font-semibold mb-4"><Transl>Integrações & IoT</Transl></h2>
-                                <div className="grid gap-4">
-                                    <div>
-                                        <Label className={"pb-3"}><Transl>Habilitar integração IoT</Transl></Label>
-                                        <p className="text-sm text-muted-foreground mb-2">
-                                            <Transl>Conectar dispositivos de campo (ex.: potenciômetro que simula nível de agrotóxico).</Transl>
-                                        </p>
-                                        <div className="flex items-center gap-3">
-                                            <Switch id="iot-enabled" checked={iotEnabled} onCheckedChange={(v) => setIotEnabled(!!v)} />
-                                            <Label htmlFor="iot-enabled" className="text-sm"><Transl>Ativar</Transl></Label>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Label className={"pb-3"} htmlFor="deviceId"><Transl>ID do dispositivo</Transl></Label>
-                                        <Input id="deviceId" value={deviceId} onChange={(e) => setDeviceId(e.target.value)} />
-                                        <p className="text-sm text-muted-foreground mt-1"><Transl>Identificador do sensor/placa conectado.</Transl></p>
-                                    </div>
-
-                                    <div>
-                                        <Label className={"pb-3"} htmlFor="iotThreshold"><Transl>Limite de alerta (percent)</Transl></Label>
-                                        <div className="flex items-center gap-2">
-                                            <Input id="iotThreshold" type="number" value={iotThreshold} onChange={(e) => setIotThreshold(Number(e.target.value))} className="w-32" />
-                                            <Button size="sm"><Transl>Salvar</Transl></Button>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground mt-1"><Transl>Se o valor lido for maior que esse percentual, o lote será marcado como impróprio automaticamente.</Transl></p>
-                                    </div>
-
-                                    <div>
-                                        <h3 className="text-md font-semibold mb-2"><Transl>Log de leitura (simulado)</Transl></h3>
-                                        <p className="text-sm text-muted-foreground mb-2"><Transl>Aqui exibiremos um preview das leituras recebidas do dispositivo (simulação) e ações tomadas pelo sistema.</Transl></p>
-                                        <div className="flex gap-2 rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">
-                                            <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                                            <span><Transl>Sem leituras recentes.</Transl></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
                         {/* ---------- Aparencia ---------- */}
                         {active === "Aparencia" && (
                             <>
                                 <h2 className="text-lg font-semibold mb-4"><Transl>Aparência</Transl></h2>
                                 <div className="grid gap-4">
                                     <div>
-                                        <Label className="pb-3"><Transl>Tamanho da fonte</Transl></Label>
+                                        <Label className="pb-3 font-bold"><Transl>Tamanho da fonte</Transl></Label>
                                         <Select onValueChange={(v) => setFont(v)} value={font}>
                                             <SelectTrigger className="w-64">
                                                 <SelectValue placeholder={<Transl>Selecionar tamanho</Transl>} />
@@ -488,7 +493,7 @@ export default function SettingsPage() {
 
                                     {/* Language selector */}
                                     <div className="flex items-center gap-2">
-                                        <Label htmlFor="language-select" className="hidden md:inline-block"><Transl>Idioma</Transl></Label>
+                                        <Label htmlFor="language-select" className="hidden md:inline-block font-bold"><Transl>Idioma</Transl></Label>
                                         <Select value={lang} onValueChange={(v) => changeLang(v)}>
                                             <SelectTrigger id="language-select" className="w-40">
                                                 <SelectValue />
@@ -502,7 +507,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div>
-                                        <Label className="pb-3"><Transl>Tema</Transl></Label>
+                                        <Label className="pb-3 font-bold"><Transl>Tema</Transl></Label>
                                         <div className="flex items-start gap-6 mt-3">
                                             <button onClick={() => setTheme("light")} className={`rounded-lg border p-3 ${theme === "light" ? "border-primary" : "border-border"}`} aria-pressed={theme === "light"}>
                                                 <div className="w-32 h-20 bg-white border rounded" />
@@ -531,7 +536,7 @@ export default function SettingsPage() {
                                 <div className="grid gap-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <Label><Transl>Notificações por email</Transl></Label>
+                                            <Label className={"font-bold"}><Transl>Notificações por email</Transl></Label>
                                             <p className="text-sm text-muted-foreground">
                                                 <Transl>Receba resumos e alertas por email (ex.: alertas de qualidade de lote).</Transl>
                                             </p>
@@ -540,7 +545,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div>
-                                        <Label><Transl>Push móvel</Transl></Label>
+                                        <Label className={"font-bold"}><Transl>Push móvel</Transl></Label>
                                         <p className="text-sm text-muted-foreground">
                                             <Transl>Configure notificações push em dispositivos de operação.</Transl>
                                         </p>

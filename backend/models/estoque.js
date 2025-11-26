@@ -17,120 +17,6 @@ export async function getEstoques() {
   }
 }
 
-export async function getEstoqueAcimaMinimo(itens_acima_minimo) {
-  try {
-    const Estoque = await prisma.estoque.findMany({
-      where: { itens_acima_minimo },
-    });
-    return {
-      sucesso: true,
-      estoqueMinimo,
-      message: "Estoque listado com sucesso.",
-    };
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao listar estoque minimo.",
-      detalhes: error.message, // opcional, para debug
-    };
-  }
-}
-
-export async function getEstoqueAbaixoMinimo(itens_abaixo_minimo) {
-  try {
-    const estoqueMin = await prisma.estoque.findMany({
-      where: { itens_abaixo_minimo },
-    });
-    return {
-      sucesso: true,
-      estoqueMin,
-      message: "Estoque listado com sucesso.",
-    };
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao listar estoque minimo.",
-      detalhes: error.message, // opcional, para debug
-    };
-  }
-}
-
-export async function getEstoqueProximoValorMin(quantidade) {
-  try {
-    const estoque = await prisma.estoque.findMany({ where: quantidade <= 200 });
-    return {
-      sucesso: true,
-      estoque,
-      message: "Estoque listado com sucesso.",
-    };
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao listar estoque minimo.",
-      detalhes: error.message, // opcional, para debug
-    };
-  }
-}
-
-export async function getValorEstoquePorProduto(produtoId) {
-  try {
-    const produto = await prisma.produto.findUnique({
-      where: { id: Number(produtoId) },
-      include: {
-        estoques: true
-      }
-    });
-
-    if (!produto) return null;
-
-    const estoque = produto.estoques[0]; // estoque único por unidadeId + produtoId
-
-    const valor_total = estoque.quantidade * produto.preco;
-
-    return {
-      produto: {
-        id: produto.id,
-        nome: produto.nome,
-        preco: produto.preco
-      },
-      quantidade: estoque.quantidade,
-      valor_total
-    };
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao listar estoque minimo.",
-      detalhes: error.message, // opcional, para debug
-    };
-  }
-}
-
-export async function getEstoquePorCategoria(categoria) { 
-  try {
-    const estoque = await prisma.estoque.findMany({
-      where: {
-        produto: {
-          categoria: categoria
-        }
-      },
-      include: {
-        produto: true, // opcional: traz informações do produto junto
-      }
-    });
-    return {
-      sucesso: true,
-      estoque,
-      message: "Estoque listado com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao listar estoque por id.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
 export async function getEstoquePorId(id) {
   try {
     const estoque = await prisma.estoque.findUnique({
@@ -152,13 +38,21 @@ export async function getEstoquePorId(id) {
 
 export async function createEstoque(data) {
   try {
+    const estoque = await prisma.estoque.findUnique({ where: { id: data.id } });
+    // Valdidacoes
+    if(estoque.id != data.id) {
+      return res.json({ message: "Estoque nao encontrado." });
+    }
+    if(estoque.unidadeId != data.unidadeId) {
+      return res.json({ message: "Unidade nao encontrada." });
+    }
+    
     const novoEstoque = await prisma.estoque.create({
       data: {
         unidadeId: data.unidadeId,
-        produtoId: data.produtoId,
-        quantidade: data.quantidade,
-        estoqueMinimo: data.estoqueMinimo,
-      },
+        descricao: data.descricao,
+        qntdItens: data.qntdItens
+      }
     });
     return {
       sucesso: true,
@@ -176,13 +70,18 @@ export async function createEstoque(data) {
 
 export async function updateEstoque(id, data) {
   try {
+    const estoque = await prisma.estoque.findUnique({ where: { id: data.id } });
+    // Valdidacoes
+    if(estoque.id != data.id) {
+      return res.json({ message: "Estoque nao encontrado." });
+    }
+
     const estoqueAtualizado = await prisma.estoque.update({
       where: { id },
       data: {
         unidadeId: data.unidadeId,
-        produtoId: data.produtoId,
-        quantidade: data.quantidade,
-        estoqueMinimo: data.estoqueMinimo,
+        descricao: data.descricao,
+        qntdItens: data.qntdItens
       },
     });
     return {
@@ -201,6 +100,11 @@ export async function updateEstoque(id, data) {
 
 export async function deleteEstoque(id) {
   try {
+    const estoque = await prisma.estoque.findUnique({ where: { id: id } });
+    // Valdidacoes
+    if(estoque.id != id) {
+      return res.json({ message: "Estoque nao encontrado." });
+    }
     await prisma.estoque.delete({
       where: { id },
     });

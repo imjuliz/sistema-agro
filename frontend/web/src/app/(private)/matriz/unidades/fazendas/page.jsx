@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash, TrendingUp, Sliders, Plus, MoreHorizontal, Download, Upload, Edit, MapPin, Wifi, Command as CommandIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, List, Grid, DownloadIcon, FileTextIcon, FileSpreadsheetIcon } from "lucide-react";
+import { Trash, TrendingUp, Sliders, Plus, MoreHorizontal, Download, Upload, Edit, MapPin, Wifi, Command as CommandIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, List, Grid, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
@@ -23,27 +23,13 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
-
-// SAMPLE DATA (em app real, busque via API)
-const sampleUnits = Array.from({ length: 18 }).map((_, i) => {
-    const status = i % 6 === 0 ? "Inativa" : "Ativa";
-    return {
-        id: `F-${300 + i}`,
-        name: `Fazenda ${i + 1}`,
-        type: "Fazenda",
-        location: ["São Paulo, SP", "Campinas, SP", "Hortolândia, SP"][i % 3],
-        manager: ["Ana Souza", "Carlos Lima", "Mariana P."][i % 3],
-        status,
-        sync: new Date(Date.now() - i * 3600_000).toISOString(),
-        iotHealth: Math.floor(40 + Math.random() * 60),
-        areaHa: Math.floor(50 + Math.random() * 400),
-    };
-});
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function FazendasPage() {
     // usePerfilProtegido('gerente_matriz'); 
+    const { user, logout, fetchWithAuth } = useAuth();
 
-    const [units, setUnits] = useState(sampleUnits);
+    const [units, setUnits] = useState([]);
     const [query, setQuery] = useState("");
     const [locationFilter, setLocationFilter] = useState("");
     const [selected, setSelected] = useState([]);
@@ -64,46 +50,119 @@ export default function FazendasPage() {
         return () => clearTimeout(t);
     }, []);
 
-    // verificar se essa requisicao esta certa (AINDA NAO ESTA FUNCIONAL)
+    // busca lista de fazendas
     useEffect(() => {
+        let mounted = true;
+
         async function fetchFazendas() {
             setLoading(true);
             try {
-                const res = await fetch(`${API_URL}fazendas`, {
-                    credentials: "include",
-                });
-                const data = await res.json();
-                if (data.sucesso) setUnits(data.unidades);
+                const url = `${API_URL}matriz/fazendas`;
+                console.debug("[fetchFazendas] GET", url);
+                const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
+
+                if (res.status === 401) {
+                    console.warn("[fetchFazendas] 401 Unauthorized");
+                    if (!mounted) return;
+                    setUnits([]); // garante array
+                    return;
+                }
+
+                const body = await res.json().catch(() => null);
+                console.debug("[fetchFazendas] body:", body);
+
+                // Normaliza possíveis formatos
+                let unidades = null;
+                if (!body) unidades = null;
+                else if (Array.isArray(body)) unidades = body;
+                else if (Array.isArray(body.unidades)) unidades = body.unidades;
+                else if (Array.isArray(body.data?.unidades)) unidades = body.data.unidades;
+                else if (body.sucesso && Array.isArray(body.unidades)) unidades = body.unidades;
+                else unidades = null;
+
+                if (!mounted) return;
+
+                if (unidades && Array.isArray(unidades) && unidades.length > 0) {
+                    const normalized = unidades.map(u => ({
+                        id: u.id,
+                        name: u.nome ?? u.name ?? String(u.id),
+                        type: u.tipo ?? u.type ?? "Fazenda",
+                        location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
+                        manager: u.gerente?.nome ?? u.gerente ?? u.manager ?? "—",
+                        status: u.status ? String(u.status) : "Ativa",
+                        sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
+                        iotHealth: u.iotHealth ?? Math.floor(40 + Math.random() * 60),
+                        areaHa: u.areaProdutiva ? Number(u.areaProdutiva) : (u.areaHa ?? 0)
+                    }));
+                    setUnits(normalized);
+                } else {
+                    console.info("[fetchFazendas] nenhum item encontrado, corpo:", body);
+                    setUnits([]); // garante que .filter funcione
+                }
             } catch (err) {
                 console.error("Erro ao carregar fazendas:", err);
+                setUnits([]);
             } finally {
-                setLoading(false);
+                if (mounted) setLoading(false);
             }
         }
+
         fetchFazendas();
-    }, []);
+        return () => { mounted = false; };
+    }, [fetchWithAuth]);
 
     // Buscar métricas de fazendas (total, ativas, inativas, etc)
     useEffect(() => {
+        let mounted = true;
+
         async function fetchMetrics() {
             try {
-                const res = await fetch(`${API_URL}unidades/fazendas/contagem`);
-                const data = await res.json();
-                if (res.ok) {
-                    setMetrics({
-                        total: data.total ?? 0,
-                        active: data.ativas ?? 0,
-                        inactive: data.inativas ?? 0,
-                    });
-                } else {
-                    console.warn("Erro ao buscar métricas:", data);
+                // URL correta (conforme suas rotas backend)
+                const url = `${API_URL}matriz/contar-fazendas`;
+                console.debug("[fetchMetrics] requesting", url);
+
+                // usando seu fetchWithAuth (faz refresh se necessário)
+                const res = await fetchWithAuth(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } });
+
+                console.debug("[fetchMetrics] status:", res.status);
+
+                if (res.status === 401) {
+                    console.warn("[fetchMetrics] 401 — não autorizado (cookie/refresh faltando)");
+                    if (!mounted) return;
+                    setMetrics({ total: 0, active: 0, inactive: 0 });
+                    return;
                 }
+
+                const body = await res.json().catch(() => null);
+                console.debug("[fetchMetrics] body:", body);
+
+                // tenta vários formatos possíveis (fallbacks)
+                const total = Number(body?.total ?? body?.count ?? body?.resultado?.total ?? 0) || 0;
+                const active = Number(body?.ativas ?? body?.active ?? 0) || 0;
+                const inactive = Number(body?.inativas ?? body?.inactive ?? Math.max(0, total - active)) || 0;
+
+                // fallback se backend retornou uma lista em 'unidades'
+                if (total === 0 && Array.isArray(body?.unidades)) {
+                    if (!mounted) return;
+                    setMetrics({
+                        total: body.unidades.length,
+                        active: Number(body.unidades.filter(u => String(u.status).toUpperCase() === 'ATIVA').length) || 0,
+                        inactive: Number(body.unidades.filter(u => String(u.status).toUpperCase() === 'INATIVA').length) || 0
+                    });
+                    return;
+                }
+
+                if (!mounted) return;
+                setMetrics({ total, active, inactive });
             } catch (err) {
-                console.error("Erro ao buscar métricas:", err);
+                console.error("[fetchMetrics] erro:", err);
+                if (mounted) setMetrics({ total: 0, active: 0, inactive: 0 });
             }
         }
+
         fetchMetrics();
-    }, []);
+        return () => { mounted = false; };
+    }, [fetchWithAuth]); // depende do fetchWithAuth
 
 
     // filtra somente fazendas e aplica query + localização
@@ -134,16 +193,6 @@ export default function FazendasPage() {
         setUnits(prev => prev.filter(u => !selected.includes(u.id)));
         setSelected([]);
     }
-
-    // const metrics = useMemo(() => {
-    //     const total = filtered.length;
-    //     const active = filtered.filter(u => u.status === "Ativa").length;
-    //     const inactive = total - active;
-    //     const avgIot = Math.round((filtered.reduce((s, u) => s + u.iotHealth, 0) / Math.max(1, filtered.length)) || 0);
-    //     const totalArea = filtered.reduce((s, u) => s + (u.areaHa || 0), 0);
-    //     return { total, active, inactive, avgIot, totalArea };
-    // }, [filtered]);
-
 
     // ---------------------------------------------------------------------
     // grafico de barras "Fazendas mais produtivas"
@@ -191,13 +240,6 @@ export default function FazendasPage() {
     return (
         <div className="min-h-screen p-6 bg-surface-50">
             <div className="max-w-screen-2xl mx-auto w-full">
-                <header className="mb-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Unidades — Fazendas</h1>
-                        <p className="text-sm text-muted-foreground">Visão dedicada para a Matriz: resumo e detalhes de fazendas</p>
-                    </div>
-                </header>
-
                 {/* METRICS */}
                 <div className="grid grid-cols-3 gap-4 mb-8">
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
@@ -251,23 +293,7 @@ export default function FazendasPage() {
                                         </div>
 
                                         <div className="space-y-3">
-                                            {/* TIPO */}
-                                            {/* <div>
-                                                <div className="text-xs text-muted-foreground mb-1">Tipo</div>
-                                                <div className="grid grid-cols-1 gap-1">
-                                                    {["Matriz", "Fazenda", "Loja"].map(t => (
-                                                        <label key={t} className="flex items-center justify-between px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
-                                                            <div className="flex items-center gap-2">
-                                                                <Checkbox checked={!!typeFilters[t]} onCheckedChange={() => { toggleType(t); setPage(1); }} />
-                                                                <div className="capitalize">{t}</div>
-                                                            </div>
-                                                            <div className="text-sm text-neutral-400">{units.filter(u => u.type === t).length}</div>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
 
-                                            <Separator /> */}
                                             {/* STATUS */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Status</div>
@@ -389,7 +415,10 @@ export default function FazendasPage() {
 
                                 {/* Empty state */}
                                 {filtered.length === 0 && (
-                                    <div className="py-8 text-center text-muted-foreground">Nenhuma fazenda encontrada.</div>
+                                    <div className="py-8 flex flex-col items-center gap-4 text-center text-muted-foreground">
+                                        <Tractor size={50} />
+                                        <p className="font-medium">Nenhuma fazenda encontrada.</p>
+                                    </div>
                                 )}
                             </div>
                         )}
