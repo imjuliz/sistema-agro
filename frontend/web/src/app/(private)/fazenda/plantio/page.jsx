@@ -1,3 +1,4 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, TableDemo,ChartLineMultiple, TableDemo2 } from "@/components/Fazenda/plantio"

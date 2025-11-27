@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+"use client"
 import * as React from 'react';
 import { SectionCards, ChartPieDonut, SectionCards2, SectionCards3, GraficoDeBarras, CalendarEventListDemo, TableDemo } from "@/components/Fazenda/dashboard"
 import { TweetGrid } from "@/components/ui/tweet-grid";

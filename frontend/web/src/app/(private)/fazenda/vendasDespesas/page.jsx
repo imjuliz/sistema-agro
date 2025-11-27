@@ -1,3 +1,4 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, EnvioLotes, TableDemo2, GraficoDeBarras, GraficoPizza, TabelaSaidas, TabelaSobDemanda } from "@/components/Fazenda/vendasDespesas"

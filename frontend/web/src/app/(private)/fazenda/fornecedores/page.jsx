@@ -1,3 +1,5 @@
+"use client"
+
 import { DataTable } from "@/components/Fazenda/parceiros"
 import data from "./data.json"
 // Para tradução
