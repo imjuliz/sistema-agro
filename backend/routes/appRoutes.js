@@ -8,13 +8,14 @@ import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { verContratosController, listarFornecedoresController, calcularFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
+import {   calcularFornecedoresController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController
 } from "../controllers/financeiro/financeiroController.js";
+import { listarFornecedoresExternos } from "../models/unidade-de-venda/fornecedores.js";
 
 
 // tradução
@@ -53,12 +54,16 @@ router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
 router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
 router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
 router.get("/somarSaidas/:unidadeId", somarSaidasController);
-router.get("/verContratos/:unidadeId", verContratosController);
 
 //fornecedores --------------------------------------------------------------------
 router.get("/fornecedoresCalculo", calcularFornecedoresController);
-router.get("/verFornecedores/:unidadeId", listarFornecedoresController);
-
+router.get("/listarFornecedoresExternos/:unidadeId", listarFornecedoresExternosController);
+router.get("/listarFornecedoresInternos/:unidadeId", listarFornecedoresInternosController);
+router.get("/listarLojasParceiras/:unidadeId", listarLojasAtendidasController);
+router.get("/verContratosComLojas/:fornecedorUnidadeId", verContratosComLojasController);
+router.get("/verContratosExternos/:unidadeId", verContratosExternosController);
+router.get("/verContratosComFazendas/:unidadeId", verContratosComFazendasController);
+router.post("/criarContratoInterno", criarContratoInternoController);
 //perfil --------------------------------------------------------------------
 
 export default router;
