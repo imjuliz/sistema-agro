@@ -263,7 +263,7 @@ export function StoreLevelView() {
 
           {filteredItems.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Nenhum item encontrado para os filtros aplicados.</p>
+              <p className="text-muted-foreground">Nenhum item encontrado.</p>
             </div>
           )}
 

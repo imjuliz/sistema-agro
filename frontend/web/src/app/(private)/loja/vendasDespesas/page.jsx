@@ -2,7 +2,14 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive, ChartPieDonut } from "@/components/chart-area-interactive"
 import ComparisonTable from "@/components/comparison-table"
 import FlexiFilterTable from "@/components/flexi-filter-table"
-export default function Page() {
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+
+export default function VendasDespesasLoja() {
+  const { fetchWithAuth } = useAuth();
+  usePerfilProtegido("GERENTE_LOJA");
+
   return (
     <div className="flex flex-1 flex-col p-10">
       <h1 className="text-2xl font-semibold ml-10">Vendas e Despesas</h1>

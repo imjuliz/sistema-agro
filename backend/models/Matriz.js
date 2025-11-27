@@ -17,16 +17,35 @@ export async function getUnidadePorId(id) {
   catch (error) {return { sucesso: false, erro: "Erro ao listar unidade por id.", detalhes: error.message };}
 }
 
-// buscar APENAS fazendas (use o valor do enum exato)
+// buscar APENAS fazendas 
 export async function getFazendas() {
   try {
     const fazendas = await prisma.unidade.findMany({
       where: { tipo: 'FAZENDA' },
       orderBy: { nome: 'asc' },
+      select: {
+        id: true,
+        nome: true,
+        cidade: true,
+        estado: true,
+        tipo: true,
+        status: true,
+        latitude: true,
+        longitude: true,
+        areaProdutiva: true,
+        atualizadoEm: true,
+        criadoEm: true,
+        gerente: {
+          select: { nome: true }
+        }
+      }
     });
-    return { sucesso: true, unidades: fazendas, message: "Fazendas listadas com sucesso." };
+
+    return { sucesso: true, unidades: fazendas };
   }
-  catch (error) {return { sucesso: false, erro: "Erro ao listar fazendas.", detalhes: error.message };}
+  catch (error) {
+    return { sucesso: false, erro: "Erro ao listar fazendas.", detalhes: error.message };
+  }
 }
 
 export async function getMatriz() {

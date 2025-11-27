@@ -14,8 +14,14 @@ import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { Card, CardContent, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card"
 import FornecedoresCard from '@/components/fornecedores/fornecedores-card';
 import { OrderManagement } from '@/components/fornecedores/OrderManagement';
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 export default function FornecedoresLoja() {
+    const { fetchWithAuth } = useAuth();
+  usePerfilProtegido("GERENTE_LOJA");
+
     return (
         <>
             <div className="flex flex-1 flex-col p-10">

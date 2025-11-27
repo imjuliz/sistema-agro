@@ -17,7 +17,9 @@ import { Calculator, CreditCard, Wallet, TrendingUp, TrendingDown, BarChart3, Fi
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 
-export default function App() {
+export default function FinancasMatriz() {
+  usePerfilProtegido("GERENTE_MATRIZ");
+
   // Dados padrão para inicialização
   const defaultCategories = [
     {

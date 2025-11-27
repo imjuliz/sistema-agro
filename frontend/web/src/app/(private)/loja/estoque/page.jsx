@@ -6,8 +6,14 @@ import { StoreLevelView } from '@/components/loja/estoque/StoreLevelView';
 import { BrandLevelView } from '@/components/Estoque/BrandLevelView';
 import { SetupView } from '@/components/Estoque/SetupView';
 import { InventoryProvider } from '@/contexts/InventoryContext';
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
-export default function App() {
+export default function EstoqueLoja() {
+    const { fetchWithAuth } = useAuth();
+    usePerfilProtegido("GERENTE_LOJA");
+
     const [activeView, setActiveView] = useState('store');
 
     return (

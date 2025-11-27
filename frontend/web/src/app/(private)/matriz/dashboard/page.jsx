@@ -1,7 +1,7 @@
 // Página Dashboard: Oferecer uma visão resumida da operação.
 // layout: Cards principais (produção atual, vendas totais, despesas totais, lucro líquido). Gráficos: Produção por fazenda. Vendas por loja. Evolução financeira (últimos 6 meses). Alertas: Lotes prestes a vencer. Estoque baixo. Lotes bloqueados por agrotóxicos.
 // Funcionalidades: Filtros (por período, unidade, tipo de produto). Exportação rápida para PDF/Excel. Links de atalho para páginas detalhadas.
-
+"use client"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/Fazenda/parceiros"
 import { SectionCards } from "@/components/section-cards"
@@ -15,9 +15,12 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Users, Briefcase, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees } from 'lucide-react';
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 //-------
 export default function Page() {
+  usePerfilProtegido("GERENTE_MATRIZ");
+
   return (
     <div className="flex flex-col p-10 gap-10">
       <div className="@container/main flex flex-2 flex-col gap-1">

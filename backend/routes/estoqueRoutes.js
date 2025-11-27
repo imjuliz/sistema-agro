@@ -1,6 +1,6 @@
 import { getEstoquesController, getEstoquePorIdController, createEstoqueController, updateEstoqueController, deleteEstoqueController } from "../controllers/EstoqueController.js";
 import express from "express";
-import { auth } from "../middleware/authMiddleware.js";
+import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

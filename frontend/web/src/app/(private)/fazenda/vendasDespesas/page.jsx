@@ -1,7 +1,12 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, EnvioLotes, TableDemo2, GraficoDeBarras, GraficoPizza,TabelaSaidas, TabelaSobDemanda } from "@/components/Fazenda/vendasDespesas"
-export default function Page() {
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+
+export default function vendasDespesasFazenda() {
+    const { fetchWithAuth } = useAuth();
+
     return (
         <div className="flex flex-1 flex-col p-10">
             <h1 className="text-2xl font-semibold mb-6 ml-10">Vendas e Despesas</h1>
