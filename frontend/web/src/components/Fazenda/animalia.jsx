@@ -13,7 +13,7 @@ import { Layers, TriangleAlert, TrendingUpDown } from 'lucide-react'
 
 export function SectionCards() {
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="h-fit p-0">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -38,19 +38,6 @@ export function SectionCards() {
                     </div>
                 </CardContent>
             </Card>
-            <Card className="h-fit p-0">
-                <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg">
-                            <TriangleAlert className="size-10" />
-                        </div>
-                        <div>
-                            <CardDescription>Alerta de sanidade</CardDescription>
-                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">12 </CardTitle>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
             <Card className="h-fit p-0 gap-0">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -58,7 +45,7 @@ export function SectionCards() {
                             <TrendingUpDown className="size-10" />
                         </div>
                         <div>
-                            <CardDescription>Mentabilidade por lote</CardDescription>
+                            <CardDescription>Rentabilidade por lote</CardDescription>
                             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">R$ 15,09F</CardTitle>
                         </div>
                     </div>

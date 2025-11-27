@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, MoreHorizontal, Download, Upload, Trash, Edit, MapPin, Wifi, Sliders, Command as CommandIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, List, Grid, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 // ---------------------------------------------------------------------
 // grafico "Lojas com melhor desempenho"
@@ -96,6 +97,8 @@ function useSavedFilters() {
 }
 
 export default function UnitManagementPageFull() {
+    usePerfilProtegido("GERENTE_MATRIZ");
+
     const [units, setUnits] = useState(sampleUnits);
     const [query, setQuery] = useState('');
     // perPage agora dinâmico
@@ -108,8 +111,8 @@ export default function UnitManagementPageFull() {
     const { saved, setSaved } = useSavedFilters();
 
     const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // por default mostra todos
-        const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true });
-        const [locationQuery, setLocationQuery] = useState('');
+    const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true });
+    const [locationQuery, setLocationQuery] = useState('');
 
     useEffect(() => {
         setLoading(true);

@@ -1,8 +1,16 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartBarMultiple } from "@/components/chart-area-interactive"
 import { SectionCards } from "@/components/section-cards"
 import ContributorsTable from "@/components/ruixen-contributors-table"
-export default function Page() {
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+
+export default function DashboardLoja() {
+  const { fetchWithAuth } = useAuth();
+  usePerfilProtegido("GERENTE_LOJA");
+
   return (
     <div className="flex flex-1 flex-col p-10">
       <h1 className="text-2xl font-semibold ml-10">Dashboard</h1>

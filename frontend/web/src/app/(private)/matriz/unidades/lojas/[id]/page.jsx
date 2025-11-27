@@ -55,8 +55,11 @@ import { RightPanel } from '@/components/matriz/Unidades/Fazenda/RightPanel';
 import { AddJobModal } from '@/components/matriz/Unidades/Fazenda/AddJobModal';
 import { LogActivityModal } from '@/components/matriz/Unidades/Fazenda/LogActivityModal';
 import { AddContactModal } from '@/components/matriz/Unidades/Fazenda/AddContactModal';
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 export default function FazendaDetalhe(props) {
+      usePerfilProtegido("GERENTE_MATRIZ");
+
   // garantir que params seja resolvido (evita o erro)
    const params = useParams();
   const { id } = params;

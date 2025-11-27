@@ -12,7 +12,8 @@ dotenv.config();
 export async function cadastrarSeController(req, res) {
   try {
     const { nome, email, senha } = userSchema.partial().parse(req.body);
-    const id = req.usuario.id
+
+    console.log( nome, email, senha );
 
     if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
 
@@ -20,10 +21,10 @@ export async function cadastrarSeController(req, res) {
     const existingUser = await getUserByEmail(email);
     if (existingUser) { return res.status(400).json({ error: "Email já cadastrado" }); }
 
+    console.log("oi");
     const user = await cadastrarSe({ nome, email, senha });
 
     res.status(201).json({ message: "Usuário criado com sucesso", user });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -46,10 +47,10 @@ export const updateUsuarioController = async (req, res) => {
 }
 
 export const deletarUsuarioController = async (req, res) => {
-  const { userId } = req.params
+  const { userId } = req.params;
 
   try {
-    const resultado = await deletarUsuario(userId)
+    const resultado = await deletarUsuario(userId);
 
     if (!resultado.sucesso) { return res.status(400).json(resultado) }
 
@@ -133,6 +134,19 @@ export async function loginController(req, res) {
     res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
 
     // retornar usuario com perfil como string
+    // return res.status(200).json({
+    //   sucesso: true,
+    //   data: {
+    //     accessToken,
+    //     usuario: {
+    //       id: user.id,
+    //       nome: user.nome,
+    //       email: user.email,
+    //       perfil: user.perfil?.funcao ?? null,
+
+    //     },
+    //   },
+    // });
     return res.status(200).json({
       sucesso: true,
       data: {
@@ -141,8 +155,13 @@ export async function loginController(req, res) {
           id: user.id,
           nome: user.nome,
           email: user.email,
+          telefone: user.telefone ?? null,
+          ftPerfil: user.ftPerfil ?? null,
           perfil: user.perfil?.funcao ?? null,
-
+          unidadeId: user.unidadeId ?? null,
+          status: user.status ?? null,
+          criadoEm: user.criadoEm ?? null,
+          atualizadoEm: user.atualizadoEm ?? null
         },
       },
     });
@@ -253,16 +272,31 @@ export async function refreshController(req, res) {
     console.log("[refreshController] refresh rotacionado com sucesso. sessaoId:", sessao.id);
 
     // return res.json({ accessToken });
+    // return res.json({
+    //   accessToken,
+    //   usuario: {
+    //     id: user.id,
+    //     nome: user.nome,
+    //     email: user.email,
+    //     perfil: user.perfil?.funcao ?? null
+    //   }
+    // });
+    // Retornar accessToken e usuario com campos públicos (perfil como funcao)
     return res.json({
       accessToken,
       usuario: {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        perfil: user.perfil?.funcao ?? null
+        telefone: user.telefone ?? null,
+        ftPerfil: user.ftPerfil ?? null,
+        perfil: user.perfil?.funcao ?? null,
+        unidadeId: user.unidadeId ?? null,
+        status: user.status ?? null,
+        criadoEm: user.criadoEm ?? null,
+        atualizadoEm: user.atualizadoEm ?? null
       }
     });
-
   } catch (err) {
     // log detalhado para encontrar raiz do problema
     console.error("refreshController - erro não tratado:", err.stack ?? err);
@@ -339,7 +373,9 @@ export const codigoController = async (req, res) => {
   const { codigo_reset } = req.body;
   try {
     const criarCodigo = await codigo(codigo_reset);
-    res.status(200).json({ message: "Código verificado com sucesso", criarCodigo });
+    res
+      .status(200)
+      .json({ message: "Código verificado com sucesso", criarCodigo });
   } catch (error) {
     console.error("Erro ao buscar codigo:", error);
     res.status(500).json({ error: "Erro ao buscar codigo" });

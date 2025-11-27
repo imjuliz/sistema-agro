@@ -7,6 +7,13 @@ import { getUnidadesController, getUnidadePorIdController, getFazendasController
 
 router.get('/unidades', auth(), getUnidadesController);
 router.get('/unidades/:id', auth(), getUnidadePorIdController);
+
+
 router.get('/fazendas', auth(), getFazendasController);
+router.get('/contar-fazendas', contarFazendasController);
+
+
 router.get('/lojas', auth(), getLojaController);
 router.get('/matrizes', auth(), getMatrizController)
+
+export default router;

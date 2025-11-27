@@ -21,6 +21,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 // SAMPLE DATA (em app real, busque via API)
 const sampleUnits = Array.from({ length: 18 }).map((_, i) => {
@@ -39,6 +40,8 @@ const sampleUnits = Array.from({ length: 18 }).map((_, i) => {
 });
 
 export default function FazendasPage() {
+    usePerfilProtegido("GERENTE_MATRIZ");
+
     const [units, setUnits] = useState(sampleUnits);
     const [query, setQuery] = useState("");
     const [locationFilter, setLocationFilter] = useState("");

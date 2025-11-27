@@ -2270,87 +2270,48 @@ async function main() {
 
         await prisma.estoque.createMany({ data: estoques, skipDuplicates: true })
 
+        // Assuma import prisma já feito acima do seed
 
-        // Assumo: existe `prisma` instanciado e constantes UMED (UnidadesDeMedida) já disponíveis.
-        // adapte nomes/enum se necessário.
-
+        // util: transforma nomes em slugs para sku (simples)
         function slugifyForSku(text) {
-            return String(text || "ITEM")
-                .toUpperCase()
-                .replace(/[^A-Z0-9]+/g, "-")
-                .replace(/(^-|-$)/g, "")
-                .slice(0, 30);
+            return String(text || '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         }
 
         /**
-         * Gera um array de objetos prontos para inserir em estoque_produto
-         * a partir de um pedidoItem (1 registro por unidade recebida).
+         * Gera um array de objetos prontos para inserir em EstoqueProduto a partir de
+         * um pedidoItem. Ajuste campos extras conforme seu model.
          */
-        function gerarEntradasDeEstoqueParaPedidoItem({
-            pedido,
-            pedidoItem,
-            estoqueId,
-            prefixo = null,
-            dataEntrada = null
-        }) {
-            const qty = Number(pedidoItem.quantidade ?? pedidoItem.quantidade) || 0;
-            if (qty <= 0) return [];
+        function gerarEntradasDeEstoqueParaPedidoItem({ pedido, pedidoItem, estoqueId, prefixo = '', dataEntrada = new Date() }) {
+            // nome, sku, marca, quantidade, precoUnitario, pedidoId, pedidoItemId, estoqueId, dataEntrada, unidadeBase
+            const nome = pedidoItem.fornecedorItem?.nome ?? pedidoItem.produto?.nome ?? pedidoItem.observacoes ?? `PedidoItem-${pedidoItem.id}`;
+            const sku = `${prefixo}-${pedidoItem.produtoId ?? pedidoItem.fornecedorItemId ?? pedidoItem.id}`.slice(0, 100);
+            const marca = pedidoItem.produto?.marca ?? null;
 
-            const baseNome =
-                (pedidoItem.fornecedorItem && pedidoItem.fornecedorItem.nome) ||
-                pedidoItem.nome ||
-                "Item do pedido";
+            const quantidadeRaw = pedidoItem.quantidade ?? 0;
+            // converte decimal-string para integer onde fizer sentido; aqui guardamos como INT truncado
+            const quantidade = Math.max(0, Math.floor(Number(quantidadeRaw)));
 
-            const pesoUnidade =
-                pedidoItem.fornecedorItem?.pesoUnidade ?? pedidoItem.pesoUnidade ?? null;
+            const precoUnitario = pedidoItem.precoUnitario ? Number(pedidoItem.precoUnitario) : 0;
 
-            const precoUnitario =
-                pedidoItem.precoUnitario ??
-                pedidoItem.fornecedorItem?.precoUnitario ??
-                null;
-
-            // unidadeBase (enum) — tente pegar do pedidoItem, se não existir use do fornecedorItem,
-            // ou fallback para 'UNIDADE' (adeque conforme seu enum).
-            const unidadeBase =
-                pedidoItem.unidadeMedida ??
-                pedidoItem.fornecedorItem?.unidadeMedida ??
-                "UNIDADE";
-
-            const fornecedorUnidadeId = pedido.origemUnidadeId ?? null;
-            const fornecedorExternoId = pedido.origemFornecedorExternoId ?? null;
-
-            const prefix = prefixo || slugifyForSku(baseNome);
-
-            const entries = [];
-            for (let i = 1; i <= qty; i++) {
-                entries.push({
-                    nome: baseNome,
-                    sku: `${prefix}-${String(i).padStart(4, "0")}`,
-                    marca: null,
-                    estoqueId,
-                    produtoId: null,
-                    producaoId: null,
-                    loteId: null,
-                    precoUnitario: precoUnitario !== null ? String(precoUnitario) : null,
-                    pesoUnidade: pesoUnidade !== undefined && pesoUnidade !== null ? String(pesoUnidade) : null,
-                    validade: null,
-                    unidadeBase,
-                    pedidoId: pedido.id,
-                    pedidoItemId: pedidoItem.id,
-                    fornecedorUnidadeId,
-                    fornecedorExternoId,
-                    dataEntrada: dataEntrada ?? pedido.dataRecebimento ?? new Date(),
-                    dataSaida: null
-                });
-            }
-            return entries;
+            return {
+                nome,
+                sku,
+                marca,
+                quantidade,
+                estoqueId: Number(estoqueId),
+                produtoId: pedidoItem.produtoId ?? null,
+                loteId: pedidoItem.loteId ?? null,
+                precoUnitario: precoUnitario || null,
+                unidadeBase: pedidoItem.unidadeMedida ?? undefined,
+                pedidoId: pedido.id,
+                pedidoItemId: pedidoItem.id,
+                fornecedorUnidadeId: null,
+                fornecedorExternoId: pedido.fornecedorExternoId ?? null,
+                dataEntrada: dataEntrada instanceof Date ? dataEntrada : new Date(dataEntrada)
+            };
         }
 
-        /**
-         * Main: cria registros em estoque_produto a partir dos pedidos entregues (documentoReferences listados).
-         */
         async function seedEstoqueProdutosFromDeliveredPedidos(prisma) {
-            // lista dos documentos de pedido que você usou no seed (adapte se houver mais)
             const docRefs = [
                 "Romaneio-AGB-20241203",
                 "Nota-VET-20240905",
@@ -2364,17 +2325,13 @@ async function main() {
                 "Romaneio-CU-20250418"
             ];
 
-            // puxa pedidos e itens. Ajuste include se seus nomes de relação forem diferentes.
+            // Busca os pedidos com os itens (observe include: { itens: true })
             const pedidos = await prisma.pedido.findMany({
                 where: { documentoReferencia: { in: docRefs } },
                 include: {
-                    // ajuste para o nome exato da relação em seu schema: aqui uso 'itens' (visto em model Pedido: itens PedidoItem[])
-                    itens: { include: { fornecedorItem: true } },
-                    contrato: true,
-                    fornecedorExterno: true,
-                    origemUnidade: true,
+                    itens: { include: { fornecedorItem: true, produto: true, lote: true } },
                     destinoUnidade: true,
-                    criadoPor: true
+                    fornecedorExterno: true
                 }
             });
 
@@ -2383,41 +2340,37 @@ async function main() {
                 return;
             }
 
-            const allEntries = [];
-
+            const created = [];
             for (const pedido of pedidos) {
-                // determine destino: ache o Estoque da unidade destino
-                const destinoUnidadeId = pedido.destinoUnidadeId ?? (pedido.destinoUnidade ? pedido.destinoUnidade.id : null);
+                const destinoUnidadeId = pedido.destinoUnidadeId ?? pedido.destinoUnidade?.id;
                 if (!destinoUnidadeId) {
                     console.warn("Pedido sem destinoUnidadeId:", pedido.documentoReferencia);
                     continue;
                 }
 
-                const estoque = await prisma.estoque.findFirst({ where: { unidadeId: destinoUnidadeId } });
+                const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(destinoUnidadeId) } });
                 if (!estoque) {
-                    console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, " (pedido)", pedido.documentoReferencia);
+                    console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, "(pedido)", pedido.documentoReferencia);
                     continue;
                 }
 
-                // Relação/shape de pedidoItem pode variar (pedido.pedidoItem ou pedido.pedidoItems)
-                const items = pedido.pedidoItem ?? pedido.pedidoItems ?? [];
+                const items = pedido.itens ?? [];
                 if (!items.length) {
                     console.warn("Pedido sem itens:", pedido.documentoReferencia);
                     continue;
                 }
 
+                // Inserir um a um para garantir vinculações e capturar erros
                 for (const pi of items) {
-                    // normalizar campo quantidade (string ou number)
-                    const qtd = Number(pi.quantidade ?? pi.quantidadeSolicitada ?? 0);
-                    if (isNaN(qtd) || qtd <= 0) {
-                        console.warn("Quantidade inválida em pedidoItem:", pi.id, "do pedido", pedido.documentoReferencia);
+                    // valida qtd
+                    const qtd = Number(pi.quantidade ?? 0);
+                    if (!qtd || isNaN(qtd) || qtd <= 0) {
+                        console.warn("Quantidade inválida em pedidoItem:", pi.id, "pedido", pedido.documentoReferencia);
                         continue;
                     }
 
-                    // prefixo sku baseado no nome do item e id do pedido para evitar colisões
-                    const prefix = slugifyForSku((pi.fornecedorItem && pi.fornecedorItem.nome) || pi.nome || `PED${pedido.id}-ITEM${pi.id}`);
-
-                    const entradas = gerarEntradasDeEstoqueParaPedidoItem({
+                    const prefix = slugifyForSku(pi.fornecedorItem?.nome ?? pi.produto?.nome ?? `PED${pedido.id}-ITEM${pi.id}`);
+                    const entrada = gerarEntradasDeEstoqueParaPedidoItem({
                         pedido,
                         pedidoItem: pi,
                         estoqueId: estoque.id,
@@ -2425,32 +2378,19 @@ async function main() {
                         dataEntrada: pedido.dataRecebimento ?? new Date()
                     });
 
-                    // opcional: limite máximo por item pra evitar criar milhões acidentalmente
-                    // se quiser habilitar, descomente a próxima linha e ajuste o limite.
-                    // if (entradas.length > 5000) entradas.length = 5000;
-
-                    allEntries.push(...entradas);
+                    // Atenção: create pode falhar devido a unique constraint (estoqueId+produtoId). Tratamos com try/catch.
+                    try {
+                        const novo = await prisma.estoqueProduto.create({ data: entrada });
+                        created.push(novo);
+                    } catch (err) {
+                        // se houver constraint, logamos e pulamos
+                        console.warn("Falha ao criar EstoqueProduto para pedidoItem", pi.id, "erro:", err.message);
+                    }
                 }
             }
 
-            if (!allEntries.length) {
-                console.warn("Nenhuma entrada de estoque a criar a partir dos pedidos consultados.");
-                return;
-            }
-
-            // Inserir em lotes para não exceder limites
-            const BATCH = 1000;
-            for (let i = 0; i < allEntries.length; i += BATCH) {
-                const batch = allEntries.slice(i, i + BATCH);
-                // Ajuste: createMany espera os nomes exatos das colunas — use exatamente os campos do seu model.
-                await prisma.estoqueProduto.createMany({
-                    data: batch,
-                    skipDuplicates: true
-                });
-                console.log(`Inseridos ${batch.length} registros de estoque_produto (batch ${Math.floor(i / BATCH) + 1}).`);
-            }
-
-            console.log("Finalizado: total de entradas criadas:", allEntries.length);
+            console.log("Finalizado seedEstoqueProdutosFromDeliveredPedidos — criados:", created.length);
+            return created.length;
         }
 
         await seedEstoqueProdutosFromDeliveredPedidos(prisma);
@@ -2644,7 +2584,7 @@ async function main() {
             const loteCasa = await prisma.lote.create({
                 data: {
                     unidadeId: unidadeMap["Fazenda Teste"],
-                    responsavelId: usuarioMap["Usuario Ficticio"] ,
+                    responsavelId: usuarioMap["Usuario Ficticio"],
                     nome: "Lote - Casa Útil Mercado - 2025-03-02",
                     tipo: TL.OUTRO,
                     qntdItens: 0,

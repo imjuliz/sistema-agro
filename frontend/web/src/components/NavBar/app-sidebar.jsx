@@ -1,6 +1,6 @@
 "use client"
 import * as React from "react"
-import { AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal, } from "lucide-react"
+import { AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal, WalletCards, Tractor, Store} from "lucide-react"
 import { NavMain } from "@/components/NavBar/nav-main"
 import { NavProjects } from "@/components/NavBar/nav-projects"
 import { NavUser } from "@/components/NavBar/nav-user"
@@ -32,7 +32,7 @@ function getMenuByPerfil(perfil) {
           {
             title: "Financeiro",
             url: "/matriz/financeiro",
-            icon: PieChart,
+            icon: WalletCards,
           },
           {
             title: "Configurações",
@@ -42,8 +42,8 @@ function getMenuByPerfil(perfil) {
           },
         ],
         projects: [
-          { name: "Fazendas", url: "/matriz/unidades/fazendas", icon: Frame },
-          { name: "Lojas", url: "/matriz/unidades/lojas", icon: PieChart },
+          { name: "Fazendas", url: "/matriz/unidades/fazendas", icon: Tractor },
+          { name: "Lojas", url: "/matriz/unidades/lojas", icon: Store },
         ],
       }
 

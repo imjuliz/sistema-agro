@@ -170,7 +170,7 @@ export const somarDiariaController = async (req, res) => { //FUNCIONANDO
   }
 };
 
-export const somarEntradaMensalController = async (req, res) => { //NAO FUNCIONANDO
+export const somarEntradaMensalController = async (req, res) => { //TESTAR
   try {
     const unidadeId = Number(req.params.unidadeId);
 
@@ -199,12 +199,12 @@ export const somarSaidasController = async (req, res) => { //FUNCIONANDO
 }
 
 
-export const calcularLucroController = async (req, res) => { //NAO FUNCIONANDO :(
+export const calcularLucroController = async (req, res) => { //TEM Q TESTAR 👍
   try {
     // Pegamos a unidade logada (supondo que vem do middleware de autenticação)
-    const unidadeId = req.params.unidadeId; //acredito que na hora de implementar no sistema tem que colocar req.user?.unidadeId
+    const unidadeId = Number(req.params.unidadeId); //acredito que na hora de implementar no sistema tem que colocar req.user?.unidadeId
 
-    if (!unidadeId) { return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' }); }
+    if (!unidadeId || isNaN(unidadeId)) { return res.status(400).json({ error: 'Unidade não encontrada para o usuário.' }); }
 
     // Chama o model que retorna o lucro
     const resultado = await calcularLucroDoMes(unidadeId);

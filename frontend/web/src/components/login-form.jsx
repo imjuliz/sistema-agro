@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from 'next/navigation'
+import { EyeOff, Eye } from 'lucide-react';
 
 export function LoginForm({ className, ...props }) {
   const { login } = useAuth();
@@ -14,6 +15,7 @@ export function LoginForm({ className, ...props }) {
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -73,10 +75,25 @@ export function LoginForm({ className, ...props }) {
         <div className="grid gap-3">
           <div className="flex items-center">
             <Label htmlFor="password">Senha</Label>
-
           </div>
-          <Input id="password" type="password" required value={senha} onChange={(e) => setSenha(e.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={show ? "text" : "password"}
+              required
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="pr-10"
+            />
+
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+              onClick={() => setShow(!show)}
+            >
+              {show ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <a href="/esqueciSenha" className="ml-auto text-sm underline-offset-4 hover:underline">

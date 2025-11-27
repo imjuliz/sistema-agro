@@ -28,7 +28,6 @@ export const somarQtdTotalEstoque = async (unidadeId) => { //ok
             _sum: { quantidade: true, },
             where: { unidadeId: Number(unidadeId) },
         });
-
         const total = resultado._sum.quantidade || 0;
 
         return {
@@ -114,18 +113,9 @@ export const reporEstoque = async (dados) => {
                 quantidade: Number(dados.quantidade)
             }
         });
-
-        return {
-            sucesso: true,
-            saida: novaSaida
-        };
-
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: error.message
-        };
+        return {sucesso: true,saida: novaSaida};
     }
+    catch (error) {return {sucesso: false,erro: error.message}}
 };
 
 //PRODUTOS

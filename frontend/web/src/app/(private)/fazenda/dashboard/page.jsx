@@ -1,8 +1,15 @@
-import { AppSidebar } from "@/components/app-sidebar"
+"use client"
 import * as React from 'react';
 import { SectionCards, ChartPieDonut, SectionCards2, SectionCards3, GraficoDeBarras, CalendarEventListDemo, TableDemo } from "@/components/Fazenda/dashboard"
 import { TweetGrid } from "@/components/ui/tweet-grid";
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+
 export default function Page() {
+    const { fetchWithAuth } = useAuth();
+  usePerfilProtegido("GERENTE_FAZENDA");
+
   return (
     <div className="flex flex-1 flex-col p-10 dark:bg-black">
       <h1 className="text-2xl font-semibold mb-6 ml-10">Dashboard</h1>

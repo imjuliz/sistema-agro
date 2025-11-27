@@ -1,7 +1,15 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import * as React from 'react';
 import { SectionCards, TableDemo,ChartLineMultiple, TableDemo2 } from "@/components/Fazenda/plantio"
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+
 export default function Page() {
+    const { fetchWithAuth } = useAuth();
+  usePerfilProtegido("GERENTE_FAZENDA");
+
   return (
     <div className="flex flex-1 flex-col p-10">
       <h1 className="text-2xl font-semibold mb-6 ml-10">Plantio</h1>

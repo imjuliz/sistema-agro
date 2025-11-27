@@ -210,31 +210,6 @@ model Produto {
   @@map("produto")
 }
 
-// Catálogo de insumos (sementes, fertilizante, ração, vacinas, adubo, reagentes)
-// model Insumo {
-//   id           Int              @id @default(autoincrement())
-//   nome         String           @db.VarChar(255)
-//   sku          String?          @db.VarChar(100)
-//   unidadeId    Int              @map("unidade_id")
-//   categoria    CategoriaInsumo? // ex: SEMENTE, FERTILIZANTE, RAÇÃO, MEDICAMENTO
-//   unidadeBase  UnidadesDeMedida // ex: KG, L, UN 
-//   fornecedorId Int
-//   ativo        Boolean          @default(true)
-//   observacoes  String?          @db.Text
-//   dataEntrada  DateTime?        @map("data_entrada")
-//   dataSaida    DateTime?        @map("data_saida")
-
-//   // estoqueMovimentos EstoqueMovimento[]  // se você usa controle de estoque
-//   pedidoItems   PedidoItem[]
-//   estoque       Estoque[]
-//   unidade       Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
-//   // fornecedorProduto FornecedorProduto[]
-//   atvdAnimalias AtvdAnimalia[]
-//   atvdAgricolas AtvdAgricola[]
-
-//   @@map("insumo")
-// }
-
 model Estoque {
   id           Int      @id @default(autoincrement())
   unidadeId    Int      @map("unidade_id")
@@ -256,6 +231,7 @@ model EstoqueProduto {
   nome                String           @db.VarChar(255)
   sku                 String?          @db.VarChar(100)
   marca               String?          @db.VarChar(255)
+  quantidade          Int              @default(0)
   estoqueId           Int
   produtoId           Int?
   producaoId          Int?
@@ -807,8 +783,8 @@ model ItemVenda {
 
 model Financeiro {
   id        Int       @id @default(autoincrement())
-  usuarioId Int
-  unidadeId Int
+  usuarioId Int //a função deve puxar o id do usuário automaticamente
+  unidadeId Int //a função deve puxar o id da unidade automaticamente
   descricao String
   tipo      TipoSaida
   valor     Decimal   @db.Decimal(12, 2)
