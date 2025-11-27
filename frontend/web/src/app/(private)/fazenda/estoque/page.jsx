@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
-import { BrandLevelView } from '@/components/Estoque/BrandLevelView';
-import { SetupView } from '@/components/Estoque/SetupView';
 import { InventoryProvider } from '@/contexts/InventoryContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
@@ -20,10 +18,6 @@ export default function App() {
     <InventoryProvider>
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-medium mb-2">Painel de Gerenciamento de Estoque</h1>
-            <p className="text-muted-foreground">Rede de Varejo para Plantio</p>
-          </div>
           <Card className="mb-6 ">
             <CardHeader>
               <CardTitle>Legenda do Status do Estoque</CardTitle>
@@ -45,18 +39,14 @@ export default function App() {
               </div>
             </CardContent>
           </Card>
-
-          <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
+          <StoreLevelView />
+          {/* <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="store">Store Level</TabsTrigger>
-              <TabsTrigger value="brand">Brand Level</TabsTrigger>
-              <TabsTrigger value="setup">Display Setup</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="store"><StoreLevelView /></TabsContent>
-            <TabsContent value="brand"><BrandLevelView /></TabsContent>
-            <TabsContent value="setup"><SetupView /></TabsContent>
-          </Tabs>
+            <TabsContent value="store"></TabsContent>
+          </Tabs> */}
         </div>
       </div>
     </InventoryProvider>

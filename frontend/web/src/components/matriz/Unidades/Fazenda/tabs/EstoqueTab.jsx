@@ -88,33 +88,6 @@ const getStatusColor = (status) => {
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export function EstoqueTab() {
 
   return (
@@ -156,7 +129,7 @@ export function EstoqueTab() {
           <StoreLevelView />
         </InventoryProvider>
 
-      </div>     
+      </div>
     </div>
   );
 }

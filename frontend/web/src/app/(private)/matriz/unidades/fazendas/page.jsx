@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor } from "lucide-react";
+import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
@@ -90,7 +90,7 @@ export default function FazendasPage() {
         async function fetchFazendas() {
             setLoading(true);
             try {
-                const url = `${API_URL}matriz/fazendas`;
+                const url = `${API_URL}unidades/fazendas`;
                 console.debug("[fetchFazendas] GET", url);
                 const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
 
@@ -170,7 +170,7 @@ export default function FazendasPage() {
         async function fetchMetrics() {
             try {
                 // URL correta (conforme suas rotas backend)
-                const url = `${API_URL}matriz/contar-fazendas`;
+                const url = `${API_URL}unidades/contar-fazendas`;
                 console.debug("[fetchMetrics] requesting", url);
 
                 // usando seu fetchWithAuth (faz refresh se necessário)
@@ -232,7 +232,6 @@ export default function FazendasPage() {
             sessionStorage.setItem(`prefetched_fazenda_${id}`, JSON.stringify(body));
         } catch (e) { console.debug(e); }
     }
-
 
     // filtra somente fazendas e aplica query + localização
     const filtered = useMemo(() => {
@@ -367,7 +366,7 @@ export default function FazendasPage() {
             <div className="max-w-screen-2xl mx-auto w-full">
                 {/* METRICS */}
                 <div className="grid grid-cols-3 gap-4 mb-8">
-                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
                         <CardHeader><CardTitle>Total de Fazendas</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.total}</div>
@@ -375,7 +374,7 @@ export default function FazendasPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
                         <CardHeader><CardTitle>Ativas</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.active}</div>
@@ -383,7 +382,7 @@ export default function FazendasPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
                         <CardHeader><CardTitle>Inativas</CardTitle></CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{metrics.inactive}</div>
@@ -496,7 +495,7 @@ export default function FazendasPage() {
                             <div className="flex items-center gap-2">
                                 <Button variant="ghost" size="sm" className="flex items-center gap-1">
                                     <span className="text-sm">Ordenar Por</span>
-                                    <div className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded bg-neutral-800 text-neutral-300 text-xs">1</div>
+                                    <div className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded dark:bg-neutral-800 bg-neutral-200 dark:text-neutral-300 text-neutral-700 text-xs">1</div>
                                 </Button>
 
                                 <div className="flex items-center gap-2 ml-3">
@@ -520,6 +519,9 @@ export default function FazendasPage() {
                                     </DropdownMenu>
                                 </div>
 
+                                <Button variant="" size="sm" className="flex items-center gap-1">
+                                    <span className="flex flex-row gap-3 items-center text-sm"><Plus />Adicionar fazenda</span>
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>

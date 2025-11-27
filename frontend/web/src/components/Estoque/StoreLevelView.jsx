@@ -22,19 +22,6 @@ export function StoreLevelView() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // const allStoreItems = getStoreItems();
-  // const stores = Object.values(storeMapping);
-  // const categories = [...new Set(allStoreItems.map(item => item.category))];
-
-  // const filteredItems = allStoreItems.filter(item => {
-  //   const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.brand.toLowerCase().includes(searchTerm.toLowerCase());
-  //   const matchesStore = selectedStore === 'all' || item.store === selectedStore;
-  //   const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-  //   return matchesSearch && matchesStore && matchesCategory;
-  // });
-
   // paginacao
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -89,20 +76,12 @@ export function StoreLevelView() {
       ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
       : value;
 
-
-  // const totalItems = filteredItems.length;
-  // const goodStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'good').length;
-  // const warningStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'warning').length;
-  // const criticalStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'critical').length;
-
-
-
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Total Items */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <span className="text-sm text-muted-foreground mb-1">Total de Itens</span>
             <div className="flex items-end gap-2">
@@ -112,7 +91,7 @@ export function StoreLevelView() {
         </Card>
 
         {/* Above Minimum */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -123,7 +102,7 @@ export function StoreLevelView() {
         </Card>
 
         {/* Near Minimum */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
@@ -134,7 +113,7 @@ export function StoreLevelView() {
         </Card>
 
         {/* Below Minimum */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -196,10 +175,7 @@ export function StoreLevelView() {
       {/* Items Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Matriz de Estoque da Loja</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Dados baseados na configuração de exposição. Quantidades de estoque de exibição são configuráveis na aba Configuração.
-          </p>
+          <CardTitle>Estoque</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -272,14 +248,16 @@ export function StoreLevelView() {
 
             <div className="flex items-center gap-3">
               <Label className="text-sm font-medium">Linhas por pág.</Label>
-              <Select value={perPage} onChange={(e) => { const v = Number(e.target.value); setPerPage(v); setPage(1); }} >
+              <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                <SelectTrigger className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={5}>5</SelectItem>
-                  <SelectItem value={6}>6</SelectItem>
-                  <SelectItem value={10}>10</SelectItem>
-                  <SelectItem value={20}>20</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="6">6</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
                 </SelectContent>
-
               </Select>
 
               <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredItems.length / perPage) || 1)}</div>
