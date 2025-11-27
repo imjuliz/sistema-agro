@@ -38,7 +38,7 @@ router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
 router.get("/produtos", auth, listarProdutosController);
 router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
-router.get("/estoque/listar", auth, listarEstoqueController);
+router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
 router.get("/lote/:loteId/media-producao",calcularMediaProducaoPorLoteController);
 

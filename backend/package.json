@@ -6,7 +6,7 @@
   "type": "module",
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",
-    "@prisma/client": "^7.0.0",
+    "@prisma/client": "^7.0.1",
     "@supabase/supabase-js": "^2.57.4",
     "accepts": "^2.0.0",
     "bcryptjs": "^3.0.2",
@@ -78,6 +78,7 @@
     "postgres-bytea": "^1.0.0",
     "postgres-date": "^1.0.7",
     "postgres-interval": "^1.2.0",
+    "prisma": "^7.0.1",
     "proxy-addr": "^2.0.7",
     "qs": "^6.14.0",
     "random-bytes": "^1.0.0",
@@ -117,9 +118,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "prisma": "^7.0.0"
-  },
   "prisma": {
     "seed": "node prisma/seed.js"
   }

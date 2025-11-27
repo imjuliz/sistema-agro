@@ -2,7 +2,7 @@ import { calcularFornecedores, verContratos } from "../../models/unidade-de-vend
 
 export const listarFornecedoresController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.params.unidadeId;
 
     if (!unidadeId) {
       return res.status(401).json({
