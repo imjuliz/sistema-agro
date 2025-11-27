@@ -1,15 +1,15 @@
-import { getLote, getLoteAtividade, getLotePorAnimaliaId, getLotePorDataColheita, getlotePorId, createLote, updateLote, deleteLote, getLoteAtividade, getLotePorDataCriacao } from "../models/lote.js";
-import { getAnimais, getAnimaisPorId } from "../models/animais.js";
+import { getLote, getlotePorId, createLote, updateLote, deleteLote } from "../models/lote.js";
+import { getAnimaisPorId } from "../models/animais.js";
 import { loteSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
   try {
     const lote = await getLote();
-    return {
+    return res.status(200).json({
       sucesso: true,
       lote,
       message: "Lotes listados com sucesso.",
-    };
+    })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -19,38 +19,40 @@ export async function getLoteController(req, res) {
   }
 }
 
-export async function getLoteAtividadeController(req, res) {
-  const { atividade } = req.query;
-  try {
-    // Validações
-    if (atividade === true) {
-      const lotes_ativos = await getLoteAtividade((atividade = true));
-    } else {
-      const lotes_inativos = await getLoteAtividade((atividade = false));
-    }
-    return {
-      sucesso: true,
-      lotes_ativos,
-      message: "Lotes ativos listados com sucesso.",
-    };
-  } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar lotes ativos.",
-      detalhes: error.message, // opcional, para debug
-    })
-  }
-}
+// N possui coluna atividade
+// export async function getLoteAtividadeController(req, res) {
+//   const { atividade } = req.query;
+//   try {
+//     // Validações
+//     if (atividade === true) {
+//       const lotes_ativos = await getLoteAtividade((atividade = true));
+//     } else {
+//       const lotes_inativos = await getLoteAtividade((atividade = false));
+//     }
+//     return res.status(200).json({
+//       sucesso: true,
+//       lotes_ativos,
+//       message: "Lotes ativos listados com sucesso.",
+//     })
+//   } catch (error) {
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro ao listar lotes ativos.",
+//       detalhes: error.message, // opcional, para debug
+//     })
+//   }
+// }
 
-export async function getLotePorAnimaliaIdController(req, res) {
-  const { tipo } = req.params;
+export async function getLotePorTipoController(req, res) {
   try {
-    const lote_animalia = await getLotePorAnimaliaId(tipo);
-    return {
+    const { tipo } = loteSchema.partial().parse(req.params);
+
+    const lote_animalia = await getLotePorTipo(tipo);
+    return res.status(200).json({
       sucesso: true,
       lote_animalia,
       message: "Lotes de animalia listados com sucesso.",
-    };
+    })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -61,13 +63,34 @@ export async function getLotePorAnimaliaIdController(req, res) {
 }
 
 export async function getLoteRentabilidadeController(req, res) {
-  const { id_animal } = req.query;
-  const { id_lote } = req.params;
   try {
-    const lote = await getlotePorId(id_lote);
+    const { id_animal } = req.query;
+    const { id } = req.params;
+
+    //Validações
+    if (isNaN(id) || isNaN(id_animal)) {
+    return res.status(400).json({
+      sucesso: false,
+      erro: "id e id_animal precisam ser números."
+    })}
+    if (!id || !id_animal) {
+    return res.status(400).json({
+      sucesso: false,
+      erro: "id e id_animal precisam ser informados."
+    })}
+
+    const lote = await getlotePorId(id);
     const animal = await getAnimaisPorId(id_animal);
-    const rentabilidade = lote.quantidade * animal.custo;
-    const lote_rentabilidade = await getLoteRentabilidade(id_lote, rentabilidade);
+
+    if (!lote || !animal) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Lote ou Animal não encontrado."
+      });
+    }
+
+    const rentabilidade = lote.qntdItens * animal.custo;
+    const lote_rentabilidade = await getLoteRentabilidade(id, rentabilidade);
     return res.status(200).json({
       sucesso: true,
       lote_rentabilidade,
@@ -82,47 +105,48 @@ export async function getLoteRentabilidadeController(req, res) {
   }
 }
 
-export async function getLotePorDataCriacaoController(req, res) {
-  const { ano } = req.body;
-  const { produtoId } = req.query;
+// nao funciona pq n existe a coluna dataFabricacao, q é necessaria para listar os lotes criados
+// export async function getLotePorDataCriacaoController(req, res) {
+//   const { ano } = req.body;
+//   const { produtoId } = req.query;
+//   try {
+//     //Validações
+//     if(isNaN(ano) || isNaN(produtoId)) {
+//       return res.status(400).json({
+//         sucesso: false,
+//         erro: "Ano ou produtoId precisa ser um numero."
+//       })
+//     }
+//     if (!ano || !produtoId) {
+//       return res.status(400).json({
+//         sucesso: false,
+//         erro: "Ano ou produtoId precisa ser informado."
+//       })
+//     }
+//     const lote = await getLotePorDataCriacao(ano, produtoId );
+//     return res.status(200).json({
+//       sucesso: true,
+//       lote,
+//       message: "Lotes criados na data listados com sucesso."
+//     })
+//   } catch (error) {
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro ao listar lotes criados na data.",
+//       detalhes: error.message // opcional, para debug
+//     })
+//   }
+// }
+
+export async function getLotePorIdController(req, res) {
   try {
-    //Validações
-    if(isNaN(ano) || isNaN(produtoId)) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Ano ou produtoId precisa ser um numero."
-      })
-    }
-    if (!ano || !produtoId) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Ano ou produtoId precisa ser informado."
-      })
-    }
-    const lote = await getLotePorDataCriacao(ano, produtoId );
+    const { id } = req.params;
+    const lote = await getlotePorId(id);
     return res.status(200).json({
       sucesso: true,
       lote,
-      message: "Lotes criados na data listados com sucesso."
-    })
-  } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar lotes criados na data.",
-      detalhes: error.message // opcional, para debug
-    })
-  }
-}
-
-export async function getLotePorIdController(req, res) {
-  const { id } = req.params;
-  try {
-    const lote = await getlotePorId(id);
-    return {
-      sucesso: true,
-      lote,
       message: "Lote listado com sucesso.",
-    };
+    })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -132,28 +156,29 @@ export async function getLotePorIdController(req, res) {
   }
 }
 
-//tem q terminar essa bomba
-export async function getLotePorDataColheitaController(req, res) {
-  const { id_plantio } = req.params;
-  try {
-    const data_colheita = await getPlantioPorId(id_plantio);
-    const lote = await getLotePorDataColheita(data_colheita.data_colheita);
-  } catch (error) {
-    return res.status(500).json({
-      
-    })
-  }
-}
-
 export async function createLoteController(req, res) {
-  const data = loteSchema.parse(req.body);
   try {
-    const lote = await createLote(data);
-    return {
+    const data = loteSchema.parse(req.body);
+    const { unidadeId, contratoId } = req.params;
+
+    // Validacoes
+    if(!unidadeId || isNaN(unidadeId)) {
+      return res.status(400).json({erro: "Unidade nao encontrada."})
+    }
+    if(!contratoId || isNaN(contratoId)) {
+      return res.status(400).json({erro: "Contrato nao encontrado."})
+    }
+    if(!data.responsavelId || isNaN(data.responsavelId)) {
+      return res.status(400).json({erro: "Responsavel nao encontrado."})
+    }
+
+    const lote = await createLote(data, unidadeId, contratoId);
+    
+    return res.status(201).json({
       sucesso: true,
       lote,
       message: "Lote criado com sucesso.",
-    };
+    })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -164,15 +189,34 @@ export async function createLoteController(req, res) {
 }
 
 export async function updateLoteController(req, res) {
-  const { id } = req.params;
   try {
     const data = loteSchema.parse(req.body);
-    const loteAtualizado = await updateLote(id, data);
-    return {
+    const { id, unidadeId, contratoId } = req.params;
+
+    //Validações
+    if (isNaN(id) || !id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "id precisa ser um número."
+      })
+    }
+    if(!unidadeId || isNaN(unidadeId)) {
+      return res.status(400).json({erro: "Unidade nao encontrada."})
+    }
+    if(!contratoId || isNaN(contratoId)) {
+      return res.status(400).json({erro: "Contrato nao encontrado."})
+    }
+    if(!data.responsavelId || isNaN(data.responsavelId)) {
+      return res.status(400).json({erro: "Responsavel nao encontrado."})
+    }
+    
+    const loteAtualizado = await updateLote(id, data, unidadeId, contratoId);
+
+    return res.status(200).json({
       sucesso: true,
-      lote: loteAtualizado,
+      loteAtualizado,
       message: "Lote atualizado com sucesso.",
-    };
+    })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -183,14 +227,24 @@ export async function updateLoteController(req, res) {
 }
 
 export async function deleteLoteController(req, res) {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
+
+    //Validações
+    if (isNaN(id) || !id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "id precisa ser um número."
+      })
+    }
+
     const loteDeletado = await deleteLote(id);
-    return {
+
+    return res.status(200).json({
       sucesso: true,
-      lote: loteDeletado,
+      loteDeletado,
       message: "Lote deletado com sucesso.",
-    };
+    })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,

@@ -2,9 +2,13 @@ import { z } from "zod";
 
 export const loteSchema = z.object({
   nome: z.string(),
-  tipo: z.enum(["PRODUCAO", "REPRODUCAO", "ABATE"]),
+  tipo: z.enum(["GADO", "SOJA", "LEITE", "BOVINOS", "SUINOS", "OVINOS", "AVES", "EQUINO", "CAPRINOS", "PLANTIO", "OUTRO"]),
   qntdItens: z.number().int().nonnegative(),
+  preco: z.number().nonnegative(),
+  unidadeMedida: z.enum(["KG", "G", "T", "LOTE", "UNIDADE", "SACA", "CABECA", "ARROBA", "LITRO", "ML"]),
   observacoes: z.string().optional(),
-  dataFabricacao: z.datetime(),
-  dataValidade: z.datetime(),
+  statusQualidade: z.enum(["PROPRIO", "ALERTA", "IMPROPRIO"]),
+  bloqueadoParaVenda: z.boolean(),
+  status: z.enum(["PENDENTE", "PRONTO", "ENVIADO"]).optional(),
+  dataEnvioReferencia: z.iso.date().optional()
 });
