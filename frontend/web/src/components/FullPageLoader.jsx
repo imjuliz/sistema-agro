@@ -2,10 +2,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-// FullPageLoader (efeito de revelação vertical)
-// A logo é revelada de cima para baixo com um gradiente que desliza e desaparece.
-// Uso: <FullPageLoader logoSrc="/img/ruraltech-logo.svg" />
-
 export default function FullPageLoader({ logoSrc = "/img/ruraltech-logo.svg" }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">

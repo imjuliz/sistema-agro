@@ -98,7 +98,7 @@ async function main() {
 
         const usuariosData = [
             { nome: "Julia Alves", email: "juliaalvesdeo447@gmail.com", senha: senhaHash, telefone: "11987651001", perfilId: perfilMap["GERENTE_MATRIZ"], unidadeId: unidadeMap["RuralTech"], status: true },
-            { nome: "Lorena Oshiroo", email: "renato.martins@gmail.com", senha: senhaHash, telefone: "11987652001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Sabor do Campo Laticínios"], status: true },
+            { nome: "Renato Martins", email: "renato.martins@gmail.com", senha: senhaHash, telefone: "11987652001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Sabor do Campo Laticínios"], status: true },
             { nome: "Maria Del Rey", email: "mebdelrey@gmail.com", senha: senhaHash, telefone: "11987653001", perfilId: perfilMap["GERENTE_LOJA"], unidadeId: unidadeMap["Casa Útil Mercado"], status: true },
             { nome: "Richard Souza", email: "richardrrggts@gmail.com", senha: senhaHash, telefone: "11916694683", perfilId: perfilMap["GERENTE_FAZENDA"], unidadeId: unidadeMap["Fazenda Beta"], status: true },
             // gerente da loja
@@ -140,7 +140,7 @@ async function main() {
         });
         await prisma.unidade.update({
             where: { id: unidadeMap["Sabor do Campo Laticínios"] },
-            data: { gerenteId: usuarioMap["Lorena Oshiroo"], matrizId: unidadeMap["RuralTech"] },
+            data: { gerenteId: usuarioMap["Renato Martins"], matrizId: unidadeMap["RuralTech"] },
         });
         await prisma.unidade.update({
             where: { id: unidadeMap["Fazenda Gamma"] },
