@@ -1,6 +1,6 @@
+// models/Unidades.js
 import prisma from "../prisma/client.js";
 
-// BUSCA
 export async function getUnidades() {
   try {
     const unidades = await prisma.unidade.findMany();
@@ -156,4 +156,99 @@ export async function updateStatusUnidade(id, novoStatus) {
     return { sucesso: true, unidade, message: `Status da unidade atualizado para ${upper}.` };
   }
   catch (error) {return { sucesso: false, message: "Erro ao atualizar status da unidade.", error: error.message };}
+}
+
+
+/* Busca usuários (funcionários) de uma unidade com filtros e paginação. */
+export async function getUsuariosPorUnidade({ unidadeId = null, q = null, perfilId = null, status = null, page = 1, perPage = 25 } = {}) {
+  try {
+    if (unidadeId == null) return { sucesso: false, erro: "unidadeId é obrigatório." };
+
+    const where = { unidadeId: Number(unidadeId) };
+
+    // busca por texto (nome, email, telefone)
+    if (q) {
+      const texto = String(q).trim();
+      where.AND = [
+        {
+          OR: [
+            { nome: { contains: texto, mode: "insensitive" } },
+            { email: { contains: texto, mode: "insensitive" } },
+            { telefone: { contains: texto, mode: "insensitive" } },
+          ],
+        },
+      ];
+    }
+
+    if (perfilId != null) {
+      where.perfilId = Number(perfilId);
+    }
+
+    if (status != null) {
+      // aceita 'true'/'false', 'ativo'/'inativo', 1/0 ou boolean
+      if (typeof status === "string") {
+        const s = status.toLowerCase();
+        if (s === "ativo" || s === "true" || s === "1") where.status = true;
+        else if (s === "inativo" || s === "false" || s === "0") where.status = false;
+      } else {
+        where.status = Boolean(status);
+      }
+    }
+
+    const pageNum = Math.max(1, Number(page || 1));
+    const per = Math.max(1, Math.min(100, Number(perPage || 25)));
+    const skip = (pageNum - 1) * per;
+
+    const [total, usuarios] = await Promise.all([
+      prisma.usuario.count({ where }),
+      prisma.usuario.findMany({
+        where,
+        orderBy: { nome: "asc" },
+        skip,
+        take: per,
+        include: {
+          perfil: { select: { id: true, funcao: true, descricao: true } },
+          unidade: { select: { id: true, nome: true, cidade: true, estado: true } },
+        },
+      }),
+    ]);
+
+    return { sucesso: true, total, page: pageNum, perPage: per, usuarios };
+  } catch (error) {
+    console.error("[getUsuariosPorUnidade] erro:", error);
+    return { sucesso: false, erro: "Erro ao buscar usuários da unidade.", detalhes: error.message };
+  }
+}
+
+/**
+ * Buscar usuário por id (opcional, útil para detalhe).
+ */
+export async function getUsuarioPorId(id) {
+  try {
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: Number(id) },
+      include: {
+        perfil: { select: { id: true, funcao: true, descricao: true } },
+        unidade: { select: { id: true, nome: true, cidade: true, estado: true } },
+      },
+    });
+
+    if (!usuario) return { sucesso: false, erro: "Usuário não encontrado." };
+    return { sucesso: true, usuario };
+  } catch (error) {
+    console.error("[getUsuarioPorId] erro:", error);
+    return { sucesso: false, erro: "Erro ao buscar usuário.", detalhes: error.message };
+  }
+}
+
+/**
+ * Contagem simples (opcional)
+ */
+export async function countUsuariosPorUnidade(unidadeId) {
+  try {
+    const total = await prisma.usuario.count({ where: { unidadeId: Number(unidadeId) } });
+    return { sucesso: true, total };
+  } catch (error) {
+    return { sucesso: false, erro: "Erro ao contar usuários.", detalhes: error.message };
+  }
 }

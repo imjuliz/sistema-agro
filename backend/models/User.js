@@ -78,7 +78,6 @@ export async function getUserById(id) {
       criadoEm: true,
       atualizadoEm: true,
       perfil: {
-        // <<< traz o objeto perfil
         select: {
           id: true,
           funcao: true,

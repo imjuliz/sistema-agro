@@ -316,6 +316,7 @@ model FornecedorExterno {
   pedidos           Pedido[]
   // fornecedorProduto FornecedorProduto[]
   estoqueProdutos   EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
+  
 
   @@map("fornecedor_externo")
 }

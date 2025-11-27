@@ -579,7 +579,7 @@ export function OverviewTab() {
         {/* Indicadores Ambientais e Legais */}
 
         {/* Job Progress */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Job Progress Overview</CardTitle>
           </CardHeader>
@@ -619,10 +619,10 @@ export function OverviewTab() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Recent Activity */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
@@ -647,7 +647,7 @@ export function OverviewTab() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
       </div>
     </div>

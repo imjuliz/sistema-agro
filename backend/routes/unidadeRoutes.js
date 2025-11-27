@@ -1,5 +1,5 @@
 import express from "express";
-import { getUnidadesController, getUnidadePorIdController, createUnidadeController, updateUnidadeController, deleteUnidadeController, contarFazendasController, getFazendasController, getLojaController, getMatrizController } from "../controllers/MatrizController.js";
+import { getUnidadesController, getUnidadePorIdController, createUnidadeController, updateUnidadeController, deleteUnidadeController, contarFazendasController, getFazendasController, getLojaController, getMatrizController, getUsuariosPorUnidadeController, getUsuarioPorIdController, contarLojasController } from "../controllers/UnidadesController.js";
 import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -10,14 +10,28 @@ router.post("/", auth(["gerente_matriz"]), createUnidadeController);
 router.put("/:id", auth(["gerente_matriz"]), updateUnidadeController);
 router.delete("/:id", auth(["gerente_matriz"]), deleteUnidadeController);
 
-// fazendas
-router.get('/fazendas', auth, getFazendasController); // lista todas as fazendas
-router.get('/fazendas/contagem', auth, contarFazendasController); // contagens relacionadas a fazendas, ex: total de fazendas, qntd de fazendas ativas, etc
 
-// lojas
-router.get('/lojas', auth, getLojaController); // lista de todas as lojas
+// listar usuários de uma unidade (aceita ?q=&perfilId=&status=&page=&perPage=)
+router.get("/:unidadeId/usuarios", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getUsuariosPorUnidadeController);
 
-// matrizes
-router.get('/matrizes', auth, getMatrizController); // lista todas as matrizes
+// alternativa: permitir consulta por query `?unidadeId=..`
+router.get("/usuarios", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getUsuariosPorUnidadeController);
+
+// obter usuário por id (detalhe)
+router.get("/usuarios/:id", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getUsuarioPorIdController);
+
+
+// router.get('/unidades', auth(), getUnidadesController);
+// router.get('/unidades/:id', auth(), getUnidadePorIdController);
+
+
+router.get('/fazendas', auth(), getFazendasController);
+router.get('/contar-fazendas', contarFazendasController);
+
+
+router.get('/lojas', auth(), getLojaController);
+router.get('/contar-lojas', contarLojasController);
+
+router.get('/matrizes', auth(), getMatrizController)
 
 export default router;

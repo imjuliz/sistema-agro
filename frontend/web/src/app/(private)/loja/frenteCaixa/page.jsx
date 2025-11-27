@@ -47,7 +47,7 @@ const dailyStats = {
   cashSales: 856.43,
   cardSales: 1991.22,
   topProduct: 'Wireless Headphones',
-  peakHour: '2:00 PM - 3:00 PM'
+  peakHour: '14:00 - 15:00'
 };
 
 //---- POSModule ------
@@ -75,8 +75,11 @@ export default function POSModule() {
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) {setCart(cart.map(item =>item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item))}
-    else {setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}])}
+    if (existingItem) {
+      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item))
+    } else {
+      setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}])
+    }
   };
 
   const updateQuantity = (id, newQuantity) => {
@@ -92,8 +95,8 @@ export default function POSModule() {
   const getChange = () => { return paymentMethod === 'cash' ? Math.max(0, amountReceived - getTotal()) : 0; };
   const clearCart = () => { setCart([]); setSelectedCustomer(null); setDiscountPercent(0); setAmountReceived(0); };
   const processSale = () => {
-    // In a real implementation, this would process the payment and update inventory
-    console.log('Processing sale:', {
+    // Em produção, aqui processaria o pagamento e atualizaria o estoque
+    console.log('Processando venda:', {
       cart,
       customer: selectedCustomer,
       subtotal: getSubtotal(),
@@ -111,42 +114,42 @@ export default function POSModule() {
 
   return (
     <div className="space-y-6">
-      {/* POS Overview */}
+      {/* Visão geral POS */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
             <ShoppingCart className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${dailyStats.totalSales.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">{dailyStats.totalTransactions} transactions</p>
+            <div className="text-2xl font-bold">R$ {dailyStats.totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground">{dailyStats.totalTransactions} transações</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Transaction</CardTitle>
+            <CardTitle className="text-sm font-medium">Média por Transação</CardTitle>
             <Receipt className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${dailyStats.averageTransaction.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Per transaction</p>
+            <div className="text-2xl font-bold">R$ {dailyStats.averageTransaction.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Por transação</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Payment Split</CardTitle>
+            <CardTitle className="text-sm font-medium">Divisão de Pagamentos</CardTitle>
             <CreditCard className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-sm">
               <div className="flex justify-between">
-                <span>Cash:</span><span>${dailyStats.cashSales.toFixed(2)}</span>
+                <span>Dinheiro:</span><span>R$ {dailyStats.cashSales.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Card:</span><span>${dailyStats.cardSales.toFixed(2)}</span>
+                <span>Cartão:</span><span>R$ {dailyStats.cardSales.toFixed(2)}</span>
               </div>
             </div>
           </CardContent>
@@ -154,32 +157,32 @@ export default function POSModule() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top Product</CardTitle>
+            <CardTitle className="text-sm font-medium">Produto em Destaque</CardTitle>
             <Barcode className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">{dailyStats.topProduct}</div>
-            <p className="text-xs text-muted-foreground">Best selling today</p>
+            <p className="text-xs text-muted-foreground">Mais vendido hoje</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="pos" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pos">Point of Sale</TabsTrigger>
-          <TabsTrigger value="sales">Sales History</TabsTrigger>
-          <TabsTrigger value="customers">Customer Lookup</TabsTrigger>
-          <TabsTrigger value="reports">Daily Reports</TabsTrigger>
+          <TabsTrigger value="pos">Frente de Caixa</TabsTrigger>
+          <TabsTrigger value="sales">Histórico de Vendas</TabsTrigger>
+          <TabsTrigger value="customers">Clientes</TabsTrigger>
+          <TabsTrigger value="reports">Relatórios Diários</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pos" className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-3">
-            {/* Product Selection */}
+            {/* Seleção de Produtos */}
             <div className="lg:col-span-2 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Product Selection</CardTitle>
-                  <CardDescription>Search and select products for sale</CardDescription>
+                  <CardTitle>Seleção de Produtos</CardTitle>
+                  <CardDescription>Pesquisar e selecionar produtos para venda</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex gap-4">
@@ -188,9 +191,9 @@ export default function POSModule() {
                       <Input placeholder="Pesquise produtos com o leitor de código de barras..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                     </div>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
+                      <SelectTrigger className="w-[180px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="all">Todas as categorias</SelectItem>
                         {categories.slice(1).map((category) => (<SelectItem key={category} value={category}>{category}</SelectItem>))}
                       </SelectContent>
                     </Select>
@@ -206,8 +209,8 @@ export default function POSModule() {
                               <div className="font-medium truncate">{product.name}</div>
                               <div className="text-sm text-muted-foreground">{product.category}</div>
                               <div className="flex justify-between items-center mt-1">
-                                <span className="font-bold text-green-600">${product.price.toFixed(2)}</span>
-                                <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
+                                <span className="font-bold text-green-600">R$ {product.price.toFixed(2)}</span>
+                                <span className="text-xs text-muted-foreground">Estoque: {product.stock}</span>
                               </div>
                             </div>
                           </div>
@@ -219,36 +222,36 @@ export default function POSModule() {
               </Card>
             </div>
 
-            {/* Shopping Cart and Checkout */}
+            {/* Carrinho e Checkout */}
             <div className="space-y-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle>Shopping Cart</CardTitle>
-                    <CardDescription>{cart.length} items</CardDescription>
+                    <CardTitle>Carrinho de Compras</CardTitle>
+                    <CardDescription>{cart.length} item(s)</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={clearCart}><Trash2 className="size-4" /></Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Customer</Label>
+                    <Label>Cliente</Label>
                     <div className="flex gap-2">
                       <Button variant="outline" className="flex-1 justify-start" onClick={() => setIsCustomerSelectOpen(true)}>
-                        <User className="size-4 mr-2" />{selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}
+                        <User className="size-4 mr-2" />{selectedCustomer ? selectedCustomer.name : 'Cliente avulso'}
                       </Button>
-                      {selectedCustomer && (<Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Clear</Button>)}
+                      {selectedCustomer && (<Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Limpar</Button>)}
                     </div>
                   </div>
 
-                  {/* Cart Items */}
+                  {/* Itens do Carrinho */}
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {cart.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-8">Cart is empty</div>
+                      <div className="text-center text-muted-foreground py-8">Carrinho vazio</div>
                     ) : (cart.map((item) => (
                         <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">{item.name}</div>
-                            <div className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</div>
+                            <div className="text-sm text-muted-foreground">R$ {item.price.toFixed(2)} cada</div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus className="size-3" />
@@ -264,10 +267,10 @@ export default function POSModule() {
                     )}
                   </div>
 
-                  {/* Discount */}
+                  {/* Desconto */}
                   {cart.length > 0 && (
                     <div className="space-y-2">
-                      <Label>Discount %</Label>
+                      <Label>Desconto %</Label>
                       <div className="flex gap-2">
                         <Input type="number" value={discountPercent} onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)} placeholder="0" min="0" max="100" />
                         <Button variant="outline" size="sm"><Percent className="size-4" /></Button>
@@ -275,45 +278,45 @@ export default function POSModule() {
                     </div>
                   )}
 
-                  {/* Cart Summary */}
+                  {/* Resumo do Carrinho */}
                   {cart.length > 0 && (
                     <div className="space-y-2 pt-4 border-t">
                       <div className="flex justify-between text-sm">
-                        <span>Subtotal:</span><span>${getSubtotal().toFixed(2)}</span>
+                        <span>Subtotal:</span><span>R$ {getSubtotal().toFixed(2)}</span>
                       </div>
                       {discountPercent > 0 && (
                         <div className="flex justify-between text-sm text-green-600">
-                          <span>Discount ({discountPercent}%):</span><span>-${getDiscountAmount().toFixed(2)}</span>
+                          <span>Desconto ({discountPercent}%):</span><span>-R$ {getDiscountAmount().toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between text-sm">
-                        <span>Tax (8%):</span><span>${getTax().toFixed(2)}</span>
+                        <span>Imposto (8%):</span><span>R$ {getTax().toFixed(2)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-medium">
-                        <span>Total:</span><span>${getTotal().toFixed(2)}</span>
+                        <span>Total:</span><span>R$ {getTotal().toFixed(2)}</span>
                       </div>
                     </div>
                   )}
 
-                  {/* Checkout Button */}
+                  {/* Botão de Checkout */}
                   <Button className="w-full" disabled={cart.length === 0} onClick={() => setIsPaymentOpen(true)}>
-                    <CreditCard className="size-4 mr-2" />Checkout
+                    <CreditCard className="size-4 mr-2" />Finalizar
                   </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
 
-          {/* Customer Selection Modal */}
+          {/* Modal de Seleção de Cliente */}
           <Dialog open={isCustomerSelectOpen} onOpenChange={setIsCustomerSelectOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Select Customer</DialogTitle>
-                <DialogDescription>Choose an existing customer or continue as walk-in</DialogDescription>
+                <DialogTitle>Selecionar Cliente</DialogTitle>
+                <DialogDescription>Escolha um cliente existente ou prossiga como cliente avulso</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <Input placeholder="Search customers..." />
+                <Input placeholder="Buscar clientes..." />
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {customers.map((customer) => (
                     <div key={customer.id} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => {setSelectedCustomer(customer);setIsCustomerSelectOpen(false);}}>
@@ -329,52 +332,52 @@ export default function POSModule() {
             </DialogContent>
           </Dialog>
 
-          {/* Payment Modal */}
+          {/* Modal de Pagamento */}
           <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Process Payment</DialogTitle>
-                <DialogDescription>Complete the transaction</DialogDescription>
+                <DialogTitle>Processar Pagamento</DialogTitle>
+                <DialogDescription>Conclua a transação</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Payment Method</Label>
+                  <Label>Forma de Pagamento</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="credit">Credit Card</SelectItem>
-                      <SelectItem value="debit">Debit Card</SelectItem>
-                      <SelectItem value="mobile">Mobile Payment</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="credit">Cartão de Crédito</SelectItem>
+                      <SelectItem value="debit">Cartão de Débito</SelectItem>
+                      <SelectItem value="mobile">Pagamento Móvel</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {paymentMethod === 'cash' && (
                   <div className="space-y-2">
-                    <Label>Amount Received</Label><Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)} placeholder="0.00" step="0.01" />
+                    <Label>Valor Recebido</Label><Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)} placeholder="0.00" step="0.01" />
                   </div>
                 )}
 
                 <div className="space-y-2 p-4 bg-muted rounded">
                   <div className="flex justify-between">
-                    <span>Total Amount:</span><span className="font-bold">${getTotal().toFixed(2)}</span>
+                    <span>Valor Total:</span><span className="font-bold">R$ {getTotal().toFixed(2)}</span>
                   </div>
                   {paymentMethod === 'cash' && amountReceived > 0 && (
                     <>
                       <div className="flex justify-between">
-                        <span>Amount Received:</span><span>${amountReceived.toFixed(2)}</span>
+                        <span>Valor Recebido:</span><span>R$ {amountReceived.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Change:</span><span className="font-bold text-green-600">${getChange().toFixed(2)}</span>
+                        <span>Troco:</span><span className="font-bold text-green-600">R$ {getChange().toFixed(2)}</span>
                       </div>
                     </>
                   )}
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setIsPaymentOpen(false)} className="flex-1">Cancel</Button>
-                  <Button onClick={processSale} className="flex-1" disabled={paymentMethod === 'cash' && amountReceived < getTotal()}>Complete Sale</Button>
+                  <Button variant="outline" onClick={() => setIsPaymentOpen(false)} className="flex-1">Cancelar</Button>
+                  <Button onClick={processSale} className="flex-1" disabled={paymentMethod === 'cash' && amountReceived < getTotal()}>Concluir Venda</Button>
                 </div>
               </div>
             </DialogContent>
@@ -384,22 +387,22 @@ export default function POSModule() {
         <TabsContent value="sales" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Sales History</CardTitle>
-              <CardDescription>Recent transactions and sales data</CardDescription>
+              <CardTitle>Histórico de Vendas</CardTitle>
+              <CardDescription>Transações recentes e dados de vendas</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Date/Time</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Items</TableHead>
+                      <TableHead>ID da Transação</TableHead>
+                      <TableHead>Data/Hora</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Itens</TableHead>
                       <TableHead>Total</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Cashier</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>Pagamento</TableHead>
+                      <TableHead>Operador</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -409,13 +412,13 @@ export default function POSModule() {
                         <TableCell>{sale.date}</TableCell>
                         <TableCell>{sale.customer}</TableCell>
                         <TableCell>{sale.items}</TableCell>
-                        <TableCell>${sale.total.toFixed(2)}</TableCell>
+                        <TableCell>R$ {sale.total.toFixed(2)}</TableCell>
                         <TableCell>{sale.paymentMethod}</TableCell>
                         <TableCell>{sale.cashier}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">View</Button>
-                            <Button variant="outline" size="sm">Print</Button>
+                            <Button variant="outline" size="sm">Ver</Button>
+                            <Button variant="outline" size="sm">Imprimir</Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -429,16 +432,16 @@ export default function POSModule() {
         <TabsContent value="customers" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Customer Management</CardTitle>
-              <CardDescription>Search and manage customer information</CardDescription>
+              <CardTitle>Gestão de Clientes</CardTitle>
+              <CardDescription>Pesquisar e gerenciar informações dos clientes</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input placeholder="Search customers..." className="pl-10" />
+                  <Input placeholder="Buscar clientes..." className="pl-10" />
                 </div>
-                <Button>Add Customer</Button>
+                <Button>Adicionar Cliente</Button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -454,8 +457,8 @@ export default function POSModule() {
                         <div className="text-right">
                           <Badge variant="outline">{customer.loyaltyPoints} pts</Badge>
                           <div className="flex gap-2 mt-2">
-                            <Button variant="outline" size="sm">Edit</Button>
-                            <Button variant="outline" size="sm">History</Button>
+                            <Button variant="outline" size="sm">Editar</Button>
+                            <Button variant="outline" size="sm">Histórico</Button>
                           </div>
                         </div>
                       </div>
@@ -469,23 +472,23 @@ export default function POSModule() {
         <TabsContent value="reports" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
-              <CardHeader><CardTitle>Daily Summary</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Resumo Diário</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Total Sales:</span>
-                    <span className="font-bold">${dailyStats.totalSales.toFixed(2)}</span>
+                    <span>Vendas Totais:</span>
+                    <span className="font-bold">R$ {dailyStats.totalSales.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Transactions:</span>
+                    <span>Transações:</span>
                     <span>{dailyStats.totalTransactions}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Avg Transaction:</span>
-                    <span>${dailyStats.averageTransaction.toFixed(2)}</span>
+                    <span>Média por Transação:</span>
+                    <span>R$ {dailyStats.averageTransaction.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Peak Hour:</span>
+                    <span>Hora de Pico:</span>
                     <span className="text-sm">{dailyStats.peakHour}</span>
                   </div>
                 </div>
@@ -493,14 +496,14 @@ export default function POSModule() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Payment Methods</CardTitle>
+                <CardTitle>Métodos de Pagamento</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Cash</span>
-                      <span>${dailyStats.cashSales.toFixed(2)}</span>
+                      <span>Dinheiro</span>
+                      <span>R$ {dailyStats.cashSales.toFixed(2)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-green-600 h-2 rounded-full" style={{ width: `${(dailyStats.cashSales / dailyStats.totalSales) * 100}%` }}></div>
@@ -508,8 +511,8 @@ export default function POSModule() {
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Card</span>
-                      <span>${dailyStats.cardSales.toFixed(2)}</span>
+                      <span>Cartão</span>
+                      <span>R$ {dailyStats.cardSales.toFixed(2)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(dailyStats.cardSales / dailyStats.totalSales) * 100}%` }}></div>
@@ -520,21 +523,21 @@ export default function POSModule() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Top Products</CardTitle>
+                <CardTitle>Produtos Principais</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Wireless Headphones</span><span>12 sold</span>
+                    <span>Wireless Headphones</span><span>12 vendidos</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Coffee Mug</span><span>8 sold</span>
+                    <span>Coffee Mug</span><span>8 vendidos</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>USB Cable</span><span>6 sold</span>
+                    <span>USB Cable</span><span>6 vendidos</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Water Bottle</span><span>5 sold</span>
+                    <span>Water Bottle</span><span>5 vendidos</span>
                   </div>
                 </div>
               </CardContent>
@@ -542,22 +545,22 @@ export default function POSModule() {
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Generate Reports</CardTitle>
-              <CardDescription>Create detailed sales and performance reports</CardDescription>
+              <CardTitle>Gerar Relatórios</CardTitle>
+              <CardDescription>Criar relatórios detalhados de vendas e desempenho</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Button variant="outline" className="h-20 flex-col">
-                  <Receipt className="size-6 mb-2" />Daily Sales
+                  <Receipt className="size-6 mb-2" />Vendas Diárias
                 </Button>
                 <Button variant="outline" className="h-20 flex-col">
-                  <Barcode className="size-6 mb-2" />Product Performance
+                  <Barcode className="size-6 mb-2" />Desempenho do Produto
                 </Button>
                 <Button variant="outline" className="h-20 flex-col">
-                  <User className="size-6 mb-2" />Customer Report
+                  <User className="size-6 mb-2" />Relatório de Clientes
                 </Button>
                 <Button variant="outline" className="h-20 flex-col">
-                  <CreditCard className="size-6 mb-2" />Payment Analysis
+                  <CreditCard className="size-6 mb-2" />Análise de Pagamentos
                 </Button>
               </div>
             </CardContent>
