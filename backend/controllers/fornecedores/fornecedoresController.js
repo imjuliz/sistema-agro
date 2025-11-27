@@ -86,3 +86,22 @@ export const verContratosController = async (req, res) => {//tem rota
     })
   }
 };
+
+export async function updateFornecedorController(req, res) {
+    const { id } = req.params;
+    const data = fornecedorSchema.parse(req.body);
+    try {
+        const fornecedor = await updateFornecedor(id, data);
+        return {
+            sucesso: true,
+            fornecedor,
+            message: "Fornecedor atualizado com sucesso!!",
+        }
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao atualizar fornecedor",
+            detalhes: error.message
+        }
+    }
+}
