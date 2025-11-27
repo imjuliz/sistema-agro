@@ -209,12 +209,10 @@ export function StoreLevelView() {
                 <TableHead>Item</TableHead>
                 <TableHead>Marca</TableHead>
                 <TableHead>Categorias</TableHead>
-                <TableHead>Lojas</TableHead>
+                <TableHead>Fornecedores</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Current Stock</TableHead>
-                <TableHead>Display Stock</TableHead>
-                <TableHead>Min Stock</TableHead>
-                <TableHead>Difference</TableHead>
+                <TableHead>Estoque Atual</TableHead>
+                <TableHead>Min Estoque</TableHead>
                 <TableHead>Preço</TableHead>
               </TableRow>
             </TableHeader>
@@ -267,7 +265,7 @@ export function StoreLevelView() {
             </div>
           )}
 
-          <CardFooter className="flex items-center justify-between px-4 py-3 border-t border-neutral-800">
+          <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
             {/* <div className="text-sm text-neutral-400">
               {selected.length} de {filtered.length} linha(s) selecionada(s).
             </div> */}
@@ -286,7 +284,7 @@ export function StoreLevelView() {
 
               <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredItems.length / perPage) || 1)}</div>
 
-              <div className="inline-flex items-center gap-1 border-l border-neutral-800 pl-3">
+              <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
                 <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
                   <ChevronsLeft className="h-4 w-4" />
                 </Button>
