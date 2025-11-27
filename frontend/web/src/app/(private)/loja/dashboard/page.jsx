@@ -1,3 +1,4 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartBarMultiple } from "@/components/chart-area-interactive"
 import { SectionCards } from "@/components/section-cards"

@@ -1,3 +1,4 @@
+"use client"
 import { DataTable } from "@/components/loja/dashboard/data-table"
 import data from "./data.json"
 // Para tradução

@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+"use client"
 import { ChartAreaInteractive, ChartPieDonut } from "@/components/chart-area-interactive"
 import ComparisonTable from "@/components/comparison-table"
 import FlexiFilterTable from "@/components/flexi-filter-table"

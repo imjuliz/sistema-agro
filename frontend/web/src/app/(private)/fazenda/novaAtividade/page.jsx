@@ -7,8 +7,14 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TruckIcon, DocumentTextIcon, BanknotesIcon, CubeIcon } from "@heroicons/react/24/outline"
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 export default function Page() {
+      const { fetchWithAuth } = useAuth();
+  usePerfilProtegido("GERENTE_FAZENDA");
+
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [atividadeSelecionada, setAtividadeSelecionada] = useState(null)
