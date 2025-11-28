@@ -8,7 +8,7 @@ import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import {   calcularFornecedoresController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController } from "../controllers/fornecedores/fornecedoresController.js";
+import {   calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
@@ -63,7 +63,8 @@ router.get("/listarLojasParceiras/:unidadeId", listarLojasAtendidasController);
 router.get("/verContratosComLojas/:fornecedorUnidadeId", verContratosComLojasController);
 router.get("/verContratosExternos/:unidadeId", verContratosExternosController);
 router.get("/verContratosComFazendas/:unidadeId", verContratosComFazendasController);
-router.post("/criarContratoInterno", criarContratoInternoController);
+router.post("/criarContratoInterno/:fazendaId", criarContratoInternoController);
+router.post("/criarContratoExterno/:unidadeId", criarContratoExternoController);
 //perfil --------------------------------------------------------------------
 
 export default router;
