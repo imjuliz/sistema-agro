@@ -1,5 +1,5 @@
 import { getPlantio, getPlantioCategoria, createPlantio, updatePlantio, deletePlantio } from "../models/plantio.js";
-import { plantioSchema } from "../schemas/plantioSchemas.js";
+import { plantioSchema } from "../schemas/plantioSchema.js";
 
 export async function getPlantioController(req, res) {
   try {

@@ -12,6 +12,9 @@ import appRoutes from './routes/appRoutes.js';
 import unidadeRoutes from './routes/unidadeRoutes.js';
 // import matrizRoutes from './routes/MatrizRoutes.js';
 import estoqueRoutes from './routes/estoqueRoutes.js';
+import animaisRoutes from './routes/animaisRoutes.js';
+import loteRoutes from './routes/loteRoutes.js';
+import plantioRoutes from './routes/plantioRoutes.js';
 
 dotenv.config({ path: ".env", quiet: true });
 
@@ -70,6 +73,10 @@ app.use('/', appRoutes);
 app.use('/unidades', unidadeRoutes);
 // app.use('/matriz', matrizRoutes);
 app.use('/estoque', estoqueRoutes)
+
+app.use('/animais', animaisRoutes)
+app.use('/lotes', loteRoutes)
+app.use('/plantio', plantioRoutes)
 
 app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
 
