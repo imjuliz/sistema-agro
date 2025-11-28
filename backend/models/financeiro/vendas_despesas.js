@@ -123,7 +123,7 @@ export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
   };
 }
 
-export const listarVendas = async (unidadeId) => {
+export const listarVendas = async (unidadeId) => { //FUNCIONA - MAS PRECISA INSERIR DADOS NA TABELA
     try {
         const vendas = await prisma.Venda.findMany({ where: { unidadeId: Number(unidadeId) }, })
         return ({

@@ -4,10 +4,10 @@ import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", auth(["gerente_matriz", "gerente_fazenda"]), getPlantioController);
-router.get("/categoria/:categoria", auth(["gerente_matriz", "gerente_fazenda"]), getPlantioCategoriaController);
-router.post("/", auth(["gerente_fazenda"]), createPlantioController);
-router.put("/:id", auth(["gerente_fazenda"]), updatePlantioController);
-router.delete("/:id", auth(["gerente_fazenda"]), deletePlantioController);
+router.get("/", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getPlantioController);
+router.get("/categoria/:categoria", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getPlantioCategoriaController);
+router.post("/:unidadeId/:loteId", auth(["GERENTE_FAZENDA"]), createPlantioController);
+router.put("/:id/:unidadeId/:loteId", auth(["GERENTE_FAZENDA"]), updatePlantioController);
+router.delete("/:id", auth(["GERENTE_FAZENDA"]), deletePlantioController);
 
 export default router;

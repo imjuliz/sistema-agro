@@ -1,4 +1,4 @@
-import prisma from "../prisma/client";
+import prisma from "../prisma/client.js";
 
 export async function getPlantio() {
   try {
@@ -16,15 +16,18 @@ export async function getPlantio() {
   }
 }
 
-// colocar filtro para também listar por tipo de plantio
-export async function getPlantioCategoria(categoria_plantio) {
+export async function getPlantioCategoria(categoria) {
   try {
-    const plantio_categoria = await prisma.plantio.findMany({
-      where: { categoria: categoria_plantio },
+    const plantioCategoria = await prisma.plantio.findMany({
+      where: { categoria: categoria },
     });
+    if(!catPlantio) {
+      return res.status(400).json({erro: "Categoria de plantio nao encontrada."})
+    }
+
     return {
       sucesso: true,
-      plantio_categoria,
+      plantioCategoria,
       message: "Categoria de plantio listados com sucesso.",
     };
   } catch (error) {
@@ -36,16 +39,25 @@ export async function getPlantioCategoria(categoria_plantio) {
   }
 }
 
-export async function createPlantio(data) {
+export async function createPlantio(data, unidadeId, loteId) {
   try {
+    const unidade = await prisma.unidade.findUnique({ where: { id: unidadeId } });
+    if(!unidade) {
+      return res.status(400).json({erro: "Unidade nao encontrada."})
+    }
+    const lote = await prisma.lote.findUnique({ where: { id: loteId } });
+    if(!lote) {
+      return res.status(400).json({erro: "Lote nao encontrado."})
+    }
+
     const plantio = await prisma.plantio.create({
       data: {
-        categoria: data.categoria,
-        areaHectares: data.areaHectares,
-        tipo: data.tipo,
-        unidadeId: data.unidadeId,
+        unidadeId: unidadeId,
+        loteId: loteId,
+        ...data
       },
     });
+
     return {
       sucesso: true,
       plantio,
@@ -60,20 +72,34 @@ export async function createPlantio(data) {
   }
 }
 
-export async function updatePlantio(id, data) {
+export async function updatePlantio(id, data, unidadeId, loteId) {
   try {
-    const plantio = await prisma.plantios.update({
+    const plantio = await prisma.plantio.findUnique({ where: { id } });
+    if(!plantio) {
+      return res.status(400).json({erro: "Plantio nao encontrado."})
+    }
+
+    const unidade = await prisma.unidade.findUnique({ where: { id: unidadeId } });
+    if(!unidade) {
+      return res.status(400).json({erro: "Unidade nao encontrada."})
+    }
+    const lote = await prisma.lote.findUnique({ where: { id: loteId } });
+    if(!lote) {
+      return res.status(400).json({erro: "Lote nao encontrado."})
+    }
+
+    const Plantio = await prisma.plantio.update({
       where: { id },
       data: {
-        categoria: data.categoria,
-        areaHectares: data.areaHectares,
-        tipo: data.tipo,
-        unidadeId: data.unidadeId,
+        unidadeId: unidadeId,
+        loteId: loteId,
+        ...data
       },
-    });
+    })
+
     return {
       sucesso: true,
-      plantio,
+      Plantio,
       message: "Plantio atualizado com sucesso.",
     };
   } catch (error) {
@@ -87,10 +113,16 @@ export async function updatePlantio(id, data) {
 
 export async function deletePlantio(id) {
   try {
-    const plantio = await prisma.plantios.delete({ where: { id } });
+    const plantio = await prisma.plantio.findUnique({ where: { id } });
+    if(!plantio) {
+      return res.status(400).json({erro: "Plantio nao encontrado."})
+    }
+
+    const Plantio = await prisma.plantio.delete({ where: { id } });
+    
     return {
       sucesso: true,
-      plantio,
+      Plantio,
       message: "Plantio deletado com sucesso.",
     };
   } catch (error) {
