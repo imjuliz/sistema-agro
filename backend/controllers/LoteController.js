@@ -1,6 +1,6 @@
-import { getLote, getlotePorId, createLote, updateLote, deleteLote } from "../models/lote.js";
+import { getLote, getlotePorId, createLote, updateLote, deleteLote, getLotePorTipo } from "../models/lote.js";
 import { getAnimaisPorId } from "../models/animais.js";
-import { loteSchema } from "../schemas/loteSchema.js";
+import { loteSchema, loteTipoVegetaisSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
   try {
@@ -137,6 +137,30 @@ export async function getLoteRentabilidadeController(req, res) {
 //     })
 //   }
 // }
+
+export async function geLotePorTipoVegetaisController(req, res) {
+  try {
+    const { tipo } = loteTipoVegetaisSchema.parse(req.params);
+
+    //Validações
+    if(!tipo) {
+      return res.status(400).json({ sucesso: false, erro: "Tipo precisa ser informado." })
+    }
+
+    const loteVegetais = await getLotePorTipoVegetais(tipo);
+    return res.status(200).json({
+      sucesso: true,
+      loteVegetais,
+      message: "Lotes de vegetais listados com sucesso.",
+    })
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao listar lotes de vegetais.",
+      detalhes: error.message, // opcional, para debug
+    })
+  }
+}
 
 export async function getLotePorIdController(req, res) {
   try {

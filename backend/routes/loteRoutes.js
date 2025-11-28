@@ -2,6 +2,7 @@ import {
     getLoteController,
     getLotePorTipoController,
     getLoteRentabilidadeController,
+    geLotePorTipoVegetaisController,
     getLotePorIdController,
     createLoteController,
     updateLoteController,
@@ -16,6 +17,7 @@ const router = express.Router();
 router.get("/", auth(["gerente_matriz", "gerente_fazenda"]), getLoteController);
 router.get("/animalia/:tipo", auth(["gerente_matriz", "gerente_fazenda"]), getLotePorTipoController);
 router.get("/ativo", auth(["gerente_matriz", "gerente_fazenda"]), getLoteAtividadeController);
+router.get("/vegetal/:tipo", auth(["gerente_matriz", "gerente_fazenda"]), geLotePorTipoVegetaisController);
 router.get("/:id", auth(["gerente_fazenda"]), getLotePorIdController);
 router.get("/rentabilidade", auth(["gerente_matriz", "gerente_fazenda"]), getLoteRentabilidadeController);
 router.post("/", auth(["gerente_fazenda"]), createLoteController);

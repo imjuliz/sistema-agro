@@ -12,3 +12,7 @@ export const loteSchema = z.object({
   status: z.enum(["PENDENTE", "PRONTO", "ENVIADO"]).optional(),
   dataEnvioReferencia: z.iso.date().optional()
 });
+
+export const loteTipoVegetaisSchema = z.object({
+  tipo: z.enum(["SOJA", "PLANTIO", "OUTRO"])
+});
