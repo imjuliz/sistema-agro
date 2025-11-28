@@ -1,4 +1,4 @@
-import { getAnimais, getAnimaisPelaRaca, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
+import { getAnimais, getAnimaisPelaRaca, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
 import { animaisSchema } from "../schemas/animaisSchemas.js";
 
 export async function getAnimaisController(req, res) {
@@ -20,8 +20,8 @@ export async function getAnimaisController(req, res) {
 }
 
 export async function getAnimaisPelaRacaController(req, res) {
-  const { raca } = req.query;
   try {
+    const { raca } = req.query;
     const animais_raca = await getAnimaisPelaRaca(raca);
     
     return res.status(200).json({
@@ -30,6 +30,7 @@ export async function getAnimaisPelaRacaController(req, res) {
       message: "Animais da raça listados com sucesso.",
     })
   } catch (error) {
+    console.log(error)
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar animais pela raça.",
@@ -40,7 +41,13 @@ export async function getAnimaisPelaRacaController(req, res) {
 
 export async function getAnimaisPorIdController(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+
+    // Validações 
+    if(!id || isNaN(id)) {
+      return res.status(500).json({message: "Id nao informado."})
+    }
+
     const animais = await getAnimaisPorId(id);
     
     return res.status(200).json({
