@@ -112,9 +112,7 @@ export default function PrivateLayout({ children, hideHome }) {
                                 </div>
                             </header>
 
-                            <Transl>
                                 {children}
-                            </Transl>
 
                         </SidebarInset>
                     </SidebarProvider>

@@ -49,6 +49,71 @@ export const listarFornecedoresExternos = async (unidadeId) => {
   }
 };
 
+export const listarTodosFornecedoresExternos = async () => {
+  try {
+    const fornecedores = await prisma.fornecedorExterno.findMany({
+      select: {
+        id: true,
+        nomeEmpresa: true,
+        cnpjCpf: true,
+        email: true,
+        telefone: true,
+        endereco: true,
+        descricaoEmpresa: true,
+      },
+      orderBy: { nomeEmpresa: 'asc' },
+    });
+
+    return {
+      sucesso: true,
+      fornecedores,
+      message: "Todos os fornecedores externos listados com sucesso!",
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar todos os fornecedores externos",
+      detalhes: error.message,
+    };
+  }
+};
+
+export const criarFornecedorExterno = async (dadosFornecedor) => {
+  try {
+    const novoFornecedor = await prisma.fornecedorExterno.create({
+      data: {
+        nomeEmpresa: dadosFornecedor.nomeEmpresa,
+        descricaoEmpresa: dadosFornecedor.descricaoEmpresa,
+        cnpjCpf: dadosFornecedor.cnpjCpf || null,
+        email: dadosFornecedor.email || null,
+        telefone: dadosFornecedor.telefone,
+        endereco: dadosFornecedor.endereco || null,
+        status: "ATIVO", // Ou outro status padrão, conforme o enum StatusFornecedor
+      },
+    });
+
+    return {
+      sucesso: true,
+      fornecedor: novoFornecedor,
+      message: "Fornecedor externo criado com sucesso!",
+    };
+  } catch (error) {
+    // Tratar erro de CNPJ/CPF duplicado, por exemplo
+    if (error.code === 'P2002' && error.meta?.target?.includes('cnpj_cpf')) {
+      return {
+        sucesso: false,
+        erro: "CNPJ/CPF já cadastrado.",
+        detalhes: error.message,
+      };
+    }
+    return {
+      sucesso: false,
+      erro: "Erro ao criar fornecedor externo",
+      detalhes: error.message,
+    };
+  }
+};
+
 //fazer uma função para buscar fornecedor interno 
 export const listarFornecedoresInternos = async (unidadeId) => { //nesse caso a função é  para as lojas consultarem as fazendas fornecedoras
   try {

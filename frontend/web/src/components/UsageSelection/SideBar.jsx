@@ -6,11 +6,11 @@ export const Sidebar = ({ steps, className }) => {
     <div
       className={cn(
         // "relative flex min-h-screen w-80 flex-col bg-gradient-to-b from-black to-indigo-700 p-6 text-white",
-        "relative flex min-h-screen w-80 flex-col bg-gradient-to-b from-[#738C16]/50 to-brand-foreground/0 dark:from-brand-foreground/0 dark:to-brand-foreground/50 p-6 text-white",
+        "relative flex min-h-screen flex-col bg-gradient-to-b from-[#738C16]/50 to-brand-foreground/0 dark:from-brand-foreground/0 dark:to-brand-foreground/50 p-6 text-white",
         className
       )}>
       <div className="mb-12 flex items-center gap-3 pt-4">
-        <BoxIcon className="size-6" />
+        
       </div>
 
       {/* Steps */}

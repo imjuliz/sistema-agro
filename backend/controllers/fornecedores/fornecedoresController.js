@@ -1,4 +1,4 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos } from "../../models/unidade-de-venda/fornecedores.js";
+import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno } from "../../models/unidade-de-venda/fornecedores.js";
 
 // export const listarFornecedoresController = async (req, res) => {
 //   try {
@@ -284,6 +284,50 @@ export const criarContratoInternoController = async (req, res) => {
       sucesso: false,
       erro: "Erro interno ao criar contrato interno",
       detalhes: error.message
+    });
+  }
+};
+
+export const listarTodosFornecedoresExternosController = async (req, res) => {
+  try {
+    const resultado = await listarTodosFornecedoresExternos();
+    if (!resultado.sucesso) {
+      return res.status(500).json(resultado);
+    }
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao listar todos os fornecedores externos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno no servidor.",
+      detalhes: error.message,
+    });
+  }
+};
+
+export const criarFornecedorExternoController = async (req, res) => {
+  try {
+    const { nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco } = req.body;
+
+    if (!nomeEmpresa || !descricaoEmpresa || !telefone) {
+      return res.status(400).json({ sucesso: false, erro: "Nome da empresa, descrição e telefone são obrigatórios." });
+    }
+
+    console.log("Dados recebidos para criar fornecedor externo:", req.body); // Adicionado para depuração
+    const resultado = await criarFornecedorExterno({ nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco });
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json(resultado);
+
+  } catch (error) {
+    console.error("Erro no controller ao criar fornecedor externo:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno no servidor.",
+      detalhes: error.message,
     });
   }
 };

@@ -7,7 +7,7 @@ import { FinanceiroTab } from './tabs/FinanceiroTab';
 import { FornecedoresTab } from './tabs/FornecedoresTab'
 import { ComunicadosTab } from './tabs/ComunicadosTab'
 
-export function CenterPanel({ activeTab }) {
+export function CenterPanel({ activeTab, fazenda }) {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -15,7 +15,7 @@ export function CenterPanel({ activeTab }) {
       // case 'jobs':
       //   return <JobsTab />;
       case 'estoque':
-        return <EstoqueTab />;
+        return  <EstoqueTab fazenda={fazenda}/>;
       case 'equipe':
         return <EquipeTab />;
       case 'atividades':

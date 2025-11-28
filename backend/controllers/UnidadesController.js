@@ -4,36 +4,40 @@ import { unidadeSchema } from "../schemas/unidadeSchema.js";
 // BUSCA ---------------------------------------------------------------------------
 export async function getUnidadesController(req, res) {
   try {
-    const unidades = await getUnidades();
-    return {
-      sucesso: true,
-      unidades,
-      message: "Unidades listadas com sucesso.",
-    };
+    const resultado = await getUnidades();
+    if (!resultado.sucesso) {
+      return res.status(500).json(resultado);
+    }
+    return res.json(resultado);
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar unidades.",
       detalhes: error.message, // opcional, para debug
-    };
+    });
   }
 }
 
 export async function getUnidadePorIdController(req, res) {
   try {
     const { id } = req.params;
-    const unidade = await getUnidadePorId(id);
-    return {
-      sucesso: true,
-      unidade,
-      message: "Unidade listada com sucesso.",
-    };
+    const parsedId = Number(id);
+
+    if (isNaN(parsedId) || parsedId <= 0) {
+      return res.status(400).json({ sucesso: false, erro: "ID da unidade inválido." });
+    }
+
+    const resultado = await getUnidadePorId(parsedId);
+    if (!resultado.sucesso) {
+      return res.status(404).json(resultado); // 404 se não encontrado
+    }
+    return res.json(resultado);
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar unidade por id.",
       detalhes: error.message, // opcional, para debug
-    };
+    });
   }
 }
 
@@ -118,18 +122,21 @@ export async function contarLojasController(req, res) {
 export async function createUnidadeController(req, res) {
   try {
     const data = unidadeSchema.parse(req.body);
-    const unidade = await createUnidade(data);
-    return {
-      sucesso: true,
-      unidade,
-      message: "Unidade criada com sucesso.",
-    };
+    const resultado = await createUnidade(data);
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+    return res.status(201).json(resultado); // 201 Created
   } catch (error) {
-    return {
+    console.error("[createUnidadeController] erro:", error);
+    if (error.name === "ZodError") {
+      return res.status(400).json({ sucesso: false, erro: "Dados de validação inválidos.", detalhes: error.errors });
+    }
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao criar unidade.",
       detalhes: error.message, // opcional, para debug
-    };
+    });
   }
 }
 
@@ -137,19 +144,22 @@ export async function createUnidadeController(req, res) {
 export async function updateUnidadeController(req, res) {
   try {
     const { id } = req.params;
-    const data = unidadeSchema.parse(req.body);
-    const unidade = await updateUnidade(id, data);
-    return {
-      sucesso: true,
-      unidade,
-      message: "Unidade atualizada com sucesso.",
-    };
+    const data = unidadeSchema.partial().parse(req.body); // Usar .partial() para atualização parcial
+    const resultado = await updateUnidade(id, data);
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+    return res.json(resultado);
   } catch (error) {
-    return {
+    console.error("[updateUnidadeController] erro:", error);
+    if (error.name === "ZodError") {
+      return res.status(400).json({ sucesso: false, erro: "Dados de validação inválidos.", detalhes: error.errors });
+    }
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao atualizar unidade.",
       detalhes: error.message, // opcional, para debug
-    };
+    });
   }
 }
 
@@ -157,26 +167,25 @@ export async function updateUnidadeController(req, res) {
 export async function deleteUnidadeController(req, res) {
   try {
     const { id } = req.params;
-    const unidade = await deleteUnidade(id);
-    return {
-      sucesso: true,
-      unidade,
-      message: "Unidade deletada com sucesso.",
-    };
+    const resultado = await deleteUnidade(id);
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+    return res.json(resultado);
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
       erro: "Erro ao deletar unidade.",
       detalhes: error.message, // opcional, para debug
-    };
+    });
   }
 }
 
 
 /**
- * GET /unidades/:unidadeId/usuarios
- * ou GET /unidades/usuarios?unidadeId=...
- */
+   * GET /unidades/:unidadeId/usuarios
+   * ou GET /unidades/usuarios?unidadeId=...
+   */
 export async function getUsuariosPorUnidadeController(req, res) {
   try {
     const unidadeId = req.params?.unidadeId ?? req.query?.unidadeId;
@@ -209,8 +218,8 @@ export async function getUsuariosPorUnidadeController(req, res) {
 }
 
 /**
- * GET /unidades/usuarios/:id  (ou /usuarios/:id dependendo da sua organização)
- */
+   * GET /unidades/usuarios/:id  (ou /usuarios/:id dependendo da sua organização)
+   */
 export async function getUsuarioPorIdController(req, res) {
   try {
     const id = req.params?.id;
@@ -234,4 +243,42 @@ export async function getUsuarioPorIdController(req, res) {
     console.error("[getUsuarioPorIdController] erro:", error);
     return res.status(500).json({ sucesso: false, erro: "Erro interno", detalhes: error.message });
   }
+}
+
+/**
+ * Busca dados de endereço por CEP.
+ * Ex: GET /unidades/cep?cep=12345000
+ * Ex: GET /unidades/cep/12345000
+ */
+export async function buscarCepController(req, res) {
+    console.log("[buscarCepController] req.query.cep:", req.query.cep);
+    console.log("[buscarCepController] req.params.cep:", req.params.cep);
+    try {
+      const cep = req.query.cep || req.params.cep;
+      console.log("[buscarCepController] CEP recebido:", cep); // LOG ADICIONADO
+      if (!cep) {
+        return res.status(400).json({ sucesso: false, erro: "CEP é obrigatório." });
+      }
+
+      const cepDigits = String(cep).replace(/\D/g, "");
+      console.log("[buscarCepController] CEP formatado (digits):"); // LOG ADICIONADO
+      if (cepDigits.length !== 8) {
+        return res.status(400).json({ sucesso: false, erro: "CEP inválido (formato esperado: 8 dígitos numéricos)." });
+      }
+
+      // Usar uma API de CEP externa, como ViaCEP
+      const response = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+      console.log("[buscarCepController] Status da resposta ViaCEP:", response.status); // Log do status
+      const data = await response.json();
+
+      if (data.erro) {
+        return res.status(404).json({ sucesso: false, erro: "CEP não encontrado." });
+      }
+
+      return res.json({ sucesso: true, cep: cepDigits, data });
+
+    } catch (error) {
+      console.error("[buscarCepController] erro:", error);
+      return res.status(500).json({ sucesso: false, erro: "Erro ao buscar CEP.", detalhes: error.message });
+    }
 }

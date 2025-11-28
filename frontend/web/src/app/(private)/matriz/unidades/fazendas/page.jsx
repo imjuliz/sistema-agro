@@ -29,6 +29,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/navigation'; // App Router
 import { useRef } from 'react';
+// (adicione entre seus imports existentes)
+import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
 
 
 // corrige o caminho dos ícones padrão em bundlers modernos
@@ -76,7 +78,6 @@ export default function FazendasPage() {
         areaQuery: ""
     });
 
-
     useEffect(() => {
         setLoading(true);
         const t = setTimeout(() => setLoading(false), 350);
@@ -94,15 +95,26 @@ export default function FazendasPage() {
                 console.debug("[fetchFazendas] GET", url);
                 const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
 
-                if (res.status === 401) {
-                    console.warn("[fetchFazendas] 401 Unauthorized");
-                    if (!mounted) return;
-                    setUnits([]); // garante array
+                console.debug("[fetchFazendas] status:", res.status, "ok?", res.ok);
+                // tenta parse seguro do body
+                const bodyText = await res.text().catch(() => "");
+                let body = null;
+                try { body = bodyText ? JSON.parse(bodyText) : null; } catch (e) { body = { raw: bodyText }; }
+
+                console.debug("[fetchFazendas] body:", body);
+
+                // tratamento de erro: mostra mensagem do backend se existir
+                if (!res.ok) {
+                    const errMsg = body?.erro ?? body?.error ?? body?.message ?? `HTTP ${res.status}`;
+                    console.warn("[fetchFazendas] resposta não OK:", errMsg);
+                    // Se for erro conhecido, trate apropriadamente:
+                    if (errMsg === "ID da unidade inválido.") {
+                        // possivelmente rota exige query param — log para debug
+                        console.error("[fetchFazendas] Backend requer ID da unidade ou rota incorreta.");
+                    }
+                    setUnits([]); // fallback
                     return;
                 }
-
-                const body = await res.json().catch(() => null);
-                console.debug("[fetchFazendas] body:", body);
 
                 // Normaliza possíveis formatos
                 let unidades = null;
@@ -113,11 +125,8 @@ export default function FazendasPage() {
                 else if (body.sucesso && Array.isArray(body.unidades)) unidades = body.unidades;
                 else unidades = null;
 
-                if (!mounted) return;
-
                 if (unidades && Array.isArray(unidades) && unidades.length > 0) {
                     const normalized = unidades.map(u => {
-                        // normaliza tipo (FAZENDA -> Fazenda), status (ATIVA -> Ativa) e id como Number
                         const rawType = String(u.tipo ?? u.type ?? "").trim();
                         const type = rawType.length === 0 ? "Fazenda"
                             : rawType.toUpperCase() === "FAZENDA" ? "Fazenda"
@@ -224,7 +233,7 @@ export default function FazendasPage() {
         if (!id || prefetchCache.current.has(id)) return;
         router.prefetch(`/matriz/unidades/fazendas/${id}`);
         try {
-            const url = `${API_URL}matriz/unidades/${id}`;
+            const url = `${API_URL}unidades/${id}`;
             const res = await fetchWithAuth(url);
             if (!res.ok) return;
             const body = await res.json().catch(() => null);
@@ -304,6 +313,63 @@ export default function FazendasPage() {
         setUnits(prev => prev.filter(u => !selected.includes(u.id)));
         setSelected([]);
     }
+
+    // estado para controlar modal
+    const [openAddFazenda, setOpenAddFazenda] = useState(false);
+
+    // normalizador (mesma lógica que você já usa na fetchFazendas)
+    function normalizeUnit(u) {
+        const rawType = String(u.tipo ?? u.type ?? '').trim();
+        const type = rawType.length === 0 ? 'Fazenda'
+            : rawType.toUpperCase() === 'FAZENDA' ? 'Fazenda'
+                : rawType[0]?.toUpperCase() + rawType.slice(1).toLowerCase();
+
+        const rawStatus = String(u.status ?? '').trim();
+        const status = rawStatus.length === 0 ? 'Ativa'
+            : rawStatus.toUpperCase() === 'ATIVA' ? 'Ativa'
+                : rawStatus[0]?.toUpperCase() + rawStatus.slice(1).toLowerCase();
+
+        return {
+            id: Number(u.id),
+            name: u.nome ?? u.name ?? String(u.id),
+            type,
+            location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
+            manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
+            status,
+            sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
+            areaHa: u.areaProdutiva ? Number(u.areaProdutiva) : (u.areaHa ?? 0),
+            latitude: u.latitude != null ? Number(u.latitude)
+                : (u.lat != null ? Number(u.lat)
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
+            longitude: u.longitude != null ? Number(u.longitude)
+                : (u.lng != null ? Number(u.lng)
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null))
+        };
+    }
+
+    // callback quando modal criar fazenda com sucesso
+    function handleCreated(novaUnidade) {
+        try {
+            const normalized = normalizeUnit(novaUnidade);
+            // evita duplicatas (se por acaso já existe)
+            setUnits(prev => {
+                if (prev.some(u => u.id === normalized.id)) return prev;
+                return [normalized, ...prev];
+            });
+            // atualiza métricas rápido (incrementa total e, se ativa, incrementa active)
+            setMetrics(prev => {
+                const total = (prev.total || 0) + 1;
+                const active = (prev.active || 0) + ((String(normalized.status).toUpperCase() === 'ATIVA') ? 1 : 0);
+                const inactive = Math.max(0, total - active);
+                return { total, active, inactive };
+            });
+            // opcional: ir para primeira página para ver novo item
+            setPage(1);
+        } catch (err) {
+            console.error('handleCreated error', err);
+        }
+    }
+
 
     // ---------------------------------------------------------------------
     // grafico de barras "Fazendas mais produtivas"
@@ -423,7 +489,7 @@ export default function FazendasPage() {
                                                 <div className="text-xs text-muted-foreground mb-1">Status</div>
                                                 <div className="flex gap-2">
                                                     {["Ativa", "Inativa"].map(s => (
-                                                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
+                                                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded dark:hover:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
                                                             <Checkbox
                                                                 checked={!!draftStatusFilters[s]}
                                                                 onCheckedChange={() => {
@@ -519,9 +585,15 @@ export default function FazendasPage() {
                                     </DropdownMenu>
                                 </div>
 
-                                <Button variant="" size="sm" className="flex items-center gap-1">
+                                <Button
+                                    variant=""
+                                    size="sm"
+                                    className="flex items-center gap-1"
+                                    onClick={() => setOpenAddFazenda(true)}
+                                >
                                     <span className="flex flex-row gap-3 items-center text-sm"><Plus />Adicionar fazenda</span>
                                 </Button>
+
                             </div>
                         </div>
                     </CardHeader>
@@ -578,7 +650,7 @@ export default function FazendasPage() {
                     <Card>
                         <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
                         <CardContent>
-                            <div className='h-100 rounded-md overflow-hidden'>
+                            <div className='h-100 rounded-md overflow-hidden z-0 relative'>
                                 <MapContainer
                                     style={{ height: "100%", width: "100%" }}
                                     center={[-14.235004, -51.92528]} // fallback (centro do Brasil)
@@ -671,6 +743,15 @@ export default function FazendasPage() {
                 </div>
 
             </div>
+
+            {/* Add Fazenda Modal */}
+            <AddFazendaModal
+                open={openAddFazenda}
+                onOpenChange={(v) => setOpenAddFazenda(v)}
+                onCreated={handleCreated}
+                className="z-[999]"
+            />
+
         </div>
     );
 }
