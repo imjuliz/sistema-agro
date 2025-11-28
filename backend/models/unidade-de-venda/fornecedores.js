@@ -1,22 +1,5 @@
 import prisma from '../../prisma/client.js';
 
-// export const listarFornecedores = async (unidadeId) =>{ //tem controller
-//     try{
-//         const fornecedores = await prisma.FornecedorExterno.findMany({where:{ unidadeId: Number(unidadeId)},})
-//         return ({
-//             sucesso: true,
-//             fornecedores,
-//             message: "Fornecedores da unidade listados com sucesso!!"
-//         })
-//     } catch (error) {
-//         return {
-//             sucesso: false,
-//             erro: "Erro ao listar fornecedores",
-//             detalhes: error.message
-//         }
-//     }
-// }
-
 export const listarFornecedoresExternos = async (unidadeId) => {
   try {
     const contratos = await prisma.contrato.findMany({
@@ -250,11 +233,10 @@ export const listarLojasAtendidas = async (unidadeId) => { //função para a faz
   }
 };
 
-export const criarContratoInterno = async (fazendaId, dadosContrato) => { 
+export const criarContratoInterno = async (fazendaId, dadosContrato) => {
   try {
     const {
-      unidadeId,            // ID da loja
-      
+      unidadeId, // loja
       dataInicio,
       dataFim,
       dataEnvio,
@@ -263,34 +245,49 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
       diaPagamento,
       formaPagamento,
       valorTotal,
-      itens                 // array de itens do contrato, ex: [{nome, quantidade, precoUnitario}]
+      itens = []
     } = dadosContrato;
 
-    // Cria o contrato
-    const contrato = await prisma.contrato.create({
+    if (!fazendaId) {
+      return { sucesso: false, erro: "ID da fazenda (fornecedor interno) é obrigatório." };
+    }
+
+    if (!unidadeId) {
+      return { sucesso: false, erro: "unidadeId da loja é obrigatório." };
+    }
+
+    if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
+      return { sucesso: false, erro: "Campos obrigatórios ausentes." };
+    }
+
+    const contrato = await prisma.Contrato.create({
       data: {
         unidadeId: Number(unidadeId),
         fornecedorUnidadeId: Number(fazendaId),
+
         dataInicio: new Date(dataInicio),
         dataFim: dataFim ? new Date(dataFim) : null,
         dataEnvio: new Date(dataEnvio),
+
         status,
         frequenciaEntregas,
         diaPagamento,
         formaPagamento,
         valorTotal: valorTotal ? Number(valorTotal) : null,
+
         itens: {
-          create: itens?.map(i => ({
-            nome: i.nome,
+          create: itens.map(i => ({
+            nome: i.nome || null,
             quantidade: i.quantidade ? Number(i.quantidade) : null,
             precoUnitario: i.precoUnitario ? Number(i.precoUnitario) : null,
-            raca: i.raca || null,
             pesoUnidade: i.pesoUnidade ? Number(i.pesoUnidade) : null,
+            raca: i.raca || null,
             categoria: i.categoria || null,
             unidadeMedida: i.unidadeMedida || null,
           }))
         }
       },
+
       include: {
         itens: true,
         fornecedorInterno: {
@@ -314,4 +311,79 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
   }
 };
 
+export const criarContratoExterno = async (unidadeId, dadosContrato) => {
+  try {
+    const {
+      fornecedorExternoId,   // agora vem do BODY
+      dataInicio,
+      dataFim,
+      dataEnvio,
+      status,
+      frequenciaEntregas,
+      diaPagamento,
+      formaPagamento,
+      valorTotal,
+      itens = []
+    } = dadosContrato;
+
+    if (!unidadeId) {
+      return { sucesso: false, erro: "O ID da unidade é obrigatório no parâmetro da rota." };
+    }
+
+    if (!fornecedorExternoId) {
+      return { sucesso: false, erro: "O fornecedor externo é obrigatório no corpo da requisição." };
+    }
+
+    if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
+      return { sucesso: false, erro: "Campos obrigatórios estão faltando." };
+    }
+
+    const contrato = await prisma.Contrato.create({
+      data: {
+        unidadeId: Number(unidadeId),            // quem está criando o contrato
+        fornecedorExternoId: Number(fornecedorExternoId), // empresa externa
+
+        dataInicio: new Date(dataInicio),
+        dataFim: dataFim ? new Date(dataFim) : null,
+        dataEnvio: new Date(dataEnvio),
+
+        status: status || "ATIVO",
+        frequenciaEntregas,
+        diaPagamento,
+        formaPagamento,
+        valorTotal: valorTotal ? Number(valorTotal) : null,
+
+        itens: {
+          create: itens.map(i => ({
+            nome: i.nome,
+            quantidade: i.quantidade ? Number(i.quantidade) : null,
+            precoUnitario: i.precoUnitario ? Number(i.precoUnitario) : null,
+            pesoUnidade: i.pesoUnidade ? Number(i.pesoUnidade) : null,
+            raca: i.raca || null,
+            categoria: i.categoria || null,
+            unidadeMedida: i.unidadeMedida || null
+          }))
+        }
+      },
+
+      include: {
+        itens: true,
+        fornecedorExterno: { select: { nomeEmpresa: true } }
+      }
+    });
+
+    return {
+      sucesso: true,
+      contrato,
+      message: "Contrato externo criado com sucesso!"
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao criar contrato externo",
+      detalhes: error.message
+    };
+  }
+};
 

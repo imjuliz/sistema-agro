@@ -1,4 +1,4 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos } from "../../models/unidade-de-venda/fornecedores.js";
+import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos } from "../../models/unidade-de-venda/fornecedores.js";
 
 // export const listarFornecedoresController = async (req, res) => {
 //   try {
@@ -252,37 +252,63 @@ export const listarLojasAtendidasController = async (req, res) => { //FUNCIONAND
   }
 };
 
-export const criarContratoInternoController = async (req, res) => { 
+export const criarContratoInternoController = async (req, res) => { //FUNCIONANDO - essa funcao é para criar contratos entre fazendas e lojas
   try {
-    const fazendaId = req.params.fazendaId
+    const fazendaId = req.params.fazendaId; // fornecedor interno (unidade que fornece)
     const dadosContrato = req.body;
 
-    // Valida campos obrigatórios
-    if (!dadosContrato.unidadeId ||  !dadosContrato.dataInicio || !dadosContrato.dataEnvio || !dadosContrato.status) {
+    if (!fazendaId) {
       return res.status(400).json({
         sucesso: false,
-        erro: "Campos obrigatórios ausentes."
+        erro: "É necessário informar o ID da fazenda fornecedora."
       });
     }
 
-    const resultado = await criarContratoInterno(dadosContrato);
+    const resultado = await criarContratoInterno(fazendaId, dadosContrato);
 
     if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json({
+      sucesso: true,
+      contrato: resultado.contrato,
+      message: "Contrato interno criado com sucesso!"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro no controller ao criar contrato interno.",
+      detalhes: error.message
+    });
+  }
+};
+
+export const criarContratoExternoController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;  // quem cria
+    const dadosContrato = req.body;
+
+    if (!unidadeId) {
       return res.status(400).json({
         sucesso: false,
-        erro: resultado.erro,
-        detalhes: resultado.detalhes
+        erro: "O ID da unidade é obrigatório na rota."
       });
+    }
+
+    const resultado = await criarContratoExterno(unidadeId, dadosContrato);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
     }
 
     return res.status(201).json(resultado);
 
   } catch (error) {
-    console.error("Erro no controller ao criar contrato interno:", error);
-
     return res.status(500).json({
       sucesso: false,
-      erro: "Erro interno ao criar contrato interno",
+      erro: "Erro no controller ao criar contrato externo.",
       detalhes: error.message
     });
   }
