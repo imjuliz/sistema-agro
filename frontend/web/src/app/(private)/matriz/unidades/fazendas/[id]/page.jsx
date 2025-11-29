@@ -199,8 +199,8 @@
 
 import FazendaDetalheClient from "./FazendaDetalheClient";
 
-export default function FazendaDetalhePage({ params }) {
-  const { id } = params;
+export default async function FazendaDetalhePage({ params }) {
+  const { id } = await params;
 
   return <FazendaDetalheClient id={id} />;
 }

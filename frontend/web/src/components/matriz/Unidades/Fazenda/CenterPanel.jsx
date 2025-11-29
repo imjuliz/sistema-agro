@@ -11,13 +11,13 @@ export function CenterPanel({ activeTab, fazenda }) {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewTab />;
+        return <OverviewTab fazendaId={fazenda?.id} />;
       // case 'jobs':
       //   return <JobsTab />;
       case 'estoque':
         return  <EstoqueTab fazenda={fazenda}/>;
       case 'equipe':
-        return <EquipeTab />;
+        return <EquipeTab fazendaId={fazenda?.id} />;
       case 'atividades':
         return <AtividadesTab />;
       case 'financeiro':
@@ -27,7 +27,7 @@ export function CenterPanel({ activeTab, fazenda }) {
       case 'comunicados':
         return <ComunicadosTab />;
       default:
-        return <OverviewTab />;
+        return <OverviewTab fazendaId={fazenda?.id} />;
     }
   };
 

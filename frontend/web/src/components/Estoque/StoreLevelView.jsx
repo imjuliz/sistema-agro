@@ -29,6 +29,24 @@ export function StoreLevelView() {
   const allStoreItems = useMemo(() => getStoreItems() || [], [getStoreItems]);
   const stores = useMemo(() => Object.values(storeMapping || {}), [storeMapping]);
 
+  // helper para extrair o nome do fornecedor/origem do item (robusto para diferentes formatos)
+  const resolveSupplierName = (item) => {
+    // alguns formatos (estoqueProdutos): item.store foi definido como supplierName já
+    if (!item) return '—';
+    if (item.fornecedorName) return item.fornecedorName;
+    // estoqueProdutos novo formato: pode ter fornecedorUnidade / fornecedorExterno
+    if (item.fornecedorUnidade && item.fornecedorUnidade.nome) return item.fornecedorUnidade.nome;
+    if (item.fornecedorExterno && item.fornecedorExterno.nomeEmpresa) return item.fornecedorExterno.nomeEmpresa;
+    // quando vindo de estoqueProdutos no InventoryContext, pode existir produto.origemUnidade ou produto.fornecedor
+    if (item.produto && item.produto.origemUnidade && item.produto.origemUnidade.nome) return item.produto.origemUnidade.nome;
+    if (item.produto && item.produto.fornecedor && item.produto.fornecedor.nomeEmpresa) return item.produto.fornecedor.nomeEmpresa;
+    // fallback para objetos com unidade metadata
+    if (item.unidade && item.unidade.nome) return item.unidade.nome;
+    // legacy/mock: store contém o nome da unidade atual — tratamos como fallback
+    if (item.store) return item.store;
+    return '—';
+  };
+
   // filtra os itens com base em busca e fornecedor
   const filteredItems = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -36,7 +54,8 @@ export function StoreLevelView() {
       const matchesSearch = !term ||
         (item.name && item.name.toLowerCase().includes(term)) ||
         (item.sku && item.sku.toLowerCase().includes(term));
-      const matchesStore = selectedStore === 'all' || item.store === selectedStore;
+      const supplierName = resolveSupplierName(item);
+      const matchesStore = selectedStore === 'all' || supplierName === selectedStore;
       return matchesSearch && matchesStore;
     });
   }, [allStoreItems, searchTerm, selectedStore]);
@@ -57,13 +76,20 @@ export function StoreLevelView() {
   // resetar página quando filtros mudarem (UX comum)
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, selectedStore, selectedCategory, perPage]);
+  }, [searchTerm, selectedStore, perPage]);
 
   // items atualmente visíveis na página
   const paginatedItems = useMemo(() => {
     const start = (page - 1) * perPage;
     return filteredItems.slice(start, start + perPage);
   }, [filteredItems, page, perPage]);
+
+  // lista de fornecedores para o seletor, extraída dos itens
+  const supplierOptions = useMemo(() => {
+    const s = new Set();
+    allStoreItems.forEach(it => s.add(resolveSupplierName(it)));
+    return Array.from(s).filter(x => x && x !== '—').sort();
+  }, [allStoreItems]);
 
   // formatação de preço BRL
   const fmtBRL = (value) =>
@@ -143,8 +169,8 @@ export function StoreLevelView() {
                 </SelectTrigger>
                 <SelectContent className={'w-full'}>
                   <SelectItem value="all">Todos os fornecedores</SelectItem>
-                  {stores.map(store => (
-                    <SelectItem key={store} value={store} className={'w-full'}>{store}</SelectItem>
+                  {supplierOptions.map(name => (
+                    <SelectItem key={name} value={name} className={'w-full'}>{name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
