@@ -4,10 +4,19 @@ import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja", "funcionario_fazenda", "funcionario_loja"]), getEstoquesController);
-+ router.get("/:id", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja", "funcionario_fazenda", "funcionario_loja"]), getEstoquePorIdController);
-router.post("/", auth(["gerente_fazenda", "gerente_loja"]), createEstoqueController);
-router.put("/:id", auth(["gerente_fazenda", "gerente_loja"]), updateEstoqueController);
-router.delete("/:id", auth(["gerente_fazenda", "gerente_loja"]), deleteEstoqueController);
+// GET todos os estoques (com filtro de unidade) - todos os roles podem ler
+router.get("/", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA", "FUNCIONARIO_FAZENDA", "FUNCIONARIO_LOJA"]), getEstoquesController);
+
+// GET um estoque específico - todos os roles podem ler
+router.get("/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA", "FUNCIONARIO_FAZENDA", "FUNCIONARIO_LOJA"]), getEstoquePorIdController);
+
+// POST criar estoque - apenas gerentes (matriz/fazenda/loja)
+router.post("/", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), createEstoqueController);
+
+// PUT atualizar estoque - apenas gerentes (matriz/fazenda/loja)
+router.put("/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), updateEstoqueController);
+
+// DELETE deletar estoque - apenas gerentes (matriz/fazenda/loja)
+router.delete("/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), deleteEstoqueController);
 
 export default router;

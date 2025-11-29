@@ -45,8 +45,8 @@ export const listarAdmins = async (unidadeId) => {
 // Função auxiliar para obter o ID do perfil pelo nome do papel
 export const getPerfilIdByRole = async (roleName) => {
   try {
-    const perfil = await prisma.perfil.findUnique({
-      where: { funcao: roleName }, // Corrigido de 'nome' para 'funcao'
+    const perfil = await prisma.perfil.findFirst({
+      where: { funcao: roleName }, // procura pelo enum funcao
       select: { id: true },
     });
     return perfil?.id;
@@ -160,7 +160,7 @@ export async function listarUsuariosPorUnidade(unidadeId) { //tem controller
       where: {unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
     
       include: {
-        perfil: {select: { nome: true, descricao: true },},
+        perfil: {select: { funcao: true, descricao: true, id: true },},
         unidade: {select: { nome: true, tipo: true },},
       },
       orderBy: {nome: "asc",},
@@ -197,7 +197,7 @@ export const updateUsuario = async (id, data) => {
         nome: true,
         email: true,
         telefone: true,
-        perfil: { select: { nome: true } },
+        perfil: { select: { funcao: true } },
         unidade: { select: { nome: true } },
       },
     });

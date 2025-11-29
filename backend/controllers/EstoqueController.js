@@ -101,11 +101,37 @@ import { getEstoques, getEstoquePorId, createEstoque, updateEstoque, deleteEstoq
 
 export async function getEstoquesController(req, res) {
   try {
-    const { unidadeId, q } = req.query;
+    // Obter unidadeId do usuario autenticado (middleware auth anexa req.usuario)
+    const userUnidadeId = req.usuario?.unidadeId ?? null;
+    const userPerfilNome = req.usuario?.perfil?.nome ?? null; // ex: 'GERENTE_MATRIZ', 'GERENTE_LOJA'
+    
+    // Detectar se é GERENTE_MATRIZ (case-insensitive)
+    const isGerenteMatriz = userPerfilNome && String(userPerfilNome).toUpperCase() === 'GERENTE_MATRIZ';
+
+    // Query params do cliente
+    let { unidadeId, q } = req.query;
+
+    // Se cliente mandou unidadeId, validar permissão:
+    // - GERENTE_MATRIZ: pode pedir qualquer unidade
+    // - outros: só podem pedir a sua própria unidade
+    if (unidadeId != null) {
+      unidadeId = Number(unidadeId);
+      if (!isGerenteMatriz && unidadeId !== userUnidadeId) {
+        console.warn(`[EstoqueController] Acesso negado: usuario ${req.usuario?.id} tentou acessar estoque de unidade ${unidadeId}, mas pertence à ${userUnidadeId}`);
+        return res.status(403).json({ sucesso: false, erro: "Acesso negado: você só pode acessar estoque da sua unidade." });
+      }
+    } else {
+      // Se não mandou unidadeId, usar a unidade do usuário (ou deixar em branco para GERENTE_MATRIZ)
+      if (!isGerenteMatriz && userUnidadeId) {
+        unidadeId = userUnidadeId;
+      }
+    }
+
     const result = await getEstoques({ unidadeId, q });
     if (!result.sucesso) return res.status(500).json(result);
     return res.json({ sucesso: true, estoques: result.estoques });
   } catch (error) {
+    console.error("[EstoqueController] getEstoquesController error:", error);
     return res.status(500).json({ sucesso: false, erro: "Erro interno", detalhes: error.message });
   }
 }
@@ -113,8 +139,20 @@ export async function getEstoquesController(req, res) {
 export async function getEstoquePorIdController(req, res) {
   try {
     const { id } = req.params;
+    const userUnidadeId = req.usuario?.unidadeId ?? null;
+    const userPerfilNome = req.usuario?.perfil?.nome ?? null;
+    const isGerenteMatriz = userPerfilNome && String(userPerfilNome).toUpperCase() === 'GERENTE_MATRIZ';
+
     const result = await getEstoquePorId(id);
     if (!result.sucesso) return res.status(404).json(result);
+
+    // Verificar permissão: se não é GERENTE_MATRIZ, só pode acessar estoque da sua unidade
+    const estoque = result.estoque;
+    if (!isGerenteMatriz && estoque.unidadeId !== userUnidadeId) {
+      console.warn(`[EstoqueController] Acesso negado: usuario ${req.usuario?.id} tentou acessar estoque ${id} (unidade ${estoque.unidadeId}), mas pertence à ${userUnidadeId}`);
+      return res.status(403).json({ sucesso: false, erro: "Acesso negado: você só pode acessar estoque da sua unidade." });
+    }
+
     return res.json(result);
   } catch (error) {
     return res.status(500).json({ sucesso: false, erro: "Erro interno", detalhes: error.message });
@@ -125,6 +163,17 @@ export async function createEstoqueController(req, res) {
   try {
     const data = req.body;
     if (!data || !data.unidadeId) return res.status(400).json({ sucesso: false, erro: "unidadeId é obrigatório." });
+
+    const userUnidadeId = req.usuario?.unidadeId ?? null;
+    const userPerfilNome = req.usuario?.perfil?.nome ?? null;
+    const isGerenteMatriz = userPerfilNome && String(userPerfilNome).toUpperCase() === 'GERENTE_MATRIZ';
+
+    // Validar que tentam criar estoque para sua própria unidade (exceto GERENTE_MATRIZ)
+    const targetUnidadeId = Number(data.unidadeId);
+    if (!isGerenteMatriz && targetUnidadeId !== userUnidadeId) {
+      console.warn(`[EstoqueController] Acesso negado: usuario ${req.usuario?.id} tentou criar estoque para unidade ${targetUnidadeId}, mas pertence à ${userUnidadeId}`);
+      return res.status(403).json({ sucesso: false, erro: "Acesso negado: você só pode criar estoque para sua unidade." });
+    }
 
     const result = await createEstoque(data);
     if (!result.sucesso) return res.status(400).json(result);
@@ -138,6 +187,20 @@ export async function updateEstoqueController(req, res) {
   try {
     const { id } = req.params;
     const data = req.body;
+    const userUnidadeId = req.usuario?.unidadeId ?? null;
+    const userPerfilNome = req.usuario?.perfil?.nome ?? null;
+    const isGerenteMatriz = userPerfilNome && String(userPerfilNome).toUpperCase() === 'GERENTE_MATRIZ';
+
+    // Buscar estoque existente para verificar permissão
+    const existingResult = await getEstoquePorId(id);
+    if (!existingResult.sucesso) return res.status(404).json(existingResult);
+
+    const estoque = existingResult.estoque;
+    if (!isGerenteMatriz && estoque.unidadeId !== userUnidadeId) {
+      console.warn(`[EstoqueController] Acesso negado: usuario ${req.usuario?.id} tentou atualizar estoque ${id} (unidade ${estoque.unidadeId}), mas pertence à ${userUnidadeId}`);
+      return res.status(403).json({ sucesso: false, erro: "Acesso negado: você só pode atualizar estoque da sua unidade." });
+    }
+
     const result = await updateEstoque(id, data);
     if (!result.sucesso) return res.status(400).json(result);
     return res.json(result);
@@ -149,6 +212,20 @@ export async function updateEstoqueController(req, res) {
 export async function deleteEstoqueController(req, res) {
   try {
     const { id } = req.params;
+    const userUnidadeId = req.usuario?.unidadeId ?? null;
+    const userPerfilNome = req.usuario?.perfil?.nome ?? null;
+    const isGerenteMatriz = userPerfilNome && String(userPerfilNome).toUpperCase() === 'GERENTE_MATRIZ';
+
+    // Buscar estoque existente para verificar permissão
+    const existingResult = await getEstoquePorId(id);
+    if (!existingResult.sucesso) return res.status(404).json(existingResult);
+
+    const estoque = existingResult.estoque;
+    if (!isGerenteMatriz && estoque.unidadeId !== userUnidadeId) {
+      console.warn(`[EstoqueController] Acesso negado: usuario ${req.usuario?.id} tentou deletar estoque ${id} (unidade ${estoque.unidadeId}), mas pertence à ${userUnidadeId}`);
+      return res.status(403).json({ sucesso: false, erro: "Acesso negado: você só pode deletar estoque da sua unidade." });
+    }
+
     const result = await deleteEstoque(id);
     if (!result.sucesso) return res.status(400).json(result);
     return res.json(result);

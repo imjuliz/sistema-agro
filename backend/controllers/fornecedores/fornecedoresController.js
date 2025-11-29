@@ -1,5 +1,29 @@
 import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno } from "../../models/unidade-de-venda/fornecedores.js";
 
+// Retorna metadados úteis para o frontend (enums / opções)
+export const listarMetaContratosController = async (req, res) => {
+  try {
+    const frequencias = [
+      { key: 'SEMANALMENTE', label: 'Semanalmente' },
+      { key: 'QUINZENAL', label: 'Quinzenal' },
+      { key: 'MENSALMENTE', label: 'Mensalmente' },
+      { key: 'TRIMESTRAL', label: 'Trimestral' },
+      { key: 'SEMESTRAL', label: 'Semestral' }
+    ];
+
+    const formasPagamento = [
+      { key: 'DINHEIRO', label: 'Dinheiro' },
+      { key: 'CARTAO', label: 'Cartão' },
+      { key: 'PIX', label: 'PIX' }
+    ];
+
+    return res.status(200).json({ sucesso: true, frequencias, formasPagamento });
+  } catch (error) {
+    console.error('Erro ao listar metadados de contratos:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao obter metadados.' });
+  }
+};
+
 // export const listarFornecedoresController = async (req, res) => {
 //   try {
 //     const unidadeId = req.params.unidadeId;

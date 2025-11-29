@@ -460,12 +460,24 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // role check case-insensitive
-  const isGerenteMatriz = !!(
-    user?.roles &&
-    Array.isArray(user.roles) &&
-    user.roles.some(r => String(r).toLowerCase() === "gerente_matriz")
-  );
+  // Detectar role do usuário (case-insensitive)
+  const userPerfilRaw = user?.perfil ?? null;
+  let userPerfilNome = '';
+  if (typeof userPerfilRaw === 'string') {
+    userPerfilNome = String(userPerfilRaw).toUpperCase();
+  } else if (typeof userPerfilRaw === 'object' && userPerfilRaw !== null) {
+    userPerfilNome = String(userPerfilRaw.funcao ?? userPerfilRaw.nome ?? '').toUpperCase();
+  }
+
+  // Role checks
+  const isGerenteMatriz = userPerfilNome === 'GERENTE_MATRIZ';
+  const isGerenteFazenda = userPerfilNome === 'GERENTE_FAZENDA';
+  const isGerenteLoja = userPerfilNome === 'GERENTE_LOJA';
+  const isFuncionarioFazenda = userPerfilNome === 'FUNCIONARIO_FAZENDA';
+  const isFuncionarioLoja = userPerfilNome === 'FUNCIONARIO_LOJA';
+  
+  // Pode ver apenas sua unidade?
+  const canOnlySeeOwnUnit = isGerenteLoja || isGerenteFazenda || isFuncionarioLoja || isFuncionarioFazenda;
 
   const userUnidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
 
@@ -474,7 +486,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
     setError(null);
     try {
       let effectiveUnidadeId = unidadeId;
-      if (!isGerenteMatriz) {
+      if (canOnlySeeOwnUnit) {
         if (!userUnidadeId) {
           console.warn("[Inventory] usuário sem unidadeId — retornando lista vazia (ou use mock)");
           setItems(useMockIfFail ? initialData : []);
@@ -489,7 +501,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       if (q) params.set("q", q);
 
       const url = `${API_URL}estoque${params.toString() ? `?${params.toString()}` : ""}`;
-      console.debug("[Inventory] carregando estoques →", url, { userId: user?.id, roles: user?.roles, isGerenteMatriz, userUnidadeId });
+      console.debug("[Inventory] carregando estoques →", url, { userId: user?.id, perfilNome: userPerfilNome, isGerenteMatriz, canOnlySeeOwnUnit, userUnidadeId });
 
       // tenta usar fetchWithAuth (preserva refresh token / cookies)
       let res;
@@ -523,7 +535,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
     } finally {
       setLoading(false);
     }
-  }, [fetchWithAuth, initialData, isGerenteMatriz, userUnidadeId, useMockIfFail]);
+  }, [fetchWithAuth, initialData, canOnlySeeOwnUnit, userUnidadeId, useMockIfFail]);
 
   useEffect(() => {
     load();
@@ -643,19 +655,25 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       if (!Array.isArray(estoque.estoqueProdutos)) return;
 
       estoque.estoqueProdutos.forEach(ep => {
-        // ep.quantidade é o ideal — se não existir, usamos 0 como fallback
-        const currentStock = Number(ep.quantidade ?? ep.qntd ?? ep.saldo ?? 0);
+        // currentStock from ep.quantidade (EstoqueProduto.quantidade)
+        const currentStock = Number(ep.quantidade ?? 0);
         const minimumStock = Number(ep.minimo ?? ep.minimum ?? estoque.minimo ?? 0);
+
+        // Supplier/Fornecedor origin: prefer fornecedorUnidade (internal supplier) over current store
+        let supplierName = storeName; // fallback: current store
+        if (ep.fornecedorUnidade) {
+          supplierName = ep.fornecedorUnidade.nome ?? `Unidade ${ep.fornecedorUnidade.id}`;
+        } else if (ep.fornecedorExterno) {
+          supplierName = ep.fornecedorExterno.nomeEmpresa ?? `Fornecedor ${ep.fornecedorExterno.id}`;
+        }
 
         const item = {
           id: `${ep.id}-${estoque.unidadeId}`,
           rawItemId: ep.id,
           name: ep.nome ?? ep.produto?.nome ?? '—',
-          brand: ep.marca ?? ep.produto?.marca ?? '—',
-          category: ep.produto?.categoria ?? ep.categoria ?? '—',
           sku: ep.sku ?? ep.produto?.sku ?? '—',
           storeCode: String(estoque.unidadeId ?? estoque.id),
-          store: storeName,
+          store: supplierName, // Show supplier/fornecedor origin
           currentStock,
           minimumStock,
           displayStock: Number(ep.displayStock ?? ep.exposicao ?? 0),
@@ -665,7 +683,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
           produtoId: ep.produtoId ?? null,
         };
 
-        if (!storeFilterName || storeFilterName === 'all' || item.store === storeFilterName) {
+        if (!storeFilterName || storeFilterName === 'all' || supplierName === storeFilterName) {
           storeItems.push(item);
         }
       });
@@ -758,7 +776,13 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       getStoreItems,
       getBrandItems,
       isGerenteMatriz,
+      isGerenteFazenda,
+      isGerenteLoja,
+      isFuncionarioFazenda,
+      isFuncionarioLoja,
+      canOnlySeeOwnUnit,
       userUnidadeId,
+      userPerfilNome,
       storeMapping
     }}>
       {children}

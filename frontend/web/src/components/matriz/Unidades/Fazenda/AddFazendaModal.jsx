@@ -153,6 +153,23 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     return v;
   }
 
+  function computeContractEndDate(startDateStr, durationKey) {
+    if (!startDateStr || !durationKey) return null;
+    const start = new Date(startDateStr);
+    if (Number.isNaN(start.getTime())) return null;
+
+    const out = new Date(start);
+    switch (durationKey) {
+      case '6m': out.setMonth(out.getMonth() + 6); break;
+      case '1y': out.setFullYear(out.getFullYear() + 1); break;
+      case '2y': out.setFullYear(out.getFullYear() + 2); break;
+      case '5y': out.setFullYear(out.getFullYear() + 5); break;
+      default: return null;
+    }
+    // return yyyy-mm-dd
+    return out.toISOString().slice(0,10);
+  }
+
   // --- CEP lookup using fetchWithAuth ---
   async function fetchCepAndFill(rawCep) {
     const digits = onlyDigits(rawCep);
@@ -256,78 +273,168 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   function handleBack() { if (step > 0) setStep(step - 1); }
 
   // --- Funções de adição de fornecedor ---
-  async function addFornecedor() {
-    setFormError("");
-    setNewFornecedorErrors({});
+async function addFornecedor() {
+  setFormError("");
+  setNewFornecedorErrors({});
 
-    // validação local (agora fornecedores só CNPJ - 14 dígitos)
-    const errors = {};
-    if (!newFornecedorData.nomeEmpresa || !newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
-    if (!newFornecedorData.descricaoEmpresa || !newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição da empresa é obrigatória.";
-    if (!newFornecedorData.telefone || !onlyDigits(newFornecedorData.telefone)) errors.telefone = "Telefone é obrigatório.";
-    const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf || '');
-    if (!cnpjDigits || cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido (14 dígitos).";
-    if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
+  // validação
+  const errors = {};
+  if (!newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
+  if (!newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição é obrigatória.";
+  const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf);
+  if (cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido.";
+  if (!onlyDigits(newFornecedorData.telefone)) errors.telefone = "Telefone é obrigatório.";
+  if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
 
-    if (Object.keys(errors).length > 0) {
-      setNewFornecedorErrors(errors);
-      return;
-    }
+  if (Object.keys(errors).length > 0) {
+    setNewFornecedorErrors(errors);
+    return;
+  }
 
-    // cria fornecedor temporário no frontend (sem POST)
-    const tempId = `temp_fornecedor_${Date.now()}`;
-    setFornecedores(prev => [
-      ...prev,
-      {
-        id: tempId,
+  // Create fornecedor immediately on backend, then add to local state and create a contract
+  try {
+    const res = await fetchWithAuth(`${API_URL}fornecedores/externos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
         descricaoEmpresa: newFornecedorData.descricaoEmpresa.trim(),
-        cnpjCpf: cnpjDigits,
-        email: newFornecedorData.email ? newFornecedorData.email.trim() : null,
+        cnpjCpf: newFornecedorData.cnpjCpf ? onlyDigits(newFornecedorData.cnpjCpf) : null,
+        email: newFornecedorData.email || null,
         telefone: onlyDigits(newFornecedorData.telefone),
-        endereco: newFornecedorData.endereco || null,
-        isNew: true,
-        _raw: { ...newFornecedorData } // guarda os dados originais para envio posterior
-      }
-    ]);
-
-    // reset UI do novo fornecedor
-    setIsCreatingNewFornecedor(false);
-    setSelectedFornecedorId(tempId);
-    setNewFornecedorData({
-      nomeEmpresa: "",
-      descricaoEmpresa: "",
-      cnpjCpf: "",
-      email: "",
-      telefone: "",
-      endereco: "",
+        endereco: newFornecedorData.endereco || null
+      })
     });
-    setNewFornecedorErrors({});
-  }
 
-  function addContract() {
-    setErrors(prev => { // Limpa erros gerais de contrato
-      const copy = { ...prev };
-      delete copy.contracts;
-      return copy;
-    });
-    setFormError("");
-
-    if (fornecedores.length === 0) {
-      setErrors(prev => ({ ...prev, contracts: 'Adicione ao menos um fornecedor antes de criar contrato.' }));
-      setFormError('Adicione um fornecedor antes de criar contratos.');
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.sucesso) {
+      setNewFornecedorErrors({ form: json.erro || 'Erro ao criar fornecedor' });
       return;
     }
-    const fornecedorIndex = fornecedores.length - 1; // Pega o último fornecedor adicionado
-    const nomeContrato = `Contrato com ${fornecedores[fornecedorIndex].nome}`;
-    setContracts(prev => [...prev, { fornecedorIndex, nomeContrato, descricao: '' }]);
-    setErrors(prev => {
-      const copy = { ...prev };
-      delete copy.contracts;
+
+    const criado = json.fornecedor || json;
+
+    // normaliza e adiciona aos fornecedores locais
+    setFornecedores(prev => {
+      const novo = {
+        id: criado.id,
+        nome: criado.nomeEmpresa || criado.nome || newFornecedorData.nomeEmpresa.trim(),
+        nomeEmpresa: criado.nomeEmpresa || criado.nome || newFornecedorData.nomeEmpresa.trim(),
+        documento: criado.cnpj || criado.cnpjCpf || newFornecedorData.cnpjCpf,
+        contato: criado.telefone || onlyDigits(newFornecedorData.telefone),
+        email: criado.email || newFornecedorData.email || null,
+      };
+      const newIndex = prev.length;
+
+      // cria contrato local associado
+      setContracts(pc => ([...pc, {
+        fornecedorIndex: newIndex,
+        nomeContrato: `Contrato com ${novo.nomeEmpresa}`,
+        descricao: '',
+        itens: [],
+        // dataInicio deve ser agora e não editável pelo usuário
+        dataInicio: new Date().toISOString().slice(0,10),
+        dataEnvio: new Date().toISOString().slice(0,10),
+        dataFim: null,
+        frequenciaEntregas: null,
+        diaPagamento: '',
+        formaPagamento: null,
+        status: 'ATIVO',
+        duration: ''
+      }]));
+
+      setSelectedFornecedorId(String(criado.id));
+      setIsCreatingNewFornecedor(false);
+      setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+      setNewFornecedorErrors({});
+
+      return [...prev, novo];
+    });
+
+  } catch (err) {
+    console.error('Erro criando fornecedor externo:', err);
+    setNewFornecedorErrors({ form: 'Erro ao criar fornecedor.' });
+  }
+}
+
+function addContract() {
+  setErrors(prev => {
+    const copy = { ...prev };
+    delete copy.contracts;
+    return copy;
+  });
+  setFormError("");
+
+  // Seleção inválida: sem seleção ou a opção "new" (que é a opção de abrir o formulário)
+  if (!selectedFornecedorId || selectedFornecedorId === "new") {
+    setErrors(prev => ({ ...prev, contracts: 'Selecione um fornecedor existente para criar contrato.' }));
+    setFormError('Selecione um fornecedor existente.');
+    return;
+  }
+
+  // Encontrar fornecedor selecionado (pode estar em fornecedores locais ou em existingFornecedores)
+  let fornecedorIndex = fornecedores.findIndex(f => String(f.id) === String(selectedFornecedorId));
+  let fornecedorObj = null;
+
+  if (fornecedorIndex === -1) {
+    // tentar achar em existingFornecedores e adicionar aos fornecedores locais
+    const ext = existingFornecedores.find(f => String(f.id) === String(selectedFornecedorId));
+    if (!ext) {
+      setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
+      setFormError('Fornecedor inválido.');
+      return;
+    }
+    fornecedorObj = {
+      id: ext.id,
+      nome: ext.nomeEmpresa || ext.nome,
+      nomeEmpresa: ext.nomeEmpresa || ext.nome,
+      documento: ext.cnpjCpf || null,
+      contato: ext.telefone || ext.contato || null,
+      email: ext.email || null
+    };
+    setFornecedores(prev => {
+      const copy = [...prev, fornecedorObj];
+      fornecedorIndex = copy.length - 1;
+
+      // cria contrato com dataInicio automática
+      setContracts(pc => ([...pc, {
+        fornecedorIndex,
+        nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa}`,
+        descricao: '',
+        itens: [],
+        dataInicio: new Date().toISOString().slice(0,10),
+        dataEnvio: new Date().toISOString().slice(0,10),
+        dataFim: null,
+        frequenciaEntregas: null,
+        diaPagamento: '',
+        formaPagamento: null,
+        status: 'ATIVO',
+        duration: ''
+      }]));
+
+      setSelectedFornecedorId(String(ext.id));
       return copy;
     });
-    setFormError('');
+    return;
   }
+
+  // fornecedor encontrado localmente
+  fornecedorObj = fornecedores[fornecedorIndex];
+  setContracts(prev => ([...prev, {
+    fornecedorIndex,
+    nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa || fornecedorObj.nome}`,
+    descricao: '',
+    itens: [],
+    dataInicio: new Date().toISOString().slice(0,10),
+    dataEnvio: new Date().toISOString().slice(0,10),
+    dataFim: null,
+    frequenciaEntregas: null,
+    diaPagamento: '',
+    formaPagamento: null,
+    status: 'ATIVO',
+    duration: ''
+  }]));
+}
 
   // --- Funções de adição de equipe ---
   async function addTeamInvite(type) {
@@ -458,6 +565,34 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       setNewFornecedorErrors({});
     }
   }, [open, accessToken, fetchWithAuth]); // Dependências do useEffect
+
+  // opções vindas do backend (frequência e forma de pagamento)
+  const [frequenciaOptions, setFrequenciaOptions] = useState([]);
+  const [formaPagamentoOptions, setFormaPagamentoOptions] = useState([]);
+
+  useEffect(() => {
+    if (!(open && accessToken)) {
+      setFrequenciaOptions([]);
+      setFormaPagamentoOptions([]);
+      return;
+    }
+
+    async function fetchContratoMeta() {
+      try {
+        const base = String(API_URL || '').replace(/\/$/, '');
+        const res = await fetchWithAuth(`${base}/meta/contratos`, { method: 'GET' });
+        if (!res.ok) return console.warn('Falha ao carregar metadados de contratos:', res.status);
+        const json = await res.json();
+        if (!json?.sucesso) return console.warn('Meta contratos retornou erro:', json);
+        setFrequenciaOptions(json.frequencias || []);
+        setFormaPagamentoOptions(json.formasPagamento || []);
+      } catch (err) {
+        console.error('Erro buscando metadados de contratos:', err);
+      }
+    }
+
+    fetchContratoMeta();
+  }, [open, accessToken, fetchWithAuth]);
 
   // Novo useEffect para buscar gerentes disponíveis
   useEffect(() => {
@@ -590,14 +725,26 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
         const fornecedorExternoId = fornecedor ? (fornecedor.isNew ? tempToRealFornecedor[fornecedor.id] : fornecedor.id) : null;
 
         const contractPayload = {
-          nome: c.nomeContrato,
-          descricao: c.descricao || null,
-          unidadeId: unidade.id,
-          fornecedorId: null,
-          fornecedorExternoId: fornecedorExternoId || null
+          fornecedorExternoId: fornecedorExternoId || null,
+          dataInicio: c.dataInicio || new Date().toISOString().slice(0,10),
+          dataFim: c.dataFim || null,
+          dataEnvio: c.dataEnvio || c.dataInicio || new Date().toISOString().slice(0,10),
+          status: c.status || 'ATIVO',
+          frequenciaEntregas: c.frequenciaEntregas || null,
+          diaPagamento: c.diaPagamento || '',
+          formaPagamento: c.formaPagamento || null,
+          valorTotal: c.valorTotal || null,
+          itens: (c.itens || []).map(item => ({
+            nome: item.nome,
+            quantidade: item.quantidade,
+            unidadeMedida: item.unidadeMedida,
+            precoUnitario: item.precoUnitario,
+            raca: item.raca,
+            pesoUnidade: item.pesoUnidade,
+          }))
         };
 
-        const rc = await fetchWithAuth(`${base}/contratos`, {
+        const rc = await fetchWithAuth(`${base}/criarContratoExterno/${unidade.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(contractPayload)
@@ -677,16 +824,63 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     }
   }
 
+const [newItems, setNewItems] = useState({});
+
+function updateNewItem(contractIndex, field, value) {
+  setNewItems(prev => ({
+    ...prev,
+    [contractIndex]: {
+      ...prev[contractIndex],
+      [field]: value
+    }
+  }));
+}
+
+function addItemToContract(contractIndex) {
+  const item = newItems[contractIndex];
+  if (!item || !item.nome) return;
+
+  setContracts(prev => {
+    const copy = [...prev];
+    copy[contractIndex].itens = copy[contractIndex].itens || [];
+    copy[contractIndex].itens.push({
+      nome: item.nome,
+      quantidade: item.quantidade ? Number(item.quantidade) : null,
+      unidadeMedida: item.unidadeMedida || null,
+      precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : null,
+      pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : null,
+      raca: item.raca || null
+    });
+    return copy;
+  });
+
+  setNewItems(prev => ({
+    ...prev,
+    [contractIndex]: {}
+  }));
+}
+
+function removeItem(contractIndex, itemIndex) {
+  setContracts(prev => {
+    const copy = [...prev];
+    copy[contractIndex].itens = copy[contractIndex].itens.filter(
+      (_, idx) => idx !== itemIndex
+    );
+    return copy;
+  });
+}
+
+function updateContractField(contractIndex, field, value) {
+  setContracts(prev => {
+    const copy = [...prev];
+    copy[contractIndex][field] = value;
+    return copy;
+  });
+}
+
   // --- JSX render ---
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) resetAll();
-        onOpenChange(v);
-      }}
-      className={cn("z-[1000]")}
-    >
+    <Dialog open={open} onOpenChange={(v) => { if (!v) resetAll(); onOpenChange(v); }} className={cn("z-[1000]")} >
       <DialogContent className={cn(
         "w-3/4 h-[90vh] max-w-none m-0 p-0 rounded-lg z-[1000]"
       )}>
@@ -912,7 +1106,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                         value={selectedFornecedorId}
                         onValueChange={(value) => {
                           setSelectedFornecedorId(value);
-                          setIsCreatingNewFornecedor(value === "new");
+                          // setIsCreatingNewFornecedor(value === "new");
                           setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
                         }}
                       >
@@ -920,7 +1114,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                           <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
                         </SelectTrigger>
                         <SelectContent className="z-[1001]">
-                          <SelectItem value="new">Criar Novo Fornecedor</SelectItem>
+                          {/* <SelectItem value="new">Criar Novo Fornecedor</SelectItem> */}
                           {existingFornecedores.map((f) => (
                             <SelectItem key={f.id} value={String(f.id)}>
                               {f.nomeEmpresa} {f.cnpjCpf ? `(${f.cnpjCpf})` : ""}
@@ -931,7 +1125,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
                     </div>
                     <div className="flex items-end gap-6">
-                      <Button onClick={addContract}><Plus/></Button>
+                      <Button onClick={addContract}><Plus /></Button>
                       <Button variant="outline" onClick={addFornecedor}>Criar fornecedor</Button>
                     </div>
                   </div>
@@ -950,7 +1144,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                           {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="novo-cnpjCpf">CNPJ/CPF</Label>
+                          <Label htmlFor="novo-cnpjCpf">CNPJ</Label>
                           <Input
                             id="novo-cnpjCpf"
                             value={newFornecedorData.cnpjCpf}
@@ -972,7 +1166,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="novo-email">Email</Label>
+                          <Label htmlFor="novo-email">Email *</Label>
                           <Input
                             id="novo-email"
                             type="email"
@@ -1030,22 +1224,237 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                   </ul>
                 </div>
 
+               <div>
+  <h4 className="font-medium">Contratos</h4>
+
+  <ul className="mt-2 space-y-4">
+    {contracts.map((c, i) => (
+      <li key={i} className="p-3 border rounded-lg space-y-4 bg-muted/30">
+
+        {/* CABEÇALHO DO CONTRATO */}
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="font-semibold text-lg">{c.nomeContrato}</div>
+            <div className="text-sm text-muted-foreground">
+              Fornecedor: {fornecedores[c.fornecedorIndex]?.nomeEmpresa || '—'}
+            </div>
+          </div>
+
+          <Button
+            variant="ghost"
+            onClick={() =>
+              setContracts(prev => prev.filter((_, idx) => idx !== i))
+            }
+          >
+            Remover
+          </Button>
+        </div>
+
+        {/* CAMPOS OBRIGATÓRIOS DO SCHEMA */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="text-sm">Data de Início</label>
+            <Input
+              type="date"
+              value={c.dataInicio || ""}
+              disabled
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label className="text-sm">Data de Envio</label>
+            <Input
+              type="date"
+              value={c.dataEnvio || ""}
+              onChange={(e) =>
+                updateContractField(i, "dataEnvio", e.target.value)
+              }
+            />
+          </div>
+
+          <div>
+            <label className="text-sm">Duração do Contrato</label>
+            <Select
+              value={c.duration || ""}
+              onValueChange={(v) => {
+                updateContractField(i, 'duration', v);
+                const start = c.dataInicio || new Date().toISOString().slice(0,10);
+                const end = computeContractEndDate(start, v);
+                updateContractField(i, 'dataFim', end);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6m">6 meses</SelectItem>
+                <SelectItem value="1y">1 ano</SelectItem>
+                <SelectItem value="2y">2 anos</SelectItem>
+                <SelectItem value="5y">5 anos</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="mt-2">
+              <label className="text-sm">Data de Fim</label>
+              <Input type="date" value={c.dataFim || ""} disabled readOnly />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm">Frequência de Entregas</label>
+            <Select
+              value={c.frequenciaEntregas || ""}
+              onValueChange={(v) => updateContractField(i, 'frequenciaEntregas', v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {frequenciaOptions.length > 0 ? (
+                  frequenciaOptions.map(opt => (
+                    <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="SEMANALMENTE">Semanalmente</SelectItem>
+                    <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                    <SelectItem value="MENSALMENTE">Mensalmente</SelectItem>
+                    <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                    <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm">Dia do Pagamento</label>
+            <Input
+              type="number"
+              placeholder="1 a 31"
+              value={c.diaPagamento || ""}
+              onChange={(e) =>
+                updateContractField(i, "diaPagamento", e.target.value)
+              }
+            />
+          </div>
+
+          <div>
+            <label className="text-sm">Forma de Pagamento</label>
+            <Select
+              value={c.formaPagamento || ""}
+              onValueChange={(v) => updateContractField(i, 'formaPagamento', v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {formaPagamentoOptions.length > 0 ? (
+                  formaPagamentoOptions.map(opt => (
+                    <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                    <SelectItem value="CARTAO">Cartão</SelectItem>
+                    <SelectItem value="PIX">PIX</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* -------- ITENS DO CONTRATO ---------- */}
+        <div className="pt-3 border-t">
+          <h5 className="font-medium mb-2">Itens do Contrato</h5>
+
+          {/* LISTA DE ITENS EXISTENTES */}
+          <ul className="space-y-2">
+            {c.itens?.map((item, idx) => (
+              <li
+                key={idx}
+                className="border rounded p-2 flex justify-between items-center bg-white"
+              >
                 <div>
-                  <h4 className="font-medium">Contratos</h4>
-                  <ul className="mt-2 space-y-2">
-                    {contracts.map((c, i) => (
-                      <li key={i} className="p-2 border rounded flex justify-between items-center">
-                        <div>
-                          <div className="font-semibold">{c.nomeContrato}</div>
-                          <div className="text-sm text-muted-foreground">Fornecedor: {fornecedores[c.fornecedorIndex]?.nome || '—'}</div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" onClick={() => setContracts(prev => prev.filter((_, idx) => idx !== i))}>Remover</Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="font-semibold">{item.nome}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {item.quantidade} {item.unidadeMedida} —
+                    R$ {item.precoUnitario}
+                  </div>
                 </div>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => removeItem(i, idx)}
+                >
+                  Remover
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          {/* FORM PARA NOVO ITEM */}
+          <div className="grid grid-cols-3 gap-3 mt-3 bg-white p-3 rounded border">
+            <Input
+              placeholder="Nome do item"
+              value={newItems?.[i]?.nome || ""}
+              onChange={(e) => updateNewItem(i, "nome", e.target.value)}
+            />
+
+            <Input
+              placeholder="Qtd"
+              value={newItems?.[i]?.quantidade || ""}
+              onChange={(e) => updateNewItem(i, "quantidade", e.target.value)}
+            />
+
+            <Select
+              value={newItems?.[i]?.unidadeMedida || ""}
+              onValueChange={(v) => updateNewItem(i, "unidadeMedida", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Unid" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="KG">KG</SelectItem>
+                <SelectItem value="G">G</SelectItem>
+                <SelectItem value="UNIDADE">UNIDADE</SelectItem>
+                <SelectItem value="CABÊÇA">CABÊÇA</SelectItem>
+                <SelectItem value="LITRO">LITRO</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="Preço Unitário"
+              value={newItems?.[i]?.precoUnitario || ""}
+              onChange={(e) => updateNewItem(i, "precoUnitario", e.target.value)}
+            />
+
+            <Input
+              placeholder="Peso por unidade"
+              value={newItems?.[i]?.pesoUnidade || ""}
+              onChange={(e) => updateNewItem(i, "pesoUnidade", e.target.value)}
+            />
+
+            <Input
+              placeholder="Raça (opcional)"
+              value={newItems?.[i]?.raca || ""}
+              onChange={(e) => updateNewItem(i, "raca", e.target.value)}
+            />
+
+            <Button
+              className="col-span-3"
+              onClick={() => addItemToContract(i)}
+            >
+              Adicionar Item
+            </Button>
+          </div>
+        </div>
+      </li>
+    ))}
+  </ul>
+</div>
+
 
                 {/* <div className="flex items-center justify-between pt-4"> */}
                 {/* <Button variant="outline" onClick={handleBack}>Voltar</Button> */}
