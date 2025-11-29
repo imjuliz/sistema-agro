@@ -101,31 +101,27 @@ export const listarGerentesDisponiveisController = async (req, res) => {
 export const criarUsuarioController = async (req, res) => {
   try {
     const { nome, email, senha, telefone, role, unidadeId } = req.body;
-
     if (!nome || !email || !senha || !telefone || !role) {
       return res.status(400).json({ sucesso: false, erro: "Nome, email, senha, telefone e papel são obrigatórios." });
     }
 
-    const perfilId = await getPerfilIdByRole(role);
-    if (!perfilId) {
-      return res.status(400).json({ sucesso: false, erro: `Papel "${role}" inválido.` });
-    }
-
-    const resultado = await criarUsuario({ nome, email, senha, telefone, perfilId, unidadeId });
+    const resultado = await criarUsuario({ nome, email, senha, telefone, role, unidadeId });
 
     if (!resultado.sucesso) {
-      return res.status(400).json(resultado);
+      // Se o service devolveu 'field', retorna também
+      const status = 400;
+      return res.status(status).json({
+        sucesso: false,
+        erro: resultado.erro || 'Erro ao criar usuário.',
+        field: resultado.field || null,
+        detalhes: resultado.detalhes || null
+      });
     }
 
     return res.status(201).json(resultado);
-
   } catch (error) {
     console.error("Erro no controller ao criar usuário:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno no servidor.",
-      detalhes: error.message,
-    });
+    return res.status(500).json({ sucesso: false, erro: "Erro interno no servidor.", detalhes: error.message });
   }
 };
 

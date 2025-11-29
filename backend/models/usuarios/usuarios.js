@@ -95,18 +95,32 @@ export const listarGerentesDisponiveis = async () => {
 // Nova função para criar um novo usuário (gerente ou funcionário)
 export const criarUsuario = async (userData) => {
   try {
-    const { nome, email, senha, telefone, role, unidadeId } = userData; // Adicionado 'role'
+    const { nome, email, senha, telefone, role, unidadeId } = userData;
 
-    // Obter o perfilId baseado no role fornecido
-    const perfilId = await getPerfilIdByRole(role);
-    if (!perfilId) {
-      return { sucesso: false, erro: `Papel \"${role}\" inválido.` };
+    if (!nome || !email || !senha || !telefone || !role) {
+      return { sucesso: false, erro: "Nome, email, senha, telefone e papel são obrigatórios.", field: null };
     }
 
-    // Verificar se o email já existe
-    const existingUser = await prisma.usuario.findUnique({ where: { email } });
-    if (existingUser) {
-      return { sucesso: false, erro: "Email já cadastrado." };
+    const perfilId = await getPerfilIdByRole(role);
+    if (!perfilId) {
+      return { sucesso: false, erro: `Papel "${role}" inválido.`, field: null };
+    }
+
+    // Verificar duplicidade por email ou telefone (retorna primeiro encontrado)
+    const existing = await prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { email: email },
+          { telefone: telefone }
+        ]
+      },
+      select: { id: true, email: true, telefone: true }
+    });
+
+    if (existing) {
+      if (existing.email === email) return { sucesso: false, erro: "Email já cadastrado.", field: "email" };
+      if (existing.telefone === telefone) return { sucesso: false, erro: "Telefone já cadastrado.", field: "telefone" };
+      return { sucesso: false, erro: "Usuário já cadastrado.", field: null };
     }
 
     const hashedPassword = await bcrypt.hash(senha, 10);
@@ -117,31 +131,26 @@ export const criarUsuario = async (userData) => {
         email,
         senha: hashedPassword,
         telefone,
-        perfilId: perfilId, // Usar o perfilId obtido
+        perfilId,
         unidadeId: unidadeId ? Number(unidadeId) : null,
-        status: true, // Usuário ativo por padrão
+        status: true,
       },
       select: {
         id: true,
         nome: true,
         email: true,
         telefone: true,
-        perfil: { select: { funcao: true } }, // Alterado de 'nome' para 'funcao' aqui também
-        unidade: { select: { nome: true } },
-      },
+      }
     });
 
-    return {
-      sucesso: true,
-      usuario: newUser,
-      message: "Usuário criado com sucesso!",
-    };
+    return { sucesso: true, usuario: newUser, message: "Usuário criado com sucesso!" };
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
+    // Prisma unique constraint fallback
     if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-      return { sucesso: false, erro: "Email já cadastrado." };
+      return { sucesso: false, erro: "Email já cadastrado.", field: "email" };
     }
-    return { sucesso: false, erro: "Erro ao criar usuário.", detalhes: error.message };
+    return { sucesso: false, erro: "Erro ao criar usuário.", detalhes: error.message, field: null };
   }
 };
 

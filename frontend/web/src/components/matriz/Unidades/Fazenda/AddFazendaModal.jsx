@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // ajuste o caminho se necessário
 import { API_URL } from '@/lib/api'; // ajuste o caminho se necessário
 import { Separator } from '@/components/ui/separator';
-
+import { Plus } from 'lucide-react'
 /**
  * AddFazendaWizard (com fetchWithAuth usando AuthContext e API_URL)
  *
@@ -208,6 +208,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (!endereco.trim()) e.endereco = "Endereço é obrigatório.";
     if (!cidade.trim()) e.cidade = "Cidade é obrigatória.";
     if (!estado.trim()) e.estado = "Estado é obrigatório.";
+    if (!email.trim()) e.email = "Email é obrigatório.";
+    if (!cnpj.trim()) e.cnpj = "CNPJ é obrigatório.";
     // validação simples de e-mail (se preenchido)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Email inválido.";
     // cnpj val: se preenchido, verificar se tem 14 dígitos
@@ -254,95 +256,53 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   function handleBack() { if (step > 0) setStep(step - 1); }
 
   // --- Funções de adição de fornecedor ---
-  async function addFornecedor() { // Modificado para async
-    setErrors(prev => { // Limpa erros gerais de contrato
-      const copy = { ...prev };
-      delete copy.contracts;
-      return copy;
-    });
+  async function addFornecedor() {
     setFormError("");
+    setNewFornecedorErrors({});
 
-    if (isCreatingNewFornecedor) {
-      // Validar dados do novo fornecedor
-      const errors = {};
-      if (!newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
-      if (!newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição da empresa é obrigatória.";
-      if (!newFornecedorData.telefone.trim()) errors.telefone = "Telefone é obrigatório.";
-      if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
-      if (newFornecedorData.cnpjCpf && onlyDigits(newFornecedorData.cnpjCpf).length !== 14 && onlyDigits(newFornecedorData.cnpjCpf).length !== 11) errors.cnpjCpf = "CNPJ/CPF inválido (11 ou 14 dígitos).";
+    // validação local (agora fornecedores só CNPJ - 14 dígitos)
+    const errors = {};
+    if (!newFornecedorData.nomeEmpresa || !newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
+    if (!newFornecedorData.descricaoEmpresa || !newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição da empresa é obrigatória.";
+    if (!newFornecedorData.telefone || !onlyDigits(newFornecedorData.telefone)) errors.telefone = "Telefone é obrigatório.";
+    const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf || '');
+    if (!cnpjDigits || cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido (14 dígitos).";
+    if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
 
-      if (Object.keys(errors).length > 0) {
-        setNewFornecedorErrors(errors);
-        return;
-      }
-
-      setNewFornecedorErrors({}); // Limpa erros se a validação passar
-      setLoading(true); // Ativar loading enquanto cria o fornecedor
-      try {
-        const r = await fetchWithAuth(`${API_URL}fornecedores/externos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...newFornecedorData,
-            telefone: onlyDigits(newFornecedorData.telefone), // Envia apenas dígitos
-            cnpjCpf: newFornecedorData.cnpjCpf ? onlyDigits(newFornecedorData.cnpjCpf) : null,
-          }),
-        });
-
-        if (!r.ok) {
-          const body = await r.json().catch(() => ({}));
-          throw new Error(body?.erro || `Erro criando fornecedor (${r.status})`);
-        }
-        const { fornecedor: createdFornecedor } = await r.json();
-        setFornecedores(prev => [...prev, {
-          id: createdFornecedor.id,
-          nome: createdFornecedor.nomeEmpresa,
-          documento: createdFornecedor.cnpjCpf,
-          contato: createdFornecedor.telefone,
-          // outros campos se necessário
-        }]);
-
-        // Resetar campos de novo fornecedor e modo
-        setIsCreatingNewFornecedor(false);
-        setSelectedFornecedorId(String(createdFornecedor.id)); // Seleciona o recém-criado
-        setNewFornecedorData({
-          nomeEmpresa: "",
-          descricaoEmpresa: "",
-          cnpjCpf: "",
-          email: "",
-          telefone: "",
-          endereco: "",
-        });
-        // Refetch de fornecedores existentes para incluir o novo na lista
-        // fetchExistingFornecedores(); // Seria ideal chamar aqui, mas o useEffect já fará no próximo open/close
-
-      } catch (err) {
-        console.error("Erro ao criar novo fornecedor:", err);
-        setFormError(err.message || "Erro ao criar novo fornecedor.");
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      // Adicionar fornecedor existente
-      if (!selectedFornecedorId) {
-        setFormError("Selecione um fornecedor ou crie um novo.");
-        return;
-      }
-      const existing = existingFornecedores.find(f => String(f.id) === selectedFornecedorId);
-      if (existing) {
-        // Verificar se já foi adicionado para evitar duplicatas visuais
-        if (!fornecedores.some(f => f.id === existing.id)) {
-          setFornecedores(prev => [...prev, {
-            id: existing.id,
-            nome: existing.nomeEmpresa,
-            documento: existing.cnpjCpf,
-            contato: existing.telefone,
-          }]);
-        }
-      } else {
-        setFormError("Fornecedor selecionado não encontrado.");
-      }
+    if (Object.keys(errors).length > 0) {
+      setNewFornecedorErrors(errors);
+      return;
     }
+
+    // cria fornecedor temporário no frontend (sem POST)
+    const tempId = `temp_fornecedor_${Date.now()}`;
+    setFornecedores(prev => [
+      ...prev,
+      {
+        id: tempId,
+        nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
+        descricaoEmpresa: newFornecedorData.descricaoEmpresa.trim(),
+        cnpjCpf: cnpjDigits,
+        email: newFornecedorData.email ? newFornecedorData.email.trim() : null,
+        telefone: onlyDigits(newFornecedorData.telefone),
+        endereco: newFornecedorData.endereco || null,
+        isNew: true,
+        _raw: { ...newFornecedorData } // guarda os dados originais para envio posterior
+      }
+    ]);
+
+    // reset UI do novo fornecedor
+    setIsCreatingNewFornecedor(false);
+    setSelectedFornecedorId(tempId);
+    setNewFornecedorData({
+      nomeEmpresa: "",
+      descricaoEmpresa: "",
+      cnpjCpf: "",
+      email: "",
+      telefone: "",
+      endereco: "",
+    });
+    setNewFornecedorErrors({});
   }
 
   function addContract() {
@@ -370,144 +330,90 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   }
 
   // --- Funções de adição de equipe ---
-  async function addTeamInvite(type) { // 'gerente' ou 'funcionario'
+  async function addTeamInvite(type) {
     setErrors({});
     setFormError("");
     setNewGerenteErrors({});
     setNewFuncionarioErrors({});
 
     if (type === "gerente") {
+      // se for criar novo gerente localmente (isCreatingNewGerente)
       if (isCreatingNewGerente) {
-        // Validar dados do novo gerente
         const errors = {};
-        if (!newGerenteData.nome.trim()) errors.nome = "Nome é obrigatório.";
-        if (!newGerenteData.email.trim()) errors.email = "Email é obrigatório.";
-        if (newGerenteData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newGerenteData.email)) errors.email = "Email inválido.";
-        if (!newGerenteData.telefone.trim()) errors.telefone = "Telefone é obrigatório.";
-        if (!newGerenteData.senha.trim()) errors.senha = "Senha é obrigatória.";
+        if (!newGerenteData.nome || !newGerenteData.nome.trim()) errors.nome = "Nome é obrigatório.";
+        if (!newGerenteData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newGerenteData.email)) errors.email = "Email inválido.";
+        if (!newGerenteData.telefone || !onlyDigits(newGerenteData.telefone)) errors.telefone = "Telefone é obrigatório.";
+        if (!newGerenteData.senha || !newGerenteData.senha.trim()) errors.senha = "Senha é obrigatória.";
 
         if (Object.keys(errors).length > 0) {
           setNewGerenteErrors(errors);
           return;
         }
 
-        setLoading(true);
-        try {
-          const r = await fetchWithAuth(`${API_URL}usuarios/criar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...newGerenteData,
-              telefone: onlyDigits(newGerenteData.telefone),
-              role: "GERENTE_FAZENDA",
-              unidadeId: null, // Será associado depois na criação da fazenda
-            }),
-          });
-
-          if (!r.ok) {
-            const body = await r.json().catch(() => ({}));
-            throw new Error(body?.erro || `Erro criando gerente (${r.status})`);
-          }
-          const { usuario: createdGerente } = await r.json();
-
-          setTeamInvites(prev => [...prev, {
-            id: createdGerente.id,
-            nome: createdGerente.nome,
-            email: createdGerente.email,
+        const tempId = `temp_user_${Date.now()}`;
+        setTeamInvites(prev => [
+          ...prev,
+          {
+            id: tempId,
+            nome: newGerenteData.nome.trim(),
+            email: newGerenteData.email.trim(),
+            telefone: onlyDigits(newGerenteData.telefone),
             role: "GERENTE_FAZENDA",
-            isNew: true, // Indica que este é um usuário novo
-            backendId: createdGerente.id, // ID retornado pelo backend
-          }]);
-
-          // Resetar campos de novo gerente e modo
-          setIsCreatingNewGerente(false);
-          setSelectedGerenteId(String(createdGerente.id));
-          setNewGerenteData({ nome: "", email: "", telefone: "", senha: "" });
-          // Atualizar lista de gerentes existentes (opcional, para refletir o recém-criado)
-          setExistingGerentes(prev => [...prev, createdGerente]);
-
-        } catch (err) {
-          console.error("Erro ao criar novo gerente:", err);
-          setFormError(err.message || "Erro ao criar novo gerente.");
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // Adicionar gerente existente
-        if (!selectedGerenteId) {
-          setFormError("Selecione um gerente ou crie um novo.");
-          return;
-        }
-        const existing = existingGerentes.find(g => String(g.id) === selectedGerenteId);
-        if (existing) {
-          // Verificar se já foi adicionado
-          if (!teamInvites.some(u => u.id === existing.id && u.role === "GERENTE_FAZENDA")) {
-            setTeamInvites(prev => [...prev, {
-              id: existing.id,
-              nome: existing.nome,
-              email: existing.email,
-              role: "GERENTE_FAZENDA",
-              isNew: false, // Indica que este é um usuário existente
-              backendId: existing.id,
-            }]);
-          } else {
-            setFormError("Este gerente já foi adicionado.");
+            isNew: true,
+            _raw: { ...newGerenteData }
           }
+        ]);
+
+        setIsCreatingNewGerente(false);
+        setSelectedGerenteId(tempId);
+        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "" });
+        setNewGerenteErrors({});
+      } else {
+        // adicionar gerente existente
+        if (!selectedGerenteId) { setFormError("Selecione um gerente ou crie um novo."); return; }
+        const existing = existingGerentes.find(g => String(g.id) === selectedGerenteId);
+        if (!existing) { setFormError("Gerente selecionado não encontrado."); return; }
+        if (!teamInvites.some(u => String(u.id) === String(existing.id) && u.role === "GERENTE_FAZENDA")) {
+          setTeamInvites(prev => [...prev, {
+            id: existing.id,
+            nome: existing.nome,
+            email: existing.email,
+            telefone: existing.telefone,
+            role: "GERENTE_FAZENDA",
+            isNew: false,
+            backendId: existing.id
+          }]);
         } else {
-          setFormError("Gerente selecionado não encontrado.");
+          setFormError("Este gerente já foi adicionado.");
         }
       }
+
     } else if (type === "funcionario") {
-      // Validar dados do novo funcionário
+      // funcionário novo — mantemos criação local (isNew true)
       const errors = {};
-      if (!newFuncionarioData.nome.trim()) errors.nome = "Nome é obrigatório.";
-      if (!newFuncionarioData.email.trim()) errors.email = "Email é obrigatório.";
-      if (newFuncionarioData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFuncionarioData.email)) errors.email = "Email inválido.";
-      if (!newFuncionarioData.telefone.trim()) errors.telefone = "Telefone é obrigatório.";
-      if (!newFuncionarioData.senha.trim()) errors.senha = "Senha é obrigatória.";
+      if (!newFuncionarioData.nome || !newFuncionarioData.nome.trim()) errors.nome = "Nome é obrigatório.";
+      if (!newFuncionarioData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFuncionarioData.email)) errors.email = "Email inválido.";
+      if (!newFuncionarioData.telefone || !onlyDigits(newFuncionarioData.telefone)) errors.telefone = "Telefone é obrigatório.";
+      if (!newFuncionarioData.senha || !newFuncionarioData.senha.trim()) errors.senha = "Senha é obrigatória.";
 
       if (Object.keys(errors).length > 0) {
         setNewFuncionarioErrors(errors);
         return;
       }
 
-      setLoading(true);
-      try {
-        const r = await fetchWithAuth(`${API_URL}usuarios/criar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...newFuncionarioData,
-            telefone: onlyDigits(newFuncionarioData.telefone),
-            role: "FUNCIONARIO_FAZENDA",
-            unidadeId: null, // Será associado depois na criação da fazenda
-          }),
-        });
+      const tempId = `temp_user_${Date.now()}`;
+      setTeamInvites(prev => [...prev, {
+        id: tempId,
+        nome: newFuncionarioData.nome.trim(),
+        email: newFuncionarioData.email.trim(),
+        telefone: onlyDigits(newFuncionarioData.telefone),
+        role: "FUNCIONARIO_FAZENDA",
+        isNew: true,
+        _raw: { ...newFuncionarioData }
+      }]);
 
-        if (!r.ok) {
-          const body = await r.json().catch(() => ({}));
-          throw new Error(body?.erro || `Erro criando funcionário (${r.status})`);
-        }
-        const { usuario: createdFuncionario } = await r.json();
-
-        setTeamInvites(prev => [...prev, {
-          id: createdFuncionario.id,
-          nome: createdFuncionario.nome,
-          email: createdFuncionario.email,
-          role: "FUNCIONARIO_FAZENDA",
-          isNew: true,
-          backendId: createdFuncionario.id,
-        }]);
-
-        // Resetar campos de novo funcionário
-        setNewFuncionarioData({ nome: "", email: "", telefone: "", senha: "" });
-
-      } catch (err) {
-        console.error("Erro ao criar novo funcionário:", err);
-        setFormError(err.message || "Erro ao criar novo funcionário.");
-      } finally {
-        setLoading(false);
-      }
+      setNewFuncionarioData({ nome: "", email: "", telefone: "", senha: "" });
+      setNewFuncionarioErrors({});
     }
   }
 
@@ -517,124 +423,6 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     const hasManager = teamInvites.some(u => u.role === 'GERENTE_FAZENDA');
     if (!hasManager) e.teamInvites = "É obrigatório informar um GERENTE_FAZENDA.";
     return e;
-  }
-
-  // --- Submit (usa fetchWithAuth ao invés de fetch) ---
-  async function handleSubmitAll() {
-    setErrors({});
-    setFormError('');
-    // valida step2
-    const e = validateStep2Fields();
-    if (Object.keys(e).length > 0) {
-      setErrors(e);
-      setFormError('Corrija os erros antes de enviar.');
-      return;
-    }
-
-    const payload = {
-      nome: nome.trim(),
-      endereco: endereco.trim(),
-      cep: onlyDigits(cep).trim(),
-      cidade: cidade.trim(),
-      estado: estado.trim(),
-      cnpj: onlyDigits(cnpj).trim() || null,
-      email: email.trim() || null,
-      telefone: onlyDigits(telefone).trim(),
-      tipo: 'FAZENDA',
-      imagemUrl: imagemUrl || null,
-      areaTotal: areaTotal !== '' ? Number(areaTotal) : null,
-      areaProdutiva: areaProdutiva !== '' ? Number(areaProdutiva) : null,
-      cultura: cultura || null,
-      horarioAbertura: horarioAbertura || null,
-      horarioFechamento: horarioFechamento || null,
-      descricaoCurta: descricaoCurta || null
-    };
-
-    setLoading(true);
-    try {
-      const r = await fetchWithAuth(`${API_URL}unidades`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-      });
-      if (!r.ok) throw new Error(`Erro criando unidade: ${r.status}`);
-      const unidade = await r.json();
-
-      // criar fornecedores
-      const createdFornecedores = [];
-      for (const f of fornecedores) { // 'fornecedores' aqui são os que foram adicionados via frontend (newFornecedorData ou existing)
-        // Se for um fornecedor recém-criado, o backend já o criou. Se for existente, nada a fazer aqui.
-        // O `fornecedores` do estado frontend já contém os dados necessários.
-        // Esta parte pode precisar de refinamento dependendo de como o backend espera que os fornecedores sejam "associados" à unidade.
-        // Por enquanto, presumo que o `fornecedores` da fazenda são apenas para exibir no frontend, e a associação é via `contrato`.
-        createdFornecedores.push(f); // Apenas adiciona os fornecedores (existente ou novo) para o array de retorno.
-      }
-
-      // criar contratos
-      const createdContracts = [];
-      for (const c of contracts) {
-        const fornecedor = createdFornecedores.find(f => f.id === c.fornecedorId) || fornecedores[c.fornecedorIndex]; // Usar o ID do fornecedor
-        const contractPayload = {
-          nome: c.nomeContrato,
-          descricao: c.descricao || null,
-          unidadeId: unidade.id,
-          fornecedorId: fornecedor?.id || null, // Se for fornecedor interno
-          fornecedorExternoId: fornecedor?.id || null, // Se for fornecedor externo
-          // ... outros campos de contrato ...
-        };
-        try {
-          const rc = await fetchWithAuth(`${API_URL}contratos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(contractPayload)
-          });
-          if (!rc.ok) { console.warn('Erro criando contrato no backend, pulando'); createdContracts.push(contractPayload); continue; }
-          const cc = await rc.json();
-          createdContracts.push(cc);
-        } catch (err) {
-          console.warn('Erro criando contrato:', err);
-          createdContracts.push(contractPayload);
-        }
-      }
-
-      // Associar usuários da equipe à nova unidade (incluindo gerentes e funcionários)
-      const finalUsers = [];
-      for (const u of teamInvites) {
-        try {
-          // Endpoint para atualizar o unidadeId de um usuário
-          const updateUrl = `${API_URL}usuarios/${u.backendId}`;
-          const updateBody = { unidadeId: unidade.id }; // Associa à unidade recém-criada
-
-          const resUpdateUser = await fetchWithAuth(updateUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updateBody),
-          });
-
-          if (!resUpdateUser.ok) {
-            const body = await resUpdateUser.json().catch(() => ({}));
-            console.warn(`Erro ao associar usuário ${u.nome} (ID: ${u.backendId}) à unidade ${unidade.id}:`, body?.erro || resUpdateUser.status);
-            finalUsers.push({ ...u, erroAssociacao: true });
-          } else {
-            const updatedUser = await resUpdateUser.json();
-            finalUsers.push({ ...u, ...updatedUser.usuario }); // Mescla os dados atualizados
-          }
-        } catch (err) {
-          console.warn(`Erro crítico ao associar usuário ${u.nome} à unidade:`, err);
-          finalUsers.push({ ...u, erroAssociacao: true });
-        }
-      }
-
-      if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: finalUsers });
-
-      // mensagem de sucesso (pode trocar por um toast)
-      alert('Fazenda criada com sucesso!');
-      resetAll();
-      onOpenChange(false);
-    } catch (err) {
-      console.error(err);
-      setFormError('Erro durante criação da fazenda. Veja console.');
-    } finally {
-      setLoading(false);
-    }
   }
 
   // Novo useEffect para buscar fornecedores externos
@@ -673,56 +461,254 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
   // Novo useEffect para buscar gerentes disponíveis
   useEffect(() => {
-    if (open && step === 2 && accessToken) { // Garante que só busca quando o modal está aberto, no passo 3 e o usuário autenticado
-      async function fetchExistingGerentes() {
-        try {
-          const res = await fetchWithAuth(`${API_URL}usuarios/gerentes-disponiveis`, { method: "GET" });
-          if (res.ok) {
-            const { gerentes } = await res.json();
-            setExistingGerentes(gerentes);
-          } else {
-            console.error("Falha ao carregar gerentes disponíveis:", res.status);
+    if (!(open && step === 2 && accessToken)) {
+      if (!open) {
+        setExistingGerentes([]);
+        setSelectedGerenteId("");
+        setIsCreatingNewGerente(false);
+        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "" });
+        setNewGerenteErrors({});
+      }
+      return;
+    }
+
+    async function fetchExistingGerentes() {
+      try {
+        // monta base sem barra final para evitar // na URL
+        const base = String(API_URL || '').replace(/\/$/, '');
+        const url = `${base}/usuarios/gerentes-disponiveis`;
+
+        const res = await fetchWithAuth(url, { method: "GET" });
+        if (res.ok) {
+          const json = await res.json();
+          // o controller retorna { sucesso: true, gerentes }
+          setExistingGerentes(json.gerentes || []);
+        } else {
+          console.error("Falha ao carregar gerentes disponíveis:", res.status);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar gerentes disponíveis:", err);
+      }
+    }
+
+    fetchExistingGerentes();
+  }, [open, step, accessToken, fetchWithAuth, API_URL]);
+
+  async function handleSubmitAll() {
+    setErrors({});
+    setFormError("");
+
+    // valida step2 (ex: obrigatoriedade de gerente)
+    const e = validateStep2Fields && validateStep2Fields();
+    if (e && Object.keys(e).length > 0) {
+      setErrors(e);
+      setFormError('Corrija os erros antes de enviar.');
+      return;
+    }
+
+    // monta payload unidade
+    const payload = {
+      nome: nome.trim(),
+      endereco: endereco.trim(),
+      cep: onlyDigits(cep).trim(),
+      cidade: cidade.trim(),
+      estado: estado.trim(),
+      cnpj: onlyDigits(cnpj).trim() || null,
+      email: email.trim() || null,
+      telefone: onlyDigits(telefone).trim() || null,
+      tipo: 'FAZENDA',
+      imagemUrl: imagemUrl || null,
+      areaTotal: areaTotal !== '' ? Number(areaTotal) : null,
+      areaProdutiva: areaProdutiva !== '' ? Number(areaProdutiva) : null,
+      cultura: cultura || null,
+      horarioAbertura: horarioAbertura || null,
+      horarioFechamento: horarioFechamento || null,
+      descricaoCurta: descricaoCurta || null
+    };
+
+    setLoading(true);
+
+    try {
+      // criar unidade primeiro
+      const base = String(API_URL || '').replace(/\/$/, '');
+      const r = await fetchWithAuth(`${base}/unidades`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body?.erro || `Erro criando unidade: ${r.status}`);
+      }
+      const unidade = await r.json();
+
+      // 1) Criar fornecedores que estão com isNew === true
+      const tempToRealFornecedor = {}; // tempId -> realId
+      const createdFornecedores = [];
+      for (const f of fornecedores) {
+        if (f.isNew) {
+          // envia cnpj (apenas dígitos) e telefone apenas dígitos
+          const body = {
+            nomeEmpresa: f.nomeEmpresa,
+            descricaoEmpresa: f.descricaoEmpresa,
+            cnpjCpf: f.cnpjCpf, // já guardamos apenas dígitos
+            email: f.email,
+            telefone: f.telefone,
+            endereco: f.endereco || null
+          };
+          const resp = await fetchWithAuth(`${base}/fornecedores/externos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!resp.ok) {
+            const errBody = await resp.json().catch(() => ({}));
+            // exibe erro específico se backend retornar field
+            if (errBody.field) {
+              // mapear para input correspondente no frontend
+              setNewFornecedorErrors({ [errBody.field]: `esse ${errBody.field} ja foi cadastrado no sistema` });
+              throw new Error(errBody.erro || 'Erro criando fornecedor.');
+            }
+            throw new Error(errBody.erro || `Erro ao criar fornecedor (${resp.status})`);
           }
-        } catch (err) {
-          console.error("Erro ao buscar gerentes disponíveis:", err);
+          const json = await resp.json();
+          const real = json.fornecedor || json; // adapta se a API retornar {fornecedor}
+          tempToRealFornecedor[f.id] = real.id;
+          createdFornecedores.push(real);
+        } else {
+          // fornecedor existente — mantemos como está
+          createdFornecedores.push(f);
         }
       }
-      fetchExistingGerentes();
-    } else if (!open) { // Resetar estados quando o modal é fechado
-      setExistingGerentes([]);
-      setSelectedGerenteId("");
-      setIsCreatingNewGerente(false);
-      setNewGerenteData({
-        nome: "",
-        email: "",
-        telefone: "",
-        senha: "",
-      });
-      setNewGerenteErrors({});
-      setNewFuncionarioData({
-        nome: "",
-        email: "",
-        telefone: "",
-        senha: "",
-      });
-      setNewFuncionarioErrors({});
+
+      // 2) Criar contratos, garantindo referenciar fornecedor realId quando necessário
+      const createdContracts = [];
+      for (const c of contracts) {
+        // c.fornecedorIndex aponta para fornecedores array; pegue o fornecedor correspondente
+        const fornecedor = fornecedores[c.fornecedorIndex];
+        const fornecedorExternoId = fornecedor ? (fornecedor.isNew ? tempToRealFornecedor[fornecedor.id] : fornecedor.id) : null;
+
+        const contractPayload = {
+          nome: c.nomeContrato,
+          descricao: c.descricao || null,
+          unidadeId: unidade.id,
+          fornecedorId: null,
+          fornecedorExternoId: fornecedorExternoId || null
+        };
+
+        const rc = await fetchWithAuth(`${base}/contratos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(contractPayload)
+        });
+
+        if (!rc.ok) {
+          const body = await rc.json().catch(() => ({}));
+          console.warn('Erro criando contrato no backend, pulando:', body?.erro || rc.status);
+          createdContracts.push(contractPayload);
+          continue;
+        }
+        const cc = await rc.json();
+        createdContracts.push(cc);
+      }
+
+      // 3) Criar usuários novos (teamInvites isNew === true) e associar unidade
+      const createdUsers = [];
+      for (const u of teamInvites) {
+        if (u.isNew) {
+          // envia _raw com telefone apenas dígitos
+          const createBody = {
+            nome: u._raw.nome,
+            email: u._raw.email,
+            senha: u._raw.senha,
+            telefone: onlyDigits(u._raw.telefone),
+            role: u.role,
+            unidadeId: unidade.id
+          };
+          const resp = await fetchWithAuth(`${base}/usuarios/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(createBody)
+          });
+
+          if (!resp.ok) {
+            const errBody = await resp.json().catch(() => ({}));
+            if (errBody.field) {
+              // mostra erro inline no input correto (email/telefone)
+              const msg = `esse ${errBody.field} ja foi cadastrado no sistema`;
+              if (errBody.field === 'email') setNewGerenteErrors(prev => ({ ...prev, email: msg }));
+              if (errBody.field === 'telefone') setNewGerenteErrors(prev => ({ ...prev, telefone: msg }));
+              throw new Error(errBody.erro || 'Erro criando usuário.');
+            }
+            throw new Error(errBody.erro || `Erro criando usuário (${resp.status})`);
+          }
+
+          const json = await resp.json();
+          createdUsers.push(json.usuario || json);
+        } else {
+          // usuário existente: atualiza unidadeId (PUT)
+          try {
+            const updateResp = await fetchWithAuth(`${base}/usuarios/${u.backendId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ unidadeId: unidade.id })
+            });
+            if (!updateResp.ok) {
+              console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);
+            }
+          } catch (err) {
+            console.warn(`Erro associando usuário ${u.nome}:`, err);
+          }
+        }
+      }
+
+      // tudo ok
+      if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
+      alert('Fazenda criada com sucesso!');
+      resetAll();
+      onOpenChange(false);
+
+    } catch (err) {
+      console.error(err);
+      setFormError(err.message || 'Erro durante criação da fazenda. Veja console.');
+    } finally {
+      setLoading(false);
     }
-  }, [open, step, accessToken, fetchWithAuth]); // Dependências do useEffect
+  }
 
   // --- JSX render ---
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) resetAll(); onOpenChange(v); }} className={cn("z-[1000]")}>
-      <DialogContent className={cn("w-3/4 h-9/10 max-w-none m-0 p-0 rounded-lg z-[1000]")}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) resetAll();
+        onOpenChange(v);
+      }}
+      className={cn("z-[1000]")}
+    >
+      <DialogContent className={cn(
+        "w-3/4 h-[90vh] max-w-none m-0 p-0 rounded-lg z-[1000]"
+      )}>
         <DialogHeader className="sr-only">
           <DialogTitle>Criar Nova Fazenda</DialogTitle>
           <DialogDescription>Preencha as informações para criar uma nova fazenda.</DialogDescription>
         </DialogHeader>
-        <div className="flex min-h-full overflow-hidden">
+
+        <div className="flex h-full overflow-hidden">
+
+          {/* Sidebar fixa */}
           <div className="hidden lg:block w-72 border-r">
-            <Sidebar steps={steps.map((s, i) => ({ ...s, completed: i < step, current: i === step }))} />
+            <Sidebar
+              steps={steps.map((s, i) => ({
+                ...s,
+                completed: i < step,
+                current: i === step
+              }))}
+            />
           </div>
 
-          <main className="flex-1 p-8 self-center overflow-auto">
+          <main className="flex-1 p-8 overflow-y-auto">
             <header className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-semibold">Criar Nova Fazenda</h2>
               <div className="flex gap-2" />
@@ -754,7 +740,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ</Label>
+                    <Label htmlFor="cnpj">CNPJ *</Label>
                     <Input
                       id="cnpj"
                       value={cnpj}
@@ -766,19 +752,6 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                     />
                     {errors.cnpj && <p id="error-cnpj" className="text-sm text-red-600 mt-1">{errors.cnpj}</p>}
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="endereco">Endereço *</Label>
-                  <Textarea
-                    id="endereco"
-                    value={endereco}
-                    onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }}
-                    className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")}
-                    aria-invalid={!!errors.endereco}
-                    aria-describedby={errors.endereco ? "error-endereco" : undefined}
-                  />
-                  {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -832,8 +805,19 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                     />
                     {errors.estado && <p id="error-estado" className="text-sm text-red-600 mt-1">{errors.estado}</p>}
                   </div>
+                </div>
 
-
+                <div className="space-y-2">
+                  <Label htmlFor="endereco">Endereço *</Label>
+                  <Textarea
+                    id="endereco"
+                    value={endereco}
+                    onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }}
+                    className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")}
+                    aria-invalid={!!errors.endereco}
+                    aria-describedby={errors.endereco ? "error-endereco" : undefined}
+                  />
+                  {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -852,7 +836,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }}
                       aria-invalid={!!errors.email}
                       aria-describedby={errors.email ? "error-email" : undefined}
@@ -920,31 +904,37 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                 <h3 className="text-lg font-semibold">Fornecedores</h3>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {/* Campo de seleção/criação de fornecedor */}
-                  <div className="space-y-2">
-                    <Label htmlFor="select-fornecedor">Fornecedor *</Label>
-                    <Select
-                      value={selectedFornecedorId}
-                      onValueChange={(value) => {
-                        setSelectedFornecedorId(value);
-                        setIsCreatingNewFornecedor(value === "new");
-                        setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
-                      }}
-                    >
-                      <SelectTrigger id="select-fornecedor">
-                        <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
-                      </SelectTrigger>
-                      <SelectContent className="z-[1001]">
-                        <SelectItem value="new">Criar Novo Fornecedor</SelectItem>
-                        {existingFornecedores.map((f) => (
-                          <SelectItem key={f.id} value={String(f.id)}>
-                            {f.nomeEmpresa} {f.cnpjCpf ? `(${f.cnpjCpf})` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <div className="flex flex-row gap-2">
+                    {/* Campo de seleção/criação de fornecedor */}
+                    <div className="space-y-2">
+                      <Label htmlFor="select-fornecedor">Fornecedor *</Label>
+                      <Select
+                        value={selectedFornecedorId}
+                        onValueChange={(value) => {
+                          setSelectedFornecedorId(value);
+                          setIsCreatingNewFornecedor(value === "new");
+                          setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
+                        }}
+                      >
+                        <SelectTrigger id="select-fornecedor">
+                          <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[1001]">
+                          <SelectItem value="new">Criar Novo Fornecedor</SelectItem>
+                          {existingFornecedores.map((f) => (
+                            <SelectItem key={f.id} value={String(f.id)}>
+                              {f.nomeEmpresa} {f.cnpjCpf ? `(${f.cnpjCpf})` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
+                    </div>
+                    <div className="flex items-end gap-6">
+                      <Button onClick={addContract}><Plus/></Button>
+                      <Button variant="outline" onClick={addFornecedor}>Criar fornecedor</Button>
+                    </div>
+                  </div>
                   {isCreatingNewFornecedor && (
                     <div className="space-y-4 p-4 border rounded-md bg-muted/20">
                       <h4 className="font-semibold">Dados do Novo Fornecedor</h4>
@@ -1017,10 +1007,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={addFornecedor}>Adicionar fornecedor</Button>
-                  <Button variant="outline" onClick={addContract}>Criar contrato com último fornecedor</Button>
-                </div>
+
 
                 {errors.contracts && <p className="text-sm text-red-600">{errors.contracts}</p>}
 

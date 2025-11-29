@@ -333,27 +333,18 @@ export const listarTodosFornecedoresExternosController = async (req, res) => {
 
 export const criarFornecedorExternoController = async (req, res) => {
   try {
-    const { nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco } = req.body;
-
-    if (!nomeEmpresa || !descricaoEmpresa || !telefone) {
-      return res.status(400).json({ sucesso: false, erro: "Nome da empresa, descrição e telefone são obrigatórios." });
-    }
-
-    console.log("Dados recebidos para criar fornecedor externo:", req.body); // Adicionado para depuração
-    const resultado = await criarFornecedorExterno({ nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco });
-
+    const resultado = await criarFornecedorExterno(req.body);
     if (!resultado.sucesso) {
-      return res.status(400).json(resultado);
+      return res.status(400).json({
+        sucesso: false,
+        erro: resultado.erro,
+        field: resultado.field || null
+      });
     }
-
     return res.status(201).json(resultado);
-
-  } catch (error) {
-    console.error("Erro no controller ao criar fornecedor externo:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno no servidor.",
-      detalhes: error.message,
-    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ sucesso:false, erro: "Erro interno." });
   }
 };
+

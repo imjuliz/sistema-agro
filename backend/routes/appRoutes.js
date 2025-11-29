@@ -8,11 +8,7 @@ import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
 import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-<<<<<<< HEAD
-import { calcularFornecedoresController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController } from "../controllers/fornecedores/fornecedoresController.js";
-=======
-import {   calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController } from "../controllers/fornecedores/fornecedoresController.js";
->>>>>>> 5f7dae57d9fd922f88cb6d84a47074983c40348b
+import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,

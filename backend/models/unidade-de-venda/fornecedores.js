@@ -61,41 +61,55 @@ export const listarTodosFornecedoresExternos = async () => {
   }
 };
 
-export const criarFornecedorExterno = async (dadosFornecedor) => {
+export const criarFornecedorExterno = async (data) => {
   try {
-    const novoFornecedor = await prisma.fornecedorExterno.create({
-      data: {
-        nomeEmpresa: dadosFornecedor.nomeEmpresa,
-        descricaoEmpresa: dadosFornecedor.descricaoEmpresa,
-        cnpjCpf: dadosFornecedor.cnpjCpf || null,
-        email: dadosFornecedor.email || null,
-        telefone: dadosFornecedor.telefone,
-        endereco: dadosFornecedor.endereco || null,
-        status: "ATIVO", // Ou outro status padrão, conforme o enum StatusFornecedor
+    const { nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco } = data;
+
+    if (!nomeEmpresa || !descricaoEmpresa || !cnpjCpf || !telefone) {
+      return { sucesso:false, erro: "nomeEmpresa, descricaoEmpresa, cnpj e telefone são obrigatórios.", field: null };
+    }
+
+    // checar duplicidade por CNPJ, email ou telefone
+    const existing = await prisma.fornecedor.findFirst({
+      where: {
+        OR: [
+          { cnpj: cnpjCpf },
+          { email: email || undefined },
+          { telefone: telefone || undefined }
+        ]
       },
+      select: { id: true, cnpj: true, email: true, telefone: true }
     });
 
-    return {
-      sucesso: true,
-      fornecedor: novoFornecedor,
-      message: "Fornecedor externo criado com sucesso!",
-    };
-  } catch (error) {
-    // Tratar erro de CNPJ/CPF duplicado, por exemplo
-    if (error.code === 'P2002' && error.meta?.target?.includes('cnpj_cpf')) {
-      return {
-        sucesso: false,
-        erro: "CNPJ/CPF já cadastrado.",
-        detalhes: error.message,
-      };
+    if (existing) {
+      if (existing.cnpj === cnpjCpf) return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
+      if (existing.email && existing.email === email) return { sucesso: false, erro: "Email já cadastrado.", field: "email" };
+      if (existing.telefone && existing.telefone === telefone) return { sucesso: false, erro: "Telefone já cadastrado.", field: "telefone" };
+      return { sucesso: false, erro: "Fornecedor já cadastrado.", field: null };
     }
-    return {
-      sucesso: false,
-      erro: "Erro ao criar fornecedor externo",
-      detalhes: error.message,
-    };
+
+    const f = await prisma.fornecedor.create({
+      data: {
+        nomeEmpresa,
+        descricaoEmpresa,
+        cnpj: cnpjCpf,
+        email: email || null,
+        telefone,
+        endereco: endereco || null,
+      },
+      select: { id: true, nomeEmpresa: true, cnpj: true, email: true, telefone: true }
+    });
+
+    return { sucesso: true, fornecedor: f, message: "Fornecedor criado" };
+  } catch (error) {
+    console.error("Erro ao criar fornecedor:", error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('cnpj')) {
+      return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
+    }
+    return { sucesso: false, erro: "Erro ao criar fornecedor.", detalhes: error.message, field: null };
   }
 };
+
 
 //fazer uma função para buscar fornecedor interno 
 export const listarFornecedoresInternos = async (unidadeId) => { //nesse caso a função é  para as lojas consultarem as fazendas fornecedoras
