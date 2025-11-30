@@ -1,14 +1,5 @@
-// generator client {
-//   provider = "prisma-client-js"
-// }
-
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-// }
-
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../prisma/generated"
 }
 
@@ -40,6 +31,7 @@ model Unidade {
   cidade            String?       @db.VarChar(100)
   estado            String?       @db.VarChar(100)
   cep               String?       @db.VarChar(20)
+  focoProdutivo     String?       @db.VarChar(50)
   imagemUrl         String?       @map("imagem_url") @db.VarChar(1000)
   areaTotal         Decimal?      @map("area_total") @db.Decimal(12, 3)
   areaProdutiva     Decimal?      @map("area_produtiva") @db.Decimal(12, 3)
@@ -316,7 +308,6 @@ model FornecedorExterno {
   pedidos           Pedido[]
   // fornecedorProduto FornecedorProduto[]
   estoqueProdutos   EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
-  
 
   @@map("fornecedor_externo")
 }
@@ -783,19 +774,44 @@ model ItemVenda {
 }
 
 model Financeiro {
-  id        Int       @id @default(autoincrement())
-  usuarioId Int //a função deve puxar o id do usuário automaticamente
-  unidadeId Int //a função deve puxar o id da unidade automaticamente
+  id        Int    @id @default(autoincrement())
+  usuarioId Int
+  unidadeId Int
   descricao String
-  tipo      TipoSaida
-  valor     Decimal   @db.Decimal(12, 2)
-  data      DateTime
-  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
-  unidade   Unidade   @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+
+  tipo           TipoMovimento // Entrada ou Saída
+  categoria      String? // categoria livre digitada pelo usuário
+  subcategoria   String? // subcategoria livre
+  formaPagamento String? // PIX, Boleto, Transferência, etc. (texto livre)
+
+  valor     Decimal  @db.Decimal(12, 2)
+  valorPago Decimal? @db.Decimal(12, 2)
+
+  competencia   DateTime? // mês referência
+  vencimento    DateTime // vencimento
+  dataPagamento DateTime? // pago quando?
+
+  parcela       Int? // ex: 1
+  totalParcelas Int? // ex: 12
+
+  status ContaStatus @default(PENDENTE)
+
+  documento  String? // Nº nota, boleto, fatura, etc.
+  observacao String?
+  anexo      String? // caminho do arquivo enviado
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
 
   @@index([unidadeId])
   @@index([usuarioId])
-  @@index([data])
+  @@index([vencimento])
+  @@index([competencia])
+  @@index([status])
   @@index([tipo])
   @@map("financeiro")
 }
@@ -803,6 +819,13 @@ model Financeiro {
 // ============================================
 // ENUMS
 // ============================================
+enum ContaStatus {
+  PENDENTE
+  PAGA
+  VENCIDA
+  CANCELADA
+}
+
 enum TipoPerfil {
   GERENTE_MATRIZ
   GERENTE_FAZENDA
