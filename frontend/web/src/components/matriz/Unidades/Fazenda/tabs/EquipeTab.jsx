@@ -253,7 +253,7 @@ export function EquipeTab({ fazendaId }) {
           </div>
         ) : (
           filtered.map((eqp) => (
-          <Card key={eqp.id} className={"p-0"}>
+            <Card key={eqp.id} className={"p-0"}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4">
@@ -336,7 +336,8 @@ export function EquipeTab({ fazendaId }) {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
