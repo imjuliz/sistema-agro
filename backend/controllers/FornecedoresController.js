@@ -1,4 +1,4 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno } from "../../models/unidade-de-venda/fornecedores.js";
+import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno } from "../models/Fornecedores.js";
 
 // Retorna metadados úteis para o frontend (enums / opções)
 export const listarMetaContratosController = async (req, res) => {

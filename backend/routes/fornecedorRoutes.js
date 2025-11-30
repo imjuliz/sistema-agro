@@ -1,5 +1,5 @@
 import express from "express";
-import { listarTodosFornecedoresExternosController, criarFornecedorExternoController } from "../controllers/fornecedores/fornecedoresController.js";
+import { listarTodosFornecedoresExternosController, criarFornecedorExternoController } from "../controllers/FornecedoresController.js";
 import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
