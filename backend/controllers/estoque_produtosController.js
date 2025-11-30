@@ -1,7 +1,7 @@
-import prisma from "../../prisma/client.js";
-import { somarQtdTotalEstoque, getEstoque, getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos,  } from "../../models/estoque_produtos.js";
-import { lotesPlantio } from "../../models/Fazendas.js";
-import { verPedidos, contarSaidas, listarPedidosEntrega, listarPedidosOrigem } from "../../models/unidade-de-venda/Loja.js";
+import prisma from "../prisma/client.js";
+import { somarQtdTotalEstoque, getEstoque, getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos,  } from "../models/estoque_produtos.js";
+import { lotesPlantio } from "../models/Fazendas.js";
+import { verPedidos, contarSaidas, listarPedidosEntrega, listarPedidosOrigem } from "../models/unidade-de-venda/Loja.js";
 
 //BUSCAR PRODUTO MAIS VENDIDO
 export const buscarProdutoMaisVendidoController = async (req, res) => {
