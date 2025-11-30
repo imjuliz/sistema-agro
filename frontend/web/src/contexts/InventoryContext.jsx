@@ -454,7 +454,7 @@ import { API_URL } from "@/lib/api";
 
 const InventoryContext = createContext();
 
-export function InventoryProvider({ children, initialData = [], useMockIfFail = true }) {
+export function InventoryProvider({ children, initialData = [], useMockIfFail = true, defaultUnidadeId = null }) {
   const { user, fetchWithAuth } = useAuth();
   const [items, setItems] = useState(initialData);
   const [loading, setLoading] = useState(true);
@@ -538,9 +538,9 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
   }, [fetchWithAuth, initialData, canOnlySeeOwnUnit, userUnidadeId, useMockIfFail]);
 
   useEffect(() => {
-    load();
+    load({ unidadeId: defaultUnidadeId });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, defaultUnidadeId]);
 
   const refresh = useCallback((opts) => load(opts), [load]);
 

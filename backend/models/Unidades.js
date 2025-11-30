@@ -11,8 +11,26 @@ export async function getUnidades() {
 
 export async function getUnidadePorId(id) {
   try {
-    const unidade = await prisma.unidade.findUnique({ where: { id: Number(id) } });
-    return { sucesso: true, unidade, message: "Unidade listada com sucesso." };
+    const unidade = await prisma.unidade.findUnique({
+      where: { id: Number(id) },
+      include: {
+        _count: {
+          select: { usuarios: true } // contar usuários vinculados
+        }
+      }
+    });
+    
+    if (!unidade) {
+      return { sucesso: false, erro: "Unidade não encontrada.", message: "A unidade com este ID não existe." };
+    }
+    
+    // normalizar resposta incluindo quantidade de funcionários
+    const unidadeComContagem = {
+      ...unidade,
+      quantidadeFuncionarios: unidade._count?.usuarios || 0
+    };
+    
+    return { sucesso: true, unidade: unidadeComContagem, message: "Unidade listada com sucesso." };
   }
   catch (error) {return { sucesso: false, erro: "Erro ao listar unidade por id.", detalhes: error.message };}
 }

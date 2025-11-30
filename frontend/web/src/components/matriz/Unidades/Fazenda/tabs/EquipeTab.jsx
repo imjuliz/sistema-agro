@@ -8,61 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Mail, Phone, MessageSquare, Calendar, MapPin, Briefcase, Edit, MoreHorizontal, Building2, Users, DollarSign, Bell, Clock, Plus, Sliders } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/lib/api';
 
-const equipe = [
-  {
-    id: 1,
-    name: 'Sarah Johnson',
-    title: 'Head of Engineering',
-    department: 'Engineering',
-    email: 'sarah.johnson@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    avatar: '/api/placeholder/48/48',
-    isPrimary: true,
-    lastContact: '2 hours ago',
-  },
-  {
-    id: 2,
-    name: 'Michael Chen',
-    title: 'HR Manager',
-    department: 'Human Resources',
-    email: 'michael.chen@techcorp.com',
-    phone: '+1 (555) 234-5678',
-    location: 'San Francisco, CA',
-    avatar: '/api/placeholder/48/48',
-    isPrimary: false,
-    lastContact: '1 day ago',
-  },
-  {
-    id: 3,
-    name: 'Emily Rodriguez',
-    title: 'Talent Acquisition Lead',
-    department: 'Human Resources',
-    email: 'emily.rodriguez@techcorp.com',
-    phone: '+1 (555) 345-6789',
-    location: 'San Francisco, CA',
-    avatar: '/api/placeholder/48/48',
-    isPrimary: false,
-    lastContact: '3 days ago',
-  },
-  {
-    id: 4,
-    name: 'David Park',
-    title: 'VP of Product',
-    department: 'Product',
-    email: 'david.park@techcorp.com',
-    phone: '+1 (555) 456-7890',
-    location: 'San Francisco, CA',
-    avatar: '/api/placeholder/48/48',
-    isPrimary: false,
-    lastContact: '1 week ago',
-  }
-];
-
-// --------------------------------------------------------------------------------
-// lado esquerdo da tela
-// --------------------------------------------------------------------------------
 const contacts = [
   {
     id: 1,
@@ -114,39 +62,93 @@ const reminders = [
   }
 ];
 
-const sampleUnits = Array.from({ length: 12 }).map((_, i) => {
-  const types = ["Matriz", "Fazenda", "Loja"];
-  const t = types[i % 3];
-  return {
-    id: `U-${100 + i}`,
-    name: `${t} ${i + 1}`,
-    type: t,
-    location: ["São Paulo, SP", "Campinas, SP", "Hortolândia, SP"][i % 3],
-    manager: ["Ana Souza", "Carlos Lima", "Mariana P."][i % 3],
-    status: i % 5 === 0 ? "Inativa" : "Ativa",
-    sync: new Date(Date.now() - i * 3600_000).toISOString(),
-    iotHealth: Math.floor(Math.random() * 100),
-  };
-});
-
-export function EquipeTab() {
+export function EquipeTab({ fazendaId }) {
+  const { fetchWithAuth } = useAuth()
   const [query, setQuery] = useState('');
-  const [units, setUnits] = useState(sampleUnits);
-  const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // por default mostra todos
-  const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true });
+  const [equipe, setEquipe] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [typeFilters, setTypeFilters] = useState({ Gerente: true, Agricultor: true, "Funcionário": true }); // por default mostra todos
+  const [statusFilters, setStatusFilters] = useState({ "Ativo": true, "Inativo": true });
   const [locationQuery, setLocationQuery] = useState('');
+  const [page, setPage] = useState(1);
 
-  // filtragem principal - integra query, tipos, status e localização
+  // Carregar equipe da unidade
+  useEffect(() => {
+    const carregarEquipe = async () => {
+      try {
+        setCarregando(true)
+        if (!fazendaId) {
+          console.warn("fazendaId não fornecido")
+          return
+        }
+
+        const response = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/usuarios?page=1&perPage=100`)
+        
+        if (!response.ok) {
+          console.error("Erro ao carregar equipe: status", response.status)
+          return
+        }
+
+        const body = await response.json()
+        const usuarios = body?.usuarios ?? []
+        
+        if (Array.isArray(usuarios)) {
+          // Mapear dados do backend para o formato da tela
+          const equipeFormatada = usuarios.map(user => ({
+            id: user.id,
+            name: user.nome,
+            title: user.perfil?.funcao || 'Funcionário',
+            department: user.perfil?.descricao || 'Sem departamento',
+            email: user.email,
+            phone: user.telefone || 'Não informado',
+            location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
+            avatar: user.ftPerfil || '/api/placeholder/48/48',
+            isPrimary: false,
+            lastContact: 'Não definido',
+            status: user.status ? 'Ativo' : 'Inativo'
+          }))
+          setEquipe(equipeFormatada)
+        } else {
+          console.error("Erro ao carregar equipe:", body)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar equipe:", error)
+      } finally {
+        setCarregando(false)
+      }
+    }
+
+    if (fazendaId) {
+      carregarEquipe()
+    }
+  }, [fazendaId, fetchWithAuth])
+
+  // Filtragem principal - integra query, tipos, status e localização
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return units.filter(u => {
-      const matchQuery = q === '' || [u.name, u.location, u.manager, u.id].some(f => f.toLowerCase().includes(q));
-      const matchType = !!typeFilters[u.type]; // verifica o checkbox do tipo
-      const matchStatus = !!statusFilters[u.status];
-      const matchLocation = locationQuery.trim() === '' || u.location.toLowerCase().includes(locationQuery.trim().toLowerCase());
-      return matchQuery && matchType && matchStatus && matchLocation;
+    return equipe.filter(eqp => {
+      const matchQuery = q === '' || [eqp.name, eqp.email, eqp.phone].some(f => f?.toLowerCase().includes(q));
+      const matchStatus = !!statusFilters[eqp.status];
+      const matchLocation = locationQuery.trim() === '' || eqp.location.toLowerCase().includes(locationQuery.trim().toLowerCase());
+      return matchQuery && matchStatus && matchLocation;
     });
-  }, [units, query, typeFilters, statusFilters, locationQuery]);
+  }, [equipe, query, statusFilters, locationQuery]);
+
+  const toggleType = (type) => {
+    setTypeFilters(prev => ({ ...prev, [type]: !prev[type] }))
+  }
+
+  const toggleStatus = (status) => {
+    setStatusFilters(prev => ({ ...prev, [status]: !prev[status] }))
+  }
+
+  const resetFilters = () => {
+    setQuery('')
+    setLocationQuery('')
+    setTypeFilters({ Gerente: true, Agricultor: true, "Funcionário": true })
+    setStatusFilters({ "Ativo": true, "Inativo": true })
+    setPage(1)
+  }
 
   return (
     <div className="flex gap-6 ">
@@ -181,13 +183,13 @@ export function EquipeTab() {
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Função</div>
                       <div className="grid grid-cols-1 gap-1">
-                        {["Gerente", "Agricultor", "Sei lá"].map(t => (
+                        {["Gerente", "Agricultor", "Funcionário"].map(t => (
                           <label key={t} className="flex items-center justify-between px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
                             <div className="flex items-center gap-2">
                               <Checkbox checked={!!typeFilters[t]} onCheckedChange={() => { toggleType(t); setPage(1); }} />
                               <div className="capitalize">{t}</div>
                             </div>
-                            <div className="text-sm text-neutral-400">{units.filter(u => u.type === t).length}</div>
+                            <div className="text-sm text-neutral-400">{equipe.filter(u => u.title === t).length}</div>
                           </label>
                         ))}
                       </div>
@@ -241,7 +243,16 @@ export function EquipeTab() {
           </div>
         </div>
 
-        {equipe.map((eqp) => (
+        {carregando ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Carregando equipe...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Nenhum funcionário encontrado</p>
+          </div>
+        ) : (
+          filtered.map((eqp) => (
           <Card key={eqp.id} className={"p-0"}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">

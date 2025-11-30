@@ -6,7 +6,7 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+import { listarAtividadesLoteController, listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
 import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedores/fornecedoresController.js";
 import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
@@ -66,6 +66,11 @@ router.post("/criarContratoInterno/:fazendaId", criarContratoInternoController);
 router.post("/criarContratoExterno/:unidadeId", criarContratoExternoController);
 // metadados para contratos (enums/options)
 router.get("/meta/contratos", listarMetaContratosController);
+
+//estoque-produtos (pedidos) --------------------------------------------------------------------
+router.get("/estoque-produtos/pedidos/:unidadeId", listarPedidosEntregaController);
+router.get("/estoque-produtos/pedidos-origem/:unidadeId", listarPedidosOrigemController);
+
 //perfil --------------------------------------------------------------------
 
 export default router;
