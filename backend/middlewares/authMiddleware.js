@@ -119,7 +119,7 @@ export const auth = (perfisPermitidos = []) => {
       const userPerfilNome = String(user.perfil.funcao ?? "").toLowerCase();
       const allowed = (perfisPermitidos || []).map(p => String(p).toLowerCase());
 
-      console.debug("[auth] verificando perfil", { userId: user.id ?? userIdFromSession, userPerfilNome, allowed });
+      console.debug("[auth] verificando perfil", { userId: user.id, userPerfilNome, allowed });
 
       if (allowed.length > 0 && !allowed.includes(userPerfilNome)) {
         // acesso negado por perfil
@@ -131,7 +131,8 @@ export const auth = (perfisPermitidos = []) => {
         id: user.id,
         email: user.email ?? user?.email,
         perfil: { nome: user.perfil.funcao, id: user.perfil.id ?? null },
-        unidadeId: user.unidadeId ?? user.unidade?.id ?? null,
+        unidadeId: user.unidadeId ?? null,
+        roles: [user.perfil.funcao],
         raw: user // opcional, para debug
       };
 

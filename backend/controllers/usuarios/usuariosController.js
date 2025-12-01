@@ -138,9 +138,21 @@ export const updateUsuarioController = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const user = req.usuario; // Do middleware auth
 
     if (!id) {
       return res.status(400).json({ sucesso: false, erro: "ID do usuário é obrigatório." });
+    }
+
+    // Autorização: gerente_matriz pode editar qualquer um, ou usuário pode editar a si mesmo
+    const isGerenteMatriz = Array.isArray(user?.roles) 
+      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_matriz"))
+      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_matriz");
+
+    const editandoASiMesmo = Number(user?.id) === Number(id);
+
+    if (!isGerenteMatriz && !editandoASiMesmo) {
+      return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para editar este usuário." });
     }
 
     // Se o body trouxer 'role' como nome da função (ex: GERENTE_LOJA), converte para perfilId

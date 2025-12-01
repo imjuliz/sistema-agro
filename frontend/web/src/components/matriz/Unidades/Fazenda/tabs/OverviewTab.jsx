@@ -316,7 +316,15 @@ export function OverviewTab({ fazendaId }) {
               <Building2 className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Culturas atuais</div>
-                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : "Foco produtivo (ex.: Milho, soja)"}</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando
+                    ? "Carregando..."
+                    : (
+                      Array.isArray(dadosFazenda?.focoProdutivo)
+                        ? dadosFazenda.focoProdutivo.join(', ')
+                        : (dadosFazenda?.focoProdutivo ?? '—')
+                    )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">

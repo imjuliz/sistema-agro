@@ -213,14 +213,18 @@ export async function getUsuariosPorUnidadeController(req, res) {
     const unidadeId = req.params?.unidadeId ?? req.query?.unidadeId;
     if (!unidadeId) return res.status(400).json({ sucesso: false, erro: "unidadeId é obrigatório." });
 
-    // autorização: req.user deve vir do seu middleware `auth`
-    const user = req.user;
+    // autorização: req.usuario deve vir do seu middleware `auth`
+    const user = req.usuario;
     if (!user) return res.status(401).json({ sucesso: false, erro: "Não autenticado." });
 
-    const isGerenteMatriz = Array.isArray(user.roles) && user.roles.some(r => String(r).toLowerCase() === "gerente_matriz");
+    // Verifica se é gerente_matriz (tem acesso total)
+    const isGerenteMatriz = Array.isArray(user.roles) 
+      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_matriz"))
+      : String(user.roles ?? "").toLowerCase().includes("gerente_matriz");
 
-    // Se não for gerente_matriz, só pode acessar usuários da própria unidade
+    // Se não for gerente_matriz, valida se é da mesma unidade
     if (!isGerenteMatriz && Number(user.unidadeId) !== Number(unidadeId)) {
+      console.warn(`[getUsuariosPorUnidade] Acesso negado: user.unidadeId=${user.unidadeId}, unidadeId=${unidadeId}`);
       return res.status(403).json({ sucesso: false, erro: "Acesso negado a esta unidade." });
     }
 

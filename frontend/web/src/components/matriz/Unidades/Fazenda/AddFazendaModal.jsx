@@ -1302,8 +1302,8 @@ function updateContractField(contractIndex, field, value) {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent className="z-[1001] bg-white dark:bg-slate-800">
-                <SelectItem value="">Selecione</SelectItem>
+                <SelectContent className="z-[1001]">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
                 <SelectItem value="6m">6 meses</SelectItem>
                 <SelectItem value="1y">1 ano</SelectItem>
                 <SelectItem value="2y">2 anos</SelectItem>
@@ -1313,7 +1313,7 @@ function updateContractField(contractIndex, field, value) {
 
             <div className="mt-2">
               <label className="text-sm">Data de Fim</label>
-              <Input className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" type="date" value={c.dataFim || ""} disabled readOnly />
+              <Input className="w-full " type="date" value={c.dataFim || ""} disabled readOnly />
             </div>
           </div>
 
@@ -1326,8 +1326,8 @@ function updateContractField(contractIndex, field, value) {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent className="z-[1001] bg-white dark:bg-slate-800">
-                <SelectItem value="">Selecione</SelectItem>
+              <SelectContent className="z-[1001]">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
                 {frequenciaOptions.length > 0 ? (
                   frequenciaOptions.map(opt => (
                     <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
@@ -1348,7 +1348,7 @@ function updateContractField(contractIndex, field, value) {
           <div>
             <label className="text-sm">Dia do Pagamento</label>
             <Input
-              className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className="w-full"
               type="number"
               min={1}
               max={31}
@@ -1367,8 +1367,8 @@ function updateContractField(contractIndex, field, value) {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent className="z-[1001] bg-white dark:bg-slate-800">
-                <SelectItem value="">Selecione</SelectItem>
+              <SelectContent className="z-[1001] ">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
                 {formaPagamentoOptions.length > 0 ? (
                   formaPagamentoOptions.map(opt => (
                     <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
@@ -1394,7 +1394,7 @@ function updateContractField(contractIndex, field, value) {
             {c.itens?.map((item, idx) => (
               <li
                 key={idx}
-                className="border rounded p-2 flex justify-between items-center bg-white"
+                className="border rounded p-2 flex justify-between items-center"
               >
                 <div>
                   <div className="font-semibold">{item.nome}</div>
