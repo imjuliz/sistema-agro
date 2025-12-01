@@ -1,6 +1,6 @@
 "use client"
 import * as React from "react"
-import { AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal, WalletCards, Tractor, Store} from "lucide-react"
+import { AudioWaveform, Vegan, Rabbit, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, ShoppingCart, WalletCards, Tractor, Store, Building2, SquarePen, Container, Boxes, UserCog } from "lucide-react"
 import { NavMain } from "@/components/NavBar/nav-main"
 import { NavProjects } from "@/components/NavBar/nav-projects"
 import { NavUser } from "@/components/NavBar/nav-user"
@@ -44,6 +44,7 @@ function getMenuByPerfil(perfil) {
         projects: [
           { name: "Fazendas", url: "/matriz/unidades/fazendas", icon: Tractor },
           { name: "Lojas", url: "/matriz/unidades/lojas", icon: Store },
+          { name: "Matriz", url: "/matriz/unidades/matriz", icon: Building2 },
         ],
       }
 
@@ -51,13 +52,25 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           {
-            title: "Vendas",
-            url: "/vendas",
-            icon: SquareTerminal,
+            title: "Dashboard",
+            url: "/loja/dashboard",
+            icon: PieChart,
+          },
+          {
+            title: "Frente de Caixa",
+            url: "/loja/frenteCaixa",
+            icon: ShoppingCart,
+          },
+          {
+            title: "Funcionários",
+            url: "/loja/funcionarios",
+            icon: UserCog,
           },
         ],
         projects: [
-          { name: "Estoque", url: "/estoque", icon: Frame },
+          { name: "Estoque", url: "/loja/estoque", icon: Boxes },
+          { name: "Financeiro", url: "/loja/vendasDespesas", icon: WalletCards },
+          { name: "Fornecedores", url: "/loja/fornecedores", icon: Container },
         ],
       }
 
@@ -65,13 +78,38 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           {
-            title: "Safras",
-            url: "/safras",
-            icon: Map,
+            title: "Dashboard",
+            url: "/fazenda/dashboard",
+            icon: PieChart,
           },
+          {
+            title: "Animais",
+            url: "/fazenda/animalia",
+            icon: Rabbit,
+          },
+          {
+            title: "Plantação",
+            url: "/fazenda/plantio",
+            icon: Vegan,
+          },
+          {
+            title: "Atividades",
+            url: "/fazenda/atividades",
+            icon: SquarePen,
+          },
+          {
+            title: "Nova Atividade",
+            url: "/fazenda/novaAtividade",
+            icon: Container,
+          },
+
         ],
         projects: [
-          { name: "Fazenda", url: "/fazenda", icon: Frame },
+          { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },
+          { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
+          { name: "Fornecedores", url: "/fazenda/fornecedores", icon: Container, },
+          { name: "Financeiro", url: "/fazenda/vendasDespesas", icon: Frame },
+          { name: "Suporte", url: "/fazenda/configuracoes", icon: Frame },
         ],
       }
 
@@ -92,9 +130,9 @@ function getMenuByPerfil(perfil) {
 
 export function AppSidebar({ ...props }) {
   const { user } = useAuth();
-  console.log("USER NA SIDEBAR →", user);
+  // console.log("USER NA SIDEBAR →", user);
 
-   const perfil = user?.perfil
+  const perfil = user?.perfil
   const { navMain, projects } = getMenuByPerfil(perfil)
 
   return (

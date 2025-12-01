@@ -1,10 +1,13 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { TrendingUp, TrendingDown, Users, Briefcase, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees } from 'lucide-react';
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
@@ -234,11 +237,52 @@ const cultivosConfig = {
   }
 }
 
-export function OverviewTab() {
+export function OverviewTab({ fazendaId }) {
+  const { fetchWithAuth } = useAuth()
+  const [dadosFazenda, setDadosFazenda] = useState(null)
+  const [carregando, setCarregando] = useState(true)
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
   const [columnVisibility, setColumnVisibility] = useState({})
   const [rowSelection, setRowSelection] = useState({})
+
+  // Carregar dados da fazenda ao montar o componente
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        setCarregando(true)
+        if (!fazendaId) {
+          console.warn("fazendaId não fornecido")
+          return
+        }
+
+        const response = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`)
+        
+        if (!response.ok) {
+          console.error("Erro ao carregar dados da fazenda: status", response.status)
+          return
+        }
+
+        const body = await response.json()
+        const unidade = body?.unidade ?? body
+        
+        if (unidade) {
+          setDadosFazenda(unidade)
+        } else {
+          console.error("Erro ao carregar dados da fazenda:", body)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados da fazenda:", error)
+      } finally {
+        setCarregando(false)
+      }
+    }
+
+    if (fazendaId) {
+      carregarDados()
+    }
+  }, [fazendaId, fetchWithAuth])
+
   const table = useReactTable({
     data,
     columns,
@@ -272,28 +316,36 @@ export function OverviewTab() {
               <Building2 className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Culturas atuais</div>
-                <div className="text-sm text-muted-foreground">Foco produtivo (ex.: Milho, soja)</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando
+                    ? "Carregando..."
+                    : (
+                      Array.isArray(dadosFazenda?.focoProdutivo)
+                        ? dadosFazenda.focoProdutivo.join(', ')
+                        : (dadosFazenda?.focoProdutivo ?? '—')
+                    )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Users className="size-4 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Tamanho da empresa</div>
-                <div className="text-sm text-muted-foreground">500-1000 funcionários</div>
+                <div className="text-sm font-medium">Quantidade de funcionários</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : dadosFazenda?.quantidadeFuncionarios || "0"}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Calendar className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Criado em</div>
-                <div className="text-sm text-muted-foreground">Março de 2023</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : (dadosFazenda?.criadoEm ? new Date(dadosFazenda.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }) : "-")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <DollarSign className="size-4 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Valor do contrato</div>
-                <div className="text-sm text-muted-foreground">R$1500/mês</div>
+                <div className="text-sm font-medium">CNPJ</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : dadosFazenda?.cnpj || "-"}</div>
               </div>
             </div>
           </CardContent>
@@ -311,7 +363,7 @@ export function OverviewTab() {
             {contacts.map((contact) => (
               <div key={contact.id} className="flex items-start gap-3">
                 <Avatar className="size-10">
-                  <AvatarImage src={contact.avatar} alt={contact.name} />
+                  <AvatarImage src={buildImageUrl(contact.avatar)} alt={contact.name} />
                   <AvatarFallback>{contact.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -387,7 +439,7 @@ export function OverviewTab() {
                   <LandPlot className="size-10" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">150 ha</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal ? `${parseFloat(dadosFazenda.areaTotal).toFixed(2)} ha` : "0 ha")}</div>
                   <div className="text-sm text-muted-foreground">Área Total</div>
                 </div>
               </div>
@@ -400,7 +452,7 @@ export function OverviewTab() {
                   <Tractor className="size-10" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">120 ha</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaProdutiva ? `${parseFloat(dadosFazenda.areaProdutiva).toFixed(2)} ha` : "0 ha")}</div>
                   <div className="text-sm text-muted-foreground">Área Produtiva</div>
                 </div>
               </div>
@@ -414,7 +466,7 @@ export function OverviewTab() {
                   <Trees className="size-10 " />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">30 ha</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal && dadosFazenda?.areaProdutiva ? `${(parseFloat(dadosFazenda.areaTotal) - parseFloat(dadosFazenda.areaProdutiva)).toFixed(2)} ha` : "0 ha")}</div>
                   <div className="text-sm text-muted-foreground">Não Produtiva</div>
                 </div>
               </div>
@@ -579,7 +631,7 @@ export function OverviewTab() {
         {/* Indicadores Ambientais e Legais */}
 
         {/* Job Progress */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Job Progress Overview</CardTitle>
           </CardHeader>
@@ -619,10 +671,10 @@ export function OverviewTab() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Recent Activity */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
@@ -647,7 +699,7 @@ export function OverviewTab() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
       </div>
     </div>

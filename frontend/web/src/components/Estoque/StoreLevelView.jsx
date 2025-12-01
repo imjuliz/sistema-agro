@@ -20,20 +20,6 @@ export function StoreLevelView() {
   const { getStoreItems, storeMapping } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // const allStoreItems = getStoreItems();
-  // const stores = Object.values(storeMapping);
-  // const categories = [...new Set(allStoreItems.map(item => item.category))];
-
-  // const filteredItems = allStoreItems.filter(item => {
-  //   const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.brand.toLowerCase().includes(searchTerm.toLowerCase());
-  //   const matchesStore = selectedStore === 'all' || item.store === selectedStore;
-  //   const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-  //   return matchesSearch && matchesStore && matchesCategory;
-  // });
 
   // paginacao
   const [page, setPage] = useState(1);
@@ -42,22 +28,37 @@ export function StoreLevelView() {
   // dados
   const allStoreItems = useMemo(() => getStoreItems() || [], [getStoreItems]);
   const stores = useMemo(() => Object.values(storeMapping || {}), [storeMapping]);
-  const categories = useMemo(() => [...new Set(allStoreItems.map(item => item.category).filter(Boolean))], [allStoreItems]);
 
-  // filtra os itens com base em busca, loja e categoria
+  // helper para extrair o nome do fornecedor/origem do item (robusto para diferentes formatos)
+  const resolveSupplierName = (item) => {
+    // alguns formatos (estoqueProdutos): item.store foi definido como supplierName já
+    if (!item) return '—';
+    if (item.fornecedorName) return item.fornecedorName;
+    // estoqueProdutos novo formato: pode ter fornecedorUnidade / fornecedorExterno
+    if (item.fornecedorUnidade && item.fornecedorUnidade.nome) return item.fornecedorUnidade.nome;
+    if (item.fornecedorExterno && item.fornecedorExterno.nomeEmpresa) return item.fornecedorExterno.nomeEmpresa;
+    // quando vindo de estoqueProdutos no InventoryContext, pode existir produto.origemUnidade ou produto.fornecedor
+    if (item.produto && item.produto.origemUnidade && item.produto.origemUnidade.nome) return item.produto.origemUnidade.nome;
+    if (item.produto && item.produto.fornecedor && item.produto.fornecedor.nomeEmpresa) return item.produto.fornecedor.nomeEmpresa;
+    // fallback para objetos com unidade metadata
+    if (item.unidade && item.unidade.nome) return item.unidade.nome;
+    // legacy/mock: store contém o nome da unidade atual — tratamos como fallback
+    if (item.store) return item.store;
+    return '—';
+  };
+
+  // filtra os itens com base em busca e fornecedor
   const filteredItems = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return allStoreItems.filter(item => {
       const matchesSearch = !term ||
         (item.name && item.name.toLowerCase().includes(term)) ||
-        (item.sku && item.sku.toLowerCase().includes(term)) ||
-        (item.brand && item.brand.toLowerCase().includes(term)) ||
-        (item.category && item.category.toLowerCase().includes(term));
-      const matchesStore = selectedStore === 'all' || item.store === selectedStore;
-      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-      return matchesSearch && matchesStore && matchesCategory;
+        (item.sku && item.sku.toLowerCase().includes(term));
+      const supplierName = resolveSupplierName(item);
+      const matchesStore = selectedStore === 'all' || supplierName === selectedStore;
+      return matchesSearch && matchesStore;
     });
-  }, [allStoreItems, searchTerm, selectedStore, selectedCategory]);
+  }, [allStoreItems, searchTerm, selectedStore]);
 
   // recalcula métricas a partir dos itens filtrados
   const totalItems = filteredItems.length;
@@ -75,7 +76,7 @@ export function StoreLevelView() {
   // resetar página quando filtros mudarem (UX comum)
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, selectedStore, selectedCategory, perPage]);
+  }, [searchTerm, selectedStore, perPage]);
 
   // items atualmente visíveis na página
   const paginatedItems = useMemo(() => {
@@ -83,26 +84,25 @@ export function StoreLevelView() {
     return filteredItems.slice(start, start + perPage);
   }, [filteredItems, page, perPage]);
 
+  // lista de fornecedores para o seletor, extraída dos itens
+  const supplierOptions = useMemo(() => {
+    const s = new Set();
+    allStoreItems.forEach(it => s.add(resolveSupplierName(it)));
+    return Array.from(s).filter(x => x && x !== '—').sort();
+  }, [allStoreItems]);
+
   // formatação de preço BRL
   const fmtBRL = (value) =>
     typeof value === 'number'
       ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
       : value;
 
-
-  // const totalItems = filteredItems.length;
-  // const goodStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'good').length;
-  // const warningStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'warning').length;
-  // const criticalStock = filteredItems.filter(item => getStockStatus(item.currentStock, item.minimumStock).status === 'critical').length;
-
-
-
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Total Items */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <span className="text-sm text-muted-foreground mb-1">Total de Itens</span>
             <div className="flex items-end gap-2">
@@ -112,7 +112,7 @@ export function StoreLevelView() {
         </Card>
 
         {/* Above Minimum */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -123,7 +123,7 @@ export function StoreLevelView() {
         </Card>
 
         {/* Near Minimum */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
@@ -134,7 +134,7 @@ export function StoreLevelView() {
         </Card>
 
         {/* Below Minimum */}
-        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition p-0 h-fit">
+        <Card className="rounded-2xl bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition p-0 h-fit">
           <CardContent className="p-6 flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -156,7 +156,7 @@ export function StoreLevelView() {
             <div>
               <label className="block mb-2">Pesquisar Itens</label>
               <Input
-                placeholder="Pesquise por nome, SKU, ou categoria..."
+                placeholder="Pesquise por nome ou SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -165,26 +165,12 @@ export function StoreLevelView() {
               <label className="block mb-2">Fornecedores</label>
               <Select value={selectedStore} onValueChange={(val) => setSelectedStore(val)}>
                 <SelectTrigger className={'w-full'}>
-                  <SelectValue placeholder="Selecionar loja" />
+                  <SelectValue placeholder="Selecionar fornecedor" />
                 </SelectTrigger>
                 <SelectContent className={'w-full'}>
                   <SelectItem value="all">Todos os fornecedores</SelectItem>
-                  {stores.map(store => (
-                    <SelectItem key={store} value={store} className={'w-full'}>{store}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block mb-2">Categorias</label>
-              <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val)} className={'w-full'}>
-                <SelectTrigger className={'w-full'}>
-                  <SelectValue placeholder="Selecionar categoria" />
-                </SelectTrigger>
-                <SelectContent className={'w-full'}>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  {supplierOptions.map(name => (
+                    <SelectItem key={name} value={name} className={'w-full'}>{name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -196,10 +182,7 @@ export function StoreLevelView() {
       {/* Items Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Matriz de Estoque da Loja</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Dados baseados na configuração de exposição. Quantidades de estoque de exibição são configuráveis na aba Configuração.
-          </p>
+          <CardTitle>Estoque</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -207,9 +190,7 @@ export function StoreLevelView() {
               <TableRow>
                 <TableHead>Status</TableHead>
                 <TableHead>Item</TableHead>
-                <TableHead>Marca</TableHead>
-                <TableHead>Categorias</TableHead>
-                <TableHead>Fornecedores</TableHead>
+                <TableHead>Fornecedor</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Estoque Atual</TableHead>
                 <TableHead>Min Estoque</TableHead>
@@ -219,7 +200,6 @@ export function StoreLevelView() {
             <TableBody>
               {paginatedItems.map(item => {
                 const stockStatus = getStockStatus(item.currentStock, item.minimumStock);
-                const difference = item.currentStock - item.minimumStock;
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
@@ -228,30 +208,12 @@ export function StoreLevelView() {
                     <TableCell className="max-w-xs">
                       <div className="font-medium">{item.name}</div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{item.brand}</Badge>
-                    </TableCell>
-                    <TableCell>{item.category}</TableCell>
                     <TableCell>{item.store}</TableCell>
                     <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                     <TableCell>
                       <span className={stockStatus.textColor}>{item.currentStock}</span>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{item.displayStock}</Badge>
-                    </TableCell>
                     <TableCell>{item.minimumStock}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className={stockStatus.textColor}>
-                          {difference > 0 ? '+' : ''}{difference}
-                        </span>
-                        <Badge variant={stockStatus.badgeVariant} className="text-xs">
-                          {stockStatus.status === 'good' ? 'Good' :
-                            stockStatus.status === 'warning' ? 'Warning' : 'Critical'}
-                        </Badge>
-                      </div>
-                    </TableCell>
                     <TableCell>{fmtBRL(item.price)}</TableCell>
                   </TableRow>
                 );
@@ -272,14 +234,16 @@ export function StoreLevelView() {
 
             <div className="flex items-center gap-3">
               <Label className="text-sm font-medium">Linhas por pág.</Label>
-              <Select value={perPage} onChange={(e) => { const v = Number(e.target.value); setPerPage(v); setPage(1); }} >
+              <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                <SelectTrigger className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={5}>5</SelectItem>
-                  <SelectItem value={6}>6</SelectItem>
-                  <SelectItem value={10}>10</SelectItem>
-                  <SelectItem value={20}>20</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="6">6</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
                 </SelectContent>
-
               </Select>
 
               <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredItems.length / perPage) || 1)}</div>

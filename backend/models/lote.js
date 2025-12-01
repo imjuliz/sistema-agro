@@ -2,12 +2,8 @@ import prisma from "../prisma/client.js";
 
 export async function getLote() {
   try {
-    const lotes = await prisma.lote.findMany({
-      include: {
-        unidade: true,
-        responsavel: true
-      }
-    })
+    const lotes = await prisma.lote.findMany();
+
     return {
       sucesso: true,
       lotes,
@@ -43,13 +39,13 @@ export async function getLote() {
 
 export async function getLotePorTipo(tipo) {
   try {
-    const lote_tipo = await prisma.lote.findMany({
-      where: { tipo }
+    const loteTipo = await prisma.lote.findMany({
+      where: { tipo: tipo }
     });
 
     return {
       sucesso: true,
-      lote_tipo,
+      loteTipo,
       message: "Lotes de animalia listados com sucesso!!",
     }
   } catch (error) {
@@ -119,6 +115,26 @@ export async function getLoteRentabilidade(id_lote, rentabilidade) {
 //     }
 //   }
 // }
+
+export async function getLotePorTipoVegetais(tipo) {
+  try {
+    const loteVegetais = await prisma.lote.findMany({
+      where: { tipo: tipo }
+    })
+
+    return {
+      sucesso: true,
+      loteVegetais,
+      message: "Lotes de vegetais listados com sucesso!!"
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes de vegetais!!",
+      error: error.message
+    }
+  }
+}
 
 export async function getlotePorId(id) {
   try {

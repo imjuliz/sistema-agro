@@ -2,6 +2,7 @@ import {
     getLoteController,
     getLotePorTipoController,
     getLoteRentabilidadeController,
+    geLotePorTipoVegetaisController,
     getLotePorIdController,
     createLoteController,
     updateLoteController,
@@ -13,16 +14,18 @@ import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", auth(["gerente_matriz", "gerente_fazenda"]), getLoteController);
-router.get("/animalia/:tipo", auth(["gerente_matriz", "gerente_fazenda"]), getLotePorTipoController);
-router.get("/:id", auth(["gerente_fazenda"]), getLotePorIdController);
-router.get("/rentabilidade", auth(["gerente_matriz", "gerente_fazenda"]), getLoteRentabilidadeController);
-router.post("/", auth(["gerente_fazenda"]), createLoteController);
-router.put("/:id", auth(["gerente_fazenda"]), updateLoteController);
-router.delete("/:id", auth(["gerente_fazenda"]), deleteLoteController);
+router.get("/", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLoteController);
+router.get("/tipo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLotePorTipoController);
+// router.get("/ativo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLoteAtividadeController);
+router.get("/rentabilidade/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLoteRentabilidadeController);
+router.get("/vegetal/:tipo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), geLotePorTipoVegetaisController);
+router.get("/:id", auth(["GERENTE_FAZENDA"]), getLotePorIdController);
+router.post("/:unidadeId/:contratoId", auth(["GERENTE_FAZENDA"]), createLoteController);
+router.put("/:id/:unidadeId/:contratoId", auth(["GERENTE_FAZENDA"]), updateLoteController);
+router.delete("/:id", auth(["GERENTE_FAZENDA"]), deleteLoteController);
 
 // atividadesLote
-router.get("/atividadeLote", auth([ "gerente_fazenda"]), getAtividadeLoteTipoPlantioController);
-router.post("/atividadeLote", auth([ "gerente_fazenda"]), createAtividadeLoteController);
+router.get("/atividadeLote", auth(["GERENTE_FAZENDA"]), getAtividadeLoteTipoPlantioController);
+router.post("/atividadeLote", auth(["GERENTE_FAZENDA"]), createAtividadeLoteController);
 
 export default router;

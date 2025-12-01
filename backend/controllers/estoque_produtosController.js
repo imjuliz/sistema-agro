@@ -1,7 +1,7 @@
-import prisma from "../../prisma/client.js";
-import { somarQtdTotalEstoque, getEstoque, getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos,  } from "../../models/estoque_produtos_lotes/estoque_produtos.js";
-import { lotesPlantio } from "../../models/Fazendas.js";
-import { verPedidos, contarSaidas } from "../../models/unidade-de-venda/Loja.js";
+import prisma from "../prisma/client.js";
+import { somarQtdTotalEstoque, getEstoque, getProdutos, getProdutoPorId, createProduto, deleteProduto, buscarProdutoMaisVendido, listarProdutos,  } from "../models/estoque_produtos.js";
+import { lotesPlantio } from "../models/Fazendas.js";
+import { verPedidos, contarSaidas, listarPedidosEntrega, listarPedidosOrigem } from "../models/unidade-de-venda/Loja.js";
 
 //BUSCAR PRODUTO MAIS VENDIDO
 export const buscarProdutoMaisVendidoController = async (req, res) => {
@@ -234,10 +234,10 @@ export const listarEstoqueController = async (req, res) => { //FUNCIONANDO
 //   }
 // }
 
-export const listarAtividadesLoteController = async(req, res) =>{
+export const AtividadesLoteAgricolaController = async(req, res) =>{
   try{
-    const unidadeId = req.params.unidadeId;
-    const atividades = await listarAtividadesLote(unidadeId);
+    const loteId = req.body;
+    const atividades = await listarAtividadesLote();
     return res.status(200).json(atividades);
   } catch (error) {
     console.error(error);
@@ -293,6 +293,60 @@ export const listarPedidosController = async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro no controller ao listar os pedidos.",
+      detalhes: error.message,
+    });
+  }
+};
+
+//listar pedidos de entrega
+export const listarPedidosEntregaController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params;
+
+    if (!unidadeId) { 
+      return res.status(400).json({ sucesso: false, erro: "Unidade não informada." }); 
+    }
+
+    const resultado = await listarPedidosEntrega(Number(unidadeId));
+
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      pedidos: resultado.pedidos
+    });
+
+  } catch (error) {
+    console.error("Erro no controller ao listar os pedidos de entrega:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro no controller ao listar os pedidos de entrega.",
+      detalhes: error.message,
+    });
+  }
+};
+
+//listar pedidos de origem (para fazenda ver seus pedidos)
+export const listarPedidosOrigemController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params;
+
+    if (!unidadeId) { 
+      return res.status(400).json({ sucesso: false, erro: "Unidade não informada." }); 
+    }
+
+    const resultado = await listarPedidosOrigem(Number(unidadeId));
+
+    return res.status(200).json({
+      sucesso: resultado.sucesso,
+      message: resultado.message,
+      pedidos: resultado.pedidos
+    });
+
+  } catch (error) {
+    console.error("Erro no controller ao listar os pedidos de origem:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro no controller ao listar os pedidos de origem.",
       detalhes: error.message,
     });
   }

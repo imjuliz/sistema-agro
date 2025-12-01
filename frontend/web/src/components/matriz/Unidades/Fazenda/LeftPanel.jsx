@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Phone, Mail, MessageSquare, MoreHorizontal, Building2, Users, Calendar, DollarSign, Bell, Clock, Plus } from 'lucide-react';
@@ -107,7 +108,7 @@ export function LeftPanel() {
           {contacts.map((contact) => (
             <div key={contact.id} className="flex items-start gap-3">
               <Avatar className="size-10">
-                <AvatarImage src={contact.avatar} alt={contact.name} />
+                <AvatarImage src={buildImageUrl(contact.avatar)} alt={contact.name} />
                 <AvatarFallback>{contact.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">

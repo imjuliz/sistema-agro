@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { Calculator, CreditCard, Wallet, TrendingUp, TrendingDown, BarChart3, FileText, Calendar, Filter } from 'lucide-react';
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
@@ -215,19 +216,6 @@ export default function FinancasMatriz() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="mb-2 open-sans">Financeiro</h1>
-              <p className="text-muted-foreground">
-                Orçamento da empresa
-              </p>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Dados salvos automaticamente
-            </div>
-          </div>
-        </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-6">

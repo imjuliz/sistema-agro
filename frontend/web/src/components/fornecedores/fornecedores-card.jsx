@@ -12,14 +12,16 @@ import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 
-export default function FornecedoresCard() {
-    const suppliers = [
+export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+    const sampleSuppliers = [
         { name: 'Animals', category: 'Animais', status: 'Ativa', products: 156 },
         { name: 'Nature Co.', category: 'Insumos', status: 'Ativa', products: 89 },
         { name: 'PetFood', category: 'Rações', status: 'Ativa', products: 67 },
         { name: 'EcoMundo', category: 'Plantas', status: 'Ativa', products: 134 }
     ];
 
+    // Fonte real de fornecedores: prop `fornecedores` (fallback para sample)
+    const suppliers = (fornecedores && fornecedores.length > 0) ? fornecedores : sampleSuppliers;
 
     // Estado da busca (funciona em tempo real)
     const [searchTerm, setSearchTerm] = useState('');
@@ -93,6 +95,34 @@ export default function FornecedoresCard() {
             return (s.name || '').toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q);
         }).length;
     }, [suppliers, searchTerm, localStatusFilters]);
+
+    // Helper: compara várias formas possíveis de representar fornecedor/empresa
+    const matchesSupplier = (entity, supplier) => {
+        if (!entity || !supplier) return false;
+        const supplierName = (supplier.name || supplier.nome || supplier.nomeEmpresa || '').toString().toLowerCase();
+
+        const candidates = [];
+        // propriedades comuns que podem representar fornecedor em contratos/pedidos
+        if (entity.fornecedorUnidade && entity.fornecedorUnidade.nome) candidates.push(entity.fornecedorUnidade.nome);
+        if (entity.fornecedorExterno && entity.fornecedorExterno.nomeEmpresa) candidates.push(entity.fornecedorExterno.nomeEmpresa);
+        if (entity.fornecedor && (entity.fornecedor.name || entity.fornecedor.nome)) candidates.push(entity.fornecedor.name || entity.fornecedor.nome);
+        if (entity.nome) candidates.push(entity.nome);
+        if (entity.nomeEmpresa) candidates.push(entity.nomeEmpresa);
+        if (entity.razao_social) candidates.push(entity.razao_social);
+        if (entity.cpf_cnpj) candidates.push(entity.cpf_cnpj);
+        // ids
+        if (supplier.id && (entity.fornecedorUnidadeId === supplier.id || entity.fornecedorExternoId === supplier.id || entity.fornecedorId === supplier.id)) return true;
+
+        return candidates.some(c => c && c.toString().toLowerCase() === supplierName);
+    };
+
+    const resolveProductName = (item) => {
+        return item?.produto?.nome || item?.produtoNome || item?.nomeProduto || item?.nome || item?.descricao || '-';
+    };
+
+    const resolveSupplierName = (s) => {
+        return (s?.name || s?.nome || s?.nomeEmpresa || s?.razao_social || '—');
+    };
 
     return (
         <div>
@@ -261,6 +291,66 @@ export default function FornecedoresCard() {
                                                             <span>{feature.text}</span>
                                                         </div>
                                                     ))}
+
+                                                    {/* EXIBIÇÃO: contratos + itens + pedidos relacionados */}
+                                                    <div className="mt-2">
+                                                        <div className="text-sm font-semibold mb-1">Contratos relacionados</div>
+                                                        {carregando ? (
+                                                            <div className="text-sm text-muted-foreground">Carregando...</div>
+                                                        ) : (
+                                                            (() => {
+                                                                const supplierContracts = contratos ? contratos.filter(c => matchesSupplier(c, supplier) || (c.fornecedorUnidade?.nome === supplier.name) || (c.fornecedorExterno?.nomeEmpresa === supplier.name)) : [];
+                                                                const supplierPedidos = pedidos ? pedidos.filter(p => matchesSupplier(p, supplier) || (p.destinoUnidade?.nome === supplier.name) || (p.origemUnidade?.nome === supplier.name)) : [];
+                                                                return (
+                                                                    <div className="space-y-3">
+                                                                        <div>
+                                                                            {supplierContracts.length === 0 ? (
+                                                                                <div className="text-sm text-muted-foreground">Nenhum contrato encontrado.</div>
+                                                                            ) : (
+                                                                                supplierContracts.map((contr, ci) => (
+                                                                                    <div key={ci} className="p-2 border rounded mt-2">
+                                                                                        <div className="text-sm font-medium">{contr.titulo || contr.numero || contr.id || `Contrato ${ci + 1}`}</div>
+                                                                                        <div className="text-xs text-muted-foreground">{contr.descricao || contr.observacoes || ''}</div>
+                                                                                        <div className="mt-2 text-sm">
+                                                                                            <div className="font-medium">Itens:</div>
+                                                                                            {(contr.itens || contr.itensContrato || contr.items || []).map((it, j) => (
+                                                                                                <div key={j} className="text-sm flex justify-between">
+                                                                                                    <div>{resolveProductName(it)}</div>
+                                                                                                    <div className="text-muted-foreground text-xs">{it.quantidade ? `${it.quantidade} ${it.unidade || ''}` : ''}</div>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))
+                                                                            )}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-sm font-semibold">Pedidos relacionados ({supplierPedidos.length})</div>
+                                                                            {supplierPedidos.length === 0 ? (
+                                                                                <div className="text-sm text-muted-foreground">Nenhum pedido relacionado.</div>
+                                                                            ) : (
+                                                                                supplierPedidos.map((pedido, pi) => (
+                                                                                    <div key={pi} className="p-2 border rounded mt-2">
+                                                                                        <div className="text-sm font-medium">Pedido {pedido.id || pedido.numero || pi + 1} - {pedido.status}</div>
+                                                                                        <div className="text-xs text-muted-foreground">Origem: {pedido.origemUnidade?.nome || pedido.origem?.nome || '-'} — Destino: {pedido.destinoUnidade?.nome || pedido.destino?.nome || '-'}</div>
+                                                                                        <div className="mt-2 text-sm">
+                                                                                            {(pedido.itens || pedido.items || pedido.pedidoItens || []).map((it2, k) => (
+                                                                                                <div key={k} className="text-sm flex justify-between">
+                                                                                                    <div>{resolveProductName(it2)}</div>
+                                                                                                    <div className="text-muted-foreground text-xs">{it2.quantidade ? `${it2.quantidade} ${it2.unidade || ''}` : ''}</div>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()
+                                                        )}
+                                                    </div>
+
                                                     <Button className="w-full bg-[#99BF0F]/80 hover:bg-[#99BF0F] text-white"><ShoppingCart className="w-4 h-4 mr-2" />Ver catálogo</Button>
                                                 </div>
                                             </ExpandableContent>

@@ -6,16 +6,15 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { listarAtividadesLoteController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+import { listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { verContratosController, listarFornecedoresController, calcularFornecedoresController } from "../controllers/fornecedores/fornecedoresController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedoresController.js";
+import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController
-} from "../controllers/financeiro/financeiroController.js";
-
+} from "../controllers/FinanceiroController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -28,11 +27,11 @@ router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
 
 // rotas usadas para _____ --------------------------------------------------------------------
-router.delete("/usuarios/:userId", deletarUsuarioController);
-router.get("/usuarios/listar",  listarUsuariosPorUnidadeController);
+// NOTE: rotas de usuários são definidas em routes/usuariosRoutes.js e routes/unidadeRoutes.js.
+// Removemos as rotas duplicadas daqui para evitar conflitos de roteamento.
 
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
-router.get("/atividadesLote", listarAtividadesLoteController);
+// router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
@@ -53,11 +52,23 @@ router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
 router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
 router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
 router.get("/somarSaidas/:unidadeId", somarSaidasController);
-router.get("/verContratos/:unidadeId", verContratosController);
 
 //fornecedores --------------------------------------------------------------------
 router.get("/fornecedoresCalculo", calcularFornecedoresController);
-router.get("/verFornecedores/:unidadeId", listarFornecedoresController);
+router.get("/listarFornecedoresExternos/:unidadeId", listarFornecedoresExternosController);
+router.get("/listarFornecedoresInternos/:unidadeId", listarFornecedoresInternosController);
+router.get("/listarLojasParceiras/:unidadeId", listarLojasAtendidasController);
+router.get("/verContratosComLojas/:fornecedorUnidadeId", verContratosComLojasController);
+router.get("/verContratosExternos/:unidadeId", verContratosExternosController);
+router.get("/verContratosComFazendas/:unidadeId", verContratosComFazendasController);
+router.post("/criarContratoInterno/:fazendaId", criarContratoInternoController);
+router.post("/criarContratoExterno/:unidadeId", criarContratoExternoController);
+// metadados para contratos (enums/options)
+router.get("/meta/contratos", listarMetaContratosController);
+
+//estoque-produtos (pedidos) --------------------------------------------------------------------
+router.get("/estoque-produtos/pedidos/:unidadeId", listarPedidosEntregaController);
+router.get("/estoque-produtos/pedidos-origem/:unidadeId", listarPedidosOrigemController);
 
 //perfil --------------------------------------------------------------------
 

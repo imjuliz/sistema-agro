@@ -26,15 +26,22 @@ export async function getFazendas() {
       select: {
         id: true,
         nome: true,
+        endereco: true,
+        cnpj: true,
+        cep: true,
+        imagemUrl: true,
         cidade: true,
         estado: true,
         tipo: true,
         status: true,
         latitude: true,
         longitude: true,
+        areaTotal: true,
         areaProdutiva: true,
         atualizadoEm: true,
         criadoEm: true,
+        email: true,
+        telefone: true,
         gerente: {
           select: { nome: true }
         }
@@ -64,6 +71,29 @@ export async function getLoja() {
     const lojas = await prisma.unidade.findMany({
       where: { tipo: 'LOJA' },
       orderBy: { nome: 'asc' },
+       select: {
+        id: true,
+        nome: true,
+        endereco: true,
+        cnpj: true,
+        cidade: true,
+        estado: true,
+        cep: true,
+        imagemUrl: true,
+        tipo: true,
+        status: true,
+        latitude: true,
+        longitude: true,
+        horarioAbertura: true,
+        horarioFechamento: true,
+        telefone: true,
+        email: true,
+        atualizadoEm: true,
+        criadoEm: true,
+        gerente: {
+          select: { nome: true }
+        }
+      }
     });
     return { sucesso: true, unidades: lojas, message: "Loja listadas com sucesso." };
   }
@@ -71,10 +101,16 @@ export async function getLoja() {
 }
 
 // CONTAGEM
-export const UnidadeService = {
+export const FazendaService = {
   async contarFazendas() {return await prisma.unidade.count({ where: { tipo: 'FAZENDA' } });},
   async contarFazendasAtivas() {return await prisma.unidade.count({ where: { tipo: 'FAZENDA', status: 'ATIVA' } });},
   async contarFazendasInativas() {return await prisma.unidade.count({ where: { tipo: 'FAZENDA', status: 'INATIVA' } });},
+};
+
+export const LojaService = {
+  async contarLojas() {return await prisma.unidade.count({ where: { tipo: 'LOJA' } });},
+  async contarLojasAtivas() {return await prisma.unidade.count({ where: { tipo: 'LOJA', status: 'ATIVA' } });},
+  async contarLojasInativas() {return await prisma.unidade.count({ where: { tipo: 'LOJA', status: 'INATIVA' } });},
 };
 
 // CRIAR

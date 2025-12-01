@@ -197,7 +197,7 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
   }, [accessToken, doRefresh]);
 
   return (
-    <AuthContext.Provider value={{ accessToken, user, loading, initialized, login, logout, fetchWithAuth }}>
+    <AuthContext.Provider value={{ accessToken, user, loading, initialized, login, logout, fetchWithAuth, doRefresh }}>
       {children}
     </AuthContext.Provider>
   );

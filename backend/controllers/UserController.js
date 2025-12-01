@@ -32,18 +32,42 @@ export async function cadastrarSeController(req, res) {
 }
 
 export const updateUsuarioController = async (req, res) => {
-  const { id } = req.params.id;
-  const { nomeCompleto, email, funcao, setor, unidade, periodo } = userSchema.partial().parse(req.body);
+  console.log("updateUsuarioController - Função chamada.");
+  // const { id } = req.params; // Removido: ID não vem dos parâmetros da URL
+  const id = req.usuario.id; // Obter ID do usuário autenticado do token/middleware
+  const { nome, telefone, ftPerfil } = req.body; // Campos que o usuário pode atualizar
+
+  console.log("updateUsuarioController - ID do usuário autenticado:", id);
+  console.log("updateUsuarioController - Dados do corpo da requisição:", { nome, telefone, ftPerfil });
+
   try {
-    // Validação dos campos obrigatórios
-    if (!nomeCompleto || !email || !funcao || !setor || !unidade || !periodo) { return res.status(400).json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios' }); }
+    const userDataToUpdate = {};
+    if (nome !== undefined) userDataToUpdate.nome = nome;
+    if (telefone !== undefined) userDataToUpdate.telefone = telefone;
+    if (ftPerfil !== undefined) userDataToUpdate.ftPerfil = ftPerfil;
 
-    const unidadeData = { nomeCompleto, email, funcao, setor, unidade, periodo };
+    console.log("updateUsuarioController - Dados para atualização no Prisma:", userDataToUpdate);
 
-    const result = await updateUsuario(id, unidadeData);
+    // Se nenhum campo válido foi fornecido para atualização
+    if (Object.keys(userDataToUpdate).length === 0) {
+      console.log("updateUsuarioController - Nenhum campo válido fornecido para atualização.");
+      return res.status(400).json({ sucesso: false, erro: 'Nenhum campo válido fornecido para atualização' });
+    }
 
-    return res.status(200).json({ sucesso: true, mensagem: 'Usuário atualizado com sucesso', result });
-  } catch (error) { return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' }); }
+    const result = await updateUsuario(parseInt(id), userDataToUpdate);
+    console.log("updateUsuarioController - Resultado do updateUsuario:", result);
+
+    if (!result.sucesso) {
+      console.log("updateUsuarioController - Erro no updateUsuario, retornando 400.");
+      return res.status(400).json(result);
+    }
+
+    console.log("updateUsuarioController - Perfil atualizado com sucesso, retornando 200.");
+    return res.status(200).json({ sucesso: true, mensagem: 'Perfil atualizado com sucesso', usuario: result.usuario });
+  } catch (error) { 
+    console.error("updateUsuarioController - Erro ao atualizar usuário no controller:", error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' }); 
+  }
 }
 
 export const deletarUsuarioController = async (req, res) => {

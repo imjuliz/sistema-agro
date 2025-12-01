@@ -41,7 +41,7 @@ export async function deletarUsuario(userId) {
 // editar informacoes do usuario
 export async function updateUsuario(id, data) {
   try {
-    const usuario = await prisma.usuarios.update({
+    const usuario = await prisma.usuario.update({
       where: { id },
       data,
     });
@@ -78,7 +78,6 @@ export async function getUserById(id) {
       criadoEm: true,
       atualizadoEm: true,
       perfil: {
-        // <<< traz o objeto perfil
         select: {
           id: true,
           funcao: true,

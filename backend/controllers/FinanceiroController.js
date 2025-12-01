@@ -1,4 +1,5 @@
-import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal } from '../../models/financeiro/vendas_despesas.js'
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal } from '../models/Financeiro.js';
+import fs from "fs";
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
@@ -234,8 +235,7 @@ export const listarVendasController = async (req, res) => { //FUNCIONANDO
 
 
 // ------ 18/11/25
-import fs from "fs";
-import { criarNotaFiscal } from "../../models/financeiro/vendas_despesas.js";
+
 
 export const criarNotaFiscalController = async (req, res) => {
   try {
