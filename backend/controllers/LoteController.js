@@ -1,11 +1,10 @@
-import { getLote, getlotePorId, createLote, updateLote, deleteLote, getLotePorTipo } from "../models/lote.js";
-import { getAnimaisPorId } from "../models/animais.js";
+import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo } from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
   try {
     const lote = await getLote();
-    
+
     return res.status(200).json({
       sucesso: true,
       lote,
@@ -71,48 +70,7 @@ export async function getLotePorTipoController(req, res) {
   }
 }
 
-export async function getLoteRentabilidadeController(req, res) {
-  try {
-    const { id_animal } = req.query;
-    const { id } = req.params;
 
-    //Validações
-    if (isNaN(id) || isNaN(id_animal)) {
-    return res.status(400).json({
-      sucesso: false,
-      erro: "id e id_animal precisam ser números."
-    })}
-    if (!id || !id_animal) {
-    return res.status(400).json({
-      sucesso: false,
-      erro: "id e id_animal precisam ser informados."
-    })}
-
-    const lote = await getlotePorId(id);
-    const animal = await getAnimaisPorId(id_animal);
-
-    if (!lote || !animal) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Lote ou Animal não encontrado."
-      });
-    }
-
-    const rentabilidade = lote.qntdItens * animal.custo;
-    const loteRentabilidade = await getLoteRentabilidade(id, rentabilidade);
-    return res.status(200).json({
-      sucesso: true,
-      loteRentabilidade,
-      message: "Lotes com rentabilidade listados com sucesso."
-    })
-  } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar lotes com rentabilidade.",
-      detalhes: error.message // opcional, para debug
-    })
-  }
-}
 
 // nao funciona pq n existe a coluna dataFabricacao, q é necessaria para listar os lotes criados
 // export async function getLotePorDataCriacaoController(req, res) {
@@ -183,7 +141,7 @@ export async function getLotePorIdController(req, res) {
       })
     }
 
-    const lote = await getlotePorId(id);
+    const lote = await getLotePorId(id);
 
     return res.status(200).json({
       sucesso: true,

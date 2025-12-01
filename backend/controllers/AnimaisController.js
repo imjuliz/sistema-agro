@@ -1,5 +1,6 @@
-import { getAnimais, getAnimaisPelaRaca, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
-import { animaisSchema } from "../schemas/animaisSchemas.js";
+import { getAnimais, getAnimaisPelaRaca, getAnimaisRentabilidade, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
+import { getLotePorId } from "../models/lote.js";
+import { animaisSchema, idSchema, loteIdSchema } from "../schemas/animaisSchemas.js";
 
 export async function getAnimaisController(req, res) {
   try {
@@ -48,6 +49,47 @@ export async function getAnimaisPelaRacaController(req, res) {
   }
 }
 
+export async function getAnimaisRentabilidadeController(req, res) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const { id_lote } = loteIdSchema.parse(req.query);
+    console.log(id, id_lote)
+
+    // Validações básicas
+    if (isNaN(id) || isNaN(id_lote)) {
+      return res.status(400).json({ sucesso: false, erro: "id e id_lote precisam ser números." });
+    }
+    if (id <= 0 || id_lote <= 0) {
+      return res.status(400).json({ sucesso: false, erro: "id e id_lote precisam ser informados e maiores que zero." });
+    }
+
+    const animalInfo = await getAnimaisPorId(id);
+    const loteInfo = await getLotePorId(id_lote);
+
+    if (!animalInfo || !animalInfo.sucesso || !animalInfo.animais || !loteInfo || !loteInfo.sucesso || !loteInfo.lote) {
+      return res.status(404).json({ sucesso: false, erro: "Lote ou Animal não encontrado." });
+    }
+
+    const custoAnimal = Number(animalInfo.animais.custo ?? 0);
+    const qntdItens = Number(lote.qntdItens ?? 0);
+
+    const rentabilidade = qntdItens * custoAnimal;
+    const loteRentabilidade = await getAnimaisRentabilidade(id_lote, rentabilidade);
+    
+    return res.status(200).json({
+      sucesso: true,
+      loteRentabilidade,
+      message: "Lotes com rentabilidade listados com sucesso."
+    })
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao listar lotes com rentabilidade.",
+      detalhes: error.message // opcional, para debug
+    })
+  }
+}
+
 export async function getAnimaisPorIdController(req, res) {
   try {
     const id = parseInt(req.params.id);
@@ -80,7 +122,7 @@ export async function createAnimaisController(req, res) {
     // Converte IDs antes de validar
     const fornecedorId = data.fornecedorId !== null ? Number(data.fornecedorId) : null;
     const unidadeId = Number(data.unidadeId);
-    const loteId = data.loteId !== null ? Number(data.loteId) : null;
+    const id_lote = data.id_lote !== null ? Number(data.id_lote) : null;
 
     // Valida unidade obrigatória
     if (!unidadeId || isNaN(unidadeId)) {
@@ -98,8 +140,8 @@ export async function createAnimaisController(req, res) {
       });
     }
 
-    // loteId pode ser null
-    if (loteId !== null && isNaN(loteId)) {
+    // id_lote pode ser null
+    if (id_lote !== null && isNaN(id_lote)) {
       return res.status(400).json({
         sucesso: false,
         message: "Lote não é um valor válido."
@@ -110,7 +152,7 @@ export async function createAnimaisController(req, res) {
       ...data,
       fornecedorId,
       unidadeId,
-      loteId
+      id_lote
     });
     
     return res.status(201).json({
