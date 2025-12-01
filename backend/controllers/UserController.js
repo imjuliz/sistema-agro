@@ -13,7 +13,7 @@ export async function cadastrarSeController(req, res) {
   try {
     const { nome, email, senha } = userSchema.partial().parse(req.body);
 
-    console.log( nome, email, senha );
+    console.log(nome, email, senha);
 
     if (!nome || !email || !senha) { return res.status(400).json({ error: "Preencha todos os campos obrigatórios" }); }
 
@@ -33,7 +33,6 @@ export async function cadastrarSeController(req, res) {
 
 export const updateUsuarioController = async (req, res) => {
   console.log("updateUsuarioController - Função chamada.");
-  // const { id } = req.params; // Removido: ID não vem dos parâmetros da URL
   const id = req.usuario.id; // Obter ID do usuário autenticado do token/middleware
   const { nome, telefone, ftPerfil } = req.body; // Campos que o usuário pode atualizar
 
@@ -64,9 +63,9 @@ export const updateUsuarioController = async (req, res) => {
 
     console.log("updateUsuarioController - Perfil atualizado com sucesso, retornando 200.");
     return res.status(200).json({ sucesso: true, mensagem: 'Perfil atualizado com sucesso', usuario: result.usuario });
-  } catch (error) { 
+  } catch (error) {
     console.error("updateUsuarioController - Erro ao atualizar usuário no controller:", error);
-    return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' }); 
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar usuário' });
   }
 }
 
@@ -151,26 +150,11 @@ export async function loginController(req, res) {
       sameSite: isProd ? 'none' : 'lax',
       maxAge: REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
-      // domain: isProd ? '.vercel.app' : undefined,
     };
 
     // enviar cookie de refresh
     res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
 
-    // retornar usuario com perfil como string
-    // return res.status(200).json({
-    //   sucesso: true,
-    //   data: {
-    //     accessToken,
-    //     usuario: {
-    //       id: user.id,
-    //       nome: user.nome,
-    //       email: user.email,
-    //       perfil: user.perfil?.funcao ?? null,
-
-    //     },
-    //   },
-    // });
     return res.status(200).json({
       sucesso: true,
       data: {
@@ -198,17 +182,11 @@ export async function loginController(req, res) {
 // Substitua sua função refreshController por esta versão instrumentada
 export async function refreshController(req, res) {
   try {
-    // console.log("[refreshController] req.headers.cookie:", req.headers?.cookie ?? "<none>");
-    // console.log("[refreshController] req.cookies:", req.cookies ?? "<undefined>");
-    // console.log("[refreshController] COOKIE_NAME env/const:", typeof COOKIE_NAME !== 'undefined' ? COOKIE_NAME : "<COOKIE_NAME não definido>");
-    // console.log("[refreshController] JWT_SECRET presente?:", !!JWT_SECRET);
-
     const token = req.cookies?.[COOKIE_NAME];
     if (!token) {
       console.warn("[refreshController] refresh token ausente");
       return res.status(401).json({ error: 'Refresh token não fornecido' });
     }
-    // console.log("[refreshController] token recebido (len):", String(token).length);
 
     let hashed;
     try { hashed = hashToken(token); }
@@ -216,10 +194,6 @@ export async function refreshController(req, res) {
       console.error("[refreshController] erro ao hashear token:", e);
       return res.status(500).json({ error: "Erro interno ao processar token" });
     }
-
-    // console.log('[refreshController] req.cookies:', req.cookies);
-    // console.log('[refreshController] COOKIE_NAME:', COOKIE_NAME);
-    // console.log('[refreshController] token (len):', token ? token.length : 'none');
 
     console.log('[refreshController] hashed:', hashed);
     console.log('[refreshController] procurando sessao...');
@@ -295,17 +269,6 @@ export async function refreshController(req, res) {
     res.cookie(COOKIE_NAME, newRefreshToken, cookieOptions);
     console.log("[refreshController] refresh rotacionado com sucesso. sessaoId:", sessao.id);
 
-    // return res.json({ accessToken });
-    // return res.json({
-    //   accessToken,
-    //   usuario: {
-    //     id: user.id,
-    //     nome: user.nome,
-    //     email: user.email,
-    //     perfil: user.perfil?.funcao ?? null
-    //   }
-    // });
-    // Retornar accessToken e usuario com campos públicos (perfil como funcao)
     return res.json({
       accessToken,
       usuario: {
@@ -322,7 +285,6 @@ export async function refreshController(req, res) {
       }
     });
   } catch (err) {
-    // log detalhado para encontrar raiz do problema
     console.error("refreshController - erro não tratado:", err.stack ?? err);
     return res.status(500).json({ error: 'Erro interno' });
   }
@@ -344,76 +306,88 @@ export async function logoutController(req, res) {
 }
 // -------------------------------------------- 
 
+
 export const esqSenhaController = async (req, res) => {
-  const { email } = userSchema.partial().parse(req.body);
   try {
-    // Gerar código de 6 dígitos
+    const { email } = req.body;
+
     const codigo = String(Math.floor(100000 + Math.random() * 900000));
-    const expira = new Date(Date.now() + 10 * 60 * 1000); // expira em 10 minutos
+    const expira = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
 
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.SMTP_CLIENT_ID,
-      process.env.SMTP_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
-    oAuth2Client.setCredentials({ refresh_token: process.env.SMTP_REFRESH_TOKEN, });
-    const accessToken = await oAuth2Client.getAccessToken();
-
+    // transporter sem OAuth2 — usando app password
     const transport = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        type: "OAuth2",
-        user: "ruraltech91@gmail.com",
-        clientId: process.env.SMTP_CLIENT_ID,
-        clientSecret: process.env.SMTP_CLIENT_SECRET,
-        refreshToken: process.env.SMTP_REFRESH_TOKEN,
-        accessToken: oAuth2Client.getAccessToken(),
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
-    const mailOptions = {
-      from: "RuralTech <ruraltech91@gmail.com>",
+    // enviar email
+    await transport.sendMail({
+      from: `RuralTech <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Recuperação de senha",
-      text: `Seu código de recuperação é: ${codigo}`,
       html: `
         <h1>Recuperação de senha</h1>
         <p>Seu código de recuperação é:</p>
         <h2 style="color:blue;">${codigo}</h2>
         <p>Este código expira em 10 minutos.</p>
-    `,
-    };
-    await transport.sendMail(mailOptions);
-    const token = await esqSenha(email, codigo, expira);
+      `,
+    });
+    
+    // salvar no banco
+    const result = await esqSenha(email, codigo, expira);
+    console.log("Resultado do model esqSenha:", result);
+    if (!result.sucesso) return res.status(400).json(result);
 
-    res.status(200).json({ message: "Código enviado com sucesso", token });
-  } catch {
-    console.error("Erro ao buscar usuário:", error);
-    res.status(500).json({ error: "Erro ao buscar usuário" });
+    return res.status(200).json({
+      sucesso: true,
+      message: "Código enviado com sucesso.",
+      result,
+    });
+
+  } catch (error) {
+    console.error("Erro no controller esqueceu senha:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno no servidor.",
+      detalhes: error.message,
+    });
   }
 };
 
+
 export const codigoController = async (req, res) => {
-  const { codigo_reset } = req.body;
   try {
-    const criarCodigo = await codigo(codigo_reset);
-    res
-      .status(200)
-      .json({ message: "Código verificado com sucesso", criarCodigo });
+    const { codigo_reset } = req.body;
+    const result = await codigo(codigo_reset);
+
+    return res.status(200).json(result);
+
   } catch (error) {
-    console.error("Erro ao buscar codigo:", error);
-    res.status(500).json({ error: "Erro ao buscar codigo" });
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao verificar código",
+      detalhes: error.message
+    });
   }
 };
 
 export const updateSenhaController = async (req, res) => {
   try {
     const { codigo } = req.params;
-    const { senha, confSenha } = userSchema.partial().parse(req.body);
+    const { senha, confSenha } = req.body;
+
     const result = await updateSenha(codigo, senha, confSenha);
-    res.status(200).json({ message: "Senha atualizada com sucesso", result });
+
+    return res.status(200).json(result);
+
   } catch (error) {
-    console.error("Erro ao buscar codigo:", error);
-    res.status(500).json({ error: "Erro ao buscar codigo" });
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao atualizar senha",
+      detalhes: error.message
+    });
   }
 };

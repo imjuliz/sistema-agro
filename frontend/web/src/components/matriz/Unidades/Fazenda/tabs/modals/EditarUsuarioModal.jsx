@@ -28,7 +28,10 @@ export function EditarUsuarioModal({ usuario, aberto, onAbrirMudar, onSucesso })
   const [formData, setFormData] = useState({
     nome: usuario?.name || '',
     email: usuario?.email || '',
+    // telefone será formatado no input (ex: (99) 99999-9999)
     telefone: usuario?.phone || '',
+    telefoneRaw: usuario?.rawPhone || String(usuario?.phone || '').replace(/\D/g, ''),
+    // role should be the enum value from backend (e.g. 'GERENTE_FAZENDA')
     role: usuario?.title || ''
   })
 
@@ -65,30 +68,22 @@ export function EditarUsuarioModal({ usuario, aberto, onAbrirMudar, onSucesso })
         return
       }
 
-      // Mapear role de exibição para nome correto
-      const roleMap = {
-        'Gerente': 'GERENTE_FAZENDA',
-        'Agricultor': 'AGRICULTOR',
-        'Funcionário': 'FUNCIONARIO'
+      // role must be an enum string (ex: 'GERENTE_FAZENDA')
+      const roleValue = formData.role
+
+      // Enviar telefone sem formatação (apenas dígitos)
+      const payload = {
+        nome: formData.nome,
+        email: formData.email,
+        telefone: String(formData.telefoneRaw || '').replace(/\D/g, ''),
+        role: roleValue
       }
 
-      const roleValue = roleMap[formData.role] || formData.role
-
-      const response = await fetchWithAuth(
-        `${API_URL}usuarios/${usuario.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            nome: formData.nome,
-            email: formData.email,
-            telefone: formData.telefone,
-            role: roleValue
-          })
-        }
-      )
+      const response = await fetchWithAuth(`${API_URL}usuarios/${usuario.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
 
       if (!response.ok) {
         const data = await response.json()
@@ -149,7 +144,19 @@ export function EditarUsuarioModal({ usuario, aberto, onAbrirMudar, onSucesso })
               id="telefone"
               placeholder="(00) 00000-0000"
               value={formData.telefone}
-              onChange={(e) => handleMudarCampo('telefone', e.target.value)}
+              onChange={(e) => {
+                // manter apenas dígitos em telefoneRaw e formatar para exibição
+                const onlyDigits = String(e.target.value).replace(/\D/g, '')
+                const formatPhone = (d) => {
+                  if (!d) return ''
+                  if (d.length <= 2) return `(${d}`
+                  if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`
+                  if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`
+                  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7,11)}`
+                }
+                handleMudarCampo('telefoneRaw', onlyDigits)
+                handleMudarCampo('telefone', formatPhone(onlyDigits))
+              }}
               disabled={carregando}
             />
           </div>
@@ -166,9 +173,31 @@ export function EditarUsuarioModal({ usuario, aberto, onAbrirMudar, onSucesso })
                 <SelectValue placeholder="Selecione uma função" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Gerente">Gerente</SelectItem>
-                <SelectItem value="Agricultor">Agricultor</SelectItem>
-                <SelectItem value="Funcionário">Funcionário</SelectItem>
+                {/* For Fazenda unit we expose only these roles */}
+                {(() => {
+                  const allowedRoles = [
+                    'GERENTE_FAZENDA',
+                    'FUNCIONARIO_FAZENDA'
+                  ]
+
+                  const tokenMap = {
+                    GERENTE: 'Gerente',
+                    FUNCIONARIO: 'Funcionário',
+                    MATRIZ: 'Matriz',
+                    FAZENDA: 'Fazenda',
+                    LOJA: 'Loja'
+                  }
+
+                  const formatRoleLabel = (role) => {
+                    if (!role) return ''
+                    const parts = String(role).split('_')
+                    return parts.map(p => tokenMap[p] || (p.charAt(0) + p.slice(1).toLowerCase())).join(' ')
+                  }
+
+                  return allowedRoles.map(r => (
+                    <SelectItem key={r} value={r}>{formatRoleLabel(r)}</SelectItem>
+                  ))
+                })()}
               </SelectContent>
             </Select>
           </div>

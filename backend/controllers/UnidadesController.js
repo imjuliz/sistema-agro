@@ -54,8 +54,9 @@ export async function getFazendasController(req, res) {
     const responsible = req.query?.responsible ?? req.query?.responsavel ?? null;
     const page = req.query?.page ?? 1;
     const perPage = req.query?.perPage ?? 25;
+    const orderBy = req.query?.orderBy ?? 'nome_asc'; // novo parâmetro
 
-    const resultado = await getFazendasFiltered({ q, cidade, estado, minArea, maxArea, tipos, status, responsible, page, perPage });
+    const resultado = await getFazendasFiltered({ q, cidade, estado, minArea, maxArea, tipos, status, responsible, page, perPage, orderBy });
     if (!resultado.sucesso) {
       return res.status(500).json(resultado);
     }
@@ -143,7 +144,21 @@ export async function contarLojasController(req, res) {
 // CRIAR ---------------------------------------------------------------------------
 export async function createUnidadeController(req, res) {
   try {
-    const data = unidadeSchema.parse(req.body);
+    let data = req.body;
+
+    // Se imagemBase64 foi enviada, processar ela
+    if (data.imagemBase64 && data.imagemBase64.startsWith('data:image')) {
+      // Aqui você pode:
+      // 1. Converter base64 para arquivo e salvar em storage (AWS S3, Cloudinary, etc)
+      // 2. Ou salvar a string base64 diretamente no banco (não recomendado para produção)
+      // 3. Ou enviar para um serviço de CDN
+      
+      // Por agora, vamos manter a base64 como imagemUrl (ajustar conforme sua infraestrutura)
+      // Em produção, recomendo usar um serviço como Cloudinary ou AWS S3
+      data.imagemUrl = data.imagemBase64;
+      delete data.imagemBase64; // remover campo indesejado
+    }
+
     const resultado = await createUnidade(data);
     if (!resultado.sucesso) {
       return res.status(400).json(resultado);
@@ -277,31 +292,41 @@ export async function getUsuarioPorIdController(req, res) {
  * Ex: GET /unidades/cep/12345000
  */
 export async function buscarCepController(req, res) {
-    console.log("[buscarCepController] req.query.cep:", req.query.cep);
-    console.log("[buscarCepController] req.params.cep:", req.params.cep);
     try {
       const cep = req.query.cep || req.params.cep;
-      console.log("[buscarCepController] CEP recebido:", cep); // LOG ADICIONADO
+      
       if (!cep) {
         return res.status(400).json({ sucesso: false, erro: "CEP é obrigatório." });
       }
 
       const cepDigits = String(cep).replace(/\D/g, "");
-      console.log("[buscarCepController] CEP formatado (digits):"); // LOG ADICIONADO
+      
       if (cepDigits.length !== 8) {
         return res.status(400).json({ sucesso: false, erro: "CEP inválido (formato esperado: 8 dígitos numéricos)." });
       }
 
       // Usar uma API de CEP externa, como ViaCEP
       const response = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
-      console.log("[buscarCepController] Status da resposta ViaCEP:", response.status); // Log do status
+      
+      if (!response.ok) {
+        return res.status(response.status).json({ sucesso: false, erro: "Erro ao buscar CEP na API externa." });
+      }
+
       const data = await response.json();
 
       if (data.erro) {
         return res.status(404).json({ sucesso: false, erro: "CEP não encontrado." });
       }
 
-      return res.json({ sucesso: true, cep: cepDigits, data });
+      return res.json({ 
+        sucesso: true, 
+        cep: cepDigits, 
+        endereco: data.logradouro || '',
+        bairro: data.bairro || '',
+        cidade: data.localidade || '',
+        estado: data.uf || '',
+        complemento: data.complemento || ''
+      });
 
     } catch (error) {
       console.error("[buscarCepController] erro:", error);

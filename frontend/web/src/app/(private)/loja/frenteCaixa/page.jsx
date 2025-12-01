@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} fr
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, Receipt, Trash2 } from 'lucide-react';
+import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, Receipt, Trash2 , BarChart, DollarSign, Layers, } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
@@ -55,6 +55,14 @@ export default function POSModule() {
   const { fetchWithAuth } = useAuth();
   usePerfilProtegido("GERENTE_LOJA");
 
+  // finance/dashboard states
+  const [saldoFinal, setSaldoFinal] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const [averageTransactionValue, setAverageTransactionValue] = useState(0);
+  const [paymentsBreakdown, setPaymentsBreakdown] = useState({ PIX: 0, DINHEIRO: 0, CARTAO: 0 });
+  const [topProduct, setTopProduct] = useState(null);
+  // POS states (cart, filters, payment)
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -67,104 +75,238 @@ export default function POSModule() {
   const categories = ['all', ...new Set(products.map(p => p.category))];
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.barcode.includes(searchTerm);
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch = term === '' || product.name.toLowerCase().includes(term) || (product.barcode && product.barcode.includes(term));
+    return matchesCategory && matchesSearch;
   });
 
   const addToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) {
-      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item))
-    } else {
-      setCart([...cart, {id: product.id, name: product.name, price: product.price, quantity: 1, total: product.price}])
-    }
+    setCart((c) => {
+      const existing = c.find(i => i.id === product.id);
+      if (existing) {
+        return c.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...c, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
+    });
   };
 
   const updateQuantity = (id, newQuantity) => {
-    if (newQuantity <= 0) { setCart(cart.filter(item => item.id !== id)); }
-    else {setCart(cart.map(item =>item.id === id ? { ...item, quantity: newQuantity, total: newQuantity * item.price } : item))}
+    setCart((c) => c.map(i => i.id === id ? { ...i, quantity: Math.max(0, newQuantity) } : i).filter(i => i.quantity > 0));
   };
 
-  const removeFromCart = (id) => { setCart(cart.filter(item => item.id !== id)); };
-  const getSubtotal = () => { return cart.reduce((sum, item) => sum + item.total, 0); };
-  const getDiscountAmount = () => { return getSubtotal() * (discountPercent / 100); };
-  const getTax = () => { return (getSubtotal() - getDiscountAmount()) * 0.08; }; // 8% tax
-  const getTotal = () => { return getSubtotal() - getDiscountAmount() + getTax(); };
-  const getChange = () => { return paymentMethod === 'cash' ? Math.max(0, amountReceived - getTotal()) : 0; };
-  const clearCart = () => { setCart([]); setSelectedCustomer(null); setDiscountPercent(0); setAmountReceived(0); };
-  const processSale = () => {
-    // Em produção, aqui processaria o pagamento e atualizaria o estoque
-    console.log('Processando venda:', {
-      cart,
-      customer: selectedCustomer,
-      subtotal: getSubtotal(),
-      discount: getDiscountAmount(),
-      tax: getTax(),
-      total: getTotal(),
-      paymentMethod,
-      amountReceived: paymentMethod === 'cash' ? amountReceived : getTotal(),
-      change: getChange()
-    });
+  const removeFromCart = (id) => { setCart((c) => c.filter(i => i.id !== id)); };
+  const getSubtotal = () => cart.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0);
+  const getDiscountAmount = () => (getSubtotal() * (Number(discountPercent || 0) / 100));
+  const getTax = () => ((getSubtotal() - getDiscountAmount()) * 0.08);
+  const getTotal = () => (getSubtotal() - getDiscountAmount() + getTax());
+  const getChange = () => Math.max(0, Number(amountReceived || 0) - getTotal());
+  const clearCart = () => { setCart([]); setDiscountPercent(0); setAmountReceived(0); };
+  // Resilient fetch helper: try fetchWithAuth (context), fallback to direct fetch to API_URL with credentials included
+  const safeFetchJson = async (path, opts = {}) => {
+    const makeUrl = (p) => {
+      if (!p) return p;
+      // if path already absolute, return as-is
+      if (/^https?:\/\//i.test(p)) return p;
+      const defaultBase = 'http://localhost:3000/api';
+      const rawBase = (API_URL && API_URL.trim()) || defaultBase;
+      const base = rawBase.replace(/\/$/, ''); // remove trailing slash
 
-    clearCart();
-    setIsPaymentOpen(false);
+      // normalize endpoint to start with '/'
+      let endpoint = p.startsWith('/') ? p : `/${p}`;
+
+      // If endpoint already contains /api at start, avoid duplicating it
+      if (endpoint.startsWith('/api/')) {
+        if (base.endsWith('/api')) return base + endpoint.slice(4); // remove '/api' from endpoint
+        return base + endpoint;
+      }
+
+      // endpoint does not start with /api
+      if (base.endsWith('/api')) return base + endpoint; // base already provides /api
+      return base + '/api' + endpoint; // add /api between
+    };
+
+    // try fetchWithAuth first (keeps existing auth flow)
+    if (typeof fetchWithAuth === 'function') {
+      try {
+        const url = makeUrl(path);
+        const resp = await fetchWithAuth(url, opts);
+        const contentType = resp.headers && resp.headers.get ? resp.headers.get('content-type') || '' : '';
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => null);
+          return { ok: false, status: resp.status, text: txt };
+        }
+        if (contentType.includes('application/json')) return await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
+        const text = await resp.text().catch(() => null);
+        return { ok: false, text };
+      } catch (err) {
+        console.debug('fetchWithAuth failed, falling back to direct fetch:', err.message || err);
+      }
+    }
+
+    // fallback: direct fetch to API_URL with credentials included
+    try {
+      const url = makeUrl(path);
+      const merged = { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...opts };
+      const resp = await fetch(url, merged);
+      const contentType = resp.headers.get('content-type') || '';
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => null);
+        return { ok: false, status: resp.status, text: txt };
+      }
+      if (contentType.includes('application/json')) return await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
+      const text = await resp.text().catch(() => null);
+      return { ok: false, text };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
   };
 
+  const processSale = async () => {
+    if (!cart || cart.length === 0) {
+      alert('Carrinho vazio. Adicione produtos antes de finalizar.');
+      return;
+    }
+
+    try {
+      const itens = cart.map((i) => {
+        const numeric = Number(i.id);
+        if (!Number.isNaN(numeric) && Number.isFinite(numeric) && numeric > 0) {
+          return { produtoId: numeric, quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
+        }
+        return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
+      });
+
+      const payload = { pagamento: paymentMethod, itens };
+
+      const resp = await safeFetchJson('/vendas/criar', { method: 'POST', body: JSON.stringify(payload) });
+
+      if (!resp || resp.sucesso === false) {
+        console.error('Erro ao criar venda', resp);
+        alert('Erro ao registrar venda. Veja o console para detalhes.');
+        return;
+      }
+
+      alert('Venda registrada com sucesso!');
+      clearCart();
+      setIsPaymentOpen(false);
+
+      // atualizar saldo final
+      const s = await safeFetchJson('/saldo-final');
+      if (s && typeof s.saldoFinal !== 'undefined') setSaldoFinal(Number(s.saldoFinal ?? 0));
+
+    } catch (error) {
+      console.error('Erro ao processar venda:', error);
+      alert('Erro ao processar venda. Veja console para detalhes.');
+    }
+  };
+  useEffect(() => {
+    let mounted = true;
+
+    
+
+    const loadFinance = async () => {
+      try {
+        const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
+          safeFetchJson('/saldo-final'),
+          safeFetchJson('/vendas/media-por-transacao'),
+          safeFetchJson('/vendas/divisao-pagamentos'),
+          safeFetchJson('/financeiro/produto-mais-vendido'),
+        ]);
+
+        if (!mounted) return;
+
+        if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') {
+          setSaldoFinal(Number(saldoRes.saldoFinal ?? 0));
+        } else if (saldoRes && saldoRes.text) {
+          console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes);
+        }
+
+        if (mediaRes && mediaRes.sucesso !== false && typeof mediaRes.media !== 'undefined') {
+          setTotalSales(Number(mediaRes.total ?? 0));
+          setTotalTransactions(Number(mediaRes.quantidade ?? 0));
+          setAverageTransactionValue(Number(mediaRes.media ?? 0));
+        } else if (mediaRes && mediaRes.text) {
+          console.warn('/vendas/media-por-transacao returned non-JSON:', mediaRes.text?.slice ? mediaRes.text.slice(0, 300) : mediaRes);
+        }
+
+        if (pagamentosRes && pagamentosRes.sucesso !== false && pagamentosRes.detalhamento) {
+          const det = pagamentosRes.detalhamento;
+          setPaymentsBreakdown({
+            PIX: Number(det.PIX ?? det.Pix ?? det.pix ?? 0),
+            DINHEIRO: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
+            CARTAO: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
+          });
+        } else if (pagamentosRes && pagamentosRes.text) {
+          console.warn('/vendas/divisao-pagamentos returned non-JSON:', pagamentosRes.text?.slice ? pagamentosRes.text.slice(0, 300) : pagamentosRes);
+        }
+
+        if (produtoRes && produtoRes.sucesso) {
+          setTopProduct(produtoRes.produto || null);
+        } else if (produtoRes && produtoRes.text) {
+          console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes);
+        }
+
+      } catch (error) {
+        console.error('Erro ao carregar dados financeiros:', error);
+      }
+    };
+
+    loadFinance();
+    return () => { mounted = false; };
+  }, [fetchWithAuth]);
   return (
-    <div className="space-y-6">
-      {/* Visão geral POS */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
-            <ShoppingCart className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ {dailyStats.totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">{dailyStats.totalTransactions} transações</p>
-          </CardContent>
-        </Card>
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
+              <ShoppingCart className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <p className="text-xs text-muted-foreground">{totalTransactions} transações</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média por Transação</CardTitle>
-            <Receipt className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ {dailyStats.averageTransaction.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Por transação</p>
-          </CardContent>
-        </Card>
+         
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Divisão de Pagamentos</CardTitle>
-            <CreditCard className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              <div className="flex justify-between">
-                <span>Dinheiro:</span><span>R$ {dailyStats.cashSales.toFixed(2)}</span>
+          {/* Média por transação */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Média por transação</CardTitle>
+              <BarChart className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {Number(averageTransactionValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <p className="text-xs text-muted-foreground">{totalTransactions} transações hoje</p>
+            </CardContent>
+          </Card>
+
+          {/* Divisão por pagamentos / Produto mais vendido (compact) */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Divisão / Top produto</CardTitle>
+              <Layers className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm">
+                <div className="flex justify-between"><span>PIX</span><strong>R$ {Number(paymentsBreakdown.PIX ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                <div className="flex justify-between"><span>Dinheiro</span><strong>R$ {Number(paymentsBreakdown.DINHEIRO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                <div className="flex justify-between"><span>Cartão</span><strong>R$ {Number(paymentsBreakdown.CARTAO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                <hr className="my-2" />
+                <div className="text-xs text-muted-foreground">Produto mais vendido:</div>
+                <div className="font-medium">{topProduct ? `${topProduct.nome} (${topProduct.quantidadeVendida})` : '—'}</div>
               </div>
-              <div className="flex justify-between">
-                <span>Cartão:</span><span>R$ {dailyStats.cardSales.toFixed(2)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produto em Destaque</CardTitle>
-            <Barcode className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{dailyStats.topProduct}</div>
-            <p className="text-xs text-muted-foreground">Mais vendido hoje</p>
-          </CardContent>
-        </Card>
+        
+
+       
+
+       
       </div>
 
       <Tabs defaultValue="pos" className="space-y-4">
@@ -247,36 +389,23 @@ export default function POSModule() {
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {cart.length === 0 ? (
                       <div className="text-center text-muted-foreground py-8">Carrinho vazio</div>
-                    ) : (cart.map((item) => (
+                    ) : (
+                      cart.map((item) => (
                         <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">{item.name}</div>
                             <div className="text-sm text-muted-foreground">R$ {item.price.toFixed(2)} cada</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus className="size-3" />
-                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus className="size-3" /></Button>
                             <span className="w-8 text-center">{item.quantity}</span>
-                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus className="size-3" />
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => removeFromCart(item.id)}><Trash2 className="size-3" />
-                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus className="size-3" /></Button>
+                            <Button variant="outline" size="sm" onClick={() => removeFromCart(item.id)}><Trash2 className="size-3" /></Button>
                           </div>
                         </div>
                       ))
                     )}
                   </div>
-
-                  {/* Desconto */}
-                  {cart.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Desconto %</Label>
-                      <div className="flex gap-2">
-                        <Input type="number" value={discountPercent} onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)} placeholder="0" min="0" max="100" />
-                        <Button variant="outline" size="sm"><Percent className="size-4" /></Button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Resumo do Carrinho */}
                   {cart.length > 0 && (

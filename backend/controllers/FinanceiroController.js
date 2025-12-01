@@ -1,4 +1,4 @@
-import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal } from '../models/Financeiro.js';
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario } from '../models/Financeiro.js';
 import fs from "fs";
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
@@ -168,6 +168,54 @@ export const somarDiariaController = async (req, res) => { //FUNCIONANDO
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao calcular a soma diária.' });
+  }
+};
+
+// MÉDIA POR TRANSAÇÃO (vendas do dia)
+export const calcularMediaPorTransacaoController = async (req, res) => {
+  try {
+    const unidadeId = req.session?.usuario?.unidadeId;
+    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+
+    const resultado = await calcularMediaPorTransacaoDiaria(Number(unidadeId));
+    if (!resultado.sucesso) { return res.status(500).json(resultado); }
+
+    return res.status(200).json({ sucesso: true, total: resultado.total, quantidade: resultado.quantidade, media: resultado.media });
+  } catch (error) {
+    console.error('Erro ao calcular média por transação:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao calcular média por transação.', detalhes: error.message });
+  }
+};
+
+// DIVISÃO POR FORMAS DE PAGAMENTO (vendas do dia)
+export const divisaoPagamentosController = async (req, res) => {
+  try {
+    const unidadeId = req.session?.usuario?.unidadeId;
+    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+
+    const resultado = await somarPorPagamentoDiario(Number(unidadeId));
+    if (!resultado.sucesso) { return res.status(500).json(resultado); }
+
+    return res.status(200).json({ sucesso: true, detalhamento: resultado.detalhamento });
+  } catch (error) {
+    console.error('Erro ao obter divisão por pagamentos:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao obter divisão por pagamentos.', detalhes: error.message });
+  }
+};
+
+// BUSCAR PRODUTO MAIS VENDIDO (usando o model já existente)
+export const buscarProdutoMaisVendidoController = async (req, res) => {
+  try {
+    const unidadeId = req.session?.usuario?.unidadeId;
+    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+
+    const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
+    if (!resultado.sucesso) { return res.status(404).json(resultado); }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('Erro ao buscar produto mais vendido:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar produto mais vendido.', detalhes: error.message });
   }
 };
 

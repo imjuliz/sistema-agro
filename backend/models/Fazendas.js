@@ -2,7 +2,7 @@ import prisma from '../prisma/client.js';
 
 export const lotesPlantio = async (unidadeId) => {
   try {
-    const lotes = await prisma.Lote.findMany({ where: { unidadeId: Number(unidadeId), tipo: "Plantio" } });
+    const lotes = await prisma.lote.findMany({ where: { unidadeId: Number(unidadeId), tipo: "Plantio" } });
     return ({
       sucesso: true,
       lotes,
@@ -17,7 +17,6 @@ export const lotesPlantio = async (unidadeId) => {
   }
 };
 
-//quando o produto poderá ser colhido
 export const verificarProducaoLote = async (loteId) => {
   try {
     const lote = await prisma.lote.findUnique({

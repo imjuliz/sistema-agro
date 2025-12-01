@@ -1,6 +1,9 @@
 "use client"
 import * as React from 'react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/config';
+import { toast } from 'sonner';
 import { Pie, PieChart } from "recharts"
 import { ChevronLeft, ChevronRight } from "lucide-react";
 //ui
@@ -68,9 +71,36 @@ const lotes = [
     { id: 8, nome: "Sementes de trigo", qtd: "200", unMedida: "kg", categoria: "Sementes", validade: "2026-02-28" }
 ];
 export function TableDemo2() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
     const [categoria, setCategoria] = useState("");
     const [status, setStatus] = useState("");
     const [busca, setBusca] = useState("");
+    const [produtosState, setProdutosState] = useState(lotes);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadProdutos() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/unidade/${unidadeId}/produtos`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                const arr = data?.produtos ?? data?.data ?? (Array.isArray(data) ? data : []);
+                if (Array.isArray(arr) && arr.length > 0) {
+                    const mapped = arr.map((p) => ({ id: p.id, nome: p.nome || p.produto || p.nomeProduto || '—', qtd: p.quantidade ?? p.qtd ?? 0, unMedida: p.unidade || 'un', categoria: p.categoria || p.tipo || '—', validade: p.validade || p.validadeEstoque || '-' }));
+                    setProdutosState(mapped);
+                }
+            } catch (err) {
+                console.error('Erro carregando produtos:', err);
+                toast.error('Erro ao carregar estoque');
+            }
+        }
+        loadProdutos();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
 
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
@@ -105,10 +135,10 @@ export function TableDemo2() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {lotes .filter((lote) =>
+                    {produtosState .filter((lote) =>
                             (!categoria || lote.tipo === categoria) &&
                             (!status || lote.status === status) &&
-                            (!busca || lote.animal.toLowerCase().includes(busca.toLowerCase()))
+                            (!busca || (lote.nome || '').toString().toLowerCase().includes(busca.toLowerCase()))
                         ) .map((lote) => (
                             <TableRow key={lote.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">{lote.id}</TableCell>
@@ -182,9 +212,35 @@ const clientes = [
 ];
 
 export function EnvioLotes() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
     const [categoria, setCategoria] = useState("");
     const [status, setStatus] = useState("");
     const [busca, setBusca] = useState("");
+    const [clientesState, setClientesState] = useState(clientes);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadPedidos() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/estoque-produtos/pedidos/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                const arr = data?.pedidos ?? data?.data ?? (Array.isArray(data) ? data : []);
+                if (Array.isArray(arr) && arr.length > 0) {
+                    setClientesState(arr.map(p => ({ id: p.id, cliente: p.cliente || p.loja || '-', lote: p.loteId || p.lote || '-', qtd: p.quantidade || p.qtd || 0, contrato: p.contratoId || p.contrato || '-', status: p.status || '-' })));
+                }
+            } catch (err) {
+                console.error('Erro carregando pedidos de envio:', err);
+                toast.error('Erro ao carregar pedidos de envio');
+            }
+        }
+        loadPedidos();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
 
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
@@ -220,10 +276,10 @@ export function EnvioLotes() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {clientes .filter((cliente) =>
+                    {clientesState .filter((cliente) =>
                             (!categoria || cliente.tipo === categoria) &&
                             (!status || cliente.status === status) &&
-                            (!busca || cliente.cliente.toLowerCase().includes(busca.toLowerCase()))
+                            (!busca || (cliente.cliente || '').toLowerCase().includes(busca.toLowerCase()))
                         ).map((cliente) => (
                             <TableRow key={cliente.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">{cliente.id}</TableCell>
@@ -296,9 +352,33 @@ const saidas = [
 ];
 
 export function TabelaSaidas() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
     const [categoria, setCategoria] = useState("");
     const [status, setStatus] = useState("");
     const [busca, setBusca] = useState("");
+    const [saidasState, setSaidasState] = useState(saidas);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadSaidas() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/listarSaidas/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                const arr = data?.saidas ?? data?.data ?? (Array.isArray(data) ? data : []);
+                if (Array.isArray(arr) && arr.length > 0) setSaidasState(arr.map(s => ({ id: s.id, descricao: s.descricao || s.titulo || '-', tipo: s.tipo || '-', valor: s.valor || s.valorTotal || 0, data: s.data || s.createdAt || '-' })));
+            } catch (err) {
+                console.error('Erro carregando saídas:', err);
+                toast.error('Erro ao carregar saídas');
+            }
+        }
+        loadSaidas();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
 
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
@@ -333,10 +413,10 @@ export function TabelaSaidas() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {saidas .filter((saida) =>
+                    {saidasState .filter((saida) =>
                             (!categoria || saida.tipo === categoria) &&
                             (!status || saida.status === status) &&
-                            (!busca || saida.descricao.toLowerCase().includes(busca.toLowerCase()))
+                            (!busca || (saida.descricao || '').toLowerCase().includes(busca.toLowerCase()))
                         ).map((saida) => (
                             <TableRow key={saida.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">{saida.id}</TableCell>

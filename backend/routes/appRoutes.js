@@ -6,16 +6,16 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
+import {listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
 import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedoresController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
+import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
-    somarEntradaMensalController, listarVendasController,
-    listarSaidasController
+    somarEntradaMensalController, listarVendasController, calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController
 } from "../controllers/FinanceiroController.js";
+import { getDashboardDataController } from '../controllers/dashboardController.js';
 
 // tradução
 router.post("/translate", translateText);
@@ -26,10 +26,13 @@ router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
+router.get("/vendas/media-por-transacao", auth, calcularMediaPorTransacaoController);
+router.get("/vendas/divisao-pagamentos", auth, divisaoPagamentosController);
+router.get("/financeiro/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
 
 // rotas usadas para _____ --------------------------------------------------------------------
-router.delete("/usuarios/:userId", deletarUsuarioController);
-router.get("/usuarios/listar",  listarUsuariosPorUnidadeController);
+// NOTE: rotas de usuários são definidas em routes/usuariosRoutes.js e routes/unidadeRoutes.js.
+// Removemos as rotas duplicadas daqui para evitar conflitos de roteamento.
 
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
 // router.get("/atividadesLote", listarAtividadesLoteController);
@@ -70,6 +73,9 @@ router.get("/meta/contratos", listarMetaContratosController);
 //estoque-produtos (pedidos) --------------------------------------------------------------------
 router.get("/estoque-produtos/pedidos/:unidadeId", listarPedidosEntregaController);
 router.get("/estoque-produtos/pedidos-origem/:unidadeId", listarPedidosOrigemController);
+
+// dashboard - dados agregados para gráficos (por unidade)
+router.get('/dashboard/fazenda/:unidadeId', auth, getDashboardDataController);
 
 //perfil --------------------------------------------------------------------
 

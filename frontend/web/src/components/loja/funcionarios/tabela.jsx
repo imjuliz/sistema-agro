@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { toast } from 'sonner'
 import {flexRender,getCoreRowModel,getFilteredRowModel,getPaginationRowModel,getSortedRowModel,useReactTable,} from "@tanstack/react-table"
 import {IconPlus,IconDotsVertical,IconPencil,IconTrash,} from "@tabler/icons-react"
 import { Badge } from "@/components/ui/badge"
@@ -66,22 +67,22 @@ function FuncionarioDrawer({ isOpen, setIsOpen, funcionario, onSave }) {
 
   const handleSave = () => {
     if (!formData.primeiroNome || !formData.sobrenome || !formData.email || !formData.telefone) {
-      alert("Por favor, preencha todos os campos obrigatórios.")
+      toast.error("Por favor, preencha todos os campos obrigatórios.")
       return
     }
 
     if (!validarEmail(formData.email)) {
-      alert("Por favor, insira um email válido contendo '@'.")
+      toast.error("Por favor, insira um email válido contendo '@'.")
       return
     }
 
     if (!validarTelefone(formData.telefone)) {
-      alert("O telefone deve conter apenas números e no máximo 11 dígitos (DDD + número).")
+      toast.error("O telefone deve conter apenas números e no máximo 11 dígitos (DDD + número).")
       return
     }
 
     if (!funcionario && !validarSenha(formData.senha)) {
-      alert("A senha deve conter:\n Pelo menos 6 caracteres,\n Pelo menos uma letra maiúscula,\n Pelo menos uma minúscula, \n Pelo menos um número.")
+      toast.error("A senha deve conter:\n Pelo menos 6 caracteres,\n Pelo menos uma letra maiúscula,\n Pelo menos uma minúscula, \n Pelo menos um número.")
       return
     }
 
