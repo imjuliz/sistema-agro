@@ -12,6 +12,8 @@ import { Mail, Phone, MapPin, Briefcase, Edit, MoreHorizontal, Plus, Sliders } f
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 import { EditarUsuarioModal } from './modals/EditarUsuarioModal';
+import DemitirUsuarioModal from './modals/DemitirUsuarioModal';
+import TransferirUsuarioModal from './modals/TransferirUsuarioModal';
 
 export function EquipeTab({ fazendaId }) {
   const { fetchWithAuth, doRefresh, logout, initialized } = useAuth()
@@ -25,6 +27,9 @@ export function EquipeTab({ fazendaId }) {
   const [page, setPage] = useState(1);
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
   const [abrirModalEditar, setAbrirModalEditar] = useState(false);
+  const [usuarioParaAcao, setUsuarioParaAcao] = useState(null);
+  const [abrirModalDemitir, setAbrirModalDemitir] = useState(false);
+  const [abrirModalTransferir, setAbrirModalTransferir] = useState(false);
 
   // Carregar equipe da unidade
   useEffect(() => {
@@ -59,20 +64,38 @@ export function EquipeTab({ fazendaId }) {
         const usuarios = body?.usuarios ?? []
         
         if (Array.isArray(usuarios)) {
+          // Helper para formatar telefones BR
+          const formatPhone = (raw) => {
+            if (!raw) return 'Não informado';
+            const digits = String(raw).replace(/\D/g, '');
+            if (digits.length === 11) {
+              return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+            } else if (digits.length === 10) {
+              return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+            } else if (digits.length > 0) {
+              return digits;
+            }
+            return 'Não informado';
+          }
+
           // Mapear dados do backend para o formato da tela
-          const equipeFormatada = usuarios.map(user => ({
-            id: user.id,
-            name: user.nome,
-            title: user.perfil?.funcao || 'Funcionário',
-            department: user.perfil?.descricao || 'Sem departamento',
-            email: user.email,
-            phone: user.telefone || 'Não informado',
-            location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
-            avatar: user.ftPerfil || '/api/placeholder/48/48',
-            isPrimary: false,
-            lastContact: 'Não definido',
-            status: user.status ? 'Ativo' : 'Inativo'
-          }))
+          const equipeFormatada = usuarios.map(user => {
+            const rawPhone = String(user.telefone || '').replace(/\D/g, '');
+            return ({
+              id: user.id,
+              name: user.nome,
+              title: user.perfil?.funcao || 'Funcionário',
+              department: user.perfil?.descricao || 'Sem departamento',
+              email: user.email,
+              phone: formatPhone(rawPhone),
+              rawPhone: rawPhone,
+              location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
+              avatar: user.ftPerfil || '/api/placeholder/48/48',
+              isPrimary: false,
+              lastContact: 'Não definido',
+              status: user.status ? 'Ativo' : 'Inativo'
+            })
+          })
           setEquipe(equipeFormatada)
         } else {
           console.error("Erro ao carregar equipe:", body)
@@ -242,7 +265,7 @@ export function EquipeTab({ fazendaId }) {
                         <Badge variant="default">Primary Contact</Badge>
                       )}
                     </div>
-                    <div className="text-muted-foreground mb-2">{eqp.title}</div>
+                    {/* <div className="text-muted-foreground mb-2">{eqp.title}</div> */}
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Briefcase className="size-3" />
@@ -260,9 +283,29 @@ export function EquipeTab({ fazendaId }) {
                     <Edit className="size-4 mr-2" />
                     Editar
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
+
+                  {/* Opções: Transferência / Demitir */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm" aria-label="Mais opções">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="end" className="w-[220px] p-2">
+                      <button
+                        className="w-full text-left px-3 py-2 hover:bg-neutral-900 rounded"
+                        onClick={() => { setUsuarioParaAcao(eqp); setAbrirModalTransferir(true); }}
+                      >
+                        Transferência
+                      </button>
+                      <button
+                        className="w-full text-left px-3 py-2 mt-1 text-destructive hover:bg-red-900 rounded"
+                        onClick={() => { setUsuarioParaAcao(eqp); setAbrirModalDemitir(true); }}
+                      >
+                        Demitir
+                      </button>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
@@ -302,13 +345,27 @@ export function EquipeTab({ fazendaId }) {
                 .then(data => {
                   if (data?.usuarios) {
                     const usuarios = data.usuarios
+                    const formatPhone = (raw) => {
+                      if (!raw) return 'Não informado';
+                      const digits = String(raw).replace(/\D/g, '');
+                      if (digits.length === 11) {
+                        return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+                      } else if (digits.length === 10) {
+                        return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+                      } else if (digits.length > 0) {
+                        return digits;
+                      }
+                      return 'Não informado';
+                    }
+
                     const equipeFormatada = usuarios.map(user => ({
                       id: user.id,
                       name: user.nome,
                       title: user.perfil?.funcao || 'Funcionário',
                       department: user.perfil?.descricao || 'Sem departamento',
                       email: user.email,
-                      phone: user.telefone || 'Não informado',
+                      phone: formatPhone(String(user.telefone || '')),
+                      rawPhone: String(user.telefone || '').replace(/\D/g, ''),
                       location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
                       avatar: user.ftPerfil || '/api/placeholder/48/48',
                       isPrimary: false,
@@ -319,6 +376,88 @@ export function EquipeTab({ fazendaId }) {
                   }
                 })
                 .finally(() => setCarregando(false))
+            }}
+          />
+        )}
+
+        {abrirModalDemitir && usuarioParaAcao && (
+          <DemitirUsuarioModal
+            usuario={usuarioParaAcao}
+            aberto={abrirModalDemitir}
+            onAbrirMudar={setAbrirModalDemitir}
+            onSucesso={() => {
+              setAbrirModalDemitir(false)
+              const url = `${API_URL}unidades/${fazendaId}/usuarios?page=1&perPage=100`
+              fetchWithAuth(url)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                  if (data?.usuarios) {
+                    const formatPhone = (raw) => {
+                      if (!raw) return 'Não informado';
+                      const digits = String(raw).replace(/\D/g, '');
+                      if (digits.length === 11) return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+                      if (digits.length === 10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+                      return digits || 'Não informado';
+                    }
+                    const usuarios = data.usuarios
+                    const equipeFormatada = usuarios.map(user => ({
+                      id: user.id,
+                      name: user.nome,
+                      title: user.perfil?.funcao || 'Funcionário',
+                      department: user.perfil?.descricao || 'Sem departamento',
+                      email: user.email,
+                      phone: formatPhone(String(user.telefone || '')),
+                      rawPhone: String(user.telefone || '').replace(/\D/g, ''),
+                      location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
+                      avatar: user.ftPerfil || '/api/placeholder/48/48',
+                      isPrimary: false,
+                      lastContact: 'Não definido',
+                      status: user.status ? 'Ativo' : 'Inativo'
+                    }))
+                    setEquipe(equipeFormatada)
+                  }
+                })
+            }}
+          />
+        )}
+
+        {abrirModalTransferir && usuarioParaAcao && (
+          <TransferirUsuarioModal
+            usuario={usuarioParaAcao}
+            aberto={abrirModalTransferir}
+            onAbrirMudar={setAbrirModalTransferir}
+            onSucesso={() => {
+              setAbrirModalTransferir(false)
+              const url = `${API_URL}unidades/${fazendaId}/usuarios?page=1&perPage=100`
+              fetchWithAuth(url)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                  if (data?.usuarios) {
+                    const formatPhone = (raw) => {
+                      if (!raw) return 'Não informado';
+                      const digits = String(raw).replace(/\D/g, '');
+                      if (digits.length === 11) return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+                      if (digits.length === 10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+                      return digits || 'Não informado';
+                    }
+                    const usuarios = data.usuarios
+                    const equipeFormatada = usuarios.map(user => ({
+                      id: user.id,
+                      name: user.nome,
+                      title: user.perfil?.funcao || 'Funcionário',
+                      department: user.perfil?.descricao || 'Sem departamento',
+                      email: user.email,
+                      phone: formatPhone(String(user.telefone || '')),
+                      rawPhone: String(user.telefone || '').replace(/\D/g, ''),
+                      location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
+                      avatar: user.ftPerfil || '/api/placeholder/48/48',
+                      isPrimary: false,
+                      lastContact: 'Não definido',
+                      status: user.status ? 'Ativo' : 'Inativo'
+                    }))
+                    setEquipe(equipeFormatada)
+                  }
+                })
             }}
           />
         )}

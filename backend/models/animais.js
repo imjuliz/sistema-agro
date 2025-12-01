@@ -3,6 +3,7 @@ import prisma from "../prisma/client.js";
 export async function getAnimais() {
   try {
     const animais = await prisma.animal.findMany();
+    
     return {
       sucesso: true,
       animais,
@@ -12,7 +13,7 @@ export async function getAnimais() {
     return {
       sucesso: false,
       erro: "Erro ao listar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
@@ -43,7 +44,7 @@ export async function getAnimaisPelaRaca(raca) {
     throw {
       sucesso: false,
       erro: "Erro ao listar animais pela raça.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
@@ -104,7 +105,7 @@ export async function updateAnimais(id, data) {
 
     // Atualiza
     const animais = await prisma.animal.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: {
         ...data, 
         fornecedorId: data.fornecedorId ?? null,
@@ -122,7 +123,7 @@ export async function updateAnimais(id, data) {
     return {
       sucesso: false,
       erro: "Erro ao atualizar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
@@ -140,7 +141,7 @@ export async function deleteAnimais(id) {
     return {
       sucesso: false,
       erro: "Erro ao deletar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }

@@ -28,8 +28,8 @@ router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
 
 // rotas usadas para _____ --------------------------------------------------------------------
-router.delete("/usuarios/:userId", deletarUsuarioController);
-router.get("/usuarios/listar",  listarUsuariosPorUnidadeController);
+// NOTE: rotas de usuários são definidas em routes/usuariosRoutes.js e routes/unidadeRoutes.js.
+// Removemos as rotas duplicadas daqui para evitar conflitos de roteamento.
 
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
 // router.get("/atividadesLote", listarAtividadesLoteController);
