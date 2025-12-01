@@ -68,12 +68,15 @@ export default function FazendasPage() {
     const [draftLocationFilter, setDraftLocationFilter] = useState(""); // cidade/estado rascunho
     const [draftResponsibleQuery, setDraftResponsibleQuery] = useState("");
     const [draftAreaQuery, setDraftAreaQuery] = useState("");
+    const [citySuggestions, setCitySuggestions] = useState([]);
+    const citySuggestTimer = useRef(null);
 
     // filtros aplicados (só atualiza quando clicar em APLICAR)
     const [appliedFilters, setAppliedFilters] = useState({
         typeFilters: typeFilters,
         statusFilters: statusFilters,
         locationFilter: "",
+        locationEstado: "",
         responsibleQuery: "",
         areaQuery: ""
     });
@@ -90,79 +93,44 @@ export default function FazendasPage() {
 
         async function fetchFazendas() {
             setLoading(true);
-            try {
-                const url = `${API_URL}unidades/fazendas`;
-                console.debug("[fetchFazendas] GET", url);
-                const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
+                try {
+                    const params = new URLSearchParams();
+                    if (query) params.set('q', query);
+                    const loc = String(appliedFilters.locationFilter || '').trim();
+                    if (loc) params.set('cidade', loc);
+                    const estadoParam = String(appliedFilters.locationEstado || '').trim();
+                    if (estadoParam) params.set('estado', estadoParam);
+                    const resp = String(appliedFilters.responsibleQuery || '').trim();
+                    if (resp) params.set('responsible', resp);
+                    const area = String(appliedFilters.areaQuery || '').trim();
+                    if (area) params.set('minArea', area);
+                    // send status filters and type filters to backend as comma-separated lists
+                    const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([,v]) => v).map(([k]) => k) : [];
+                    if (types.length > 0) params.set('tipos', types.join(','));
+                    const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([,v]) => v).map(([k]) => k.toUpperCase()) : [];
+                    if (statuses.length > 0) params.set('status', statuses.join(','));
+                    params.set('page', String(page));
+                    params.set('perPage', String(perPage));
 
-                console.debug("[fetchFazendas] status:", res.status, "ok?", res.ok);
-                // tenta parse seguro do body
-                const bodyText = await res.text().catch(() => "");
-                let body = null;
-                try { body = bodyText ? JSON.parse(bodyText) : null; } catch (e) { body = { raw: bodyText }; }
-
-                console.debug("[fetchFazendas] body:", body);
-
-                // tratamento de erro: mostra mensagem do backend se existir
+                    const url = `${API_URL}unidades/fazendas?${params.toString()}`;
+                console.debug('[fetchFazendas] GET', url);
+                const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
                 if (!res.ok) {
-                    const errMsg = body?.erro ?? body?.error ?? body?.message ?? `HTTP ${res.status}`;
-                    console.warn("[fetchFazendas] resposta não OK:", errMsg);
-                    // Se for erro conhecido, trate apropriadamente:
-                    if (errMsg === "ID da unidade inválido.") {
-                        // possivelmente rota exige query param — log para debug
-                        console.error("[fetchFazendas] Backend requer ID da unidade ou rota incorreta.");
-                    }
-                    setUnits([]); // fallback
+                    console.warn('[fetchFazendas] resposta não OK', res.status);
+                    setUnits([]);
                     return;
                 }
-
-                // Normaliza possíveis formatos
-                let unidades = null;
-                if (!body) unidades = null;
-                else if (Array.isArray(body)) unidades = body;
-                else if (Array.isArray(body.unidades)) unidades = body.unidades;
-                else if (Array.isArray(body.data?.unidades)) unidades = body.data.unidades;
-                else if (body.sucesso && Array.isArray(body.unidades)) unidades = body.unidades;
-                else unidades = null;
-
-                if (unidades && Array.isArray(unidades) && unidades.length > 0) {
-                    const normalized = unidades.map(u => {
-                        const rawType = String(u.tipo ?? u.type ?? "").trim();
-                        const type = rawType.length === 0 ? "Fazenda"
-                            : rawType.toUpperCase() === "FAZENDA" ? "Fazenda"
-                                : rawType[0]?.toUpperCase() + rawType.slice(1).toLowerCase();
-
-                        const rawStatus = String(u.status ?? "").trim();
-                        const status = rawStatus.length === 0 ? "Ativa"
-                            : rawStatus.toUpperCase() === "ATIVA" ? "Ativa"
-                                : rawStatus[0]?.toUpperCase() + rawStatus.slice(1).toLowerCase();
-
-                        return {
-                            id: Number(u.id),
-                            name: u.nome ?? u.name ?? String(u.id),
-                            type,
-                            location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
-                            manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
-                            status,
-                            sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
-                            areaHa: u.areaProdutiva ? Number(u.areaProdutiva) : (u.areaHa ?? 0),
-                            latitude: u.latitude != null ? Number(u.latitude)
-                                : (u.lat != null ? Number(u.lat)
-                                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
-                            longitude: u.longitude != null ? Number(u.longitude)
-                                : (u.lng != null ? Number(u.lng)
-                                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null))
-                        };
-                    });
-
-                    setUnits(normalized);
+                const body = await res.json().catch(() => null);
+                const unidades = body?.unidades ?? body?.unidades ?? [];
+                if (Array.isArray(unidades) && unidades.length > 0) {
+                    const normalized = unidades.map(normalizeUnit);
+                    if (mounted) setUnits(normalized);
                 } else {
-                    console.info("[fetchFazendas] nenhum item encontrado, corpo:", body);
-                    setUnits([]); // garante que .filter funcione
+                    if (mounted) setUnits([]);
                 }
             } catch (err) {
-                console.error("Erro ao carregar fazendas:", err);
-                setUnits([]);
+                console.error('Erro ao carregar fazendas:', err);
+                if (mounted) setUnits([]);
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -170,7 +138,7 @@ export default function FazendasPage() {
 
         fetchFazendas();
         return () => { mounted = false; };
-    }, [fetchWithAuth]);
+    }, [fetchWithAuth, appliedFilters, page, perPage, query]);
 
     // Buscar métricas de fazendas (total, ativas, inativas, etc)
     useEffect(() => {
@@ -302,6 +270,21 @@ export default function FazendasPage() {
         setStatusFilters({ Ativa: true, Inativa: true });
         setTypeFilters({ Matriz: true, Fazenda: true, Loja: true });
         setPage(1);
+        // clear drafts and applied filters as well
+        setDraftAreaQuery('');
+        setDraftLocationFilter('');
+        setDraftResponsibleQuery('');
+        setDraftStatusFilters({ Ativa: true, Inativa: true });
+        setDraftTypeFilters({ Matriz: true, Fazenda: true, Loja: true });
+        setCitySuggestions([]);
+        setAppliedFilters({
+            typeFilters: { Matriz: true, Fazenda: true, Loja: true },
+            statusFilters: { Ativa: true, Inativa: true },
+            locationFilter: '',
+            locationEstado: '',
+            responsibleQuery: '',
+            areaQuery: ''
+        });
     }
 
     function selectAllOnPage() {
@@ -506,7 +489,35 @@ export default function FazendasPage() {
                                             {/* LOCALIZAÇÃO */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                                                <Input placeholder="Filtrar por cidade / estado" value={locationFilter} onChange={(e) => { setLocationFilter(e.target.value); setPage(1); }} />
+                                                    <div className="relative">
+                                                        <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
+                                                            const v = e.target.value;
+                                                            setDraftLocationFilter(v);
+                                                            setPage(1);
+                                                            // debounce suggestions
+                                                            if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
+                                                            citySuggestTimer.current = setTimeout(async () => {
+                                                                try {
+                                                                    const q = v.trim();
+                                                                    if (!q || q.length < 2) { setCitySuggestions([]); return; }
+                                                                    const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
+                                                                    const res = await fetchWithAuth(url);
+                                                                    if (!res.ok) { setCitySuggestions([]); return; }
+                                                                    const body = await res.json().catch(() => null);
+                                                                    setCitySuggestions(body?.suggestions ?? []);
+                                                                } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
+                                                            }, 300);
+                                                        }} />
+                                                        {citySuggestions.length > 0 && (
+                                                            <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
+                                                                {citySuggestions.map((s, idx) => (
+                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                        <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                             </div>
                                             <Separator />
                                             {/* RESPONSAVEL - ainda nn funciona */}
@@ -526,7 +537,11 @@ export default function FazendasPage() {
                                                 <Input
                                                     placeholder="Filtrar por área (ha)"
                                                     value={draftAreaQuery}
-                                                    onChange={(e) => { setDraftAreaQuery(e.target.value); }}
+                                                    onChange={(e) => { 
+                                                        // aceita apenas números (garantia do usuário)
+                                                        const digits = String(e.target.value || '').replace(/\D/g, '');
+                                                        setDraftAreaQuery(digits);
+                                                    }}
                                                 />
 
                                             </div>
@@ -535,21 +550,32 @@ export default function FazendasPage() {
                                             <div className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <Button size="sm" onClick={() => {
+                                                        // parse draftLocationFilter which may contain "Cidade, ESTADO"
+                                                        const parts = String(draftLocationFilter || '').split(',').map(s => s.trim()).filter(Boolean);
+                                                        const cidade = parts[0] || '';
+                                                        const estado = parts[1] || '';
+
                                                         setAppliedFilters({
                                                             typeFilters: draftTypeFilters,
                                                             statusFilters: draftStatusFilters,
-                                                            locationFilter: draftLocationFilter,
+                                                            locationFilter: cidade,
+                                                            locationEstado: estado,
                                                             responsibleQuery: draftResponsibleQuery,
                                                             areaQuery: draftAreaQuery
                                                         });
                                                         setPage(1);
-                                                        // opcional: fechar popover — se seu Popover suportar controle externo, feche aqui
                                                     }}
                                                     >
                                                         Aplicar
                                                     </Button>
 
-                                                    <Button size="sm" variant="ghost" onClick={() => resetFilters()}>Limpar</Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => {
+                                                        resetFilters();
+                                                        setDraftAreaQuery('');
+                                                        setDraftLocationFilter('');
+                                                        setDraftResponsibleQuery('');
+                                                        setCitySuggestions([]);
+                                                    }}>Limpar</Button>
                                                 </div>
                                             </div>
 

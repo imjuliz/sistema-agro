@@ -1,6 +1,7 @@
 import express from "express";
-import { listarGerentesDisponiveisController, criarUsuarioController, updateUsuarioController, deletarUsuarioController, listarUsuariosPorUnidadeController } from "../controllers/usuarios/usuariosController.js";
+import { listarGerentesDisponiveisController, criarUsuarioController, updateUsuarioController, deletarUsuarioController, listarUsuariosPorUnidadeController, removerFotoController, atualizarFotoPerfilController } from "../controllers/usuarios/usuariosController.js";
 import { auth } from "../middlewares/authMiddleware.js";
+import { upload } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -18,5 +19,8 @@ router.delete("/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]
 
 // Rota para listar usuários da unidade (funcionários e gerentes da loja)
 router.get("/unidade/listar", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), listarUsuariosPorUnidadeController);
+
+router.post('/editarFoto', auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), upload.single('foto'), atualizarFotoPerfilController);
+router.post('/removerFoto', auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), removerFotoController);
 
 export default router;

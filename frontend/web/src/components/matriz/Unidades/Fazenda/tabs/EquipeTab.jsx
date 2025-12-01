@@ -3,89 +3,55 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Mail, Phone, MessageSquare, Calendar, MapPin, Briefcase, Edit, MoreHorizontal, Building2, Users, DollarSign, Bell, Clock, Plus, Sliders } from 'lucide-react';
+import { Mail, Phone, MapPin, Briefcase, Edit, MoreHorizontal, Plus, Sliders } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
-
-const contacts = [
-  {
-    id: 1,
-    name: 'Sarah Johnson',
-    title: 'Head of Engineering',
-    email: 'sarah.johnson@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    avatar: '/api/placeholder/40/40',
-    status: 'primary'
-  },
-  {
-    id: 2,
-    name: 'Michael Chen',
-    title: 'HR Manager',
-    email: 'michael.chen@techcorp.com',
-    phone: '+1 (555) 234-5678',
-    avatar: '/api/placeholder/40/40',
-    status: 'secondary'
-  },
-  {
-    id: 3,
-    name: 'Emily Rodriguez',
-    title: 'Talent Acquisition Lead',
-    email: 'emily.rodriguez@techcorp.com',
-    phone: '+1 (555) 345-6789',
-    avatar: '/api/placeholder/40/40',
-    status: 'secondary'
-  }
-];
-
-const reminders = [
-  {
-    id: 1,
-    title: 'Follow up on Senior Developer role',
-    time: '2:00 PM today',
-    priority: 'high'
-  },
-  {
-    id: 2,
-    title: 'Call Sarah Johnson about new requirements',
-    time: 'Tomorrow 10:00 AM',
-    priority: 'medium'
-  },
-  {
-    id: 3,
-    title: 'Send candidate shortlist',
-    time: 'Dec 15, 3:00 PM',
-    priority: 'low'
-  }
-];
+import { EditarUsuarioModal } from './modals/EditarUsuarioModal';
 
 export function EquipeTab({ fazendaId }) {
-  const { fetchWithAuth } = useAuth()
+  const { fetchWithAuth, doRefresh, logout, initialized } = useAuth()
   const [query, setQuery] = useState('');
   const [equipe, setEquipe] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [typeFilters, setTypeFilters] = useState({ Gerente: true, Agricultor: true, "Funcionário": true }); // por default mostra todos
+  const [erroEquipe, setErroEquipe] = useState(null);
+  const [typeFilters, setTypeFilters] = useState({ Gerente: true, Agricultor: true, "Funcionário": true });
   const [statusFilters, setStatusFilters] = useState({ "Ativo": true, "Inativo": true });
   const [locationQuery, setLocationQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [abrirModalEditar, setAbrirModalEditar] = useState(false);
 
   // Carregar equipe da unidade
   useEffect(() => {
     const carregarEquipe = async () => {
       try {
         setCarregando(true)
+        setErroEquipe(null)
+        
         if (!fazendaId) {
           console.warn("fazendaId não fornecido")
           return
         }
 
-        const response = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/usuarios?page=1&perPage=100`)
-        
+        const url = `${API_URL}unidades/${fazendaId}/usuarios?page=1&perPage=100`
+
+        const response = await fetchWithAuth(url)
+
         if (!response.ok) {
-          console.error("Erro ao carregar equipe: status", response.status)
+          const status = response.status;
+          if (status === 401) {
+            setErroEquipe('Sessão expirada. Faça login novamente.');
+            await logout()
+          } else if (status === 403) {
+            setErroEquipe('Você não tem permissão para ver a equipe desta unidade.');
+          } else {
+            setErroEquipe(`Erro ao carregar equipe (${status}).`);
+          }
           return
         }
 
@@ -113,15 +79,16 @@ export function EquipeTab({ fazendaId }) {
         }
       } catch (error) {
         console.error("Erro ao buscar equipe:", error)
+        setErroEquipe('Erro ao carregar a equipe. Tente novamente.')
       } finally {
         setCarregando(false)
       }
     }
 
-    if (fazendaId) {
+    if (fazendaId && initialized) {
       carregarEquipe()
     }
-  }, [fazendaId, fetchWithAuth])
+  }, [fazendaId, fetchWithAuth, initialized, logout])
 
   // Filtragem principal - integra query, tipos, status e localização
   const filtered = useMemo(() => {
@@ -243,7 +210,14 @@ export function EquipeTab({ fazendaId }) {
           </div>
         </div>
 
-        {carregando ? (
+        {erroEquipe ? (
+          <div className="text-center py-8">
+            <p className="text-destructive">{erroEquipe}</p>
+            <div className="mt-3">
+              <Button size="sm" onClick={() => { setErroEquipe(null); window.location.reload(); }}>Tentar novamente</Button>
+            </div>
+          </div>
+        ) : carregando ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Carregando equipe...</p>
           </div>
@@ -258,7 +232,7 @@ export function EquipeTab({ fazendaId }) {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4">
                   <Avatar className="size-12">
-                    <AvatarImage src={eqp.avatar} alt={eqp.name} />
+                    <AvatarImage src={buildImageUrl(eqp.avatar)} alt={eqp.name} />
                     <AvatarFallback>{eqp.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div>
@@ -278,12 +252,11 @@ export function EquipeTab({ fazendaId }) {
                         <MapPin className="size-3" />
                         <span>{eqp.location}</span>
                       </div>
-                      <span>Last eqp: {eqp.lastContact}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => { setUsuarioSelecionado(eqp); setAbrirModalEditar(true); }}>
                     <Edit className="size-4 mr-2" />
                     Editar
                   </Button>
@@ -307,36 +280,47 @@ export function EquipeTab({ fazendaId }) {
                     </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Mail className="size-4 mr-2" />
-                      Email
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Phone className="size-4 mr-2" />
-                      Ligar
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <MessageSquare className="size-4 mr-2" />
-                      Mensagem
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-4 border-t">
-                {/* <Button size="sm">Log Activity</Button> */}
-                <Button variant="outline" size="sm">
-                  <Calendar className="size-4 mr-2" />
-                  Marcar reunião
-                </Button>
-                <Button size="sm">Adicionar nota</Button>
               </div>
             </CardContent>
           </Card>
           ))
+        )}
+        
+        {abrirModalEditar && usuarioSelecionado && (
+          <EditarUsuarioModal
+            usuario={usuarioSelecionado}
+            aberto={abrirModalEditar}
+            onAbrirMudar={setAbrirModalEditar}
+            onSucesso={() => {
+              setAbrirModalEditar(false)
+              setCarregando(true)
+              setErroEquipe(null)
+              // Recarregar equipe após edição bem-sucedida
+              const url = `${API_URL}unidades/${fazendaId}/usuarios?page=1&perPage=100`
+              fetchWithAuth(url)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                  if (data?.usuarios) {
+                    const usuarios = data.usuarios
+                    const equipeFormatada = usuarios.map(user => ({
+                      id: user.id,
+                      name: user.nome,
+                      title: user.perfil?.funcao || 'Funcionário',
+                      department: user.perfil?.descricao || 'Sem departamento',
+                      email: user.email,
+                      phone: user.telefone || 'Não informado',
+                      location: `${user.unidade?.cidade || ''}, ${user.unidade?.estado || ''}`,
+                      avatar: user.ftPerfil || '/api/placeholder/48/48',
+                      isPrimary: false,
+                      lastContact: 'Não definido',
+                      status: user.status ? 'Ativo' : 'Inativo'
+                    }))
+                    setEquipe(equipeFormatada)
+                  }
+                })
+                .finally(() => setCarregando(false))
+            }}
+          />
         )}
       </div>
     </div>

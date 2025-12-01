@@ -332,7 +332,7 @@ export function CompanyHeader({ id, onLogActivity }) {
 
       // 2) Fetch direto
       try {
-        const url = `${API_URL}matriz/unidades/${id}`;
+        const url = `${API_URL}unidades/${id}`;
         const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
 
         if (res.status === 404) {
@@ -371,7 +371,7 @@ export function CompanyHeader({ id, onLogActivity }) {
 
     async function refreshInBackground(id) {
       try {
-        const url = `${API_URL}matriz/unidades/${id}`;
+        const url = `${API_URL}unidades/${id}`;
         const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
         if (!res.ok) return;
         const body = await res.json().catch(() => null);

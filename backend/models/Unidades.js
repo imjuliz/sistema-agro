@@ -73,6 +73,127 @@ export async function getFazendas() {
   }
 }
 
+// BUSCA FAZENDAS COM FILTROS E PAGINAÇÃO
+export async function getFazendasFiltered({ q = null, cidade = null, estado = null, minArea = null, maxArea = null, tipos = null, status = null, responsible = null, page = 1, perPage = 25, orderBy = { nome: 'asc' } } = {}) {
+  try {
+    const where = { tipo: 'FAZENDA' };
+
+    const and = [];
+
+    if (q) {
+      const texto = String(q).trim();
+      and.push({
+        OR: [
+          { nome: { contains: texto, mode: 'insensitive' } },
+          { endereco: { contains: texto, mode: 'insensitive' } },
+          { cidade: { contains: texto, mode: 'insensitive' } },
+          { estado: { contains: texto, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (cidade) {
+      and.push({ cidade: { contains: String(cidade).trim(), mode: 'insensitive' } });
+    }
+
+    if (estado) {
+      and.push({ estado: { contains: String(estado).trim(), mode: 'insensitive' } });
+    }
+
+    // tipos: aceita string com vírgula ou array de tipos (ex: 'FAZENDA,MATRIZ')
+    if (tipos) {
+      const list = Array.isArray(tipos) ? tipos : String(tipos).split(',');
+      const cleaned = list.map(t => String(t || '').trim()).filter(Boolean).map(t => {
+        const upper = t.toUpperCase();
+        if (upper === 'FAZENDA') return 'FAZENDA';
+        if (upper === 'MATRIZ') return 'MATRIZ';
+        if (upper === 'LOJA' || upper === 'LOJAS') return 'LOJA';
+        return upper;
+      });
+      if (cleaned.length > 0) {
+        and.push({ tipo: { in: cleaned } });
+      }
+    }
+
+    // status: aceita 'ATIVA,INATIVA' or localized forms
+    if (status) {
+      const list = Array.isArray(status) ? status : String(status).split(',');
+      const cleaned = list.map(s => String(s || '').trim()).filter(Boolean).map(s => s.toUpperCase());
+      if (cleaned.length > 0) {
+        and.push({ status: { in: cleaned } });
+      }
+    }
+
+    // responsible: buscar pelo campo gerente.nome ou gerente (string)
+    if (responsible) {
+      const texto = String(responsible).trim();
+      and.push({ OR: [ { gerente: { nome: { contains: texto, mode: 'insensitive' } } }, { gerente: { contains: texto, mode: 'insensitive' } } ] });
+    }
+
+    if (minArea != null || maxArea != null) {
+      const areaCond = {};
+      if (minArea != null) areaCond.gte = Number(minArea);
+      if (maxArea != null) areaCond.lte = Number(maxArea);
+      // assume areaProdutiva is stored in hectares
+      and.push({ areaProdutiva: areaCond });
+    }
+
+    if (and.length > 0) where.AND = and;
+
+    const pageNum = Math.max(1, Number(page || 1));
+    const per = Math.max(1, Math.min(200, Number(perPage || 25)));
+    const skip = (pageNum - 1) * per;
+
+    const [total, unidades] = await Promise.all([
+      prisma.unidade.count({ where }),
+      prisma.unidade.findMany({ where, skip, take: per, orderBy }),
+    ]);
+
+    return { sucesso: true, unidades, total, page: pageNum, perPage: per };
+  } catch (error) {
+    console.error('[getFazendasFiltered] erro:', error);
+    return { sucesso: false, erro: 'Erro ao buscar fazendas filtradas.', detalhes: error.message };
+  }
+}
+
+// SUGESTÕES DE CIDADES / ESTADOS (autocomplete)
+export async function getCityStateSuggestions(query = '', limit = 20) {
+  try {
+    const q = String(query || '').trim();
+    if (!q) return { sucesso: true, suggestions: [] };
+
+    const rows = await prisma.unidade.findMany({
+      where: {
+        tipo: 'FAZENDA',
+        OR: [
+          { cidade: { contains: q, mode: 'insensitive' } },
+          { estado: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      select: { cidade: true, estado: true },
+      take: limit,
+    });
+
+    // dedupe combinations
+    const seen = new Set();
+    const suggestions = [];
+    for (const r of rows) {
+      const c = String(r.cidade || '').trim();
+      const e = String(r.estado || '').trim();
+      const key = `${c}||${e}`;
+      if (!c) continue;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      suggestions.push({ cidade: c, estado: e });
+    }
+
+    return { sucesso: true, suggestions };
+  } catch (error) {
+    console.error('[getCityStateSuggestions] erro:', error);
+    return { sucesso: false, erro: 'Erro ao buscar sugestões de cidades.', detalhes: error.message };
+  }
+}
+
 export async function getMatriz() {
   try {
     const matrizes = await prisma.unidade.findMany({
@@ -270,3 +391,56 @@ export async function countUsuariosPorUnidade(unidadeId) {
     return { sucesso: false, erro: "Erro ao contar usuários.", detalhes: error.message };
   }
 }
+
+// FOTO DA UNIDADE
+export const atualizarFotoUnidade = async (id, caminhoFoto) => {
+  try {
+    const unidadeAtualizada = await prisma.unidade.update({
+      where: { id: Number(id) },
+      data: { imagemUrl: caminhoFoto },
+      select: {
+        id: true,
+        nome: true,
+        imagemUrl: true,
+      },
+    });
+    return {
+      sucesso: true,
+      unidade: unidadeAtualizada,
+      message: "Foto da unidade atualizada com sucesso!",
+    };
+  } catch (error) {
+    console.error("Erro ao atualizar foto da unidade:", error);
+    return {
+      sucesso: false,
+      erro: "Erro ao atualizar foto da unidade.",
+      detalhes: error.message,
+    };
+  }
+};
+
+export const removerFotoUnidade = async (id) => {
+  try {
+    const unidadeAtualizada = await prisma.unidade.update({
+      where: { id: Number(id) },
+      data: { imagemUrl: null },
+      select: {
+        id: true,
+        nome: true,
+        imagemUrl: true,
+      },
+    });
+    return {
+      sucesso: true,
+      unidade: unidadeAtualizada,
+      message: "Foto da unidade removida com sucesso!",
+    };
+  } catch (error) {
+    console.error("Erro ao remover foto da unidade:", error);
+    return {
+      sucesso: false,
+      erro: "Erro ao remover foto da unidade.",
+      detalhes: error.message,
+    };
+  }
+};
