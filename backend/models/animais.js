@@ -3,6 +3,7 @@ import prisma from "../prisma/client.js";
 export async function getAnimais() {
   try {
     const animais = await prisma.animal.findMany();
+    
     return {
       sucesso: true,
       animais,

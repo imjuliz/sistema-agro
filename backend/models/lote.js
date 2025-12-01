@@ -2,9 +2,8 @@ import prisma from "../prisma/client.js";
 
 export async function getLote() {
   try {
-    const lotes = await prisma.lote.findMany({
-      where: { unidadeId: Number(unidadeId) },
-    })
+    const lotes = await prisma.lote.findMany();
+
     return {
       sucesso: true,
       lotes,
@@ -40,13 +39,13 @@ export async function getLote() {
 
 export async function getLotePorTipo(tipo) {
   try {
-    const lote_tipo = await prisma.lote.findMany({
-      where: { tipo }
+    const loteTipo = await prisma.lote.findMany({
+      where: { tipo: tipo }
     });
 
     return {
       sucesso: true,
-      lote_tipo,
+      loteTipo,
       message: "Lotes de animalia listados com sucesso!!",
     }
   } catch (error) {
