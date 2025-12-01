@@ -49,6 +49,25 @@ export async function getAnimaisPelaRaca(raca) {
   }
 }
 
+export async function getAnimaisRentabilidade(id, rentabilidade) {
+  try {
+    const lote_rentabilidade = await prisma.lote.findMany({ 
+      where: { id: id, rentabilidade: Number(rentabilidade) }
+    });
+    return {
+      sucesso: true,
+      lote_rentabilidade,
+      message: "Lotes com rentabilidade listados com sucesso!!"
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes com rentabilidade!!",
+      error: error.message
+    }
+  }
+}
+
 export async function getAnimaisPorId(id) {
   try {
     const animais = await prisma.animal.findUnique({

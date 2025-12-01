@@ -3657,7 +3657,7 @@ async function main() {
 
                 // Data da venda (últimos 30 dias)
                 const dataVenda = new Date();
-                dataVenda.setDate(dataVenda.getDate() - Math.floor(Math.random() * 30));
+                // dataVenda.setDate(dataVenda.getDate() - Math.floor(Math.random() * 30));
 
                 // Criar a venda
                 const venda = await prisma.venda.create({

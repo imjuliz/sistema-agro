@@ -57,24 +57,7 @@ export async function getLotePorTipo(tipo) {
   }
 }
 
-export async function getLoteRentabilidade(id_lote, rentabilidade) {
-  try {
-    const lote_rentabilidade = await prisma.lote.findMany({ 
-      where: { id_lote, rentabilidade }
-    });
-    return {
-      sucesso: true,
-      lote_rentabilidade,
-      message: "Lotes com rentabilidade listados com sucesso!!"
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      message: "Erro ao listar lotes com rentabilidade!!",
-      error: error.message
-    }
-  }
-}
+
 
 // nao funciona pq n existe a coluna dataFabricacao, q é necessaria para listar os lotes criados
 // export async function getLotePorDataCriacao(ano, produtoId) { // testar
@@ -136,7 +119,7 @@ export async function getLotePorTipoVegetais(tipo) {
   }
 }
 
-export async function getlotePorId(id) {
+export async function getLotePorId(id) {
   try {
     const lote = await prisma.lote.findUnique({ where: { id } });
     return {
