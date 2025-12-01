@@ -3,7 +3,10 @@ import prisma from "../prisma/client.js";
 export async function getLote() {
   try {
     const lotes = await prisma.lote.findMany({
-      where: { unidadeId: Number(unidadeId) },
+      include: {
+        unidade: true,
+        responsavel: true
+      }
     })
     return {
       sucesso: true,

@@ -9,13 +9,12 @@ import {
   } from "../controllers/LoteController.js";
 import { getAtividadeLoteTipoPlantioController, createAtividadeLoteController } from "../controllers/AtividadeLoteController.js";
 import express from "express";
-import { auth } from "../middleware/auth.js";
+import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", auth(["gerente_matriz", "gerente_fazenda"]), getLoteController);
 router.get("/animalia/:tipo", auth(["gerente_matriz", "gerente_fazenda"]), getLotePorTipoController);
-router.get("/ativo", auth(["gerente_matriz", "gerente_fazenda"]), getLoteAtividadeController);
 router.get("/:id", auth(["gerente_fazenda"]), getLotePorIdController);
 router.get("/rentabilidade", auth(["gerente_matriz", "gerente_fazenda"]), getLoteRentabilidadeController);
 router.post("/", auth(["gerente_fazenda"]), createLoteController);
