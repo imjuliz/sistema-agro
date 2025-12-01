@@ -9,11 +9,11 @@ import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usua
 import { listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
 import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedoresController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
+import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
-    somarEntradaMensalController, listarVendasController
+    somarEntradaMensalController, listarVendasController, calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController
 } from "../controllers/FinanceiroController.js";
 
 // tradução
@@ -25,6 +25,9 @@ router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
+router.get("/vendas/media-por-transacao", auth, calcularMediaPorTransacaoController);
+router.get("/vendas/divisao-pagamentos", auth, divisaoPagamentosController);
+router.get("/financeiro/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
 
 // rotas usadas para _____ --------------------------------------------------------------------
 // NOTE: rotas de usuários são definidas em routes/usuariosRoutes.js e routes/unidadeRoutes.js.
