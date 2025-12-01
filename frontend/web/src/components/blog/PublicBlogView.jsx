@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -66,7 +67,7 @@ export const PublicBlogView = ({ onShowAuth }) => {
 
   const handleReaction = (blogId, reaction) => {
     if (!isAuthenticated) {
-      alert('Please log in to react to posts');
+      toast.error('Please log in to react to posts');
       return;
     }
     
@@ -79,15 +80,15 @@ export const PublicBlogView = ({ onShowAuth }) => {
 
   const handleComment = (blogId) => {
     if (!isAuthenticated) {
-      alert('Please log in to comment');
+      toast.error('Please log in to comment');
       return;
     }
     
     if (!newComment.trim()) return;
     
-    console.log('Adding comment:', { blogId, comment: newComment, user: user?.name });
-    setNewComment('');
-    alert('Comment added successfully!');
+  console.log('Adding comment:', { blogId, comment: newComment, user: user?.name });
+  setNewComment('');
+  toast.success('Comment added successfully!');
   };
 
   const getInitials = (name) => {

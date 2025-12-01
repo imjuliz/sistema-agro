@@ -1,6 +1,9 @@
 "use client"
 import * as React from 'react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/config';
+import { toast } from 'sonner';
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import { IconTrendingDown } from "@tabler/icons-react"
 //ui
@@ -77,14 +80,12 @@ export function SectionCards() {
     );
 }
 
-
 //grafico de barras
 export function GraficoDeBarras() {
     return (
         <BarChart xAxis={[{ data: ['Vegetais', 'Frutas', 'Animália'], scaleType: 'band' }]} series={[{ data: [4, 3, 5], color: '#99BF0F' }, { data: [1, 6, 3], color: '#738C16' },]} height={650} barLabel="value" margin={{ left: 0 }} yAxis={[{ width: 50 }]} />
     );
 }
-
 
 export function ItemVariant() {
     return (
@@ -241,8 +242,45 @@ const lotes = [
 ];
 
 export function TableDemo2() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
     const [categoria, setCategoria] = useState("");
     const [busca, setBusca] = useState("");
+    const [lotesState, setLotesState] = useState(lotes);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadLotes() {
+            if (!unidadeId) return; 
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                const arr = data?.lotes ?? data?.data ?? (Array.isArray(data) ? data : []);
+                if (Array.isArray(arr) && arr.length > 0) {
+                    const mapped = arr.map((l) => ({
+                        id: l.id,
+                        nome: l.nome || l.produto || `Lote ${l.id}`,
+                        tipo: l.tipo || l.categoria || '-',
+                        talhao: l.talhao || l.local || '-',
+                        plantio: l.plantio || l.dataPlantio || '-',
+                        validade: l.validade || l.colheitaPrevista || '-',
+                        status: l.status || '-',
+                        qtd: l.quantidade ?? l.qtd ?? 0,
+                        unMedida: l.unidade || 'un',
+                        preco: l.preco || l.precoUnitario || '-' 
+                    }));
+                    setLotesState(mapped);
+                }
+            } catch (err) {
+                console.error('Erro carregando lotesPlantio:', err);
+                toast.error('Erro ao carregar lotes da fazenda');
+            }
+        }
+        loadLotes();
+        return () => { mounted = false }
+    }, [unidadeId, fetchWithAuth]);
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
@@ -304,7 +342,7 @@ export function TableDemo2() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {lotes.map((lote) => (
+                    {lotesState.map((lote) => (
                         <TableRow key={lote.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <TableCell className="font-medium">{lote.id}</TableCell>
                             <TableCell>{lote.nome}</TableCell>
