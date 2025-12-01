@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useContext, useEffect } from "react";
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -812,7 +813,6 @@ function addContract() {
       const createdUsers = [];
       for (const u of teamInvites) {
         if (u.isNew) {
-          // envia _raw com telefone apenas dígitos
           const createBody = {
             nome: u._raw.nome,
             email: u._raw.email,
@@ -842,34 +842,27 @@ function addContract() {
           const json = await resp.json();
           createdUsers.push(json.usuario || json);
         } else {
-          // usuário existente: atualiza unidadeId (PUT)
           try {
             const updateResp = await fetchWithAuth(`${base}/usuarios/${u.backendId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ unidadeId: unidade.id })
             });
-            if (!updateResp.ok) {
-              console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);
-            }
-          } catch (err) {
-            console.warn(`Erro associando usuário ${u.nome}:`, err);
+            if (!updateResp.ok) {console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);}
           }
+          catch (err) {console.warn(`Erro associando usuário ${u.nome}:`, err);}
         }
       }
 
-      // tudo ok
-      if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
-      alert('Fazenda criada com sucesso!');
+  if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
+  toast.success('Fazenda criada com sucesso!');
       resetAll();
       onOpenChange(false);
-
     } catch (err) {
       console.error(err);
       setFormError(err.message || 'Erro durante criação da fazenda. Veja console.');
-    } finally {
-      setLoading(false);
     }
+    finally {setLoading(false);}
   }
 
 const [newItems, setNewItems] = useState({});
@@ -911,9 +904,7 @@ function addItemToContract(contractIndex) {
 function removeItem(contractIndex, itemIndex) {
   setContracts(prev => {
     const copy = [...prev];
-    copy[contractIndex].itens = copy[contractIndex].itens.filter(
-      (_, idx) => idx !== itemIndex
-    );
+    copy[contractIndex].itens = copy[contractIndex].itens.filter((_, idx) => idx !== itemIndex);
     return copy;
   });
 }
@@ -955,7 +946,6 @@ function updateContractField(contractIndex, field, value) {
               <h2 className="text-2xl font-semibold">Criar Nova Fazenda</h2>
               <div className="flex gap-2" />
             </header>
-
             {/* mensagem de erro geral do step */}
             {formError && (
               <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700">
@@ -969,29 +959,13 @@ function updateContractField(contractIndex, field, value) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome *</Label>
-                    <Input
-                      id="nome"
-                      value={nome}
-                      onChange={(e) => { setNome(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.nome; return c; }); }}
-                      placeholder="Nome da fazenda"
-                      aria-invalid={!!errors.nome}
-                      aria-describedby={errors.nome ? "error-nome" : undefined}
-                      className={cn(errors.nome && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="nome" value={nome} onChange={(e) => { setNome(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.nome; return c; }); }} placeholder="Nome da fazenda" aria-invalid={!!errors.nome} aria-describedby={errors.nome ? "error-nome" : undefined} className={cn(errors.nome && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.nome && <p id="error-nome" className="text-sm text-red-600 mt-1">{errors.nome}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input
-                      id="cnpj"
-                      value={cnpj}
-                      onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.cnpj; return c; }); }}
-                      placeholder="00.000.000/0000-00"
-                      aria-invalid={!!errors.cnpj}
-                      aria-describedby={errors.cnpj ? "error-cnpj" : undefined}
-                      className={cn(errors.cnpj && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="cnpj" value={cnpj} onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.cnpj; return c; }); }} placeholder="00.000.000/0000-00" aria-invalid={!!errors.cnpj} aria-describedby={errors.cnpj ? "error-cnpj" : undefined} className={cn(errors.cnpj && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.cnpj && <p id="error-cnpj" className="text-sm text-red-600 mt-1">{errors.cnpj}</p>}
                   </div>
 
@@ -1013,9 +987,7 @@ function updateContractField(contractIndex, field, value) {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="cep">CEP *</Label>
-                    <Input
-                      id="cep"
-                      value={cep}
+                    <Input id="cep" value={cep}
                       onChange={(e) => {
                         const v = formatCEP(e.target.value);
                         setCep(v);
@@ -1067,39 +1039,20 @@ function updateContractField(contractIndex, field, value) {
 
                 <div className="space-y-2">
                   <Label htmlFor="endereco">Endereço *</Label>
-                  <Textarea
-                    id="endereco"
-                    value={endereco}
-                    onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }}
-                    className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")}
-                    aria-invalid={!!errors.endereco}
-                    aria-describedby={errors.endereco ? "error-endereco" : undefined}
-                  />
+                  <Textarea id="endereco" value={endereco} onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }} className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")} aria-invalid={!!errors.endereco} aria-describedby={errors.endereco ? "error-endereco" : undefined}/>
                   {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone *</Label>
-                    <Input
-                      id="telefone"
-                      value={telefone}
-                      onChange={(e) => { setTelefone(formatTelefone(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.telefone; return c; }); }}
-                      placeholder="(00) 90000-0000"
-                      aria-invalid={!!errors.telefone}
-                      aria-describedby={errors.telefone ? "error-telefone" : undefined}
-                      className={cn(errors.telefone && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="telefone" value={telefone} onChange={(e) => { setTelefone(formatTelefone(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.telefone; return c; }); }} placeholder="(00) 90000-0000" aria-invalid={!!errors.telefone} aria-describedby={errors.telefone ? "error-telefone" : undefined} className={cn(errors.telefone && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.telefone && <p id="error-telefone" className="text-sm text-red-600 mt-1">{errors.telefone}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }}
-                      aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? "error-email" : undefined}
-                      className={cn(errors.email && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }} aria-invalid={!!errors.email} aria-describedby={errors.email ? "error-email" : undefined} className={cn(errors.email && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.email && <p id="error-email" className="text-sm text-red-600 mt-1">{errors.email}</p>}
                   </div>
                 </div>
@@ -1132,22 +1085,12 @@ function updateContractField(contractIndex, field, value) {
 
                   <div className="space-y-2">
                     <Label htmlFor="areaTotal">Área Total (ha)</Label>
-                    <Input
-                      id="areaTotal"
-                      value={areaTotal}
-                      onChange={(e) => { setAreaTotal(formatArea(e.target.value)); }}
-                      placeholder="Ex: 123.45"
-                    />
+                    <Input id="areaTotal" value={areaTotal} onChange={(e) => { setAreaTotal(formatArea(e.target.value)); }} placeholder="Ex: 123.45"/>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="areaProdutiva">Área Produtiva (ha)</Label>
-                    <Input
-                      id="areaProdutiva"
-                      value={areaProdutiva}
-                      onChange={(e) => { setAreaProdutiva(formatArea(e.target.value)); }}
-                      placeholder="Ex: 100.00"
-                    />
+                    <Input id="areaProdutiva" value={areaProdutiva} onChange={(e) => { setAreaProdutiva(formatArea(e.target.value))}} placeholder="Ex: 100.00"/>
                   </div>
                 </div>
 
@@ -1170,7 +1113,6 @@ function updateContractField(contractIndex, field, value) {
                 <div className="flex items-center justify-between pt-4">
                   <div />
                   <div className="flex gap-2">
-                    {/* <Button variant="outline" onClick={() => { resetAll(); onOpenChange(false); }}>Cancelar</Button> */}
                     <Button onClick={handleNext}>Próximo</Button>
                   </div>
                 </div>
@@ -1186,14 +1128,11 @@ function updateContractField(contractIndex, field, value) {
                     {/* Campo de seleção/criação de fornecedor */}
                     <div className="space-y-2">
                       <Label htmlFor="select-fornecedor">Fornecedor *</Label>
-                      <Select
-                        value={selectedFornecedorId}
-                        onValueChange={(value) => {
+                      <Select value={selectedFornecedorId} onValueChange={(value) => {
                           setSelectedFornecedorId(value);
                           // setIsCreatingNewFornecedor(value === "new");
                           setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
-                        }}
-                      >
+                        }}>
                         <SelectTrigger id="select-fornecedor">
                           <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
                         </SelectTrigger>

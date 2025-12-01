@@ -1,14 +1,35 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { Moon, Sun, Check, Copy } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { API_URL } from '@/config';
+import { toast } from 'sonner';
 
 export default function Verific({ className, ...props }) {
+  const searchParams = useSearchParams();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isPasted, setIsPasted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const inputRefs = useRef([]);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const e = searchParams?.get?.('email') || '';
+      if (e) setEmail(decodeURIComponent(e));
+    } catch (err) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const e = params.get('email') || '';
+        if (e) setEmail(decodeURIComponent(e));
+      } catch (/*ignored*/_) {}
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const allFilled = otp.every(digit => digit !== '');
@@ -16,9 +37,7 @@ export default function Verific({ className, ...props }) {
   }, [otp]);
 
   const handleChange = (index, value) => {
-    // Only allow single digit
     if (value.length > 1) return;
-    // Only allow numbers
     if (value && !/^\d$/.test(value)) return;
 
     const newOtp = [...otp];
@@ -26,7 +45,6 @@ export default function Verific({ className, ...props }) {
     setOtp(newOtp);
     setIsPasted(false);
 
-    // Auto focus next input
     if (value && index < 5) { inputRefs.current[index + 1]?.focus(); }
   };
 
@@ -46,7 +64,6 @@ export default function Verific({ className, ...props }) {
       setOtp(newOtp);
       setIsPasted(true);
 
-      // Focus the next empty input or the last one
       const nextEmptyIndex = newOtp.findIndex(digit => digit === '');
       const focusIndex = nextEmptyIndex === -1 ? 5 : nextEmptyIndex;
       setTimeout(() => inputRefs.current[focusIndex]?.focus(), 0);
@@ -65,6 +82,40 @@ export default function Verific({ className, ...props }) {
     navigator.clipboard.writeText(otpString);
   };
 
+  async function verifyCode() {
+    if (!isComplete) return;
+    setLoading(true);
+    setErrorMsg('');
+    const code = otp.join('');
+    try {
+      const res = await fetch(`${API_URL}/auth/codigo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo_reset: code }),
+      });
+      const data = await res.json();
+      if (res.ok && data.sucesso) {
+        toast.success('Código verificado. Redirecionando...');
+        router.push(`/redefinicaoSenha?codigo=${encodeURIComponent(code)}${email ? `&email=${encodeURIComponent(email)}` : ''}`);
+        return;
+      }
+
+      const err = data?.erro || data?.message || 'Código inválido.';
+      setErrorMsg(err);
+      toast.error(err);
+    } catch (err) {
+      console.error('Erro ao verificar código:', err);
+      setErrorMsg('Erro ao conectar ao servidor.');
+      toast.error('Erro ao conectar ao servidor.');
+    } finally {setLoading(false);}
+  }
+
+  useEffect(() => {
+    if (!isComplete) return;
+    const timer = setTimeout(() => {if (!loading) verifyCode();}, 350);
+    return () => clearTimeout(timer);
+  }, [isComplete]);
+
   const toggleTheme = () => { setIsDarkMode(!isDarkMode); };
 
   const themeClasses = {
@@ -81,40 +132,31 @@ export default function Verific({ className, ...props }) {
   return (
     <div className={`w-100 flex items-center justify-center p-4 transition-colors duration-200 `}>
       <div className="w-full max-w-md">
-        {/* Main Card */}
         <div className={`${themeClasses.card} w-full h-full rounded-2xl border p-8 transition-colors duration-200`}>
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2">Verificar código</h1>
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Um código de verificação foi enviado para o email cadastrado.</p>
+              Um código de verificação foi enviado para {email ? <strong>{email}</strong> : 'o email cadastrado'}.
+            </p>
           </div>
 
-          {/* OTP Input Fields */}
           <div className="flex justify-center gap-3 mb-6">
             {otp.map((digit, index) => (
-              <input key={index} ref={(el) => inputRefs.current[index] = el} type="text" value={digit} onChange={(e) => handleChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(index, e)} onPaste={handlePaste}
-                className={` w-12 h-14 text-center text-xl font-semibold rounded-lg border-2 transition-all duration-200
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 ${isPasted ? themeClasses.inputPasted : isComplete ? themeClasses.inputComplete : themeClasses.input} ${isDarkMode ? 'focus:ring-offset-gray-800' : 'focus:ring-offset-white'}
-                `} maxLength="1" autoComplete="off" />
+              <input key={index} ref={(el) => inputRefs.current[index] = el} type="text" value={digit} onChange={(e) => handleChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(index, e)} onPaste={handlePaste} className={` w-12 h-14 text-center text-xl font-semibold rounded-lg border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${isPasted ? themeClasses.inputPasted : isComplete ? themeClasses.inputComplete : themeClasses.input} ${isDarkMode ? 'focus:ring-offset-gray-800' : 'focus:ring-offset-white'}`} maxLength="1" autoComplete="off" />
             ))}
           </div>
           {/* Status Indicators */}
           {isPasted && (
             <div className="text-center mb-4">
-              <span
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-700'
-                  }`}>
-                <Check size={14} />
-                Code pasted successfully
+              <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-700'}`}>
+                <Check size={14} />Código colado com sucesso!
               </span>
             </div>
           )}
 
           {isComplete && (
             <div className="text-center mb-4">
-              <span
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-black-800 text-white-200' : 'bg-blue-100 text-green-700'
-                  }`}>
+              <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-black-800 text-white-200' : 'bg-blue-100 text-green-700'}`}>
                 <Check size={14} />Code complete: {otp.join('')}
               </span>
             </div>
@@ -122,14 +164,8 @@ export default function Verific({ className, ...props }) {
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button
-              onClick={() => alert(`Verifying code: ${otp.join('')}`)}
-              disabled={!isComplete}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200
-                ${isComplete ? `${themeClasses.button} shadow-md transform hover:scale-[1.02]` : `${isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`
-                }
-              `}>
-              Verificar Código
+            <button onClick={verifyCode} disabled={!isComplete || loading} className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200${isComplete ? `${themeClasses.button} shadow-md transform hover:scale-[1.02]` : `${isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`}`}>
+              {loading ? 'Verificando...' : 'Verificar Código'}
             </button>
 
             <div className="flex gap-2">
@@ -138,8 +174,7 @@ export default function Verific({ className, ...props }) {
               </button>
 
               {isComplete && (
-                <button onClick={copyOtp} className={`px-4 py-2 rounded-lg transition-colors duration-200 ${themeClasses.buttonSecondary}`}
-                  title="Copy OTP">
+                <button onClick={copyOtp} className={`px-4 py-2 rounded-lg transition-colors duration-200 ${themeClasses.buttonSecondary}`} title="Copy OTP">
                   <Copy size={18} />
                 </button>
               )}
@@ -150,10 +185,11 @@ export default function Verific({ className, ...props }) {
           <div className="mt-6 text-center">
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Não recebeu o código?{' '}
-              <button className={`font-medium ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors`}>
-                Reenviar
-              </button>
+              <button className={`font-medium ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors`}>Reenviar</button>
             </p>
+            {errorMsg && (
+              <div className="mt-3 text-sm text-red-600 dark:text-red-400">{errorMsg}</div>
+            )}
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CalendarIcon, ClockIcon, TwitterIcon, FacebookIcon, LinkedinIcon, } from "lucide-react";
 import React, { useState } from "react";
+import { toast } from 'sonner';
 import { Heart, ThumbsDown, MessageCircle, LogIn } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import Navbar from "@/components/Home/sections/navbar/default";
@@ -344,7 +345,7 @@ export default function BlogSingle1({
                                             <CardContent className="text-center py-6">
                                                 <LogIn className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                                                 <p className="text-muted-foreground mb-3">Faça login para comentar</p>
-                                                <Button onClick={() => alert("Login simulado")}>Entrar</Button>
+                                                <Button onClick={() => toast('Login simulado')}>Entrar</Button>
                                             </CardContent>
                                         </Card>
                                     )}

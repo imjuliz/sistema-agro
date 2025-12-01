@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Home/sections/footer/default";
 import Navbar from "@/components/Home/sections/navbar/default";
 import * as React from 'react';
+import { toast } from 'sonner';
 //icons-----
 import { Mail, Phone, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, User, Send } from "lucide-react";
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
@@ -72,8 +73,8 @@ export default function sobreNos({
 }) {
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text)
-            .then(() => alert(`Copiado: ${text}`))
-            .catch(() => alert("Falha ao copiar. Tente novamente."));
+            .then(() => toast.success(`Copiado: ${text}`))
+            .catch(() => toast.error("Falha ao copiar. Tente novamente."));
     };
 
     const cards = [
