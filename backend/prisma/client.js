@@ -1,6 +1,6 @@
 // import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from './generated/client.js';
+import { PrismaClient } from './generated/client.ts'
 const globalForPrisma = globalThis;
 
 // Reaproveita a instância entre reloads (útil em dev) e entre lambdas (em teoria)

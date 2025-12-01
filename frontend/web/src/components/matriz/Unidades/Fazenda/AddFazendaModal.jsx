@@ -13,13 +13,6 @@ import { useAuth } from '@/contexts/AuthContext'; // ajuste o caminho se necess�
 import { API_URL } from '@/lib/api'; // ajuste o caminho se necessário
 import { Separator } from '@/components/ui/separator';
 import { Plus } from 'lucide-react'
-/**
- * AddFazendaWizard (com fetchWithAuth usando AuthContext e API_URL)
- *
- * Regras:
- * - fetchWithAuth usa accessToken, doRefresh, setAccessToken, setUser do AuthContext.
- * - Se `input` for relativo, prefixa com API_URL.
- */
 
 export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const { accessToken, fetchWithAuth } = useAuth();
@@ -274,16 +267,17 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
   // --- Funções de adição de fornecedor ---
 async function addFornecedor() {
+  // Não criar fornecedor no backend aqui. Apenas validar e criar um fornecedor LOCAL
+  // que será persistido no backend somente durante a criação final da fazenda (handleSubmitAll).
   setFormError("");
   setNewFornecedorErrors({});
 
-  // validação
   const errors = {};
   if (!newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
   if (!newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição é obrigatória.";
-  const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf);
-  if (cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido.";
-  if (!onlyDigits(newFornecedorData.telefone)) errors.telefone = "Telefone é obrigatório.";
+  const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf || "");
+  if (newFornecedorData.cnpjCpf && cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido.";
+  if (!onlyDigits(newFornecedorData.telefone || "")) errors.telefone = "Telefone é obrigatório.";
   if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
 
   if (Object.keys(errors).length > 0) {
@@ -291,70 +285,25 @@ async function addFornecedor() {
     return;
   }
 
-  // Create fornecedor immediately on backend, then add to local state and create a contract
-  try {
-    const res = await fetchWithAuth(`${API_URL}fornecedores/externos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
-        descricaoEmpresa: newFornecedorData.descricaoEmpresa.trim(),
-        cnpjCpf: newFornecedorData.cnpjCpf ? onlyDigits(newFornecedorData.cnpjCpf) : null,
-        email: newFornecedorData.email || null,
-        telefone: onlyDigits(newFornecedorData.telefone),
-        endereco: newFornecedorData.endereco || null
-      })
-    });
+  // Criar fornecedor local (temporário). Será criado no backend apenas em handleSubmitAll.
+  const tempId = `temp_fornecedor_${Date.now()}`;
+  const localFornecedor = {
+    id: tempId,
+    isNew: true,
+    nome: newFornecedorData.nomeEmpresa.trim(),
+    nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
+    descricaoEmpresa: newFornecedorData.descricaoEmpresa.trim(),
+    cnpjCpf: newFornecedorData.cnpjCpf ? onlyDigits(newFornecedorData.cnpjCpf) : null,
+    email: newFornecedorData.email || null,
+    telefone: onlyDigits(newFornecedorData.telefone),
+    endereco: newFornecedorData.endereco || null
+  };
 
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok || !json.sucesso) {
-      setNewFornecedorErrors({ form: json.erro || 'Erro ao criar fornecedor' });
-      return;
-    }
-
-    const criado = json.fornecedor || json;
-
-    // normaliza e adiciona aos fornecedores locais
-    setFornecedores(prev => {
-      const novo = {
-        id: criado.id,
-        nome: criado.nomeEmpresa || criado.nome || newFornecedorData.nomeEmpresa.trim(),
-        nomeEmpresa: criado.nomeEmpresa || criado.nome || newFornecedorData.nomeEmpresa.trim(),
-        documento: criado.cnpj || criado.cnpjCpf || newFornecedorData.cnpjCpf,
-        contato: criado.telefone || onlyDigits(newFornecedorData.telefone),
-        email: criado.email || newFornecedorData.email || null,
-      };
-      const newIndex = prev.length;
-
-      // cria contrato local associado
-      setContracts(pc => ([...pc, {
-        fornecedorIndex: newIndex,
-        nomeContrato: `Contrato com ${novo.nomeEmpresa}`,
-        descricao: '',
-        itens: [],
-        // dataInicio deve ser agora e não editável pelo usuário
-        dataInicio: new Date().toISOString().slice(0,10),
-        dataEnvio: new Date().toISOString().slice(0,10),
-        dataFim: null,
-        frequenciaEntregas: null,
-        diaPagamento: '',
-        formaPagamento: null,
-        status: 'ATIVO',
-        duration: ''
-      }]));
-
-      setSelectedFornecedorId(String(criado.id));
-      setIsCreatingNewFornecedor(false);
-      setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
-      setNewFornecedorErrors({});
-
-      return [...prev, novo];
-    });
-
-  } catch (err) {
-    console.error('Erro criando fornecedor externo:', err);
-    setNewFornecedorErrors({ form: 'Erro ao criar fornecedor.' });
-  }
+  setFornecedores(prev => ([...prev, localFornecedor]));
+  setSelectedFornecedorId(String(tempId));
+  setIsCreatingNewFornecedor(false);
+  setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+  setNewFornecedorErrors({});
 }
 
 function addContract() {
@@ -372,33 +321,96 @@ function addContract() {
     return;
   }
 
-  // Encontrar fornecedor selecionado (pode estar em fornecedores locais ou em existingFornecedores)
+  // Primeiro tente encontrar o fornecedor nos fornecedores locais
   let fornecedorIndex = fornecedores.findIndex(f => String(f.id) === String(selectedFornecedorId));
   let fornecedorObj = null;
 
-  if (fornecedorIndex === -1) {
-    // tentar achar em existingFornecedores e adicionar aos fornecedores locais
-    const ext = existingFornecedores.find(f => String(f.id) === String(selectedFornecedorId));
-    if (!ext) {
-      setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
-      setFormError('Fornecedor inválido.');
+  // Helper: verifica se já existe contrato para o fornecedor (comparando id, não só índice)
+  const hasContractForFornecedorId = (fornecedorId) => {
+    return contracts.some(c => {
+      const f = fornecedores[c.fornecedorIndex];
+      return f && String(f.id) === String(fornecedorId);
+    });
+  };
+
+  // Se fornecedor já está localmente
+  if (fornecedorIndex !== -1) {
+    const fornecedorId = fornecedores[fornecedorIndex].id;
+    if (hasContractForFornecedorId(fornecedorId)) {
+      setFormError('Já existe um contrato para este fornecedor.');
       return;
     }
-    fornecedorObj = {
-      id: ext.id,
-      nome: ext.nomeEmpresa || ext.nome,
-      nomeEmpresa: ext.nomeEmpresa || ext.nome,
-      documento: ext.cnpjCpf || null,
-      contato: ext.telefone || ext.contato || null,
-      email: ext.email || null
-    };
+    fornecedorObj = fornecedores[fornecedorIndex];
+    setContracts(prev => ([...prev, {
+      fornecedorIndex,
+      nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa || fornecedorObj.nome}`,
+      descricao: '',
+      itens: [],
+      dataInicio: new Date().toISOString().slice(0,10),
+      dataEnvio: new Date().toISOString().slice(0,10),
+      dataFim: null,
+      frequenciaEntregas: null,
+      diaPagamento: '',
+      formaPagamento: null,
+      status: 'ATIVO',
+      duration: ''
+    }]));
+    return;
+  }
+
+  // Se não está nos fornecedores locais, procurar entre existingFornecedores
+  const ext = existingFornecedores.find(f => String(f.id) === String(selectedFornecedorId));
+  if (!ext) {
+    setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
+    setFormError('Fornecedor inválido.');
+    return;
+  }
+
+  // Verificar se já adicionamos esse fornecedor (por id) anteriormente
+  const alreadyLocalIndex = fornecedores.findIndex(f => String(f.id) === String(ext.id));
+  if (alreadyLocalIndex !== -1) {
+    const fornecedorId = fornecedores[alreadyLocalIndex].id;
+    if (hasContractForFornecedorId(fornecedorId)) {
+      setFormError('Já existe um contrato para este fornecedor.');
+      setSelectedFornecedorId(String(ext.id));
+      return;
+    }
+    // adicionar contrato referenciando fornecedor já local
+    setContracts(pc => ([...pc, {
+      fornecedorIndex: alreadyLocalIndex,
+      nomeContrato: `Contrato com ${fornecedores[alreadyLocalIndex].nomeEmpresa || fornecedores[alreadyLocalIndex].nome}`,
+      descricao: '',
+      itens: [],
+      dataInicio: new Date().toISOString().slice(0,10),
+      dataEnvio: new Date().toISOString().slice(0,10),
+      dataFim: null,
+      frequenciaEntregas: null,
+      diaPagamento: '',
+      formaPagamento: null,
+      status: 'ATIVO',
+      duration: ''
+    }]));
+    setSelectedFornecedorId(String(ext.id));
+    return;
+  }
+
+  // Caso padrão: adicionar fornecedor aos locais (se ainda não existe) e criar contrato
+  fornecedorObj = {
+    id: ext.id,
+    nome: ext.nomeEmpresa || ext.nome,
+    nomeEmpresa: ext.nomeEmpresa || ext.nome,
+    documento: ext.cnpjCpf || null,
+    contato: ext.telefone || ext.contato || null,
+    email: ext.email || null
+  };
+
+  // Evitar duplicatas em fornecedores (defensivo)
+  if (!fornecedores.some(f => String(f.id) === String(fornecedorObj.id))) {
     setFornecedores(prev => {
       const copy = [...prev, fornecedorObj];
-      fornecedorIndex = copy.length - 1;
-
-      // cria contrato com dataInicio automática
+      const newIndex = copy.length - 1;
       setContracts(pc => ([...pc, {
-        fornecedorIndex,
+        fornecedorIndex: newIndex,
         nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa}`,
         descricao: '',
         itens: [],
@@ -411,29 +423,32 @@ function addContract() {
         status: 'ATIVO',
         duration: ''
       }]));
-
       setSelectedFornecedorId(String(ext.id));
       return copy;
     });
-    return;
+  } else {
+    // Se por algum motivo já existe (concorrência), encontrar índice e adicionar contrato se necessário
+    const idx = fornecedores.findIndex(f => String(f.id) === String(fornecedorObj.id));
+    if (!hasContractForFornecedorId(fornecedorObj.id)) {
+      setContracts(pc => ([...pc, {
+        fornecedorIndex: idx,
+        nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa}`,
+        descricao: '',
+        itens: [],
+        dataInicio: new Date().toISOString().slice(0,10),
+        dataEnvio: new Date().toISOString().slice(0,10),
+        dataFim: null,
+        frequenciaEntregas: null,
+        diaPagamento: '',
+        formaPagamento: null,
+        status: 'ATIVO',
+        duration: ''
+      }]));
+    } else {
+      setFormError('Já existe um contrato para este fornecedor.');
+    }
+    setSelectedFornecedorId(String(ext.id));
   }
-
-  // fornecedor encontrado localmente
-  fornecedorObj = fornecedores[fornecedorIndex];
-  setContracts(prev => ([...prev, {
-    fornecedorIndex,
-    nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa || fornecedorObj.nome}`,
-    descricao: '',
-    itens: [],
-    dataInicio: new Date().toISOString().slice(0,10),
-    dataEnvio: new Date().toISOString().slice(0,10),
-    dataFim: null,
-    frequenciaEntregas: null,
-    diaPagamento: '',
-    formaPagamento: null,
-    status: 'ATIVO',
-    duration: ''
-  }]));
 }
 
   // --- Funções de adição de equipe ---
@@ -1284,19 +1299,21 @@ function updateContractField(contractIndex, field, value) {
                 updateContractField(i, 'dataFim', end);
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent>
+                <SelectContent className="z-[1001]">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
                 <SelectItem value="6m">6 meses</SelectItem>
                 <SelectItem value="1y">1 ano</SelectItem>
                 <SelectItem value="2y">2 anos</SelectItem>
                 <SelectItem value="5y">5 anos</SelectItem>
               </SelectContent>
             </Select>
+
             <div className="mt-2">
               <label className="text-sm">Data de Fim</label>
-              <Input type="date" value={c.dataFim || ""} disabled readOnly />
+              <Input className="w-full " type="date" value={c.dataFim || ""} disabled readOnly />
             </div>
           </div>
 
@@ -1306,10 +1323,11 @@ function updateContractField(contractIndex, field, value) {
               value={c.frequenciaEntregas || ""}
               onValueChange={(v) => updateContractField(i, 'frequenciaEntregas', v)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[1001]">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
                 {frequenciaOptions.length > 0 ? (
                   frequenciaOptions.map(opt => (
                     <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
@@ -1330,12 +1348,13 @@ function updateContractField(contractIndex, field, value) {
           <div>
             <label className="text-sm">Dia do Pagamento</label>
             <Input
+              className="w-full"
               type="number"
+              min={1}
+              max={31}
               placeholder="1 a 31"
               value={c.diaPagamento || ""}
-              onChange={(e) =>
-                updateContractField(i, "diaPagamento", e.target.value)
-              }
+              onChange={(e) => updateContractField(i, "diaPagamento", e.target.value)}
             />
           </div>
 
@@ -1345,10 +1364,11 @@ function updateContractField(contractIndex, field, value) {
               value={c.formaPagamento || ""}
               onValueChange={(v) => updateContractField(i, 'formaPagamento', v)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[1001] ">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
                 {formaPagamentoOptions.length > 0 ? (
                   formaPagamentoOptions.map(opt => (
                     <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
@@ -1374,7 +1394,7 @@ function updateContractField(contractIndex, field, value) {
             {c.itens?.map((item, idx) => (
               <li
                 key={idx}
-                className="border rounded p-2 flex justify-between items-center bg-white"
+                className="border rounded p-2 flex justify-between items-center"
               >
                 <div>
                   <div className="font-semibold">{item.nome}</div>

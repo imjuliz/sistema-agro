@@ -33,39 +33,39 @@ const defaultFeatures = [
 
 export default function sobreNos({
     // Hero section - inline defaults for simple strings
-    badgeText = "Conheça a RuralTech",
-    title = "Revolucionando o",
-    titleHighlight = "Futuro do Agronegócio",
-    description = "A RuralTech nasceu com o propósito de conectar tecnologia e campo. Nosso sistema de gestão e rastreabilidade transforma dados em decisões estratégicas, garantindo transparência, qualidade e eficiência em toda a cadeia produtiva.",
+    badgeText = "Sobre a RuralTech",
+    title = "Uma história construída ",
+    titleHighlight = "no campo",
+    description = "RuralTech é uma empresa brasileira de agronegócio dedicada à produção, processamento e distribuição de alimentos de alta qualidade, desde hortaliças e legumes até carnes e laticínios, sempre com foco em sustentabilidade e segurança alimentar.",
 
     // Vision section
     visionImageSrc = "/img/campoComTecnologia.jpg",
     visionImageAlt = "Campo com tecnologia agrícola moderna",
     visionBadge = "NOSSA VISÃO",
-    visionText = "Ser referência nacional em soluções tecnológicas para o agronegócio, promovendo uma cadeia produtiva 100% rastreável, sustentável e integrada — do campo à mesa do consumidor.",
+    visionText = "Ser referência nacional em alimentos de origem agrícola e pecuária, promovendo qualidade, responsabilidade socioambiental e inovação em toda a cadeia produtiva, do campo à mesa do consumidor.",
 
     // Mission section
     missionImageSrc = "/img/equipeGestaoAgricola.jpg",
     missionImageAlt = "Equipe de gestão agrícola analisando dados de produção",
     missionBadge = "NOSSA MISSÃO",
-    missionText = "Desenvolver tecnologias que unam fazendas, lojas e matriz em uma gestão inteligente, garantindo rastreabilidade completa, qualidade alimentar e o fortalecimento da confiança entre produtor e consumidor.",
+    missionText = "Produzir alimentos seguros e de alta qualidade, garantindo bem-estar animal, sustentabilidade, rastreabilidade completa e fortalecendo a confiança entre produtores e consumidores.",
 
     // Approach section
-    approachBadge = "Nossa abordagem",
-    approachTitle = "Conectando o Campo à Tecnologia",
-    approachDescription = "A RuralTech entende que o futuro do agronegócio depende de informação, rastreabilidade e eficiência. Por isso, criamos um sistema que centraliza dados da produção e da venda, oferecendo à matriz uma visão global do negócio e às unidades ferramentas práticas para otimizar o trabalho no campo e nas lojas.",
+    approachBadge = "QUEM SOMOS",
+    approachTitle = "Uma empresa que nasce e cresce no campo",
+    approachDescription = "Fundada com a missão de transformar a produção agropecuária em referência de qualidade e confiança, a RuralTech atua em toda a cadeia: cultivo, criação, processamento e distribuição de produtos agrícolas e pecuários, garantindo alimento fresco e seguro para toda a população.",
     features = defaultFeatures,
 
     // CTA section
-    ctaBadge = "INOVAÇÃO NO CAMPO",
-    ctaTitle = "Unindo Sustentabilidade e Tecnologia",
-    ctaDescription = "A RuralTech acredita que o agronegócio do futuro é digital, sustentável e transparente. Nosso sistema foi projetado para conectar todas as pontas da cadeia produtiva, promovendo um novo padrão de excelência e confiança no setor agrícola.",
-    ctaButton1Text = "Conheça o Sistema",
-    ctaButton2Text = "Ver Demonstração",
+    ctaBadge = "NOSSA PRODUÇÃO",
+    ctaTitle = "Alimentos que nascem no campo e chegam com qualidade à sua mesa",
+    ctaDescription = "Na RuralTech, unimos tradição e inovação na produção de alimentos agrícolas e pecuários, garantindo frescor, qualidade e responsabilidade ambiental em toda a cadeia.",
+    ctaButton1Text = "Conheça nossos produtos",
+    ctaButton2Text = "Fale com um representante",
     ctaImageSrc = "/img/mulher-tablet.jpg",
     ctaImageAlt = "Agricultor utilizando tablet no campo",
-    ctaImageOverlayText = "Sistema RuralTech",
-    ctaImageOverlaySubtext = "Gestão, rastreabilidade e eficiência para o agronegócio",
+    ctaImageOverlayText = "RuralTech — Produção Agropecuária",
+    ctaImageOverlaySubtext = "Qualidade, origem e responsabilidade",
 
     // Stats section
     // stats = defaultStats,
@@ -226,8 +226,8 @@ export default function sobreNos({
                         <div className="grid items-start gap-16 lg:grid-cols-2">
                             <div className="space-y-8">
                                 <div className="space-y-4">
-                                    <h1 className="text-foreground text-3xl leading-tight font-bold lg:text-4xl">Vamos conversar sobre<br />Seu agronegócio</h1>
-                                    <p className="text-muted-foreground leading-relaxed">Se você está curioso sobre agronegócios ou apenas precisa de uma orientação sincera — nossos especialistas estão aqui para ajudar.</p>
+                                    <h1 className="text-foreground text-3xl leading-tight font-bold lg:text-4xl">Fale com a RuralTech</h1>
+                                    <p className="text-muted-foreground leading-relaxed">Entre em contato para saber mais sobre nossos produtos, nossas fazendas, criação de animais e unidades de distribuição. Nossa equipe está pronta para responder suas dúvidas e fornecer informações detalhadas sobre nossa produção.</p>
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">

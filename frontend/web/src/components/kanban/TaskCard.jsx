@@ -2,6 +2,7 @@ import React from 'react';
 import { useDrag } from 'react-dnd';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { Calendar, MessageCircle, Paperclip } from 'lucide-react';
 import { Task } from './KanbanBoard';
 
@@ -57,7 +58,7 @@ export function TaskCard({ task, columnId }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Avatar className="w-6 h-6">
-            <AvatarImage src={task.avatar} alt={task.assignee} />
+            <AvatarImage src={buildImageUrl(task.avatar)} alt={task.assignee} />
             <AvatarFallback className="text-xs">
               {task.assignee.split(' ').map(n => n[0]).join('')}
             </AvatarFallback>

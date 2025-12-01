@@ -6,16 +6,15 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { listarAtividadesLoteController, listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtos_lotes/estoque_produtosController.js";
+import { listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedores/fornecedoresController.js";
-import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtos_lotes/estoque_produtosController.js'
+import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedoresController.js";
+import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController
-} from "../controllers/financeiro/financeiroController.js";
-import { listarFornecedoresExternos } from "../models/unidade-de-venda/fornecedores.js";
+} from "../controllers/FinanceiroController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -32,7 +31,7 @@ router.delete("/usuarios/:userId", deletarUsuarioController);
 router.get("/usuarios/listar",  listarUsuariosPorUnidadeController);
 
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
-router.get("/atividadesLote", listarAtividadesLoteController);
+// router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
