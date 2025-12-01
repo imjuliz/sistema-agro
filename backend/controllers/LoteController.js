@@ -5,7 +5,7 @@ import { loteSchema, loteTipoVegetaisSchema } from "../schemas/loteSchema.js";
 export async function getLoteController(req, res) {
   try {
     const lote = await getLote();
-
+    
     return res.status(200).json({
       sucesso: true,
       lote,
