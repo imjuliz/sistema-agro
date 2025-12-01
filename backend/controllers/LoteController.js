@@ -5,6 +5,7 @@ import { loteSchema, loteTipoVegetaisSchema } from "../schemas/loteSchema.js";
 export async function getLoteController(req, res) {
   try {
     const lote = await getLote();
+
     return res.status(200).json({
       sucesso: true,
       lote,
@@ -45,12 +46,20 @@ export async function getLoteController(req, res) {
 
 export async function getLotePorTipoController(req, res) {
   try {
-    const { tipo } = loteSchema.partial().parse(req.params);
+    const { tipo } = req.query;
 
-    const lote_animalia = await getLotePorTipo(tipo);
+    //Validações 
+    if (!tipo) {
+    return res.status(400).json({
+      sucesso: false,
+      erro: "Tipo precisa ser informado."
+    })}
+
+    const loteAnimalia = await getLotePorTipo(tipo);
+
     return res.status(200).json({
       sucesso: true,
-      lote_animalia,
+      loteAnimalia,
       message: "Lotes de animalia listados com sucesso.",
     })
   } catch (error) {
@@ -90,10 +99,10 @@ export async function getLoteRentabilidadeController(req, res) {
     }
 
     const rentabilidade = lote.qntdItens * animal.custo;
-    const lote_rentabilidade = await getLoteRentabilidade(id, rentabilidade);
+    const loteRentabilidade = await getLoteRentabilidade(id, rentabilidade);
     return res.status(200).json({
       sucesso: true,
-      lote_rentabilidade,
+      loteRentabilidade,
       message: "Lotes com rentabilidade listados com sucesso."
     })
   } catch (error) {
@@ -164,8 +173,18 @@ export async function geLotePorTipoVegetaisController(req, res) {
 
 export async function getLotePorIdController(req, res) {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
+
+    //Validações
+    if (isNaN(id) || !id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "id informado incorretamente."
+      })
+    }
+
     const lote = await getlotePorId(id);
+
     return res.status(200).json({
       sucesso: true,
       lote,
