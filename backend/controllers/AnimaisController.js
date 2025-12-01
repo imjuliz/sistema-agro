@@ -71,7 +71,7 @@ export async function getAnimaisRentabilidadeController(req, res) {
     }
 
     const custoAnimal = Number(animalInfo.animais.custo ?? 0);
-    const qntdItens = Number(lote.qntdItens ?? 0);
+    const qntdItens = Number(loteInfo.lote.lote ?? 0);
 
     const rentabilidade = qntdItens * custoAnimal;
     const loteRentabilidade = await getAnimaisRentabilidade(id_lote, rentabilidade);
