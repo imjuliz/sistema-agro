@@ -1,4 +1,4 @@
-import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getLoja, getMatriz, FazendaService, LojaService, updateUnidade, getUsuariosPorUnidade, getUsuarioPorId, countUsuariosPorUnidade } from "../models/Unidades.js";
+import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getFazendasFiltered, getCityStateSuggestions, getLoja, getMatriz, FazendaService, LojaService, updateUnidade, getUsuariosPorUnidade, getUsuarioPorId, countUsuariosPorUnidade, atualizarFotoUnidade, removerFotoUnidade } from "../models/Unidades.js";
 import { unidadeSchema } from "../schemas/unidadeSchema.js";
 
 // BUSCA ---------------------------------------------------------------------------
@@ -43,17 +43,39 @@ export async function getUnidadePorIdController(req, res) {
 
 export async function getFazendasController(req, res) {
   try {
-    const resultado = await getFazendas();
+    // aceitar filtros via query params
+    const q = req.query?.q ?? null;
+    const cidade = req.query?.cidade ?? req.query?.localidade ?? null;
+    const estado = req.query?.estado ?? null;
+    const minArea = req.query?.minArea ?? null;
+    const maxArea = req.query?.maxArea ?? null;
+    const tipos = req.query?.tipos ?? req.query?.types ?? req.query?.type ?? null; // comma-separated
+    const status = req.query?.status ?? null; // comma-separated statuses
+    const responsible = req.query?.responsible ?? req.query?.responsavel ?? null;
+    const page = req.query?.page ?? 1;
+    const perPage = req.query?.perPage ?? 25;
+
+    const resultado = await getFazendasFiltered({ q, cidade, estado, minArea, maxArea, tipos, status, responsible, page, perPage });
     if (!resultado.sucesso) {
       return res.status(500).json(resultado);
     }
     return res.json(resultado);
   } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao listar fazendas.",
-      detalhes: error.message
-    });
+    console.error('[getFazendasController] erro:', error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao listar fazendas.", detalhes: error.message });
+  }
+}
+
+export async function getCitySuggestionsController(req, res) {
+  try {
+    const q = req.query?.query ?? req.query?.q ?? '';
+    const limit = Number(req.query?.limit ?? 20);
+    const resultado = await getCityStateSuggestions(q, limit);
+    if (!resultado.sucesso) return res.status(500).json(resultado);
+    return res.json({ sucesso: true, suggestions: resultado.suggestions });
+  } catch (error) {
+    console.error('[getCitySuggestionsController] erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar sugestões de cidades.', detalhes: error.message });
   }
 }
 
@@ -282,3 +304,73 @@ export async function buscarCepController(req, res) {
       return res.status(500).json({ sucesso: false, erro: "Erro ao buscar CEP.", detalhes: error.message });
     }
 }
+
+// FOTO DA UNIDADE
+export const atualizarFotoUnidadeController = async (req, res) => {
+  try {
+    console.log('[atualizarFotoUnidadeController] Iniciando upload');
+    console.log('[atualizarFotoUnidadeController] req.file:', req.file ? 'existe' : 'não existe');
+    console.log('[atualizarFotoUnidadeController] req.params:', req.params);
+    
+    if (!req.file) {
+      console.error('[atualizarFotoUnidadeController] Nenhum arquivo enviado');
+      return res.status(400).json({ sucesso: false, erro: 'Nenhuma imagem enviada.' });
+    }
+
+    const { id } = req.params;
+
+    console.log('[atualizarFotoUnidadeController] Arquivo:', req.file.filename, 'ID:', id);
+
+    if (!id) {
+      console.error('[atualizarFotoUnidadeController] ID não fornecido');
+      return res.status(400).json({ sucesso: false, erro: 'ID da unidade é obrigatório.' });
+    }
+
+    // Construir caminho da foto com a pasta uploads
+    const fotoUrl = `uploads/${req.file.filename}`;
+    
+    console.log('[atualizarFotoUnidadeController] URL a armazenar:', fotoUrl);
+    
+    const resultado = await atualizarFotoUnidade(id, fotoUrl);
+
+    console.log('[atualizarFotoUnidadeController] Resultado:', resultado);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('[atualizarFotoUnidadeController] Erro:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: 'Erro ao atualizar foto da unidade.',
+      detalhes: error.message,
+    });
+  }
+};
+
+export const removerFotoUnidadeController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ sucesso: false, erro: 'ID da unidade é obrigatório.' });
+    }
+
+    const resultado = await removerFotoUnidade(id);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('Erro ao remover foto da unidade:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: 'Erro ao remover foto da unidade.',
+      detalhes: error.message,
+    });
+  }
+};

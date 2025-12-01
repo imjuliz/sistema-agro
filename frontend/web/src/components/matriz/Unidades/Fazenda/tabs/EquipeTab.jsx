@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -258,7 +259,7 @@ export function EquipeTab({ fazendaId }) {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4">
                   <Avatar className="size-12">
-                    <AvatarImage src={eqp.avatar} alt={eqp.name} />
+                    <AvatarImage src={buildImageUrl(eqp.avatar)} alt={eqp.name} />
                     <AvatarFallback>{eqp.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div>

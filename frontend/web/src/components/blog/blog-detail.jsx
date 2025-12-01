@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import buildImageUrl from '@/lib/image';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -224,8 +225,8 @@ export default function BlogSingle1({
                         <div className="absolute inset-0 flex flex-col justify-end rounded-lg bg-gradient-to-r from-black/70 to-black/30 p-8 text-white">
                             <h1 className="mb-4 text-5xl font-bold leading-tight">{title}</h1>
                             <div className="mb-4 flex items-center space-x-4">
-                                <Avatar className="size-12 ring-2 ring-primary ring-offset-2 ring-offset-background">
-                                    <AvatarImage src={author.avatarSrc} alt={author.name} />
+                                    <Avatar className="size-12 ring-2 ring-primary ring-offset-2 ring-offset-background">
+                                        <AvatarImage src={buildImageUrl(author.avatarSrc)} alt={author.name} />
                                     <AvatarFallback>{author.initials}</AvatarFallback>
                                 </Avatar>
                                 <div>

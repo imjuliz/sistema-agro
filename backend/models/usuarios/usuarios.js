@@ -215,3 +215,55 @@ export const updateUsuario = async (id, data) => {
     return { sucesso: false, erro: "Erro ao atualizar usuário.", detalhes: error.message };
   }
 };
+
+export const atualizarFotoPerfil = async (id, caminhoFoto) => {
+  try {
+    const usuarioAtualizado = await prisma.usuario.update({
+      where: { id: Number(id) },
+      data: { ftPerfil: caminhoFoto },
+      select: {
+        id: true,
+        nome: true,
+        ftPerfil: true,
+      },
+    });
+    return {
+      sucesso: true,
+      usuario: usuarioAtualizado,
+      message: "Foto de perfil atualizada com sucesso!",
+    };
+  } catch (error) {
+    console.error("Erro ao atualizar foto de perfil:", error);
+    return {
+      sucesso: false,
+      erro: "Erro ao atualizar foto de perfil.",
+      detalhes: error.message,
+    };
+  }
+};
+
+export const removerFotoPerfil = async (id) => {
+  try {
+    const usuarioAtualizado = await prisma.usuario.update({
+      where: { id: Number(id) },
+      data: { ftPerfil: null },
+      select: {
+        id: true,
+        nome: true,
+        ftPerfil: true,
+      },
+    });
+    return {
+      sucesso: true,
+      usuario: usuarioAtualizado,
+      message: "Foto de perfil removida com sucesso!",
+    };
+  } catch (error) {
+    console.error("Erro ao remover foto de perfil:", error);
+    return {
+      sucesso: false,
+      erro: "Erro ao remover foto de perfil.",
+      detalhes: error.message,
+    };
+  }
+};

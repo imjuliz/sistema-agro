@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import buildImageUrl from '@/lib/image';
 
 export function BlogPostCard({
   imageSrc,
@@ -24,7 +25,7 @@ export function BlogPostCard({
         <p className="text-muted-foreground line-clamp-3 text-sm">{description}</p>
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Avatar className="h-6 w-6">
-            <AvatarImage src={authorAvatarSrc || "/placeholder.svg"} />
+            <AvatarImage src={buildImageUrl(authorAvatarSrc) || "/placeholder.svg"} />
             <AvatarFallback>
               {authorName
                 .split(" ")

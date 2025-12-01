@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import buildImageUrl from '@/lib/image';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -251,7 +252,7 @@ export default function SettingsPage() {
                                                 <div className="flex items-center gap-4">
                                                     <Avatar className="h-20 w-20">
                                                         {avatarUrl ? (
-                                                            <AvatarImage src={avatarUrl} alt="Avatar" />
+                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" />
                                                         ) : (
                                                             <AvatarFallback>
                                                                 {username?.[0]?.toUpperCase() || "A"}

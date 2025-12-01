@@ -1,5 +1,5 @@
 import prisma from "../../prisma/client.js";
-import { listarUsuariosPorUnidade, getPerfilIdByRole, listarGerentesDisponiveis, criarUsuario, updateUsuario } from "../../models/usuarios/usuarios.js";
+import { listarUsuariosPorUnidade, getPerfilIdByRole, listarGerentesDisponiveis, criarUsuario, updateUsuario, atualizarFotoPerfil, removerFotoPerfil } from "../../models/usuarios/usuarios.js";
 import { deletarUsuario } from "../../models/User.js";
 
 //listar funcionarios
@@ -207,3 +207,64 @@ export const deletarUsuarioController = async (req, res) => {
     });
   }
 };
+
+
+// Atualizar foto de perfil
+export const atualizarFotoPerfilController = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ sucesso: false, erro: 'Nenhuma imagem enviada.' });
+    }
+
+    const usuarioId = req.usuario?.id; // vindo do middleware de autenticação
+
+    if (!usuarioId) {
+      return res.status(401).json({ sucesso: false, erro: 'Usuário não autenticado.' });
+    }
+
+    // Construir URL da foto (sem barra inicial, pois será concatenada com API_URL que já tem /)
+    const fotoUrl = `uploads/${req.file.filename}`;
+
+    const resultado = await atualizarFotoPerfil(usuarioId, fotoUrl);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('Erro ao atualizar foto de perfil:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: 'Erro ao atualizar foto de perfil.',
+      detalhes: error.message,
+    });
+  }
+};
+
+// Remover foto de perfil
+export const removerFotoController = async (req, res) => {
+  try {
+    const usuarioId = req.usuario?.id; // vindo do middleware de autenticação
+
+    if (!usuarioId) {
+      return res.status(401).json({ sucesso: false, erro: 'Usuário não autenticado.' });
+    }
+
+    const resultado = await removerFotoPerfil(usuarioId);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('Erro ao remover foto de perfil:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: 'Erro ao remover foto de perfil.',
+      detalhes: error.message,
+    });
+  }
+}
+

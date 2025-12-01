@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { TrendingUp, TrendingDown, Users, Briefcase, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees } from 'lucide-react';
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
@@ -354,7 +355,7 @@ export function OverviewTab({ fazendaId }) {
             {contacts.map((contact) => (
               <div key={contact.id} className="flex items-start gap-3">
                 <Avatar className="size-10">
-                  <AvatarImage src={contact.avatar} alt={contact.name} />
+                  <AvatarImage src={buildImageUrl(contact.avatar)} alt={contact.name} />
                   <AvatarFallback>{contact.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">

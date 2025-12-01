@@ -1,6 +1,7 @@
 "use client"
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import { buildImageUrl } from '@/lib/image';
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -380,7 +381,7 @@ export default function FuncionariosLoja() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4 flex-1">
                     <Avatar className="size-12">
-                      <AvatarImage src={func.avatar} alt={func.nome} />
+                      <AvatarImage src={buildImageUrl(func.avatar)} alt={func.nome} />
                       <AvatarFallback>{func.nome.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
