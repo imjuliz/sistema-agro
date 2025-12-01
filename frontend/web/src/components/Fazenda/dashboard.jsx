@@ -1,12 +1,13 @@
 "use client"
 import * as React from 'react';
 import { Pie, PieChart } from "recharts"
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { API_URL } from '@/config';
+import { useAuth } from '@/contexts/AuthContext';
 import { PlusIcon } from 'lucide-react'
 import { useTheme } from "next-themes";
 //ui
-import { Card,  CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Calendar } from "../ui/calendar"
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
@@ -18,6 +19,24 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import ArticleIcon from '@mui/icons-material/Article';
 import PersonIcon from '@mui/icons-material/Person';
 import CreateIcon from '@mui/icons-material/Create';
+
+const chartData = [
+  { browser: 'Lote A', visitors: 420 },
+  { browser: 'Lote B', visitors: 300 },
+  { browser: 'Lote C', visitors: 180 },
+];
+
+const chartConfig = {visitors: { label: 'Lotes', color: '#738C16' }};
+
+const allEvents = [
+  { title: 'Pulverização', from: new Date().toISOString(), to: new Date(Date.now() + 1000 * 60 * 60).toISOString() },
+  { title: 'Colheita', from: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), to: new Date(Date.now() + 1000 * 60 * 60 * 25).toISOString() },
+];
+
+const admins = [
+  { id: 1, nome: 'João Silva', email: 'joao@fazenda.com', telefone: '11999990000' },
+  { id: 2, nome: 'Maria Souza', email: 'maria@fazenda.com', telefone: '11988880000' },
+];
 
 export function SectionCards() {
   return (
@@ -101,8 +120,47 @@ export function SectionCards3() {
     </div>
   );
 }
+
 export const description = "A donut chart"
 export function ChartPieDonut() {
+  const { user, fetchWithAuth } = useAuth();
+  const [fetchedData, setFetchedData] = useState([]);
+  const [fetchedConfig, setFetchedConfig] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      try {
+        if (!unidadeId) {
+          console.warn('[ChartPieDonut] unidadeId ausente — usando dados de demonstração');
+          return;
+        }
+
+        const fetchFn = fetchWithAuth || fetch;
+        const res = await fetchFn(`${API_URL}/dashboard/fazenda/${unidadeId}`);
+        const data = await res.json().catch(() => ({}));
+        if (!mounted) return;
+        if (res.ok && data.sucesso && Array.isArray(data.chart)) {
+          const mapped = data.chart.map((c) => ({ browser: c.label, visitors: Number(c.value) }));
+          setFetchedData(mapped);
+          setFetchedConfig({ visitors: { label: 'Lotes', color: '#738C16' } });
+        }
+        else { console.warn('Dashboard fetch returned no data, using demo data.', data); }
+      }
+      catch (err) { console.error('Erro ao carregar dados do dashboard:', err); }
+      finally { if (mounted) setLoading(false); }
+    }
+    load();
+    return () => { mounted = false };
+  }, [unidadeId, fetchWithAuth]);
+
+  const dataToUse = fetchedData.length ? fetchedData : chartData;
+  const configToUse = fetchedConfig || chartConfig;
+
   return (
     <Card className="flex flex-col w-full max-w-[500px] h-[400px]">
       <CardHeader className="items-center pb-0">
@@ -110,10 +168,10 @@ export function ChartPieDonut() {
         <CardDescription>750</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-4 flex justify-center items-center">
-        <ChartContainer config={chartConfig} className="w-[90%] h-[90%] flex justify-center items-center">
+        <ChartContainer config={configToUse} className="w-[90%] h-[90%] flex justify-center items-center">
           <PieChart width={300} height={300}>
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie data={chartData} dataKey="visitors" nameKey="browser" innerRadius={80} outerRadius={120} />
+            <Pie data={dataToUse} dataKey="visitors" nameKey="browser" innerRadius={80} outerRadius={120} />
           </PieChart>
         </ChartContainer>
       </CardContent>
@@ -127,8 +185,8 @@ export function GraficoDeBarras() {
   return (
     <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-4">
       <BarChart xAxis={[
-          { data: ["Vegetais", "Frutas", "Animália"], scaleType: "band", tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000"}, labelStyle: { fill: isDark ? "#ffffff" : "#000000"}},
-        ]}
+        { data: ["Vegetais", "Frutas", "Animália"], scaleType: "band", tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000" }, labelStyle: { fill: isDark ? "#ffffff" : "#000000" } },
+      ]}
         yAxis={[{ width: 50, tickLabelStyle: { fill: isDark ? "#ffffff" : "#000000", }, },]}
         series={[{ data: [4, 3, 5], color: "#99BF0F" }, { data: [1, 6, 3], color: "#738C16" },]}
         height={650} barLabel="value" margin={{ left: 60, right: 30, top: 30, bottom: 30 }}

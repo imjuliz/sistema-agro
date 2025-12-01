@@ -1,6 +1,8 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as React from "react"
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/config';
 import { toast } from "sonner"
 import { z } from "zod"
 import { closestCenter, DndContext, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors, } from "@dnd-kit/core";
@@ -126,7 +128,33 @@ const pedidos = [
 ];
 
 export function DataTable({ data: initialData }) {
-    const [data, setData] = React.useState(() => initialData)
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
+    const [data, setData] = React.useState(() => initialData || pedidos)
+    // If no initialData provided, attempt to fetch partners for the unidade
+    useEffect(() => {
+        let mounted = true;
+        async function loadPartners() {
+            if (!unidadeId || initialData) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/listarLojasParceiras/${unidadeId}`);
+                const json = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                const arr = json?.lojas || json?.data || (Array.isArray(json) ? json : []);
+                if (Array.isArray(arr) && arr.length > 0) {
+                    const mapped = arr.map((p) => ({ id: p.id, nome: p.nome || p.razaoSocial || p.nomeLoja || '-', cnpj: p.cnpj || '-', tel: p.telefone || p.contato || '-', email: p.email || p.contatoEmail || '-', status: p.status || 'Ativo' }));
+                    setData(mapped);
+                }
+            } catch (err) {
+                console.error('Erro carregando parceiros:', err);
+                toast.error('Erro ao carregar parceiros');
+            }
+        }
+        loadPartners();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth, initialData]);
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] = React.useState({})
     const [columnFilters, setColumnFilters] = React.useState([])

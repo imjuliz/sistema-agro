@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useContext, useEffect } from "react";
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // ajuste o caminho se necessário
 import { API_URL } from '@/lib/api'; // ajuste o caminho se necessário
 import { Separator } from '@/components/ui/separator';
-import { Plus } from 'lucide-react'
+import { Plus, Camera } from 'lucide-react'
 
 export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const { accessToken, fetchWithAuth } = useAuth();
@@ -28,13 +29,16 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [cnpj, setCnpj] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [imagemUrl, setImagemUrl] = useState("");
+  const [imagemFile, setImagemFile] = useState(null);
+  const [imagemPreview, setImagemPreview] = useState(null);
   const [areaTotal, setAreaTotal] = useState("");
   const [areaProdutiva, setAreaProdutiva] = useState("");
+  const [focoProdutivo, setFocoProdutivo] = useState("");
   const [cultura, setCultura] = useState("");
   const [horarioAbertura, setHorarioAbertura] = useState("");
   const [horarioFechamento, setHorarioFechamento] = useState("");
   const [descricaoCurta, setDescricaoCurta] = useState("");
+  const [cepPreenchido, setCepPreenchido] = useState(false);
 
   // Novos estados para fornecedores externos
   const [existingFornecedores, setExistingFornecedores] = useState([]);
@@ -102,8 +106,9 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
   function resetAll() {
     setNome(''); setEndereco(''); setCep(''); setCidade(''); setEstado(''); setCnpj(''); setEmail(''); setTelefone('');
-    setImagemUrl(''); setAreaProdutiva(''); setAreaTotal(''); setCultura(''); setHorarioAbertura(''); setHorarioFechamento(''); setDescricaoCurta('');
+    setImagemFile(null); setImagemPreview(null); setAreaProdutiva(''); setAreaTotal(''); setCultura(''); setHorarioAbertura(''); setHorarioFechamento(''); setDescricaoCurta('');
     setFornecedores([]); setContracts([]); setTeamInvites([]);
+    setFocoProdutivo(''); setCepPreenchido(false);
     setStep(0);
     setErrors({});
     setFormError('');
@@ -163,6 +168,32 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     return out.toISOString().slice(0,10);
   }
 
+  // --- Handle upload de imagem ---
+  function handleImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo e tamanho
+    if (!file.type.startsWith('image/')) {
+      alert('Selecione uma imagem válida');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+      alert('Imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setImagemFile(file);
+
+    // Criar preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImagemPreview(event.target?.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
   // --- CEP lookup using fetchWithAuth ---
   async function fetchCepAndFill(rawCep) {
     const digits = onlyDigits(rawCep);
@@ -178,22 +209,23 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
         return;
       }
       const json = await res.json();
-      // o seu controller retorna { sucesso: true, cep, data: {...} } como implementado anteriormente
+      // o controller retorna { sucesso: true, cep, endereco, bairro, cidade, estado, complemento }
       if (!json?.sucesso) {
         setCepError(json?.erro || 'CEP não encontrado');
         setErrors(prev => ({ ...prev, cep: 'CEP inválido ou não encontrado.' }));
         return;
       }
 
-      const data = json.data || json;
-      // normaliza e preenche campos
-      const { logradouro, complemento, bairro, localidade, uf } = data;
+      // extrai os dados diretamente de json (não precisa de json.data)
+      const { endereco: logradouro, complemento, bairro, cidade: localidade, estado: uf } = json;
       const enderecoMontado = [logradouro, bairro, complemento].filter(Boolean).join(", ");
       if (enderecoMontado) setEndereco(enderecoMontado);
       if (localidade) setCidade(localidade);
       if (uf) setEstado(uf);
       // atualiza cep formatado
       setCep(json.cep || formatCEP(digits));
+      // marca CEP como preenchido para desabilitar campos
+      setCepPreenchido(true);
       // limpa erros
       setErrors(prev => {
         const copy = { ...prev };
@@ -220,6 +252,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (!estado.trim()) e.estado = "Estado é obrigatório.";
     if (!email.trim()) e.email = "Email é obrigatório.";
     if (!cnpj.trim()) e.cnpj = "CNPJ é obrigatório.";
+    if (!focoProdutivo.trim()) e.focoProdutivo = "Foco produtivo é obrigatório.";
     // validação simples de e-mail (se preenchido)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Email inválido.";
     // cnpj val: se preenchido, verificar se tem 14 dígitos
@@ -667,13 +700,14 @@ function addContract() {
       email: email.trim() || null,
       telefone: onlyDigits(telefone).trim() || null,
       tipo: 'FAZENDA',
-      imagemUrl: imagemUrl || null,
+      imagemBase64: imagemPreview || null,
       areaTotal: areaTotal !== '' ? Number(areaTotal) : null,
       areaProdutiva: areaProdutiva !== '' ? Number(areaProdutiva) : null,
       cultura: cultura || null,
       horarioAbertura: horarioAbertura || null,
       horarioFechamento: horarioFechamento || null,
-      descricaoCurta: descricaoCurta || null
+      descricaoCurta: descricaoCurta || null,
+      focoProdutivo: focoProdutivo.trim() || null
     };
 
     setLoading(true);
@@ -779,7 +813,6 @@ function addContract() {
       const createdUsers = [];
       for (const u of teamInvites) {
         if (u.isNew) {
-          // envia _raw com telefone apenas dígitos
           const createBody = {
             nome: u._raw.nome,
             email: u._raw.email,
@@ -809,34 +842,27 @@ function addContract() {
           const json = await resp.json();
           createdUsers.push(json.usuario || json);
         } else {
-          // usuário existente: atualiza unidadeId (PUT)
           try {
             const updateResp = await fetchWithAuth(`${base}/usuarios/${u.backendId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ unidadeId: unidade.id })
             });
-            if (!updateResp.ok) {
-              console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);
-            }
-          } catch (err) {
-            console.warn(`Erro associando usuário ${u.nome}:`, err);
+            if (!updateResp.ok) {console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);}
           }
+          catch (err) {console.warn(`Erro associando usuário ${u.nome}:`, err);}
         }
       }
 
-      // tudo ok
-      if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
-      alert('Fazenda criada com sucesso!');
+  if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
+  toast.success('Fazenda criada com sucesso!');
       resetAll();
       onOpenChange(false);
-
     } catch (err) {
       console.error(err);
       setFormError(err.message || 'Erro durante criação da fazenda. Veja console.');
-    } finally {
-      setLoading(false);
     }
+    finally {setLoading(false);}
   }
 
 const [newItems, setNewItems] = useState({});
@@ -878,9 +904,7 @@ function addItemToContract(contractIndex) {
 function removeItem(contractIndex, itemIndex) {
   setContracts(prev => {
     const copy = [...prev];
-    copy[contractIndex].itens = copy[contractIndex].itens.filter(
-      (_, idx) => idx !== itemIndex
-    );
+    copy[contractIndex].itens = copy[contractIndex].itens.filter((_, idx) => idx !== itemIndex);
     return copy;
   });
 }
@@ -922,7 +946,6 @@ function updateContractField(contractIndex, field, value) {
               <h2 className="text-2xl font-semibold">Criar Nova Fazenda</h2>
               <div className="flex gap-2" />
             </header>
-
             {/* mensagem de erro geral do step */}
             {formError && (
               <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700">
@@ -933,42 +956,38 @@ function updateContractField(contractIndex, field, value) {
             {/* Steps content */}
             {step === 0 && (
               <section className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome *</Label>
-                    <Input
-                      id="nome"
-                      value={nome}
-                      onChange={(e) => { setNome(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.nome; return c; }); }}
-                      placeholder="Nome da fazenda"
-                      aria-invalid={!!errors.nome}
-                      aria-describedby={errors.nome ? "error-nome" : undefined}
-                      className={cn(errors.nome && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="nome" value={nome} onChange={(e) => { setNome(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.nome; return c; }); }} placeholder="Nome da fazenda" aria-invalid={!!errors.nome} aria-describedby={errors.nome ? "error-nome" : undefined} className={cn(errors.nome && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.nome && <p id="error-nome" className="text-sm text-red-600 mt-1">{errors.nome}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input
-                      id="cnpj"
-                      value={cnpj}
-                      onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.cnpj; return c; }); }}
-                      placeholder="00.000.000/0000-00"
-                      aria-invalid={!!errors.cnpj}
-                      aria-describedby={errors.cnpj ? "error-cnpj" : undefined}
-                      className={cn(errors.cnpj && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="cnpj" value={cnpj} onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.cnpj; return c; }); }} placeholder="00.000.000/0000-00" aria-invalid={!!errors.cnpj} aria-describedby={errors.cnpj ? "error-cnpj" : undefined} className={cn(errors.cnpj && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.cnpj && <p id="error-cnpj" className="text-sm text-red-600 mt-1">{errors.cnpj}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="focoProdutivo">Foco Produtivo *</Label>
+                    <Input
+                      id="focoProdutivo"
+                      value={focoProdutivo}
+                      onChange={(e) => { setFocoProdutivo(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.focoProdutivo; return c; }); }}
+                      placeholder="Ex: Gado Leiteiro"
+                      aria-invalid={!!errors.focoProdutivo}
+                      aria-describedby={errors.focoProdutivo ? "error-focoProdutivo" : undefined}
+                      className={cn(errors.focoProdutivo && "border-red-500 ring-1 ring-red-500")}
+                    />
+                    {errors.focoProdutivo && <p id="error-focoProdutivo" className="text-sm text-red-600 mt-1">{errors.focoProdutivo}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="cep">CEP *</Label>
-                    <Input
-                      id="cep"
-                      value={cep}
+                    <Input id="cep" value={cep}
                       onChange={(e) => {
                         const v = formatCEP(e.target.value);
                         setCep(v);
@@ -998,6 +1017,7 @@ function updateContractField(contractIndex, field, value) {
                   <div className="space-y-2">
                     <Label htmlFor="cidade">Cidade *</Label>
                     <Input id="cidade" value={cidade} onChange={(e) => { setCidade(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.cidade; return c; }); }}
+                      disabled={cepPreenchido}
                       aria-invalid={!!errors.cidade}
                       aria-describedby={errors.cidade ? "error-cidade" : undefined}
                       className={cn(errors.cidade && "border-red-500 ring-1 ring-red-500")}
@@ -1008,6 +1028,7 @@ function updateContractField(contractIndex, field, value) {
                   <div className="space-y-2">
                     <Label htmlFor="estado">Estado *</Label>
                     <Input id="estado" value={estado} onChange={(e) => { setEstado(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.estado; return c; }); }}
+                      disabled={cepPreenchido}
                       aria-invalid={!!errors.estado}
                       aria-describedby={errors.estado ? "error-estado" : undefined}
                       className={cn(errors.estado && "border-red-500 ring-1 ring-red-500")}
@@ -1018,67 +1039,58 @@ function updateContractField(contractIndex, field, value) {
 
                 <div className="space-y-2">
                   <Label htmlFor="endereco">Endereço *</Label>
-                  <Textarea
-                    id="endereco"
-                    value={endereco}
-                    onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }}
-                    className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")}
-                    aria-invalid={!!errors.endereco}
-                    aria-describedby={errors.endereco ? "error-endereco" : undefined}
-                  />
+                  <Textarea id="endereco" value={endereco} onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }} className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")} aria-invalid={!!errors.endereco} aria-describedby={errors.endereco ? "error-endereco" : undefined}/>
                   {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone *</Label>
-                    <Input
-                      id="telefone"
-                      value={telefone}
-                      onChange={(e) => { setTelefone(formatTelefone(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.telefone; return c; }); }}
-                      placeholder="(00) 90000-0000"
-                      aria-invalid={!!errors.telefone}
-                      aria-describedby={errors.telefone ? "error-telefone" : undefined}
-                      className={cn(errors.telefone && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="telefone" value={telefone} onChange={(e) => { setTelefone(formatTelefone(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.telefone; return c; }); }} placeholder="(00) 90000-0000" aria-invalid={!!errors.telefone} aria-describedby={errors.telefone ? "error-telefone" : undefined} className={cn(errors.telefone && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.telefone && <p id="error-telefone" className="text-sm text-red-600 mt-1">{errors.telefone}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }}
-                      aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? "error-email" : undefined}
-                      className={cn(errors.email && "border-red-500 ring-1 ring-red-500")}
-                    />
+                    <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }} aria-invalid={!!errors.email} aria-describedby={errors.email ? "error-email" : undefined} className={cn(errors.email && "border-red-500 ring-1 ring-red-500")}/>
                     {errors.email && <p id="error-email" className="text-sm text-red-600 mt-1">{errors.email}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="imagemUrl">URL da Imagem</Label>
-                    <Input id="imagemUrl" value={imagemUrl} onChange={(e) => setImagemUrl(e.target.value)} />
+                    <Label>Foto da Fazenda</Label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="imagemInput"
+                      />
+                      <label htmlFor="imagemInput" className="cursor-pointer">
+                        <div className="w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 transition bg-white">
+                          {imagemPreview ? (
+                            <img src={imagemPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            <Camera className="w-8 h-8 text-gray-400" />
+                          )}
+                        </div>
+                      </label>
+                      {imagemFile && (
+                        <p className="text-xs text-gray-600 mt-2 text-center">{imagemFile.name}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="areaTotal">Área Total (ha)</Label>
-                    <Input
-                      id="areaTotal"
-                      value={areaTotal}
-                      onChange={(e) => { setAreaTotal(formatArea(e.target.value)); }}
-                      placeholder="Ex: 123.45"
-                    />
+                    <Input id="areaTotal" value={areaTotal} onChange={(e) => { setAreaTotal(formatArea(e.target.value)); }} placeholder="Ex: 123.45"/>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="areaProdutiva">Área Produtiva (ha)</Label>
-                    <Input
-                      id="areaProdutiva"
-                      value={areaProdutiva}
-                      onChange={(e) => { setAreaProdutiva(formatArea(e.target.value)); }}
-                      placeholder="Ex: 100.00"
-                    />
+                    <Input id="areaProdutiva" value={areaProdutiva} onChange={(e) => { setAreaProdutiva(formatArea(e.target.value))}} placeholder="Ex: 100.00"/>
                   </div>
                 </div>
 
@@ -1101,7 +1113,6 @@ function updateContractField(contractIndex, field, value) {
                 <div className="flex items-center justify-between pt-4">
                   <div />
                   <div className="flex gap-2">
-                    {/* <Button variant="outline" onClick={() => { resetAll(); onOpenChange(false); }}>Cancelar</Button> */}
                     <Button onClick={handleNext}>Próximo</Button>
                   </div>
                 </div>
@@ -1117,14 +1128,11 @@ function updateContractField(contractIndex, field, value) {
                     {/* Campo de seleção/criação de fornecedor */}
                     <div className="space-y-2">
                       <Label htmlFor="select-fornecedor">Fornecedor *</Label>
-                      <Select
-                        value={selectedFornecedorId}
-                        onValueChange={(value) => {
+                      <Select value={selectedFornecedorId} onValueChange={(value) => {
                           setSelectedFornecedorId(value);
                           // setIsCreatingNewFornecedor(value === "new");
                           setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
-                        }}
-                      >
+                        }}>
                         <SelectTrigger id="select-fornecedor">
                           <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
                         </SelectTrigger>

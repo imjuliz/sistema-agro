@@ -1,5 +1,6 @@
-'use client'
+ 'use client'
 import { useState } from "react";
+import { toast } from 'sonner'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,7 +56,7 @@ export function CadastrarForm({
     if (validate()) {
       // Aqui você pode enviar os dados para o backend
       console.log({ nome, email, password });
-      alert("Cadastro válido!");
+      toast.success("Cadastro válido!");
     }
   };
   return (

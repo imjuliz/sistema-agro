@@ -6,7 +6,7 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import { listarPedidosController, listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
+import {listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
 import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedoresController.js";
 import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
@@ -15,6 +15,7 @@ import {
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController, calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController
 } from "../controllers/FinanceiroController.js";
+import { getDashboardDataController } from '../controllers/dashboardController.js';
 
 // tradução
 router.post("/translate", translateText);
@@ -72,6 +73,9 @@ router.get("/meta/contratos", listarMetaContratosController);
 //estoque-produtos (pedidos) --------------------------------------------------------------------
 router.get("/estoque-produtos/pedidos/:unidadeId", listarPedidosEntregaController);
 router.get("/estoque-produtos/pedidos-origem/:unidadeId", listarPedidosOrigemController);
+
+// dashboard - dados agregados para gráficos (por unidade)
+router.get('/dashboard/fazenda/:unidadeId', auth, getDashboardDataController);
 
 //perfil --------------------------------------------------------------------
 

@@ -13,7 +13,7 @@ export async function getAnimais() {
     return {
       sucesso: false,
       erro: "Erro ao listar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
@@ -44,7 +44,26 @@ export async function getAnimaisPelaRaca(raca) {
     throw {
       sucesso: false,
       erro: "Erro ao listar animais pela raça.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
+    }
+  }
+}
+
+export async function getAnimaisRentabilidade(id, rentabilidade) {
+  try {
+    const lote_rentabilidade = await prisma.lote.findMany({ 
+      where: { id: id, rentabilidade: Number(rentabilidade) }
+    });
+    return {
+      sucesso: true,
+      lote_rentabilidade,
+      message: "Lotes com rentabilidade listados com sucesso!!"
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes com rentabilidade!!",
+      error: error.message
     }
   }
 }
@@ -105,7 +124,7 @@ export async function updateAnimais(id, data) {
 
     // Atualiza
     const animais = await prisma.animal.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: {
         ...data, 
         fornecedorId: data.fornecedorId ?? null,
@@ -123,7 +142,7 @@ export async function updateAnimais(id, data) {
     return {
       sucesso: false,
       erro: "Erro ao atualizar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
@@ -141,7 +160,7 @@ export async function deleteAnimais(id) {
     return {
       sucesso: false,
       erro: "Erro ao deletar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }

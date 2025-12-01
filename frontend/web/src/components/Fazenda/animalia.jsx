@@ -1,6 +1,9 @@
 "use client"
 import * as React from 'react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/config';
+import { toast } from 'sonner';
 import { Pie, PieChart } from "recharts"
 //ui
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -8,7 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Layers, TriangleAlert, TrendingUpDown } from 'lucide-react'
+import { Layers, TrendingUpDown } from 'lucide-react'
 //mui
 
 export function SectionCards() {
@@ -28,9 +31,7 @@ export function SectionCards() {
             <Card className="h-fit p-0">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg">
-                            <Layers className="size-10" />
-                        </div>
+                        <div className="p-2 rounded-lg"><Layers className="size-10" /></div>
                         <div>
                             <CardDescription>Lotes ativos</CardDescription>
                             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">120</CardTitle>
@@ -41,9 +42,7 @@ export function SectionCards() {
             <Card className="h-fit p-0 gap-0">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg">
-                            <TrendingUpDown className="size-10" />
-                        </div>
+                        <div className="p-2 rounded-lg"><TrendingUpDown className="size-10" /></div>
                         <div>
                             <CardDescription>Rentabilidade por lote</CardDescription>
                             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">R$ 15,09F</CardTitle>
@@ -103,8 +102,42 @@ const atividades = [
 
 
 export function TableDemo() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
     const [categoria, setCategoria] = useState("");
     const [busca, setBusca] = useState("");
+    const [atividadesState, setAtividadesState] = useState(atividades);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadLotesAnimais() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                const arr = data?.lotes ?? data?.data ?? (Array.isArray(data) ? data : []);
+                if (Array.isArray(arr) && arr.length > 0) {
+                    const mappedActivities = arr.slice(0, 8).map((l, idx) => ({
+                        id: l.id ?? idx + 1,
+                        descricao: l.nome || l.produto || `Lote ${l.id}`,
+                        tipo: l.tipo || 'Monitoramento',
+                        lote: l.talhao || l.local || '-',
+                        data: l.plantio || l.dataPlantio || '-',
+                        responsavel: l.responsavel || '-'
+                    }));
+                    setAtividadesState(mappedActivities);
+                }
+            } catch (err) {
+                console.error('Erro carregando dados de animais:', err);
+                toast.error('Erro ao carregar dados de animais');
+            }
+        }
+        loadLotesAnimais();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
 
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
@@ -138,7 +171,7 @@ export function TableDemo() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {atividades.map((atvd) => (
+                    {atividadesState.map((atvd) => (
                         <TableRow key={atvd.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <TableCell className="font-medium">{atvd.id}</TableCell>
                             <TableCell>{atvd.descricao}</TableCell>
