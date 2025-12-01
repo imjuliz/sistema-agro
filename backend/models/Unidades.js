@@ -74,7 +74,7 @@ export async function getFazendas() {
 }
 
 // BUSCA FAZENDAS COM FILTROS E PAGINAÇÃO
-export async function getFazendasFiltered({ q = null, cidade = null, estado = null, minArea = null, maxArea = null, tipos = null, status = null, responsible = null, page = 1, perPage = 25, orderBy = { nome: 'asc' } } = {}) {
+export async function getFazendasFiltered({ q = null, cidade = null, estado = null, minArea = null, maxArea = null, tipos = null, status = null, responsible = null, page = 1, perPage = 25, orderBy = 'nome_asc' } = {}) {
   try {
     const where = { tipo: 'FAZENDA' };
 
@@ -140,13 +140,52 @@ export async function getFazendasFiltered({ q = null, cidade = null, estado = nu
 
     if (and.length > 0) where.AND = and;
 
+    // Processar ordenação
+    let orderByObj = { nome: 'asc' };
+    const orderByStr = String(orderBy || 'nome_asc').toLowerCase();
+    if (orderByStr === 'nome_desc' || orderByStr === 'z-a') {
+      orderByObj = { nome: 'desc' };
+    } else if (orderByStr === 'mais_recente' || orderByStr === 'recente') {
+      orderByObj = { atualizadoEm: 'desc' };
+    } else if (orderByStr === 'mais_antigo' || orderByStr === 'antigo') {
+      orderByObj = { atualizadoEm: 'asc' };
+    }
+
     const pageNum = Math.max(1, Number(page || 1));
     const per = Math.max(1, Math.min(200, Number(perPage || 25)));
     const skip = (pageNum - 1) * per;
 
     const [total, unidades] = await Promise.all([
       prisma.unidade.count({ where }),
-      prisma.unidade.findMany({ where, skip, take: per, orderBy }),
+      prisma.unidade.findMany({ 
+        where, 
+        skip, 
+        take: per, 
+        orderBy: orderByObj,
+        select: {
+          id: true,
+          nome: true,
+          endereco: true,
+          cnpj: true,
+          cep: true,
+          imagemUrl: true,
+          cidade: true,
+          estado: true,
+          tipo: true,
+          status: true,
+          latitude: true,
+          longitude: true,
+          areaTotal: true,
+          areaProdutiva: true,
+          atualizadoEm: true,
+          criadoEm: true,
+          email: true,
+          telefone: true,
+          gerente: {
+            select: { nome: true }
+          }
+        }
+      }),
     ]);
 
     return { sucesso: true, unidades, total, page: pageNum, perPage: per };
