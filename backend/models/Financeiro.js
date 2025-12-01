@@ -4,10 +4,10 @@ import fs from "fs";
 import path from "path";
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
+export const listarSaidas = async (unidadeId) => {//tem controller
     try {
-        const saidas = await prisma.Saidas.findMany({ 
-            where: { unidadeId: Number(unidadeId), tipo, data}, 
+        const saidas = await prisma.financeiro.findMany({ 
+            where: { unidadeId: Number(unidadeId)}, 
         })
         return ({
             sucesso: true,

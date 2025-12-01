@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../prisma/generated"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -735,6 +734,7 @@ model Caixa {
 
 model Venda {
   id        Int           @id @default(autoincrement())
+  //tambem tem nome cliente, mas no supabase
   caixaId   Int           @map("caixa_id")
   usuarioId Int           @map("usuario_id")
   unidadeId Int           @map("unidade_id")
@@ -784,8 +784,8 @@ model Financeiro {
   subcategoria   String? // subcategoria livre
   formaPagamento String? // PIX, Boleto, Transferência, etc. (texto livre)
 
-  valor     Decimal  @db.Decimal(12, 2)
-  valorPago Decimal? @db.Decimal(12, 2)
+  valor     Int
+  valorPago Int?
 
   competencia   DateTime? // mês referência
   vencimento    DateTime // vencimento

@@ -135,16 +135,16 @@ export const listarSaidasController = async (req, res) => {
         const unidadeId = req.params.unidadeId; //quando implemetar mudar para  req.usuario.unidadeId ou sei la
 
         // tipo e data vêm do front
-        const { tipo, data } = req.body;
+        // const { tipo, data } = req.body;
 
-        if (!tipo || !data) {
-            return res.status(400).json({
-                sucesso: false,
-                mensagem: "Informe 'tipo' e 'data' na query. Ex: /saidas?tipo=VENDA&data=2025-01-01"
-            });
-        }
+        if (!unidadeId) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: "Sessão inválida ou unidade não identificada.",
+      });
+    }
 
-        const resposta = await listarSaidas(unidadeId, tipo, data);
+        const resposta = await listarSaidas(unidadeId);
 
         return res.status(200).json(resposta);
 

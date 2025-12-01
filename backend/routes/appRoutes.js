@@ -13,7 +13,8 @@ import { listarEstoqueController, buscarProdutoMaisVendidoController, listarProd
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
-    somarEntradaMensalController, listarVendasController
+    somarEntradaMensalController, listarVendasController,
+    listarSaidasController
 } from "../controllers/FinanceiroController.js";
 
 // tradução
@@ -48,8 +49,8 @@ router.get("/relatorio/producao/:loteId", gerarRelatorioProducaoController);
 //financeiro (de todos os perfis) --------------------------------------------------------------------
 router.get("/saldoLiquido", auth, calcularSaldoLiquidoController);
 router.get("/saldo-final", auth, mostrarSaldoFController);
-router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
-router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
+// router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
+router.get("/listarSaidas/:unidadeId", listarSaidasController);
 router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
 router.get("/somarSaidas/:unidadeId", somarSaidasController);
 
