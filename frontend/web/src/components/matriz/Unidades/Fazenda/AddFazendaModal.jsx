@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // ajuste o caminho se necessário
 import { API_URL } from '@/lib/api'; // ajuste o caminho se necessário
 import { Separator } from '@/components/ui/separator';
-import { Plus, Camera } from 'lucide-react'
+import { Plus, Camera, Eye, EyeOff } from 'lucide-react'
 
 export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const { accessToken, fetchWithAuth } = useAuth();
@@ -39,6 +39,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [horarioFechamento, setHorarioFechamento] = useState("");
   const [descricaoCurta, setDescricaoCurta] = useState("");
   const [cepPreenchido, setCepPreenchido] = useState(false);
+  const [enderecoNumero, setEnderecoNumero] = useState("");
+  const [unidadesMedidaOptions, setUnidadesMedidaOptions] = useState([]);
 
   // Novos estados para fornecedores externos
   const [existingFornecedores, setExistingFornecedores] = useState([]);
@@ -63,16 +65,22 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     email: "",
     telefone: "",
     senha: "",
+    confirmaSenha: "",
   });
   const [newGerenteErrors, setNewGerenteErrors] = useState({});
+  const [showGerenteSenha, setShowGerenteSenha] = useState(false);
+  const [showGerenteConfirmaSenha, setShowGerenteConfirmaSenha] = useState(false);
 
   const [newFuncionarioData, setNewFuncionarioData] = useState({
     nome: "",
     email: "",
     telefone: "",
     senha: "",
+    confirmaSenha: "",
   });
   const [newFuncionarioErrors, setNewFuncionarioErrors] = useState({});
+  const [showFuncionarioSenha, setShowFuncionarioSenha] = useState(false);
+  const [showFuncionarioConfirmaSenha, setShowFuncionarioConfirmaSenha] = useState(false);
 
   // Step 2 (fornecedores & contratos)
   const [fornecedores, setFornecedores] = useState([]);
@@ -107,7 +115,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   function resetAll() {
     setNome(''); setEndereco(''); setCep(''); setCidade(''); setEstado(''); setCnpj(''); setEmail(''); setTelefone('');
     setImagemFile(null); setImagemPreview(null); setAreaProdutiva(''); setAreaTotal(''); setCultura(''); setHorarioAbertura(''); setHorarioFechamento(''); setDescricaoCurta('');
-    setFornecedores([]); setContracts([]); setTeamInvites([]);
+    setEnderecoNumero(''); setFornecedores([]); setContracts([]); setTeamInvites([]);
     setFocoProdutivo(''); setCepPreenchido(false);
     setStep(0);
     setErrors({});
@@ -253,6 +261,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (!email.trim()) e.email = "Email é obrigatório.";
     if (!cnpj.trim()) e.cnpj = "CNPJ é obrigatório.";
     if (!focoProdutivo.trim()) e.focoProdutivo = "Foco produtivo é obrigatório.";
+    // validação do número do endereço (opcional, mas se preenchido validar comprimento)
+    if (enderecoNumero && enderecoNumero.trim().length > 20) e.enderecoNumero = "Número do endereço inválido.";
     // validação simples de e-mail (se preenchido)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Email inválido.";
     // cnpj val: se preenchido, verificar se tem 14 dígitos
@@ -265,9 +275,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   }
 
   function validateStep1Fields() {
-    const e = {};
-    if (contracts.length === 0) e.contracts = "É necessário ao menos 1 contrato para a fazenda.";
-    return e;
+    // Fornecedores/contratos não são mais obrigatórios
+    return {};
   }
 
   // --- Handlers de navegação com validação inline ---
@@ -347,141 +356,64 @@ function addContract() {
   });
   setFormError("");
 
-  // Seleção inválida: sem seleção ou a opção "new" (que é a opção de abrir o formulário)
+  // Seleção inválida: sem seleção
   if (!selectedFornecedorId || selectedFornecedorId === "new") {
     setErrors(prev => ({ ...prev, contracts: 'Selecione um fornecedor existente para criar contrato.' }));
     setFormError('Selecione um fornecedor existente.');
     return;
   }
 
-  // Primeiro tente encontrar o fornecedor nos fornecedores locais
-  let fornecedorIndex = fornecedores.findIndex(f => String(f.id) === String(selectedFornecedorId));
-  let fornecedorObj = null;
+  const fornecedorId = String(selectedFornecedorId);
 
-  // Helper: verifica se já existe contrato para o fornecedor (comparando id, não só índice)
-  const hasContractForFornecedorId = (fornecedorId) => {
-    return contracts.some(c => {
-      const f = fornecedores[c.fornecedorIndex];
-      return f && String(f.id) === String(fornecedorId);
-    });
-  };
+  // verificar duplicata por fornecedorId
+  const alreadyHas = contracts.some(c => String(c.fornecedorId) === fornecedorId);
+  if (alreadyHas) {
+    setFormError('Já existe um contrato para este fornecedor.');
+    return;
+  }
 
-  // Se fornecedor já está localmente
-  if (fornecedorIndex !== -1) {
-    const fornecedorId = fornecedores[fornecedorIndex].id;
-    if (hasContractForFornecedorId(fornecedorId)) {
-      setFormError('Já existe um contrato para este fornecedor.');
+  // preparar cópias
+  const fornecedoresCopy = [...fornecedores];
+  let fornecedorIndex = fornecedoresCopy.findIndex(f => String(f.id) === fornecedorId);
+
+  if (fornecedorIndex === -1) {
+    const ext = existingFornecedores.find(f => String(f.id) === fornecedorId);
+    if (!ext) {
+      setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
+      setFormError('Fornecedor inválido.');
       return;
     }
-    fornecedorObj = fornecedores[fornecedorIndex];
-    setContracts(prev => ([...prev, {
-      fornecedorIndex,
-      nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa || fornecedorObj.nome}`,
-      descricao: '',
-      itens: [],
-      dataInicio: new Date().toISOString().slice(0,10),
-      dataEnvio: new Date().toISOString().slice(0,10),
-      dataFim: null,
-      frequenciaEntregas: null,
-      diaPagamento: '',
-      formaPagamento: null,
-      status: 'ATIVO',
-      duration: ''
-    }]));
-    return;
+    const fornecedorObj = {
+      id: ext.id,
+      nome: ext.nomeEmpresa || ext.nome,
+      nomeEmpresa: ext.nomeEmpresa || ext.nome,
+      documento: ext.cnpjCpf || null,
+      contato: ext.telefone || ext.contato || null,
+      email: ext.email || null
+    };
+    fornecedoresCopy.push(fornecedorObj);
+    fornecedorIndex = fornecedoresCopy.length - 1;
   }
 
-  // Se não está nos fornecedores locais, procurar entre existingFornecedores
-  const ext = existingFornecedores.find(f => String(f.id) === String(selectedFornecedorId));
-  if (!ext) {
-    setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
-    setFormError('Fornecedor inválido.');
-    return;
-  }
-
-  // Verificar se já adicionamos esse fornecedor (por id) anteriormente
-  const alreadyLocalIndex = fornecedores.findIndex(f => String(f.id) === String(ext.id));
-  if (alreadyLocalIndex !== -1) {
-    const fornecedorId = fornecedores[alreadyLocalIndex].id;
-    if (hasContractForFornecedorId(fornecedorId)) {
-      setFormError('Já existe um contrato para este fornecedor.');
-      setSelectedFornecedorId(String(ext.id));
-      return;
-    }
-    // adicionar contrato referenciando fornecedor já local
-    setContracts(pc => ([...pc, {
-      fornecedorIndex: alreadyLocalIndex,
-      nomeContrato: `Contrato com ${fornecedores[alreadyLocalIndex].nomeEmpresa || fornecedores[alreadyLocalIndex].nome}`,
-      descricao: '',
-      itens: [],
-      dataInicio: new Date().toISOString().slice(0,10),
-      dataEnvio: new Date().toISOString().slice(0,10),
-      dataFim: null,
-      frequenciaEntregas: null,
-      diaPagamento: '',
-      formaPagamento: null,
-      status: 'ATIVO',
-      duration: ''
-    }]));
-    setSelectedFornecedorId(String(ext.id));
-    return;
-  }
-
-  // Caso padrão: adicionar fornecedor aos locais (se ainda não existe) e criar contrato
-  fornecedorObj = {
-    id: ext.id,
-    nome: ext.nomeEmpresa || ext.nome,
-    nomeEmpresa: ext.nomeEmpresa || ext.nome,
-    documento: ext.cnpjCpf || null,
-    contato: ext.telefone || ext.contato || null,
-    email: ext.email || null
+  const novoContrato = {
+    fornecedorIndex,
+    fornecedorId,
+    nomeContrato: `Contrato com ${fornecedoresCopy[fornecedorIndex].nomeEmpresa || fornecedoresCopy[fornecedorIndex].nome}`,
+    descricao: '',
+    itens: [],
+    dataInicio: new Date().toISOString().slice(0,10),
+    dataEnvio: new Date().toISOString().slice(0,10),
+    dataFim: null,
+    frequenciaEntregas: null,
+    diaPagamento: '',
+    formaPagamento: null,
+    status: 'ATIVO',
+    duration: ''
   };
 
-  // Evitar duplicatas em fornecedores (defensivo)
-  if (!fornecedores.some(f => String(f.id) === String(fornecedorObj.id))) {
-    setFornecedores(prev => {
-      const copy = [...prev, fornecedorObj];
-      const newIndex = copy.length - 1;
-      setContracts(pc => ([...pc, {
-        fornecedorIndex: newIndex,
-        nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa}`,
-        descricao: '',
-        itens: [],
-        dataInicio: new Date().toISOString().slice(0,10),
-        dataEnvio: new Date().toISOString().slice(0,10),
-        dataFim: null,
-        frequenciaEntregas: null,
-        diaPagamento: '',
-        formaPagamento: null,
-        status: 'ATIVO',
-        duration: ''
-      }]));
-      setSelectedFornecedorId(String(ext.id));
-      return copy;
-    });
-  } else {
-    // Se por algum motivo já existe (concorrência), encontrar índice e adicionar contrato se necessário
-    const idx = fornecedores.findIndex(f => String(f.id) === String(fornecedorObj.id));
-    if (!hasContractForFornecedorId(fornecedorObj.id)) {
-      setContracts(pc => ([...pc, {
-        fornecedorIndex: idx,
-        nomeContrato: `Contrato com ${fornecedorObj.nomeEmpresa}`,
-        descricao: '',
-        itens: [],
-        dataInicio: new Date().toISOString().slice(0,10),
-        dataEnvio: new Date().toISOString().slice(0,10),
-        dataFim: null,
-        frequenciaEntregas: null,
-        diaPagamento: '',
-        formaPagamento: null,
-        status: 'ATIVO',
-        duration: ''
-      }]));
-    } else {
-      setFormError('Já existe um contrato para este fornecedor.');
-    }
-    setSelectedFornecedorId(String(ext.id));
-  }
+  setFornecedores(fornecedoresCopy);
+  setContracts(prev => ([...prev, novoContrato]));
+  setSelectedFornecedorId(fornecedorId);
 }
 
   // --- Funções de adição de equipe ---
@@ -499,6 +431,10 @@ function addContract() {
         if (!newGerenteData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newGerenteData.email)) errors.email = "Email inválido.";
         if (!newGerenteData.telefone || !onlyDigits(newGerenteData.telefone)) errors.telefone = "Telefone é obrigatório.";
         if (!newGerenteData.senha || !newGerenteData.senha.trim()) errors.senha = "Senha é obrigatória.";
+        if (!newGerenteData.confirmaSenha || !newGerenteData.confirmaSenha.trim()) errors.confirmaSenha = "Confirmação de senha é obrigatória.";
+        if (newGerenteData.senha && newGerenteData.confirmaSenha && newGerenteData.senha !== newGerenteData.confirmaSenha) {
+          errors.confirmaSenha = "As senhas não correspondem.";
+        }
 
         if (Object.keys(errors).length > 0) {
           setNewGerenteErrors(errors);
@@ -521,7 +457,7 @@ function addContract() {
 
         setIsCreatingNewGerente(false);
         setSelectedGerenteId(tempId);
-        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "" });
+        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "", confirmaSenha: "" });
         setNewGerenteErrors({});
       } else {
         // adicionar gerente existente
@@ -550,6 +486,10 @@ function addContract() {
       if (!newFuncionarioData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFuncionarioData.email)) errors.email = "Email inválido.";
       if (!newFuncionarioData.telefone || !onlyDigits(newFuncionarioData.telefone)) errors.telefone = "Telefone é obrigatório.";
       if (!newFuncionarioData.senha || !newFuncionarioData.senha.trim()) errors.senha = "Senha é obrigatória.";
+      if (!newFuncionarioData.confirmaSenha || !newFuncionarioData.confirmaSenha.trim()) errors.confirmaSenha = "Confirmação de senha é obrigatória.";
+      if (newFuncionarioData.senha && newFuncionarioData.confirmaSenha && newFuncionarioData.senha !== newFuncionarioData.confirmaSenha) {
+        errors.confirmaSenha = "As senhas não correspondem.";
+      }
 
       if (Object.keys(errors).length > 0) {
         setNewFuncionarioErrors(errors);
@@ -567,7 +507,7 @@ function addContract() {
         _raw: { ...newFuncionarioData }
       }]);
 
-      setNewFuncionarioData({ nome: "", email: "", telefone: "", senha: "" });
+      setNewFuncionarioData({ nome: "", email: "", telefone: "", senha: "", confirmaSenha: "" });
       setNewFuncionarioErrors({});
     }
   }
@@ -690,9 +630,10 @@ function addContract() {
     }
 
     // monta payload unidade
+    const enderecoCompleto = endereco.trim() + (enderecoNumero && enderecoNumero.trim() ? `, nº ${enderecoNumero.trim()}` : '');
     const payload = {
       nome: nome.trim(),
-      endereco: endereco.trim(),
+      endereco: enderecoCompleto,
       cep: onlyDigits(cep).trim(),
       cidade: cidade.trim(),
       estado: estado.trim(),
@@ -715,16 +656,21 @@ function addContract() {
     try {
       // criar unidade primeiro
       const base = String(API_URL || '').replace(/\/$/, '');
+      console.log('🔧 Criando unidade com payload:', payload);
+      console.log('🔧 URL:', `${base}/unidades`, 'Token:', !!accessToken);
       const r = await fetchWithAuth(`${base}/unidades`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      console.log('🔧 Resposta da unidade - Status:', r.status, 'OK:', r.ok);
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
+        console.error('❌ Erro ao criar unidade - Status:', r.status, 'Body:', body);
         throw new Error(body?.erro || `Erro criando unidade: ${r.status}`);
       }
       const unidade = await r.json();
+      console.log('✅ Unidade criada com sucesso:', unidade);
 
       // 1) Criar fornecedores que estão com isNew === true
       const tempToRealFornecedor = {}; // tempId -> realId
@@ -867,6 +813,32 @@ function addContract() {
 
 const [newItems, setNewItems] = useState({});
 
+  // Helper para garantir que newItems[contractIndex] sempre existe
+  const getNewItem = (contractIndex) => {
+    return newItems[contractIndex] || {};
+  };
+
+  // Unidades de medida (opções vindas do backend)
+  useEffect(() => {
+    if (!(open && accessToken)) {
+      setUnidadesMedidaOptions([]);
+      return;
+    }
+    async function fetchUnidadesMedida() {
+      try {
+        const base = String(API_URL || '').replace(/\/$/, '');
+        const res = await fetchWithAuth(`${base}/unidades/unidades-medida/opcoes`, { method: 'GET' });
+        if (!res.ok) return console.warn('Falha ao carregar unidades de medida:', res.status);
+        const json = await res.json();
+        if (!json?.sucesso) return console.warn('unidades medida retornou erro:', json);
+        setUnidadesMedidaOptions(json.opcoes || []);
+      } catch (err) {
+        console.error('Erro buscando unidades de medida:', err);
+      }
+    }
+    fetchUnidadesMedida();
+  }, [open, accessToken, fetchWithAuth]);
+
 function updateNewItem(contractIndex, field, value) {
   setNewItems(prev => ({
     ...prev,
@@ -884,6 +856,18 @@ function addItemToContract(contractIndex) {
   setContracts(prev => {
     const copy = [...prev];
     copy[contractIndex].itens = copy[contractIndex].itens || [];
+    
+    // Verificar se item com mesmo nome já existe
+    const itemNomeNormalizado = item.nome.trim().toLowerCase();
+    const jaExiste = copy[contractIndex].itens.some(
+      i => i.nome.trim().toLowerCase() === itemNomeNormalizado
+    );
+    
+    if (jaExiste) {
+      setFormError('Este item já foi adicionado ao contrato.');
+      return copy;
+    }
+    
     copy[contractIndex].itens.push({
       nome: item.nome,
       quantidade: item.quantidade ? Number(item.quantidade) : null,
@@ -1037,10 +1021,18 @@ function updateContractField(contractIndex, field, value) {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="endereco">Endereço *</Label>
-                  <Textarea id="endereco" value={endereco} onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }} className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")} aria-invalid={!!errors.endereco} aria-describedby={errors.endereco ? "error-endereco" : undefined}/>
-                  {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <Label htmlFor="endereco">Endereço *</Label>
+                    <Textarea id="endereco" value={endereco} onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }} className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")} aria-invalid={!!errors.endereco} aria-describedby={errors.endereco ? "error-endereco" : undefined}/>
+                    {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="enderecoNumero">Número</Label>
+                    <Input id="enderecoNumero" value={enderecoNumero} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, ''); setEnderecoNumero(cleaned); setErrors(prev => { const c = { ...prev }; delete c.enderecoNumero; return c; }); }} placeholder="Nº" />
+                    {errors.enderecoNumero && <p id="error-enderecoNumero" className="text-sm text-red-600 mt-1">{errors.enderecoNumero}</p>}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1069,7 +1061,7 @@ function updateContractField(contractIndex, field, value) {
                         id="imagemInput"
                       />
                       <label htmlFor="imagemInput" className="cursor-pointer">
-                        <div className="w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 transition bg-white">
+                        <div className="w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 transition">
                           {imagemPreview ? (
                             <img src={imagemPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
                           ) : (
@@ -1362,7 +1354,14 @@ function updateContractField(contractIndex, field, value) {
               max={31}
               placeholder="1 a 31"
               value={c.diaPagamento || ""}
-              onChange={(e) => updateContractField(i, "diaPagamento", e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                const cleaned = val.replace(/\D/g, '');
+                const num = cleaned ? parseInt(cleaned, 10) : '';
+                if (num === '' || (num >= 1 && num <= 31)) {
+                  updateContractField(i, "diaPagamento", String(num));
+                }
+              }}
             />
           </div>
 
@@ -1423,50 +1422,62 @@ function updateContractField(contractIndex, field, value) {
           </ul>
 
           {/* FORM PARA NOVO ITEM */}
-          <div className="grid grid-cols-3 gap-3 mt-3 bg-white p-3 rounded border">
+          <div className="grid grid-cols-3 gap-3 mt-3 p-3 rounded border">
             <Input
               placeholder="Nome do item"
-              value={newItems?.[i]?.nome || ""}
+              value={getNewItem(i).nome || ""}
               onChange={(e) => updateNewItem(i, "nome", e.target.value)}
             />
 
             <Input
               placeholder="Qtd"
-              value={newItems?.[i]?.quantidade || ""}
-              onChange={(e) => updateNewItem(i, "quantidade", e.target.value)}
+              value={getNewItem(i).quantidade || ""}
+              onChange={(e) => updateNewItem(i, "quantidade", e.target.value.replace(/\D/g, ''))}
             />
 
             <Select
-              value={newItems?.[i]?.unidadeMedida || ""}
+              value={getNewItem(i).unidadeMedida || ""}
               onValueChange={(v) => updateNewItem(i, "unidadeMedida", v)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Unid" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="KG">KG</SelectItem>
-                <SelectItem value="G">G</SelectItem>
-                <SelectItem value="UNIDADE">UNIDADE</SelectItem>
-                <SelectItem value="CABÊÇA">CABÊÇA</SelectItem>
-                <SelectItem value="LITRO">LITRO</SelectItem>
+              <SelectContent className="z-[1002]">
+                {unidadesMedidaOptions && unidadesMedidaOptions.length > 0 ? (
+                  unidadesMedidaOptions.map((opcao) => (
+                    <SelectItem key={opcao.valor || opcao.label} value={opcao.valor}>
+                      {opcao.label}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="KG">KG</SelectItem>
+                    <SelectItem value="G">G</SelectItem>
+                    <SelectItem value="UNIDADE">UNIDADE</SelectItem>
+                    <SelectItem value="LITRO">LITRO</SelectItem>
+                    <SelectItem value="TONELADA">TONELADA</SelectItem>
+                    <SelectItem value="METRO">METRO</SelectItem>
+                    <SelectItem value="METRO_QUADRADO">METRO²</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
 
             <Input
               placeholder="Preço Unitário"
-              value={newItems?.[i]?.precoUnitario || ""}
-              onChange={(e) => updateNewItem(i, "precoUnitario", e.target.value)}
+              value={getNewItem(i).precoUnitario || ""}
+              onChange={(e) => updateNewItem(i, "precoUnitario", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'))}
             />
 
             <Input
               placeholder="Peso por unidade"
-              value={newItems?.[i]?.pesoUnidade || ""}
-              onChange={(e) => updateNewItem(i, "pesoUnidade", e.target.value)}
+              value={getNewItem(i).pesoUnidade || ""}
+              onChange={(e) => updateNewItem(i, "pesoUnidade", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'))}
             />
 
             <Input
               placeholder="Raça (opcional)"
-              value={newItems?.[i]?.raca || ""}
+              value={getNewItem(i).raca || ""}
               onChange={(e) => updateNewItem(i, "raca", e.target.value)}
             />
 
@@ -1534,7 +1545,7 @@ function updateContractField(contractIndex, field, value) {
                           <Label htmlFor="novo-gerente-nome">Nome *</Label>
                           <Input
                             id="novo-gerente-nome"
-                            value={newGerenteData.nome}
+                            value={newGerenteData.nome || ""}
                             onChange={(e) => setNewGerenteData(prev => ({ ...prev, nome: e.target.value }))}
                             className={cn(newGerenteErrors.nome && "border-red-500 ring-1 ring-red-500")}
                           />
@@ -1545,7 +1556,7 @@ function updateContractField(contractIndex, field, value) {
                           <Input
                             id="novo-gerente-email"
                             type="email"
-                            value={newGerenteData.email}
+                            value={newGerenteData.email || ""}
                             onChange={(e) => setNewGerenteData(prev => ({ ...prev, email: e.target.value }))}
                             className={cn(newGerenteErrors.email && "border-red-500 ring-1 ring-red-500")}
                           />
@@ -1557,22 +1568,53 @@ function updateContractField(contractIndex, field, value) {
                           <Label htmlFor="novo-gerente-telefone">Telefone *</Label>
                           <Input
                             id="novo-gerente-telefone"
-                            value={newGerenteData.telefone}
+                            value={newGerenteData.telefone || ""}
                             onChange={(e) => setNewGerenteData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
                             className={cn(newGerenteErrors.telefone && "border-red-500 ring-1 ring-red-500")}
                           />
                           {newGerenteErrors.telefone && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.telefone}</p>}
                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="novo-gerente-senha">Senha *</Label>
-                          <Input
-                            id="novo-gerente-senha"
-                            type="password"
-                            value={newGerenteData.senha}
-                            onChange={(e) => setNewGerenteData(prev => ({ ...prev, senha: e.target.value }))}
-                            className={cn(newGerenteErrors.senha && "border-red-500 ring-1 ring-red-500")}
-                          />
+                          <div className="relative">
+                            <Input
+                              id="novo-gerente-senha"
+                              type={showGerenteSenha ? "text" : "password"}
+                              value={newGerenteData.senha || ""}
+                              onChange={(e) => setNewGerenteData(prev => ({ ...prev, senha: e.target.value }))}
+                              className={cn(newGerenteErrors.senha && "border-red-500 ring-1 ring-red-500", "pr-10")}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowGerenteSenha(!showGerenteSenha)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showGerenteSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
                           {newGerenteErrors.senha && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.senha}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="novo-gerente-confirma-senha">Confirmar Senha *</Label>
+                          <div className="relative">
+                            <Input
+                              id="novo-gerente-confirma-senha"
+                              type={showGerenteConfirmaSenha ? "text" : "password"}
+                              value={newGerenteData.confirmaSenha || ""}
+                              onChange={(e) => setNewGerenteData(prev => ({ ...prev, confirmaSenha: e.target.value }))}
+                              className={cn(newGerenteErrors.confirmaSenha && "border-red-500 ring-1 ring-red-500", "pr-10")}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowGerenteConfirmaSenha(!showGerenteConfirmaSenha)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showGerenteConfirmaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
+                          {newGerenteErrors.confirmaSenha && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.confirmaSenha}</p>}
                         </div>
                       </div>
                     </div>
@@ -1591,7 +1633,7 @@ function updateContractField(contractIndex, field, value) {
                         <Label htmlFor="novo-funcionario-nome">Nome *</Label>
                         <Input
                           id="novo-funcionario-nome"
-                          value={newFuncionarioData.nome}
+                          value={newFuncionarioData.nome || ""}
                           onChange={(e) => setNewFuncionarioData(prev => ({ ...prev, nome: e.target.value }))}
                           className={cn(newFuncionarioErrors.nome && "border-red-500 ring-1 ring-red-500")}
                         />
@@ -1602,7 +1644,7 @@ function updateContractField(contractIndex, field, value) {
                         <Input
                           id="novo-funcionario-email"
                           type="email"
-                          value={newFuncionarioData.email}
+                          value={newFuncionarioData.email || ""}
                           onChange={(e) => setNewFuncionarioData(prev => ({ ...prev, email: e.target.value }))}
                           className={cn(newFuncionarioErrors.email && "border-red-500 ring-1 ring-red-500")}
                         />
@@ -1614,22 +1656,53 @@ function updateContractField(contractIndex, field, value) {
                         <Label htmlFor="novo-funcionario-telefone">Telefone *</Label>
                         <Input
                           id="novo-funcionario-telefone"
-                          value={newFuncionarioData.telefone}
+                          value={newFuncionarioData.telefone || ""}
                           onChange={(e) => setNewFuncionarioData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
                           className={cn(newFuncionarioErrors.telefone && "border-red-500 ring-1 ring-red-500")}
                         />
                         {newFuncionarioErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFuncionarioErrors.telefone}</p>}
                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="novo-funcionario-senha">Senha *</Label>
-                        <Input
-                          id="novo-funcionario-senha"
-                          type="password"
-                          value={newFuncionarioData.senha}
-                          onChange={(e) => setNewFuncionarioData(prev => ({ ...prev, senha: e.target.value }))}
-                          className={cn(newFuncionarioErrors.senha && "border-red-500 ring-1 ring-red-500")}
-                        />
+                        <div className="relative">
+                          <Input
+                            id="novo-funcionario-senha"
+                            type={showFuncionarioSenha ? "text" : "password"}
+                            value={newFuncionarioData.senha || ""}
+                            onChange={(e) => setNewFuncionarioData(prev => ({ ...prev, senha: e.target.value }))}
+                            className={cn(newFuncionarioErrors.senha && "border-red-500 ring-1 ring-red-500", "pr-10")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowFuncionarioSenha(!showFuncionarioSenha)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showFuncionarioSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                         {newFuncionarioErrors.senha && <p className="text-sm text-red-600 mt-1">{newFuncionarioErrors.senha}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-funcionario-confirma-senha">Confirmar Senha *</Label>
+                        <div className="relative">
+                          <Input
+                            id="novo-funcionario-confirma-senha"
+                            type={showFuncionarioConfirmaSenha ? "text" : "password"}
+                            value={newFuncionarioData.confirmaSenha || ""}
+                            onChange={(e) => setNewFuncionarioData(prev => ({ ...prev, confirmaSenha: e.target.value }))}
+                            className={cn(newFuncionarioErrors.confirmaSenha && "border-red-500 ring-1 ring-red-500", "pr-10")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowFuncionarioConfirmaSenha(!showFuncionarioConfirmaSenha)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showFuncionarioConfirmaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                        {newFuncionarioErrors.confirmaSenha && <p className="text-sm text-red-600 mt-1">{newFuncionarioErrors.confirmaSenha}</p>}
                       </div>
                     </div>
                   </div>

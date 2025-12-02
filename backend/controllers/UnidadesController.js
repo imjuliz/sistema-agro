@@ -146,6 +146,11 @@ export async function createUnidadeController(req, res) {
   try {
     let data = req.body;
 
+    // Normalizar tipo para maiúsculas
+    if (data.tipo) {
+      data.tipo = String(data.tipo).toUpperCase();
+    }
+
     // Se imagemBase64 foi enviada, processar ela
     if (data.imagemBase64 && data.imagemBase64.startsWith('data:image')) {
       // Aqui você pode:
@@ -159,7 +164,15 @@ export async function createUnidadeController(req, res) {
       delete data.imagemBase64; // remover campo indesejado
     }
 
-    const resultado = await createUnidade(data);
+    // Validar dados com schema
+    const dataValidada = unidadeSchema.parse(data);
+
+    // Se a unidade é do tipo FAZENDA e não tem contratos, setar como INATIVA
+    if (dataValidada.tipo === 'FAZENDA' && (!dataValidada.contratos || dataValidada.contratos.length === 0)) {
+      dataValidada.status = 'INATIVA';
+    }
+
+    const resultado = await createUnidade(dataValidada);
     if (!resultado.sucesso) {
       return res.status(400).json(resultado);
     }

@@ -7,7 +7,7 @@ const router = express.Router();
 
 // ROTAS NÃO-DINÂMICAS PRIMEIRO (antes de /:id)
 router.get("/", auth(["gerente_matriz"]), getUnidadesController);
-router.post("/", auth(["gerente_matriz"]), createUnidadeController);
+router.post("/", auth(), createUnidadeController);
 
 router.get('/fazendas', auth(["gerente_matriz"]), getFazendasController);
 router.get('/cidades', auth(), getCitySuggestionsController);
@@ -17,6 +17,27 @@ router.get('/lojas', auth(), getLojaController);
 router.get('/contar-lojas', auth(["gerente_matriz"]), contarLojasController);
 
 router.get('/matrizes', auth(), getMatrizController);
+
+router.get("/unidades-medida/opcoes", (req, res) => {
+  const opcoes = [
+    { valor: "QUILOGRAMA", label: "Quilograma (kg)" },
+    { valor: "GRAMA", label: "Grama (g)" },
+    { valor: "TONELADA", label: "Tonelada (t)" },
+    { valor: "LITRO", label: "Litro (L)" },
+    { valor: "MILILITRO", label: "Mililitro (ml)" },
+    { valor: "METRO", label: "Metro (m)" },
+    { valor: "METRO_QUADRADO", label: "Metro Quadrado (m²)" },
+    { valor: "METRO_CUBICO", label: "Metro Cúbico (m³)" },
+    { valor: "UNIDADE", label: "Unidade" },
+    { valor: "DUZIA", label: "Dúzia" },
+    { valor: "CAIXA", label: "Caixa" },
+    { valor: "SACO", label: "Saco" },
+    { valor: "LATA", label: "Lata" },
+    { valor: "FRASCO", label: "Frasco" },
+    { valor: "POTE", label: "Pote" }
+  ];
+  return res.json({ sucesso: true, opcoes });
+});
 
 router.get("/cep/:cep", buscarCepController);
 router.get("/cep", buscarCepController);
