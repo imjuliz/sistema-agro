@@ -49,24 +49,43 @@ export async function getAnimaisPelaRaca(raca) {
   }
 }
 
-export async function getAnimaisRentabilidade(id, rentabilidade) {
+export async function calcularRentabilidadeAnimal({ animalId, loteId }) {
   try {
-    const lote_rentabilidade = await prisma.lote.findMany({ 
-      where: { id: id, rentabilidade: Number(rentabilidade) }
+    const animal = await prisma.animal.findUnique({
+      where: { id: animalId }
     });
+
+    if (!animal) {
+      return { sucesso: false, erro: "Animal não encontrado." };
+    }
+
+    const lote = await prisma.lote.findUnique({
+      where: { id: loteId }
+    });
+
+    if (!lote) {
+      return { sucesso: false, erro: "Lote não encontrado." };
+    }
+
+    // Regra de negócio → cálculo
+    const custoAnimal = Number(animal.custo ?? 0);
+    const qntdItens = Number(lote.qntdItens ?? 0);
+    const rentabilidade = qntdItens * custoAnimal;
+
     return {
       sucesso: true,
-      lote_rentabilidade,
-      message: "Lotes com rentabilidade listados com sucesso!!"
-    }
-  } catch (error) {
+      rentabilidade
+    };
+
+  } catch (e) {
     return {
       sucesso: false,
-      message: "Erro ao listar lotes com rentabilidade!!",
-      error: error.message
-    }
+      erro: "Erro ao calcular rentabilidade.",
+      detalhes: e.message
+    };
   }
 }
+
 
 export async function getAnimaisPorId(id) {
   try {

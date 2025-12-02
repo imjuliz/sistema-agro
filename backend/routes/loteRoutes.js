@@ -16,7 +16,7 @@ const router = express.Router();
 router.get("/", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLoteController);
 router.get("/tipo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLotePorTipoController);
 // router.get("/ativo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLoteAtividadeController);
-router.get("/vegetal/:tipo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), geLotePorTipoVegetaisController);
+router.get("/vegetal", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), geLotePorTipoVegetaisController);
 router.get("/:id", auth(["GERENTE_FAZENDA"]), getLotePorIdController);
 router.post("/:unidadeId/:contratoId", auth(["GERENTE_FAZENDA"]), createLoteController);
 router.put("/:id/:unidadeId/:contratoId", auth(["GERENTE_FAZENDA"]), updateLoteController);

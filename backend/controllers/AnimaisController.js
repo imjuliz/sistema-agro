@@ -1,4 +1,4 @@
-import { getAnimais, getAnimaisPelaRaca, getAnimaisRentabilidade, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
+import { getAnimais, getAnimaisPelaRaca, calcularRentabilidadeAnimal, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
 import { getLotePorId } from "../models/lote.js";
 import { animaisSchema, idSchema, loteIdSchema } from "../schemas/animaisSchemas.js";
 
@@ -49,46 +49,36 @@ export async function getAnimaisPelaRacaController(req, res) {
   }
 }
 
-export async function getAnimaisRentabilidadeController(req, res) {
+export async function calcularRentabilidadeAnimalController(req, res) {
   try {
-    const { id } = idSchema.parse(req.params);
-    const { id_lote } = loteIdSchema.parse(req.query);
-    console.log(id, id_lote)
+    const { id: animalId } = idSchema.parse(req.params);
+    const { id_lote: loteId } = loteIdSchema.parse(req.query);
 
-    // Validações básicas
-    if (isNaN(id) || isNaN(id_lote)) {
-      return res.status(400).json({ sucesso: false, erro: "id e id_lote precisam ser números." });
-    }
-    if (id <= 0 || id_lote <= 0) {
-      return res.status(400).json({ sucesso: false, erro: "id e id_lote precisam ser informados e maiores que zero." });
-    }
+    // Chama regras de negócio nos models
+    const resultado = await calcularRentabilidadeAnimal({
+      animalId,
+      loteId
+    });
 
-    const animalInfo = await getAnimaisPorId(id);
-    const loteInfo = await getLotePorId(id_lote);
-
-    if (!animalInfo || !animalInfo.sucesso || !animalInfo.animais || !loteInfo || !loteInfo.sucesso || !loteInfo.lote) {
-      return res.status(404).json({ sucesso: false, erro: "Lote ou Animal não encontrado." });
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
     }
 
-    const custoAnimal = Number(animalInfo.animais.custo ?? 0);
-    const qntdItens = Number(loteInfo.lote.lote ?? 0);
-
-    const rentabilidade = qntdItens * custoAnimal;
-    const loteRentabilidade = await getAnimaisRentabilidade(id_lote, rentabilidade);
-    
     return res.status(200).json({
       sucesso: true,
-      loteRentabilidade,
-      message: "Lotes com rentabilidade listados com sucesso."
-    })
+      rentabilidade: resultado.rentabilidade,
+      message: "Rentabilidade calculada com sucesso."
+    });
+
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes com rentabilidade.",
-      detalhes: error.message // opcional, para debug
-    })
+      detalhes: error.message
+    });
   }
 }
+
 
 export async function getAnimaisPorIdController(req, res) {
   try {
