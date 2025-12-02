@@ -112,7 +112,7 @@ export default function FinanceiroTable() {
               <TableRow key={item.id} className={cn(selected.includes(item.id) && "bg-muted/50")}>
                 <TableCell>{item.usuarioId}</TableCell>
                 <TableCell>{item.descricao}</TableCell>
-                <TableCell>{item.tipo}</TableCell>
+                <TableCell>{item.tipoMovimento}</TableCell>
                 <TableCell>{item.categoria}</TableCell>
                 <TableCell>{item.formaPagamento}</TableCell>
                 <TableCell>R$ {item.valor}</TableCell>

@@ -1,4 +1,4 @@
-import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario } from '../models/Financeiro.js';
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas } from '../models/Financeiro.js';
 import fs from "fs";
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
@@ -128,34 +128,34 @@ export const listarSaidasPorUnidadeController = async (req, res) => { //FUNCIONA
   }
 };
 
-//listar saidas especificas
-export const listarSaidasController = async (req, res) => {
-    try {
-        // unidadeId vem da autenticação
-        const unidadeId = req.params.unidadeId; //quando implemetar mudar para  req.usuario.unidadeId ou sei la
+// //listar saidas especificas
+// export const listarSaidasController = async (req, res) => {
+//     try {
+//         // unidadeId vem da autenticação
+//         const unidadeId = req.params.unidadeId; //quando implemetar mudar para  req.usuario.unidadeId ou sei la
 
-        // tipo e data vêm do front
-        // const { tipo, data } = req.body;
+//         // tipo e data vêm do front
+//         // const { tipo, data } = req.body;
 
-        if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
-    }
+//         if (!unidadeId) {
+//       return res.status(401).json({
+//         sucesso: false,
+//         erro: "Sessão inválida ou unidade não identificada.",
+//       });
+//     }
 
-        const resposta = await listarSaidas(unidadeId);
+//         const resposta = await listarSaidas(unidadeId);
 
-        return res.status(200).json(resposta);
+//         return res.status(200).json(resposta);
 
-    } catch (error) {
-        return res.status(500).json({
-            sucesso: false,
-            mensagem: "Erro no controller ao listar saídas",
-            detalhes: error.message
-        });
-    }
-};
+//     } catch (error) {
+//         return res.status(500).json({
+//             sucesso: false,
+//             mensagem: "Erro no controller ao listar saídas",
+//             detalhes: error.message
+//         });
+//     }
+// };
 
 export const somarDiariaController = async (req, res) => { //FUNCIONANDO
   try {
@@ -280,6 +280,21 @@ export const listarVendasController = async (req, res) => { //FUNCIONANDO
     return res.status(500).json({ erro: 'Erro ao listar vendas.' })
   }
 }
+
+export const listarDespesasController = async (req, res) => { 
+  try {
+      const unidadeId = req.params.unidadeId;
+      const despesas = await listarDespesas(unidadeId);
+      if (despesas.sucesso) {
+          return res.status(200).json(despesas);
+      } else {
+          return res.status(500).json({ erro: despesas.erro });
+      }
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ erro: 'Erro ao listar despesas.' });
+  }
+};
 
 
 // ------ 18/11/25

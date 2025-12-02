@@ -626,6 +626,7 @@ model Caixa {
 
 model Venda {
   id                Int                @id @default(autoincrement())
+  nomeCliente String?
   caixaId           Int                @map("caixa_id")
   usuarioId         Int                @map("usuario_id")
   unidadeId         Int                @map("unidade_id")

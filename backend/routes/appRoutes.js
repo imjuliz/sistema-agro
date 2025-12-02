@@ -13,7 +13,8 @@ import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqu
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
-    somarEntradaMensalController, listarVendasController, listarSaidasController, calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController
+    somarEntradaMensalController, listarVendasController,  calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController,
+    listarDespesasController
 } from "../controllers/FinanceiroController.js";
 import { getDashboardDataController } from '../controllers/dashboardController.js';
 
@@ -24,6 +25,7 @@ router.post("/translate", translateText);
 router.get("/vendas/ultimos-6-meses",auth,contarVendasPorMesUltimos6MesesController);
 router.post("/vendas/criar", auth, criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
+router.get("/listarDespesas/:unidadeId", listarDespesasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
 router.get("/vendas/media-por-transacao", auth, calcularMediaPorTransacaoController);

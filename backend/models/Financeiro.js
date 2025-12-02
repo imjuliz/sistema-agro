@@ -188,9 +188,9 @@ export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
   };
 }
 
-export const listarVendas = async (unidadeId) => { //FUNCIONA - MAS PRECISA INSERIR DADOS NA TABELA
+export const listarVendas = async (unidadeId) => { //FUNCIONA 
     try {
-        const vendas = await prisma.Venda.findMany({ where: { unidadeId: Number(unidadeId) }, })
+        const vendas = await prisma.Venda.findMany({ where: { unidadeId: Number(unidadeId) },});
         return ({
             sucesso: true,
             vendas,
@@ -204,6 +204,48 @@ export const listarVendas = async (unidadeId) => { //FUNCIONA - MAS PRECISA INSE
         })
     }
 }
+
+export const listarDespesas = async (unidadeId) => { 
+    try {
+        const despesas = await prisma.Financeiro.findMany({
+            where: { unidadeId: Number(unidadeId), tipoMovimento: 'SAIDA' },
+            select: {
+                categoria: true,
+                valor: true
+            }
+        });
+
+        // Agrupar as despesas por categoria
+        const categorias = despesas.reduce((acc, despesa) => {
+            const categoria = despesa.categoria || "Outros"; // Caso não tenha categoria, usar "Outros"
+            if (acc[categoria]) {
+                acc[categoria] += despesa.valor;
+            } else {
+                acc[categoria] = despesa.valor;
+            }
+            return acc;
+        }, {});
+
+        // Transformar em array para fácil consumo pelo gráfico
+        const categoriaArray = Object.keys(categorias).map(categoria => ({
+            browser: categoria,
+            visitors: categorias[categoria], // Reutilizando a chave "visitors" para o valor
+            fill: "var(--color-" + categoria.toLowerCase().replace(/ /g, "-") + ")" // Estilo para cores diferentes
+        }));
+
+        return {
+            sucesso: true,
+            categoriaArray,
+            message: "Despesas listadas com sucesso!!"
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao listar despesas",
+            detalhes: error.message
+        };
+    }
+};
 
 //do arquivo Loja.js
 export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA DA UNIDADE
@@ -418,27 +460,29 @@ export const calcularSaldoLiquido = async (unidadeId) => {
     }
 };
 
-//select de tudo em saidas
 export async function listarSaidasPorUnidade(unidadeId) {
     try {
-        const saidas = await prisma.financeiro.findMany({
-            where: { unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
-            // orderBy: { data: "desc", },
-        });
-
-        return {
-            sucesso: true,
-            unidadeId: Number(unidadeId),
-            saidas: saidas,
-        };
+      const saidas = await prisma.financeiro.findMany({
+        where: {
+          unidadeId: Number(unidadeId), // filtra todos com a mesma unidade
+          tipoMovimento: "SAIDA",        // filtra apenas os movimentos do tipo "SAIDA"
+        },
+        // orderBy: { data: "desc" }, // Você pode descomentar caso queira ordenar por data
+      });
+  
+      return {
+        sucesso: true,
+        unidadeId: Number(unidadeId),
+        saidas: saidas,
+      };
     } catch (error) {
-        console.error("Erro ao buscar saidas", error);
-        return {
-            sucesso: false,
-            erro: error.message,
-        };
+      console.error("Erro ao buscar saídas", error);
+      return {
+        sucesso: false,
+        erro: error.message,
+      };
     }
-}
+  }
 
 // ----------- 18/11/2025
 export const criarNotaFiscal = async (data) => {
