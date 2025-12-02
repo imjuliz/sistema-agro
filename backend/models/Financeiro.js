@@ -205,47 +205,47 @@ export const listarVendas = async (unidadeId) => { //FUNCIONA
     }
 }
 
-export const listarDespesas = async (unidadeId) => { 
+export const listarDespesas = async (unidadeId) => {
     try {
-        const despesas = await prisma.Financeiro.findMany({
-            where: { unidadeId: Number(unidadeId), tipoMovimento: 'SAIDA' },
-            select: {
-                categoria: true,
-                valor: true
-            }
-        });
-
-        // Agrupar as despesas por categoria
-        const categorias = despesas.reduce((acc, despesa) => {
-            const categoria = despesa.categoria || "Outros"; // Caso não tenha categoria, usar "Outros"
-            if (acc[categoria]) {
-                acc[categoria] += despesa.valor;
-            } else {
-                acc[categoria] = despesa.valor;
-            }
-            return acc;
-        }, {});
-
-        // Transformar em array para fácil consumo pelo gráfico
-        const categoriaArray = Object.keys(categorias).map(categoria => ({
-            browser: categoria,
-            visitors: categorias[categoria], // Reutilizando a chave "visitors" para o valor
-            fill: "var(--color-" + categoria.toLowerCase().replace(/ /g, "-") + ")" // Estilo para cores diferentes
-        }));
-
-        return {
-            sucesso: true,
-            categoriaArray,
-            message: "Despesas listadas com sucesso!!"
-        };
+      const despesas = await prisma.Financeiro.findMany({
+        where: { unidadeId: Number(unidadeId), tipoMovimento: 'SAIDA' },
+        select: {
+          categoria: true,
+          valor: true
+        }
+      });
+  
+      // Agrupar as despesas por categoria
+      const categorias = despesas.reduce((acc, despesa) => {
+        const categoria = despesa.categoria || "Outros"; // Caso não tenha categoria, usar "Outros"
+        if (acc[categoria]) {
+          acc[categoria] += despesa.valor;
+        } else {
+          acc[categoria] = despesa.valor;
+        }
+        return acc;
+      }, {});
+  
+      // Transformar em array para fácil consumo pelo gráfico
+      const categoriaArray = Object.keys(categorias).map(categoria => ({
+        browser: categoria,
+        visitors: categorias[categoria], // Reutilizando a chave "visitors" para o valor
+        fill: "var(--color-" + categoria.toLowerCase().replace(/ /g, "-") + ")" // Estilo para cores diferentes
+      }));
+  
+      return {
+        sucesso: true,
+        categoriaArray,
+        message: "Despesas listadas com sucesso!!"
+      };
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao listar despesas",
-            detalhes: error.message
-        };
+      return {
+        sucesso: false,
+        erro: "Erro ao listar despesas",
+        detalhes: error.message
+      };
     }
-};
+  };
 
 //do arquivo Loja.js
 export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA DA UNIDADE

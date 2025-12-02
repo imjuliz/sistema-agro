@@ -6,6 +6,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem, } from "@/components/ui/toggle-group"
 import { Pie, PieChart } from "recharts"
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 //grafico de ondas
 export const description = "An interactive area chart"
@@ -136,21 +138,58 @@ export function ChartBarMultiple() {
 }
 
 //gráfico de pizza
-export const description3 = "A donut chart"
+// Função para buscar os dados de despesas (por exemplo, categorias de despesas)
+const listarDespesas = async (unidadeId, fetchWithAuth) => {
+  try {
+    const res = await fetchWithAuth(`${API_URL}listarDespesas/${unidadeId}`);
+    if (!res.ok) {
+      throw new Error("Erro ao carregar despesas");
+    }
+    const body = await res.json();
 
-const chartData3 = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" }, { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" }, { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 90, fill: "var(--color-other)" },
-]
+    if (!body.sucesso) {
+      throw new Error(body.erro);
+    }
 
-const chartConfig3 = {
-  visitors: { label: "Visitors", },chrome: { label: "Chrome", color: "var(--chart-1)", },
-  safari: { label: "Safari", color: "var(--chart-2)", },firefox: { label: "Firefox", color: "var(--chart-3)", },
-  edge: { label: "Edge", color: "var(--chart-4)", },other: { label: "Other", color: "var(--chart-5)", },
-}
+    // Transformando as despesas para o formato esperado pelo gráfico
+    const categoriaArray = body.categoriaArray.map((categoria) => ({
+      browser: categoria.browser,
+      visitors: categoria.visitors,
+      fill: categoria.fill,
+    }));
 
-export function ChartPieDonut() {
+    return categoriaArray;
+  } catch (error) {
+    console.error("Erro ao carregar despesas:", error);
+    return [];
+  }
+};
+export function ChartPieDonut({ unidadeId }) {
+  const { fetchWithAuth } = useAuth(); // Usando fetchWithAuth do contexto
+  const [chartData, setChartData] = React.useState([]);
+
+  // Carregar as despesas ao montar o componente
+  React.useEffect(() => {
+    const fetchData = async () => {
+      if (!unidadeId) return;
+      const data = await listarDespesas(unidadeId, fetchWithAuth);
+      setChartData(data);
+    };
+
+    fetchData();
+  }, [unidadeId, fetchWithAuth]);
+
+  if (chartData.length === 0) {
+    return (
+      <Card className="flex flex-col w-full h-full">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Despesas do Mês</CardTitle>
+          <CardDescription>Não há dados disponíveis</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className="flex flex-col w-full h-full">
       <CardHeader className="items-center pb-0">
@@ -158,15 +197,14 @@ export function ChartPieDonut() {
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig3} className="mx-auto aspect-square max-h-[450px]">
+        <ChartContainer config={chartConfig3} className="mx-auto aspect-square max-h-[450px]">
           <PieChart>
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie data={chartData3} dataKey="visitors" nameKey="browser" innerRadius={100} />
+            <Pie data={chartData} dataKey="visitors" nameKey="browser" innerRadius={100} />
           </PieChart>
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }
 

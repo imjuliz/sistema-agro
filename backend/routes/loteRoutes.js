@@ -1,11 +1,5 @@
-import {
-    getLoteController,
-    getLotePorTipoController,
-    geLotePorTipoVegetaisController,
-    getLotePorIdController,
-    createLoteController,
-    updateLoteController,
-    deleteLoteController,
+import {getLoteController,getLotePorTipoController,geLotePorTipoVegetaisController,getLotePorIdController,createLoteController,
+    updateLoteController,deleteLoteController,
   } from "../controllers/LoteController.js";
 import { getAtividadeLoteTipoPlantioController, createAtividadeLoteController } from "../controllers/AtividadeLoteController.js";
 import express from "express";

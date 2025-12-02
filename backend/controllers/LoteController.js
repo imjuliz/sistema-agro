@@ -15,30 +15,6 @@ export async function getLoteController(req, res) {
   }
 }
 
-// N possui coluna atividade
-// export async function getLoteAtividadeController(req, res) {
-//   const { atividade } = req.query;
-//   try {
-//     // Validações
-//     if (atividade === true) {
-//       const lotes_ativos = await getLoteAtividade((atividade = true));
-//     } else {
-//       const lotes_inativos = await getLoteAtividade((atividade = false));
-//     }
-//     return res.status(200).json({
-//       sucesso: true,
-//       lotes_ativos,
-//       message: "Lotes ativos listados com sucesso.",
-//     })
-//   } catch (error) {
-//     return res.status(500).json({
-//       sucesso: false,
-//       erro: "Erro ao listar lotes ativos.",
-//       detalhes: error.message, // opcional, para debug
-//     })
-//   }
-// }
-
 export async function getLotePorTipoController(req, res) {
   try {
     const { tipo } = req.query;

@@ -18,25 +18,6 @@ export async function getLote() {
   }
 }
 
-// N possui coluna atividade
-// export async function getLoteAtividade(atividade) {
-//   //testar para ver se funciona
-//   try {
-//     const lotes_ativos = await prisma.lote.findMany({ where: { atividade } })
-//     return {
-//       sucesso: true,
-//       lotes_ativos,
-//       message: "Lotes ativos listados com sucesso!!",
-//     }
-//   } catch (error) {
-//     return {
-//       sucesso: false,
-//       message: "Erro ao listar lotes ativos!!",
-//       error: error.message,
-//     }
-//   }
-// }
-
 export async function getLotePorTipo(tipo) {
   try {
     const loteTipo = await prisma.lote.findMany({
