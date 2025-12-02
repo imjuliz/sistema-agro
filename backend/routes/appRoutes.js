@@ -13,7 +13,7 @@ import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqu
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
-    somarEntradaMensalController, listarVendasController, calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController
+    somarEntradaMensalController, listarVendasController, listarSaidasController, calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController
 } from "../controllers/FinanceiroController.js";
 import { getDashboardDataController } from '../controllers/dashboardController.js';
 
@@ -52,8 +52,8 @@ router.get("/relatorio/producao/:loteId", gerarRelatorioProducaoController);
 //financeiro (de todos os perfis) --------------------------------------------------------------------
 router.get("/saldoLiquido", auth, calcularSaldoLiquidoController);
 router.get("/saldo-final", auth, mostrarSaldoFController);
-// router.get("/saidas/listar", auth, listarSaidasPorUnidadeController);
-router.get("/listarSaidas/:unidadeId", listarSaidasController);
+router.get("/listarSaidas/:unidadeId", listarSaidasPorUnidadeController);
+// router.get("/listarSaidas/:unidadeId", listarSaidasController);
 router.get("/somarEntradasMensais/:unidadeId", somarEntradaMensalController);
 router.get("/somarSaidas/:unidadeId", somarSaidasController);
 

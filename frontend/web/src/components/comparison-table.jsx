@@ -1,80 +1,131 @@
 "use client";
-import * as React from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
-const defaultData = [
-  { id: 1, category: "Laptop", price: 1200, rating: 4.5, stock: 20 },
-  { id: 2, category: "Tablet", price: 600, rating: 4.1, stock: 35 },
-  { id: 3, category: "Smartphone", price: 800, rating: 4.7, stock: 50 },
-  { id: 4, category: "Monitor", price: 300, rating: 4.0, stock: 15 },
-  { id: 5, category: "Laptop", price: 1500, rating: 4.8, stock: 10 },
-  { id: 6, category: "Tablet", price: 550, rating: 4.2, stock: 28 },
-]
+export default function FinanceiroTable() {
+  const { fetchWithAuth, user } = useAuth();
+  const [saidas, setSaidas] = useState([]);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [selected, setSelected] = useState([]);
 
-export default function ComparisonTable() {
-  const [selected, setSelected] = React.useState([])
-  const [search, setSearch] = React.useState("")
-  const [category, setCategory] = React.useState("all")
+  // Carregar saídas do backend
+  useEffect(() => {
+    const carregarSaidas = async () => {
+      if (!user?.unidadeId) return;
 
-  const toggleSelect = (id) => {setSelected((prev) =>prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 2 ? [...prev, id] : prev)}
+      try {
+        const res = await fetchWithAuth(`${API_URL}listarSaidas/${user.unidadeId}`);
+        if (res.ok) {
+          const body = await res.json();
+          setSaidas(body.saidas || []);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar saídas:", error);
+      }
+    };
 
-  const resetSelection = () => setSelected([])
+    carregarSaidas();
+  }, [user?.unidadeId, fetchWithAuth]);
 
-  const filteredData = defaultData.filter((item) => {
-    const matchesSearch = item.category.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = category === "all" || item.category === category
-    return matchesSearch && matchesCategory
-  })
+  // Seleção de linhas
+  const toggleSelect = (id) => {
+    setSelected((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : prev.length < 2
+        ? [...prev, id]
+        : prev
+    );
+  };
 
-  const comparedItems = defaultData.filter((item) => selected.includes(item.id))
+  const resetSelection = () => setSelected([]);
+
+  // Filtros
+  const filteredData = saidas.filter((item) => {
+    const matchesSearch = item.descricao?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = category === "all" || item.categoria === category;
+    return matchesSearch && matchesCategory;
+  });
+
+  const comparedItems = saidas.filter((item) => selected.includes(item.id));
 
   return (
-    <Card className="w-full  mx-auto h-full">
+    <Card className="w-full mx-auto h-full">
       <CardContent className="p-3">
         <h2 className="text-xl font-semibold mb-4">Tabela de Saídas</h2>
 
-        {/* Filters */}
+        {/* Filtros */}
         <div className="flex items-center gap-3 mb-4">
-          <Input placeholder="Pesquisar categoria..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+          <Input
+            placeholder="Pesquisar descrição..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs"
+          />
+
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by category" /></SelectTrigger>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar por categoria" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tudo</SelectItem>
-              <SelectItem value="Laptop">Laptop</SelectItem>
-              <SelectItem value="Tablet">Tablet</SelectItem>
-              <SelectItem value="Smartphone">Smartphone</SelectItem>
-              <SelectItem value="Monitor">Monitor</SelectItem>
+              {[...new Set(saidas.map((s) => s.categoria).filter(Boolean))].map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={resetSelection}>Reset</Button>
+
+          <Button variant="outline" onClick={resetSelection}>
+            Reset
+          </Button>
         </div>
 
-        {/* Table */}
+        {/* Tabela */}
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Usuário ID</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Categoria</TableHead>
-              <TableHead>Preço</TableHead>
-              <TableHead>Avaliação</TableHead>
-              <TableHead>Estoque</TableHead>
+              <TableHead>Forma Pagamento</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Valor Pago</TableHead>
+              <TableHead>Data Pagamento</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Selecionar</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {filteredData.map((item) => (
               <TableRow key={item.id} className={cn(selected.includes(item.id) && "bg-muted/50")}>
-                <TableCell className="p-2">{item.category}</TableCell>
-                <TableCell className="p-2">{item.price}</TableCell>
-                <TableCell className="p-2">{item.rating}</TableCell>
-                <TableCell className="p-2">{item.stock}</TableCell>
-                <TableCell className="p-2">
-                  <Button variant={selected.includes(item.id) ? "destructive" : "outline"} size="sm" className={selected.includes(item.id) ? "text-white" : ""} onClick={() => toggleSelect(item.id)}>
-                    {selected.includes(item.id) ? "Remove" : "Compare"}
+                <TableCell>{item.usuarioId}</TableCell>
+                <TableCell>{item.descricao}</TableCell>
+                <TableCell>{item.tipo}</TableCell>
+                <TableCell>{item.categoria}</TableCell>
+                <TableCell>{item.formaPagamento}</TableCell>
+                <TableCell>R$ {item.valor}</TableCell>
+                <TableCell>R$ {item.valorPago ?? 0}</TableCell>
+                <TableCell>{item.dataPagamento ? new Date(item.dataPagamento).toLocaleDateString("pt-BR") : "-"}</TableCell>
+                <TableCell>{item.status}</TableCell>
+                <TableCell>
+                  <Button
+                    variant={selected.includes(item.id) ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() => toggleSelect(item.id)}
+                  >
+                    {selected.includes(item.id) ? "Remover" : "Comparar"}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -82,38 +133,28 @@ export default function ComparisonTable() {
           </TableBody>
         </Table>
 
-        {/* Comparison view */}
+        {/* Comparação */}
         {comparedItems.length === 2 && (
           <div className="mt-6 border-t pt-4">
-            <h3 className="text-lg font-medium mb-3">Comparison Result</h3>
+            <h3 className="text-lg font-medium mb-3">Comparação</h3>
             <div className="grid grid-cols-3 gap-4 text-sm">
-              <div className="font-semibold">Attribute</div>
-              <div className="font-semibold">{comparedItems[0].category}</div>
-              <div className="font-semibold">{comparedItems[1].category}</div>
-
-              <div>Price ($)</div>
-              <div className={cn(comparedItems[0].price < comparedItems[1].price && "text-green-600 dark:text-green-400")}>
-                {comparedItems[0].price}
-              </div>
-              <div className={cn( comparedItems[1].price < comparedItems[0].price && "text-green-600 dark:text-green-400")}>
-                {comparedItems[1].price}
-              </div>
-
-              <div>Rating</div>
-              <div className={cn( comparedItems[0].rating > comparedItems[1].rating && "text-green-600 dark:text-green-400")}>
-                {comparedItems[0].rating}
-              </div>
-              <div className={cn( comparedItems[1].rating > comparedItems[0].rating && "text-green-600 dark:text-green-400")}>
-                {comparedItems[1].rating}
-              </div>
-
-              <div>Stock</div>
-              <div className={cn(comparedItems[0].stock > comparedItems[1].stock && "text-green-600 dark:text-green-400")}>
-                {comparedItems[0].stock}
-              </div>
-              <div className={cn( comparedItems[1].stock > comparedItems[0].stock && "text-green-600 dark:text-green-400")}>
-                {comparedItems[1].stock}
-              </div>
+              {[
+                "Usuário ID",
+                "Descrição",
+                "Tipo",
+                "Categoria",
+                "Forma Pagamento",
+                "Valor",
+                "Valor Pago",
+                "Data Pagamento",
+                "Status",
+              ].map((col, index) => (
+                <React.Fragment key={col}>
+                  <div className="font-semibold">{col}</div>
+                  <div>{comparedItems[0][Object.keys(comparedItems[0])[index]]}</div>
+                  <div>{comparedItems[1][Object.keys(comparedItems[1])[index]]}</div>
+                </React.Fragment>
+              ))}
             </div>
           </div>
         )}

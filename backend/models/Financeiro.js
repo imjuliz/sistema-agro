@@ -421,9 +421,9 @@ export const calcularSaldoLiquido = async (unidadeId) => {
 //select de tudo em saidas
 export async function listarSaidasPorUnidade(unidadeId) {
     try {
-        const saidas = await prisma.saidas.findMany({
+        const saidas = await prisma.financeiro.findMany({
             where: { unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
-            orderBy: { data: "desc", },
+            // orderBy: { data: "desc", },
         });
 
         return {
