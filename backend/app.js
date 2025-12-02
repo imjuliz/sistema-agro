@@ -89,4 +89,22 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 
 app.use('/uploads', express.static(path.resolve('uploads')));
 
+// 404 handler — responde JSON para rotas não encontradas
+app.use((req, res, next) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
+// Global error handler — garante que erros inesperados retornem JSON e logam a stack
+app.use((err, req, res, next) => {
+  // Log completo para debugging
+  console.error('Unhandled error (global handler):', err && err.stack ? err.stack : err);
+
+  // Se headers já foram enviados, delega para o handler padrão
+  if (res.headersSent) return next(err);
+
+  const status = err && err.status ? err.status : 500;
+  const message = err && err.message ? err.message : 'Erro interno';
+  res.status(status).json({ error: message });
+});
+
 export default app;  // servidor é iniciado a partir de `server.js`
