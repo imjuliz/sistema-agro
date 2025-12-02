@@ -1,21 +1,4 @@
-import prisma from '../../prisma/client.js';
-
-// export const listarFornecedores = async (unidadeId) =>{ //tem controller
-//     try{
-//         const fornecedores = await prisma.FornecedorExterno.findMany({where:{ unidadeId: Number(unidadeId)},})
-//         return ({
-//             sucesso: true,
-//             fornecedores,
-//             message: "Fornecedores da unidade listados com sucesso!!"
-//         })
-//     } catch (error) {
-//         return {
-//             sucesso: false,
-//             erro: "Erro ao listar fornecedores",
-//             detalhes: error.message
-//         }
-//     }
-// }
+import prisma from "../prisma/client.js";
 
 export const listarFornecedoresExternos = async (unidadeId) => {
   try {
@@ -48,6 +31,85 @@ export const listarFornecedoresExternos = async (unidadeId) => {
     };
   }
 };
+
+export const listarTodosFornecedoresExternos = async () => {
+  try {
+    const fornecedores = await prisma.fornecedorExterno.findMany({
+      select: {
+        id: true,
+        nomeEmpresa: true,
+        cnpjCpf: true,
+        email: true,
+        telefone: true,
+        endereco: true,
+        descricaoEmpresa: true,
+      },
+      orderBy: { nomeEmpresa: 'asc' },
+    });
+
+    return {
+      sucesso: true,
+      fornecedores,
+      message: "Todos os fornecedores externos listados com sucesso!",
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao listar todos os fornecedores externos",
+      detalhes: error.message,
+    };
+  }
+};
+
+export const criarFornecedorExterno = async (data) => {
+  try {
+    const { nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco } = data;
+
+    if (!nomeEmpresa || !descricaoEmpresa || !cnpjCpf || !telefone) {
+      return { sucesso:false, erro: "nomeEmpresa, descricaoEmpresa, cnpj e telefone são obrigatórios.", field: null };
+    }
+
+    // checar duplicidade por CNPJ, email ou telefone
+    const existing = await prisma.fornecedor.findFirst({
+      where: {
+        OR: [
+          { cnpj: cnpjCpf },
+          { email: email || undefined },
+          { telefone: telefone || undefined }
+        ]
+      },
+      select: { id: true, cnpj: true, email: true, telefone: true }
+    });
+
+    if (existing) {
+      if (existing.cnpj === cnpjCpf) return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
+      if (existing.email && existing.email === email) return { sucesso: false, erro: "Email já cadastrado.", field: "email" };
+      if (existing.telefone && existing.telefone === telefone) return { sucesso: false, erro: "Telefone já cadastrado.", field: "telefone" };
+      return { sucesso: false, erro: "Fornecedor já cadastrado.", field: null };
+    }
+
+    const f = await prisma.fornecedor.create({
+      data: {
+        nomeEmpresa,
+        descricaoEmpresa,
+        cnpj: cnpjCpf,
+        email: email || null,
+        telefone,
+        endereco: endereco || null,
+      },
+      select: { id: true, nomeEmpresa: true, cnpj: true, email: true, telefone: true }
+    });
+
+    return { sucesso: true, fornecedor: f, message: "Fornecedor criado" };
+  } catch (error) {
+    console.error("Erro ao criar fornecedor:", error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('cnpj')) {
+      return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
+    }
+    return { sucesso: false, erro: "Erro ao criar fornecedor.", detalhes: error.message, field: null };
+  }
+};
+
 
 //fazer uma função para buscar fornecedor interno 
 export const listarFornecedoresInternos = async (unidadeId) => { //nesse caso a função é  para as lojas consultarem as fazendas fornecedoras
@@ -250,11 +312,10 @@ export const listarLojasAtendidas = async (unidadeId) => { //função para a faz
   }
 };
 
-export const criarContratoInterno = async (fazendaId, dadosContrato) => { 
+export const criarContratoInterno = async (fazendaId, dadosContrato) => {
   try {
     const {
-      unidadeId,            // ID da loja
-      
+      unidadeId, // loja
       dataInicio,
       dataFim,
       dataEnvio,
@@ -263,34 +324,49 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
       diaPagamento,
       formaPagamento,
       valorTotal,
-      itens                 // array de itens do contrato, ex: [{nome, quantidade, precoUnitario}]
+      itens = []
     } = dadosContrato;
 
-    // Cria o contrato
-    const contrato = await prisma.contrato.create({
+    if (!fazendaId) {
+      return { sucesso: false, erro: "ID da fazenda (fornecedor interno) é obrigatório." };
+    }
+
+    if (!unidadeId) {
+      return { sucesso: false, erro: "unidadeId da loja é obrigatório." };
+    }
+
+    if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
+      return { sucesso: false, erro: "Campos obrigatórios ausentes." };
+    }
+
+    const contrato = await prisma.Contrato.create({
       data: {
         unidadeId: Number(unidadeId),
         fornecedorUnidadeId: Number(fazendaId),
+
         dataInicio: new Date(dataInicio),
         dataFim: dataFim ? new Date(dataFim) : null,
         dataEnvio: new Date(dataEnvio),
+
         status,
         frequenciaEntregas,
         diaPagamento,
         formaPagamento,
         valorTotal: valorTotal ? Number(valorTotal) : null,
+
         itens: {
-          create: itens?.map(i => ({
-            nome: i.nome,
+          create: itens.map(i => ({
+            nome: i.nome || null,
             quantidade: i.quantidade ? Number(i.quantidade) : null,
             precoUnitario: i.precoUnitario ? Number(i.precoUnitario) : null,
-            raca: i.raca || null,
             pesoUnidade: i.pesoUnidade ? Number(i.pesoUnidade) : null,
+            raca: i.raca || null,
             categoria: i.categoria || null,
             unidadeMedida: i.unidadeMedida || null,
           }))
         }
       },
+
       include: {
         itens: true,
         fornecedorInterno: {
@@ -314,4 +390,79 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
   }
 };
 
+export const criarContratoExterno = async (unidadeId, dadosContrato) => {
+  try {
+    const {
+      fornecedorExternoId,   // agora vem do BODY
+      dataInicio,
+      dataFim,
+      dataEnvio,
+      status,
+      frequenciaEntregas,
+      diaPagamento,
+      formaPagamento,
+      valorTotal,
+      itens = []
+    } = dadosContrato;
+
+    if (!unidadeId) {
+      return { sucesso: false, erro: "O ID da unidade é obrigatório no parâmetro da rota." };
+    }
+
+    if (!fornecedorExternoId) {
+      return { sucesso: false, erro: "O fornecedor externo é obrigatório no corpo da requisição." };
+    }
+
+    if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
+      return { sucesso: false, erro: "Campos obrigatórios estão faltando." };
+    }
+
+    const contrato = await prisma.Contrato.create({
+      data: {
+        unidadeId: Number(unidadeId),            // quem está criando o contrato
+        fornecedorExternoId: Number(fornecedorExternoId), // empresa externa
+
+        dataInicio: new Date(dataInicio),
+        dataFim: dataFim ? new Date(dataFim) : null,
+        dataEnvio: new Date(dataEnvio),
+
+        status: status || "ATIVO",
+        frequenciaEntregas,
+        diaPagamento,
+        formaPagamento,
+        valorTotal: valorTotal ? Number(valorTotal) : null,
+
+        itens: {
+          create: itens.map(i => ({
+            nome: i.nome,
+            quantidade: i.quantidade ? Number(i.quantidade) : null,
+            precoUnitario: i.precoUnitario ? Number(i.precoUnitario) : null,
+            pesoUnidade: i.pesoUnidade ? Number(i.pesoUnidade) : null,
+            raca: i.raca || null,
+            categoria: i.categoria || null,
+            unidadeMedida: i.unidadeMedida || null
+          }))
+        }
+      },
+
+      include: {
+        itens: true,
+        fornecedorExterno: { select: { nomeEmpresa: true } }
+      }
+    });
+
+    return {
+      sucesso: true,
+      contrato,
+      message: "Contrato externo criado com sucesso!"
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao criar contrato externo",
+      detalhes: error.message
+    };
+  }
+};
 

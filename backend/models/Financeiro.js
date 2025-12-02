@@ -1,13 +1,13 @@
-import prisma from '../../prisma/client.js';
+import prisma from '../prisma/client.js';
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
+export const listarSaidas = async (unidadeId) => {//tem controller
     try {
-        const saidas = await prisma.Saidas.findMany({ 
-            where: { unidadeId: Number(unidadeId), tipo, data}, 
+        const saidas = await prisma.financeiro.findMany({ 
+            where: { unidadeId: Number(unidadeId)}, 
         })
         return ({
             sucesso: true,
@@ -79,6 +79,71 @@ export const somarDiaria = async (unidadeId) => {//tem controller
     return result[0]?.total ?? 0;
 };
 
+// Média por transação das vendas do dia
+export const calcularMediaPorTransacaoDiaria = async (unidadeId) => {
+    try {
+        const [res] = await prisma.$queryRaw`
+            SELECT COALESCE(SUM("total"),0) AS total, COUNT(*) AS quantidade
+            FROM "vendas"
+            WHERE DATE("criado_em") = CURRENT_DATE
+              AND "unidade_id" = ${unidadeId};
+        `;
+
+        const total = Number(res.total || 0);
+        const quantidade = Number(res.quantidade || 0);
+        const media = quantidade > 0 ? total / quantidade : 0;
+
+        return {
+            sucesso: true,
+            total,
+            quantidade,
+            media: Number(media.toFixed(2)),
+            message: "Média por transação calculada com sucesso",
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: "Erro ao calcular média por transação",
+            detalhes: error.message,
+        };
+    }
+};
+
+// Soma das vendas do dia agrupadas por forma de pagamento
+export const somarPorPagamentoDiario = async (unidadeId) => {
+    try {
+        const rows = await prisma.$queryRaw`
+            SELECT "pagamento" as pagamento, COALESCE(SUM("total"),0) as total
+            FROM "vendas"
+            WHERE DATE("criado_em") = CURRENT_DATE
+              AND "unidade_id" = ${unidadeId}
+            GROUP BY "pagamento";
+        `;
+
+        // transformar em objeto com chaves (ex: PIX, DINHEIRO, CARTAO)
+        const resultado = {};
+        for (const r of rows) {
+            // alguns drivers retornam pagamento como enum ou string
+            const chave = r.pagamento || 'DESCONHECIDO';
+            resultado[chave] = Number(r.total || 0);
+        }
+
+        // garantir chaves padrão mesmo que zero
+        const padrao = { PIX: 0, DINHEIRO: 0, CARTAO: 0 };
+        return {
+            sucesso: true,
+            detalhamento: { ...padrao, ...resultado },
+            message: 'Totais por forma de pagamento calculados com sucesso',
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: 'Erro ao somar por pagamento',
+            detalhes: error.message,
+        };
+    }
+};
+
 export const somarEntradaMensal = async (unidadeId) => { // Acho q agora funciona(ajuda do chatgpt)
     const result = await prisma.$queryRaw`
       SELECT
@@ -123,7 +188,7 @@ export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
   };
 }
 
-export const listarVendas = async (unidadeId) => {
+export const listarVendas = async (unidadeId) => { //FUNCIONA - MAS PRECISA INSERIR DADOS NA TABELA
     try {
         const vendas = await prisma.Venda.findMany({ where: { unidadeId: Number(unidadeId) }, })
         return ({
@@ -224,52 +289,97 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 export async function criarVenda(req, res) {
     try {
         const { caixaId, usuarioId, unidadeId, pagamento, itens } = req.body;
-
-        if (!caixaId || !usuarioId || !unidadeId || !pagamento || !itens || itens.length === 0) {
-            return res.status(400).json({
-                sucesso: false,
-                erro: "Dados incompletos. Verifique os campos enviados.",
-            });
+        // Basic validation: itens required
+        if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {
+            return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' });
         }
 
-        const itensCalculados = itens.map((item) => {
-            const subtotal = (Number(item.precoUnitario) - Number(item.desconto || 0)) * Number(item.quantidade);
-            return { ...item, subtotal };
-        });
+        // If caixaId not provided, try to find today's caixa for the unidade
+        let caixaIdToUse = caixaId ? Number(caixaId) : null;
+        if (!caixaIdToUse) {
+            const agora = new Date();
+            const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+            const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
+            const caixa = await prisma.caixa.findFirst({
+                where: { unidadeId: Number(unidadeId), abertoEm: { gte: inicioDoDia, lte: fimDoDia } },
+                orderBy: { abertoEm: 'desc' }
+            });
+            if (caixa) caixaIdToUse = caixa.id;
+        }
 
-        const totalVenda = itensCalculados.reduce((acc, item) => acc + item.subtotal, 0);
+        if (!caixaIdToUse) {
+            return res.status(400).json({ sucesso: false, erro: 'Caixa não informado e nenhum caixa aberto encontrado para a unidade hoje.' });
+        }
+
+        // Normalize payment method (accept frontend strings like 'cash','credit','debit','mobile')
+        const normalizePagamento = (p) => {
+            if (!p) return 'DINHEIRO';
+            const s = String(p).toUpperCase();
+            if (['CASH', 'DINHEIRO'].includes(s)) return 'DINHEIRO';
+            if (['CREDIT', 'DEBIT', 'CARTAO', 'CARTÃO', 'CARD'].includes(s)) return 'CARTAO';
+            if (['PIX'].includes(s)) return 'PIX';
+            return s;
+        };
+
+        const pagamentoFinal = normalizePagamento(pagamento);
+
+        // Resolve items: support either produtoId (numeric) or produtoSku (string in item.produtoSku or item.produtoId)
+        const itensResolvidos = await Promise.all(itens.map(async (item) => {
+            // item: { produtoId | produtoSku, quantidade, precoUnitario, desconto }
+            let produtoIdNum = Number(item.produtoId);
+            if (Number.isNaN(produtoIdNum)) {
+                // try SKU from produtoId or produtoSku
+                const sku = item.produtoSku || item.produtoId || item.sku || null;
+                if (sku) {
+                    const prod = await prisma.produto.findUnique({ where: { sku: String(sku) } });
+                    if (prod) produtoIdNum = prod.id;
+                }
+            }
+
+            if (!produtoIdNum || Number.isNaN(produtoIdNum)) {
+                throw new Error(`Produto não encontrado ou id inválido para item: ${JSON.stringify(item)}`);
+            }
+
+            const quantidade = Number(item.quantidade || 0);
+            const precoUnitario = Number(item.precoUnitario || 0);
+            const desconto = Number(item.desconto || 0);
+            const subtotal = (precoUnitario - desconto) * quantidade;
+
+            return {
+                produtoId: produtoIdNum,
+                quantidade,
+                precoUnitario,
+                desconto,
+                subtotal,
+            };
+        }));
+
+        const totalVenda = itensResolvidos.reduce((acc, it) => acc + (it.subtotal || 0), 0);
 
         const novaVenda = await prisma.venda.create({
             data: {
-                caixaId: Number(caixaId),
+                caixaId: Number(caixaIdToUse),
                 usuarioId: Number(usuarioId),
                 unidadeId: Number(unidadeId),
-                pagamento,
+                pagamento: pagamentoFinal,
                 total: totalVenda,
                 itens: {
-                    create: itensCalculados.map((item) => ({
+                    create: itensResolvidos.map((item) => ({
                         produtoId: Number(item.produtoId),
                         quantidade: Number(item.quantidade),
                         precoUnitario: Number(item.precoUnitario),
                         desconto: Number(item.desconto || 0),
                         subtotal: item.subtotal,
-                    })),
-                },
+                    }))
+                }
             },
-            include: { itens: { include: { produto: true }, }, },
+            include: { itens: { include: { produto: true } } }
         });
-        return res.status(201).json({
-            sucesso: true,
-            message: "Venda criada com sucesso!",
-            venda: novaVenda,
-        });
+
+        return res.status(201).json({ sucesso: true, message: 'Venda criada com sucesso!', venda: novaVenda });
     } catch (error) {
-        console.error("Erro ao criar venda:", error);
-        return res.status(500).json({
-            sucesso: false,
-            erro: "Erro ao criar venda.",
-            detalhes: error.message,
-        });
+        console.error('Erro ao criar venda:', error);
+        return res.status(500).json({ sucesso: false, erro: 'Erro ao criar venda.', detalhes: error.message });
     }
 }
 
@@ -311,9 +421,9 @@ export const calcularSaldoLiquido = async (unidadeId) => {
 //select de tudo em saidas
 export async function listarSaidasPorUnidade(unidadeId) {
     try {
-        const saidas = await prisma.saidas.findMany({
+        const saidas = await prisma.financeiro.findMany({
             where: { unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
-            orderBy: { data: "desc", },
+            // orderBy: { data: "desc", },
         });
 
         return {

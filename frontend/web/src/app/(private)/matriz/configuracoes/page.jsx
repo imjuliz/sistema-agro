@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import buildImageUrl from '@/lib/image';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +15,15 @@ import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 export default function SettingsPage() {
     usePerfilProtegido("GERENTE_MATRIZ");
 
-    const { user, loading, initialized } = useAuth();
+    const { user, loading, initialized, fetchWithAuth, doRefresh } = useAuth();
+    const { toast } = useToast();
+    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
 
     const { lang, changeLang } = useTranslation();
     const languageOptions = [
@@ -37,14 +42,25 @@ export default function SettingsPage() {
     const [avatarUrl, setAvatarUrl] = useState("");
     const fileRef = useRef(null);
 
-    const [font, setFont] = useState("");
-    const [theme, setTheme] = useState("dark");
+    // Estados locais para edição temporária antes de salvar
+    const [localTheme, setLocalTheme] = useState(globalTheme); 
+    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [profileEditing, setProfileEditing] = useState(false);
     const [companyEditing, setCompanyEditing] = useState(false);
     const [companyName, setCompanyName] = useState("");
     const [companyAvatarUrl, setCompanyAvatarUrl] = useState("");
 
+    // Sincronizar estados locais com o contexto global na montagem e quando o contexto muda
+    useEffect(() => {
+        setLocalTheme(globalTheme);
+        setLocalSelectedFontSize(globalSelectedFontSize);
+    }, [globalTheme, globalSelectedFontSize]);
+
+    // Remover useEffects antigos de tema e font size
+    // ... (o conteúdo dos useEffects para theme e selectedFontSize deve ser removido aqui)
+    
     // popula os estados quando user chegar (dep array estável - primitivos)
     useEffect(() => {
         if (!loading && user) {
@@ -53,7 +69,7 @@ export default function SettingsPage() {
             setUsername(firstName || (user.email ? user.email.split('@')?.[0] : "") || "");
             setEmailSelect(user.email ?? "");
             setTelefone(user.telefone ?? "");
-            setAvatarUrl(user.avatarUrl ?? "");
+            setAvatarUrl(user.ftPerfil ?? ""); // Usar ftPerfil do backend
             // se backend não retorna urls ou companyName, mantenha defaults
         }
 
@@ -72,7 +88,7 @@ export default function SettingsPage() {
         user?.nome,
         user?.email,
         user?.telefone,
-        user?.avatarUrl
+        user?.ftPerfil // Usar ftPerfil aqui
     ]);
 
     // handlers (mantidos)
@@ -91,10 +107,68 @@ export default function SettingsPage() {
     function addUrl() { setUrls((s) => [...s, ""]); }
     function updateUrl(index, value) { setUrls((s) => s.map((u, i) => (i === index ? value : u))); }
     function removeUrl(index) { setUrls((s) => s.filter((_, i) => i !== index)); }
-    function saveProfile() { setProfileEditing(false); }
+    async function saveProfile() {
+        console.log("saveProfile - Função chamada.");
+        setProfileEditing(false);
+        
+        const dataToUpdate = {
+            nome: nome,
+            telefone: telefone,
+            ftPerfil: avatarUrl, // Mapear avatarUrl para ftPerfil
+        };
+
+        console.log("saveProfile - Dados a enviar:", dataToUpdate);
+
+        try {
+            const res = await fetchWithAuth("/api/auth/me", { // Alterado para usar /api/auth/me
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToUpdate),
+            });
+
+            const result = await res.json();
+            console.log("saveProfile - Resposta da API:", res.status, result);
+
+            if (res.ok) {
+                console.log("saveProfile - Chamando toast de sucesso.");
+                toast({
+                    title: "Sucesso",
+                    description: result.mensagem || "Perfil atualizado com sucesso!",
+                });
+                await doRefresh(); 
+            } else {
+                console.log("saveProfile - Chamando toast de erro.");
+                toast({
+                    title: "Erro",
+                    description: result.erro || "Falha ao atualizar perfil.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+            console.error("saveProfile - Erro ao salvar perfil:", error);
+            toast({
+                title: "Erro",
+                description: "Ocorreu um erro inesperado ao salvar o perfil.",
+                variant: "destructive",
+            });
+        }
+    }
+
     function cancelProfileEdit() { setProfileEditing(false); }
     function saveCompany() { setCompanyEditing(false); }
     function cancelCompanyEdit() { setCompanyEditing(false); }
+
+    async function savePreferences() {
+        console.log("savePreferences - Função chamada.");
+        applyPreferences(localTheme, localSelectedFontSize); 
+        console.log("savePreferences - Chamando toast de sucesso.");
+        toast({
+            title: "Sucesso",
+            description: "Preferências salvas com sucesso!",
+        });
+    }
 
     // --- Render de carregamento / não autenticado (diagnóstico)
     if (!initialized || loading) {
@@ -142,13 +216,7 @@ export default function SettingsPage() {
 
     return (
         <div className="container mx-auto py-8">
-            <h1 className="text-2xl font-bold mb-2"><Transl>Configurações</Transl></h1>
-            <p className="text-muted-foreground mb-6">
-                <Transl>
-                    Gerencie as configurações da sua empresa e personalize o comportamento do sistema.
-                </Transl>
-            </p>
-
+            
             <div className="flex gap-6">
                 {/* Sidebar */}
                 <aside className="w-72 h-fit rounded-lg border border-border bg-background p-4">
@@ -184,7 +252,7 @@ export default function SettingsPage() {
                                                 <div className="flex items-center gap-4">
                                                     <Avatar className="h-20 w-20">
                                                         {avatarUrl ? (
-                                                            <AvatarImage src={avatarUrl} alt="Avatar" />
+                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" />
                                                         ) : (
                                                             <AvatarFallback>
                                                                 {username?.[0]?.toUpperCase() || "A"}
@@ -305,14 +373,14 @@ export default function SettingsPage() {
                                 <div className="grid gap-4">
                                     <div>
                                         <Label className="pb-3 font-bold"><Transl>Tamanho da fonte</Transl></Label>
-                                        <Select onValueChange={(v) => setFont(v)} value={font}>
+                                        <Select onValueChange={(v) => setLocalSelectedFontSize(v)} value={localSelectedFontSize}>
                                             <SelectTrigger className="w-64">
                                                 <SelectValue placeholder={<Transl>Selecionar tamanho</Transl>} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="inter"><Transl>Inter</Transl></SelectItem>
-                                                <SelectItem value="system"><Transl>System UI</Transl></SelectItem>
-                                                <SelectItem value="serif"><Transl>Serif</Transl></SelectItem>
+                                                <SelectItem value="text-sm"><Transl>Pequeno</Transl></SelectItem>
+                                                <SelectItem value="text-base"><Transl>Médio</Transl></SelectItem>
+                                                <SelectItem value="text-lg"><Transl>Grande</Transl></SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <p className="text-sm text-muted-foreground mt-1">
@@ -338,12 +406,12 @@ export default function SettingsPage() {
                                     <div>
                                         <Label className="pb-3 font-bold"><Transl>Tema</Transl></Label>
                                         <div className="flex items-start gap-6 mt-3">
-                                            <button onClick={() => setTheme("light")} className={`rounded-lg border p-3 ${theme === "light" ? "border-primary" : "border-border"}`} aria-pressed={theme === "light"}>
+                                            <button onClick={() => setLocalTheme("light")} className={`rounded-lg border p-3 ${localTheme === "light" ? "border-primary" : "border-border"}`} aria-pressed={localTheme === "light"}>
                                                 <div className="w-32 h-20 bg-white border rounded" />
                                                 <div className="text-sm mt-2 text-center"><Transl>Claro</Transl></div>
                                             </button>
 
-                                            <button onClick={() => setTheme("dark")} className={`rounded-lg border p-3 ${theme === "dark" ? "border-primary" : "border-border"}`} aria-pressed={theme === "dark"}>
+                                            <button onClick={() => setLocalTheme("dark")} className={`rounded-lg border p-3 ${localTheme === "dark" ? "border-primary" : "border-border"}`} aria-pressed={localTheme === "dark"}>
                                                 <div className="w-32 h-20 bg-slate-900 border rounded" />
                                                 <div className="text-sm mt-2 text-center"><Transl>Escuro</Transl></div>
                                             </button>
@@ -351,7 +419,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="pt-2">
-                                        <Button><Transl>Salvar preferências</Transl></Button>
+                                        <Button onClick={savePreferences}><Transl>Salvar preferências</Transl></Button> 
                                     </div>
                                 </div>
                             </>

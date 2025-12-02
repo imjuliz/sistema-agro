@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { DataTable } from "@/components/Fazenda/parceiros";
 import data from "./data.json";
@@ -26,8 +26,68 @@ import FornecedoresCard from "@/components/fornecedores/fornecedores-card";
 import { OrderManagement } from "@/components/fornecedores/OrderManagement";
 
 export default function ConsumerDashboard() {
-  const { fetchWithAuth } = useAuth();
+  const { fetchWithAuth, user } = useAuth();
   usePerfilProtegido("GERENTE_FAZENDA");
+
+  const [lojas, setLojas] = useState([]);
+  const [contratos, setContratos] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        setCarregando(true);
+        const unidadeId = user?.unidadeId;
+
+        if (!unidadeId) {
+          console.error("Unidade não identificada");
+          return;
+        }
+
+        // Carrega lojas atendidas
+        const resLojas = await fetchWithAuth(
+          `${API_URL}listarLojasParceiras/${unidadeId}`
+        );
+        if (resLojas.ok) {
+          const bodyLojas = await resLojas.json();
+          setLojas(bodyLojas.lojas || []);
+        }
+
+        // Carrega contratos com lojas
+        const resContratos = await fetchWithAuth(
+          `${API_URL}verContratosComLojas/${unidadeId}`
+        );
+        if (resContratos.ok) {
+          const bodyContratos = await resContratos.json();
+          setContratos(bodyContratos.contratos || []);
+        }
+
+        // Carrega pedidos (origem da fazenda)
+        const resPedidos = await fetchWithAuth(
+          `${API_URL}estoque-produtos/pedidos-origem/${unidadeId}`
+        );
+        if (resPedidos.ok) {
+          const bodyPedidos = await resPedidos.json();
+          setPedidos(bodyPedidos.pedidos || []);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    if (user?.unidadeId) {
+      carregarDados();
+    }
+  }, [user?.unidadeId, fetchWithAuth]);
+
+  const totalLojas = lojas.length;
+  const totalContratos = contratos.length;
+  const pedidosPendentes = pedidos.filter(
+    (p) => p.status === "PENDENTE" || p.status === "EM_TRANSITO"
+  ).length;
 
   const StatCard = ({ title, value, icon: Icon, color = "text-muted-foreground" }) => (
     <Card>
@@ -50,7 +110,9 @@ export default function ConsumerDashboard() {
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos Ativos</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">7</CardTitle>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {carregando ? "-" : totalContratos}
+            </CardTitle>
             <CardAction>
               <FileCheck />
             </CardAction>
@@ -60,7 +122,9 @@ export default function ConsumerDashboard() {
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Pedidos pendentes</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">3</CardTitle>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {carregando ? "-" : pedidosPendentes}
+            </CardTitle>
             <CardAction>
               <Clock />
             </CardAction>
@@ -69,8 +133,10 @@ export default function ConsumerDashboard() {
 
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
-            <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">24</CardTitle>
+            <CardDescription>Lojas Parceiras</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {carregando ? "-" : totalLojas}
+            </CardTitle>
             <CardAction>
               <CheckCircle />
             </CardAction>
@@ -78,12 +144,12 @@ export default function ConsumerDashboard() {
         </Card>
       </div>
 
-      {/* card de fornecedores */}
-      <FornecedoresCard />
+      {/* card de lojas atendidas */}
+      <FornecedoresCard fornecedores={lojas} carregando={carregando} />
       {/* produtos */}
-      <ProductCatalog />
+      <ProductCatalog contratos={contratos} carregando={carregando} />
       {/* gerenciamento de pedidos */}
-      <OrderManagement />
+      <OrderManagement pedidos={pedidos} carregando={carregando} />
     </div>
   );
 }

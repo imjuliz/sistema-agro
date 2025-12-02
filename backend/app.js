@@ -10,8 +10,13 @@ import cookieParser from "cookie-parser";
 import authRotas from './routes/authRotas.js';
 import appRoutes from './routes/appRoutes.js';
 import unidadeRoutes from './routes/unidadeRoutes.js';
+import fornecedorRoutes from './routes/fornecedorRoutes.js';
+import usuariosRoutes from './routes/usuariosRoutes.js';
 // import matrizRoutes from './routes/MatrizRoutes.js';
 import estoqueRoutes from './routes/estoqueRoutes.js';
+import animaisRoutes from './routes/animaisRoutes.js';
+import loteRoutes from './routes/loteRoutes.js';
+import plantioRoutes from './routes/plantioRoutes.js';
 
 dotenv.config({ path: ".env", quiet: true });
 
@@ -46,6 +51,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Para parsear application/x-www-form-urlencoded
 
 app.use(cookieParser());
 
@@ -68,8 +74,14 @@ app.use(session({
 app.use('/auth', authRotas);
 app.use('/', appRoutes);
 app.use('/unidades', unidadeRoutes);
+app.use('/fornecedores', fornecedorRoutes);
+app.use('/usuarios', usuariosRoutes);
 // app.use('/matriz', matrizRoutes);
 app.use('/estoque', estoqueRoutes)
+
+app.use('/animais', animaisRoutes)
+app.use('/lotes', loteRoutes)
+app.use('/plantio', plantioRoutes)
 
 app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
 
@@ -77,8 +89,4 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 
 app.use('/uploads', express.static(path.resolve('uploads')));
 
-app.listen(8080, () => {
-  console.log('Servidor rodando na http://localhost:8080',);
-});
-
-export default app;  // aqui exporta o app puro, sem serverless
+export default app;  // servidor é iniciado a partir de `server.js`

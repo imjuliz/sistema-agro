@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,16 +15,16 @@ export default function CreateBlog () {
 
   const handleSaveDraft = () => {
     console.log('Saving as draft:', { title, content, thumbnail });
-    alert('Blog saved as draft!');
+    toast.success('Blog saved as draft!');
   };
 
   const handlePublish = () => {
     if (!title.trim() || !content.trim()) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
     console.log('Publishing blog:', { title, content, thumbnail });
-    alert('Blog published successfully!');
+    toast.success('Blog published successfully!');
   };
 
   return (

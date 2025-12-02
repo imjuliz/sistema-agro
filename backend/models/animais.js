@@ -3,6 +3,7 @@ import prisma from "../prisma/client.js";
 export async function getAnimais() {
   try {
     const animais = await prisma.animal.findMany();
+    
     return {
       sucesso: true,
       animais,
@@ -12,42 +13,84 @@ export async function getAnimais() {
     return {
       sucesso: false,
       erro: "Erro ao listar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
 
 export async function getAnimaisPelaRaca(raca) {
   try {
-    const animais = await prisma.animal.findMany();
-    // Validações 
-    if(animais.raca !== raca) {
-      return res.json({message: "Raca nao encontrada."})
-    }
+    // Normaliza texto digitado na URL
+    const normalize = (str) =>
+      str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-    const animais_raca = await prisma.animal.findMany({
-      where: {
-        raca: raca,
-      },
-    })
+    const racaNormalizada = normalize(raca);
+
+    // Busca todos os animais
+    const animais = await prisma.animal.findMany();
+
+    // Filtra ignorando acentos e caixa
+    const animaisFiltrados = animais.filter((a) =>
+      normalize(a.raca).includes(racaNormalizada)
+    );
+
     return {
       sucesso: true,
-      animais_raca,
-      message: "Animais listados com sucesso.",
-    }
+      animais: animaisFiltrados,
+      message: "Animais listados com sucesso."
+    };
+
   } catch (error) {
-    return {
+    throw {
       sucesso: false,
       erro: "Erro ao listar animais pela raça.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
+
+export async function calcularRentabilidadeAnimal({ animalId, loteId }) {
+  try {
+    const animal = await prisma.animal.findUnique({
+      where: { id: animalId }
+    });
+
+    if (!animal) {
+      return { sucesso: false, erro: "Animal não encontrado." };
+    }
+
+    const lote = await prisma.lote.findUnique({
+      where: { id: loteId }
+    });
+
+    if (!lote) {
+      return { sucesso: false, erro: "Lote não encontrado." };
+    }
+
+    // Regra de negócio → cálculo
+    const custoAnimal = Number(animal.custo ?? 0);
+    const qntdItens = Number(lote.qntdItens ?? 0);
+    const rentabilidade = qntdItens * custoAnimal;
+
+    return {
+      sucesso: true,
+      rentabilidade
+    };
+
+  } catch (e) {
+    return {
+      sucesso: false,
+      erro: "Erro ao calcular rentabilidade.",
+      detalhes: e.message
+    };
+  }
+}
+
 
 export async function getAnimaisPorId(id) {
   try {
     const animais = await prisma.animal.findUnique({
-      where: { id },
+      where: { id: Number(id) },
     })
     return {
       sucesso: true,
@@ -57,7 +100,7 @@ export async function getAnimaisPorId(id) {
   } catch (error) {
     return {
       sucesso: false,
-      erro: "Erro ao listar animais.",
+      erro: "Erro ao listar animais coisinha.",
       detalhes: error.message, // opcional, para debug
     }
   }
@@ -65,873 +108,12 @@ export async function getAnimaisPorId(id) {
 
 export async function createAnimais(data) {
   try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
     const animais = await prisma.animal.create({
       data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
         unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
+        loteId: data.loteId,
         fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
-    return {
-      sucesso: true,
-      animais,
-      message: "Animais criados com sucesso.",
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      erro: "Erro ao criar animais.",
-      detalhes: error.message, // opcional, para debug
-    }
-  }
-}
-
-export async function createAnimais(data) {
-  try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
-    }
-    if(animal.fornecedorId != data.fornecedorId) {
-      return res.json({ message: "Fornecedor nao encontrado." });
-    }
-    if(animal.unidadeId != data.unidadeId) {
-      return res.json({ message: "Unidade nao encontrada." });
-    }
-    if(animal.loteId != data.loteId) {
-      return res.json({ message: "Lote nao encontrado." });
-    }
-
-    const animais = await prisma.animal.create({
-      data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
+        ...data
       },
     })
     return {
@@ -950,46 +132,36 @@ export async function createAnimais(data) {
 
 export async function updateAnimais(id, data) {
   try {
-    const animal = await prisma.animal.findUnique({ where: {id: data.id} });
-    // Valdidacoes
-    if(animal.id != data.id) {
-      return res.json({ message: "Animal nao encontrado." });
+    const animal = await prisma.animal.findUnique({ where: { id } });
+
+    if (!animal) {
+      return {
+        sucesso: false,
+        erro: "Animal não encontrado."
+      };
     }
-    if(animal.fornecedorId != data.fornecedorId) {
-      return res.json({ message: "Fornecedor nao encontrado." });
-    }
-    if(animal.unidadeId != data.unidadeId) {
-      return res.json({ message: "Unidade nao encontrada." });
-    }
-    if(animal.loteId != data.loteId) {
-      return res.json({ message: "Lote nao encontrado." });
-    }
-    
+
+    // Atualiza
     const animais = await prisma.animal.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: {
-        animal: data.animal,
-        raca: data.raca,
-        sku: data.sku,
-        dataEntrada: data.dataEntrada,
-        fornecedorId: data.fornecedorId,
-        quantidade: data.quantidade,
-        tipo: data.tipo,
-        custo: data.custo,
-        unidadeId: data.unidadeId,
-        loteId: data.loteId
-      },
-    })
+        ...data, 
+        fornecedorId: data.fornecedorId ?? null,
+        loteId: data.loteId ?? null,
+        unidadeId: data.unidadeId
+      }
+    });
+
     return {
       sucesso: true,
       animais,
-      message: "Animais atualizados com sucesso.",
+      message: "Animais atualizados com sucesso."
     }
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao atualizar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }
@@ -1007,7 +179,7 @@ export async function deleteAnimais(id) {
     return {
       sucesso: false,
       erro: "Erro ao deletar animais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     }
   }
 }

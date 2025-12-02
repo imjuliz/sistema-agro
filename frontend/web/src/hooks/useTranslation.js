@@ -8,7 +8,7 @@ export function TranslationProvider({ children }) {
   const [lang, setLang] = useState('pt-BR');
   const [dict, setDict] = useState({});
 
-  const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/';
+  const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || '/api/';
   const TRANSLATE_ENDPOINT = `${BACKEND_BASE}translate`;
   // console.log(TRANSLATE_ENDPOINT)
 

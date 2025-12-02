@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 // Para tradução
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
@@ -23,8 +23,68 @@ import FornecedoresCard from "@/components/fornecedores/fornecedores-card";
 import { OrderManagement } from "@/components/fornecedores/OrderManagement";
 
 export default function ConsumerDashboard() {
-  const { fetchWithAuth } = useAuth();
+  const { fetchWithAuth, user } = useAuth();
   usePerfilProtegido("GERENTE_LOJA");
+
+  const [fornecedores, setFornecedores] = useState([]);
+  const [contratos, setContratos] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        setCarregando(true);
+        const unidadeId = user?.unidadeId;
+
+        if (!unidadeId) {
+          console.error("Unidade não identificada");
+          return;
+        }
+
+        // Carrega fornecedores internos
+        const resFornecedores = await fetchWithAuth(
+          `${API_URL}listarFornecedoresInternos/${unidadeId}`
+        );
+        if (resFornecedores.ok) {
+          const bodyFornecedores = await resFornecedores.json();
+          setFornecedores(bodyFornecedores.fornecedores || []);
+        }
+
+        // Carrega contratos
+        const resContratos = await fetchWithAuth(
+          `${API_URL}verContratosComFazendas/${unidadeId}`
+        );
+        if (resContratos.ok) {
+          const bodyContratos = await resContratos.json();
+          setContratos(bodyContratos.contratos || []);
+        }
+
+        // Carrega pedidos
+        const resPedidos = await fetchWithAuth(
+          `${API_URL}estoque-produtos/pedidos/${unidadeId}`
+        );
+        if (resPedidos.ok) {
+          const bodyPedidos = await resPedidos.json();
+          setPedidos(bodyPedidos.pedidos || []);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    if (user?.unidadeId) {
+      carregarDados();
+    }
+  }, [user?.unidadeId, fetchWithAuth]);
+
+  const totalFornecedores = fornecedores.length;
+  const totalContratos = contratos.length;
+  const pedidosPendentes = pedidos.filter(
+    (p) => p.status === "PENDENTE" || p.status === "EM_TRANSITO"
+  ).length;
 
   const StatCard = ({ title, value, icon: Icon, color = "text-muted-foreground" }) => (
     <Card>
@@ -47,7 +107,9 @@ export default function ConsumerDashboard() {
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos Ativos</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">7</CardTitle>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {carregando ? "-" : totalContratos}
+            </CardTitle>
             <CardAction>
               <FileCheck />
             </CardAction>
@@ -57,7 +119,9 @@ export default function ConsumerDashboard() {
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Pedidos pendentes</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">3</CardTitle>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {carregando ? "-" : pedidosPendentes}
+            </CardTitle>
             <CardAction>
               <Clock />
             </CardAction>
@@ -66,8 +130,10 @@ export default function ConsumerDashboard() {
 
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
-            <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">24</CardTitle>
+            <CardDescription>Fornecedores</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {carregando ? "-" : totalFornecedores}
+            </CardTitle>
             <CardAction>
               <CheckCircle />
             </CardAction>
@@ -76,11 +142,11 @@ export default function ConsumerDashboard() {
       </div>
 
       {/* card de fornecedores */}
-      <FornecedoresCard />
+      <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
       {/* produtos */}
-      <ProductCatalog />
+      <ProductCatalog contratos={contratos} carregando={carregando} />
       {/* gerenciamento de pedidos */}
-      <OrderManagement />
+      <OrderManagement pedidos={pedidos} carregando={carregando} />
     </div>
   );
 }

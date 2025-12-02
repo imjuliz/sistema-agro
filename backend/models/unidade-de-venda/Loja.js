@@ -205,6 +205,78 @@ export const verPedidos = async(unidadeId)=>{
   }
 };
 
+// Função para listar pedidos de entrega (modelo Pedido)
+export const listarPedidosEntrega = async(unidadeId)=>{
+  try{
+    const pedidos = await prisma.pedido.findMany({
+      where:{
+        destinoUnidadeId: Number(unidadeId)
+      },
+      include: {
+        itens: {
+          include: {
+            produto: true,
+            fornecedorItem: true
+          }
+        },
+        contrato: true,
+        origemUnidade: true,
+        destinoUnidade: true
+      },
+      orderBy: {
+        dataPedido: 'desc'
+      }
+    });
+    return ({
+      sucesso: true,
+      pedidos: pedidos,
+      message: "Pedidos de entrega listados com sucesso!"
+    })
+  }catch(error){
+    return{
+      sucesso: false,
+      erro:"Erro ao listar os pedidos de entrega",
+      detalhes: error.message
+    }
+  }
+};
+
+// Função para listar pedidos de origem (para a fazenda ver seus pedidos para as lojas)
+export const listarPedidosOrigem = async(unidadeId)=>{
+  try{
+    const pedidos = await prisma.pedido.findMany({
+      where:{
+        origemUnidadeId: Number(unidadeId)
+      },
+      include: {
+        itens: {
+          include: {
+            produto: true,
+            fornecedorItem: true
+          }
+        },
+        contrato: true,
+        origemUnidade: true,
+        destinoUnidade: true
+      },
+      orderBy: {
+        dataPedido: 'desc'
+      }
+    });
+    return ({
+      sucesso: true,
+      pedidos: pedidos,
+      message: "Pedidos de origem listados com sucesso!"
+    })
+  }catch(error){
+    return{
+      sucesso: false,
+      erro:"Erro ao listar os pedidos de origem",
+      detalhes: error.message
+    }
+  }
+};
+
 
 // Conta quantos registros existem na tabela "saidas"
 export const contarSaidas = async (unidadeId) => {

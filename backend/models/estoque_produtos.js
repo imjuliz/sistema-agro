@@ -1,5 +1,5 @@
 import { success } from 'zod';
-import prisma from '../../prisma/client.js';
+import prisma from '../prisma/client.js';
 
 export const mostrarEstoque = async (unidadeId) => { //ok
     try {
@@ -73,7 +73,14 @@ export const getEstoque = async (unidadeId) => {
             include: {
                 estoqueProdutos: {
                     include: {
-                        produto: true // inclui detalhes do Produto relacionado
+                        produto: {
+                            include: {
+                                origemUnidade: true,
+                                fornecedor: true
+                            }
+                        },
+                        fornecedorUnidade: true,
+                        fornecedorExterno: true
                     }
                 }
             }
@@ -268,12 +275,11 @@ export const listarAtividadesLote = async (unidadeId) => {
     }
 }
 
-export const consultarLote = async (unidadeId, loteId) => {
+export const consultarLoteAgricola = async ( loteId) => {
     try {
-        const atividadesLote = await prisma.atividadesLote.findMany({
+        const atividadesLote = await prisma.AtvdAgricola.findMany({
             where: {
-                loteId,
-                unidadeId: Number(unidadeId),
+                loteId: Number(loteId),
             }
         });
 

@@ -2,9 +2,8 @@ import prisma from "../prisma/client.js";
 
 export async function getLote() {
   try {
-    const lotes = await prisma.lote.findMany({
-      where: { unidadeId: Number(unidadeId) },
-    })
+    const lotes = await prisma.lote.findMany();
+
     return {
       sucesso: true,
       lotes,
@@ -40,13 +39,13 @@ export async function getLote() {
 
 export async function getLotePorTipo(tipo) {
   try {
-    const lote_tipo = await prisma.lote.findMany({
-      where: { tipo }
+    const loteTipo = await prisma.lote.findMany({
+      where: { tipo: tipo }
     });
 
     return {
       sucesso: true,
-      lote_tipo,
+      loteTipo,
       message: "Lotes de animalia listados com sucesso!!",
     }
   } catch (error) {
@@ -58,24 +57,7 @@ export async function getLotePorTipo(tipo) {
   }
 }
 
-export async function getLoteRentabilidade(id_lote, rentabilidade) {
-  try {
-    const lote_rentabilidade = await prisma.lote.findMany({ 
-      where: { id_lote, rentabilidade }
-    });
-    return {
-      sucesso: true,
-      lote_rentabilidade,
-      message: "Lotes com rentabilidade listados com sucesso!!"
-    }
-  } catch (error) {
-    return {
-      sucesso: false,
-      message: "Erro ao listar lotes com rentabilidade!!",
-      error: error.message
-    }
-  }
-}
+
 
 // nao funciona pq n existe a coluna dataFabricacao, q é necessaria para listar os lotes criados
 // export async function getLotePorDataCriacao(ano, produtoId) { // testar
@@ -117,7 +99,27 @@ export async function getLoteRentabilidade(id_lote, rentabilidade) {
 //   }
 // }
 
-export async function getlotePorId(id) {
+export async function getLotePorTipoVegetais(tipo) {
+  try {
+    const loteVegetais = await prisma.lote.findMany({
+      where: { tipo: tipo }
+    })
+
+    return {
+      sucesso: true,
+      loteVegetais,
+      message: "Lotes de vegetais listados com sucesso!!"
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes de vegetais!!",
+      error: error.message
+    }
+  }
+}
+
+export async function getLotePorId(id) {
   try {
     const lote = await prisma.lote.findUnique({ where: { id } });
     return {
@@ -149,6 +151,10 @@ export async function createLote(data, unidadeId, contratoId) {
     const responsavel = await prisma.usuario.findUnique({ where: { id: data.responsavelId } });
     if (!responsavel) {
       return {sucesso: false, message: "Responsavel nao encontrado!!"}
+    }
+
+    if (responsavel.unidadeId !== unidadeId) {
+      return { sucesso: false, message: "Responsável não pertence a esta unidade!" };
     }
 
     const novoLote = await prisma.lote.create({
@@ -190,6 +196,10 @@ export async function updateLote(id, data, unidadeId, contratoId) {
       return {sucesso: false, message: "Responsavel nao encontrado!!"}
     }
 
+    if (responsavel.unidadeId !== unidadeId) {
+      return { sucesso: false, message: "Responsável não pertence a esta unidade!" };
+    }
+
     const loteAtualizado = await prisma.lote.update({
       where: { id },
       data: {
@@ -222,6 +232,7 @@ export async function deleteLote(id) {
     const loteDeletado = await prisma.lote.delete({
       where: { id },
     })
+    
     return {
       sucesso: true,
       loteDeletado,

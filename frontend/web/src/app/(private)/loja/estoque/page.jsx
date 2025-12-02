@@ -9,8 +9,9 @@ import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 export default function App() {
-  const { fetchWithAuth } = useAuth();
-  usePerfilProtegido("GERENTE_LOJA");
+  const { user } = useAuth();
+  // Apenas GERENTE_LOJA e FUNCIONARIO_LOJA podem acessar estoque da loja
+  usePerfilProtegido(["GERENTE_LOJA", "FUNCIONARIO_LOJA"]);
 
   const [activeView, setActiveView] = useState('store');
 

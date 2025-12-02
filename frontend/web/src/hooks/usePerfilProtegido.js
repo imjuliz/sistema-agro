@@ -35,7 +35,22 @@ export const usePerfilProtegido = (perfilNecessario) => {
   const allowed = useMemo(() => {
     if (!user) return false;
     if (!perfilNecessario) return true;
-    return String(user.perfil ?? "").toUpperCase() === String(perfilNecessario).toUpperCase();
+    
+    // user.perfil may be a string (e.g. 'GERENTE_LOJA') or an object ({ funcao, descricao })
+    const perfilRaw = user.perfil ?? null;
+    let perfilValue = '';
+    if (typeof perfilRaw === 'string') perfilValue = perfilRaw;
+    else if (typeof perfilRaw === 'object' && perfilRaw !== null) {
+      perfilValue = String(perfilRaw.funcao ?? perfilRaw.nome ?? '');
+    }
+    const userPerfilUppercase = String(perfilValue).toUpperCase();
+
+    // perfilNecessario can be a string or an array of strings
+    if (Array.isArray(perfilNecessario)) {
+      return perfilNecessario.some(p => String(p).toUpperCase() === userPerfilUppercase);
+    } else {
+      return userPerfilUppercase === String(perfilNecessario).toUpperCase();
+    }
   }, [user, perfilNecessario]);
 
   useEffect(() => {

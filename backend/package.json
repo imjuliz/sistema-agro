@@ -56,6 +56,7 @@
     "mime-db": "^1.54.0",
     "mime-types": "^3.0.1",
     "ms": "^2.1.3",
+    "multer": "^2.0.2",
     "negotiator": "^1.0.0",
     "nodemailer": "^7.0.6",
     "object-assign": "^4.1.1",
@@ -78,7 +79,6 @@
     "postgres-bytea": "^1.0.0",
     "postgres-date": "^1.0.7",
     "postgres-interval": "^1.2.0",
-    "prisma": "^7.0.1",
     "proxy-addr": "^2.0.7",
     "qs": "^6.14.0",
     "random-bytes": "^1.0.0",
@@ -120,5 +120,11 @@
   "license": "ISC",
   "prisma": {
     "seed": "node prisma/seed.js"
+  },
+  "devDependencies": {
+    "prisma": "^7.0.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

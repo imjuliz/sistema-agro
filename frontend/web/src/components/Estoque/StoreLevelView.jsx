@@ -20,7 +20,6 @@ export function StoreLevelView() {
   const { getStoreItems, storeMapping } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // paginacao
   const [page, setPage] = useState(1);
@@ -29,22 +28,37 @@ export function StoreLevelView() {
   // dados
   const allStoreItems = useMemo(() => getStoreItems() || [], [getStoreItems]);
   const stores = useMemo(() => Object.values(storeMapping || {}), [storeMapping]);
-  const categories = useMemo(() => [...new Set(allStoreItems.map(item => item.category).filter(Boolean))], [allStoreItems]);
 
-  // filtra os itens com base em busca, loja e categoria
+  // helper para extrair o nome do fornecedor/origem do item (robusto para diferentes formatos)
+  const resolveSupplierName = (item) => {
+    // alguns formatos (estoqueProdutos): item.store foi definido como supplierName já
+    if (!item) return '—';
+    if (item.fornecedorName) return item.fornecedorName;
+    // estoqueProdutos novo formato: pode ter fornecedorUnidade / fornecedorExterno
+    if (item.fornecedorUnidade && item.fornecedorUnidade.nome) return item.fornecedorUnidade.nome;
+    if (item.fornecedorExterno && item.fornecedorExterno.nomeEmpresa) return item.fornecedorExterno.nomeEmpresa;
+    // quando vindo de estoqueProdutos no InventoryContext, pode existir produto.origemUnidade ou produto.fornecedor
+    if (item.produto && item.produto.origemUnidade && item.produto.origemUnidade.nome) return item.produto.origemUnidade.nome;
+    if (item.produto && item.produto.fornecedor && item.produto.fornecedor.nomeEmpresa) return item.produto.fornecedor.nomeEmpresa;
+    // fallback para objetos com unidade metadata
+    if (item.unidade && item.unidade.nome) return item.unidade.nome;
+    // legacy/mock: store contém o nome da unidade atual — tratamos como fallback
+    if (item.store) return item.store;
+    return '—';
+  };
+
+  // filtra os itens com base em busca e fornecedor
   const filteredItems = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return allStoreItems.filter(item => {
       const matchesSearch = !term ||
         (item.name && item.name.toLowerCase().includes(term)) ||
-        (item.sku && item.sku.toLowerCase().includes(term)) ||
-        (item.brand && item.brand.toLowerCase().includes(term)) ||
-        (item.category && item.category.toLowerCase().includes(term));
-      const matchesStore = selectedStore === 'all' || item.store === selectedStore;
-      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-      return matchesSearch && matchesStore && matchesCategory;
+        (item.sku && item.sku.toLowerCase().includes(term));
+      const supplierName = resolveSupplierName(item);
+      const matchesStore = selectedStore === 'all' || supplierName === selectedStore;
+      return matchesSearch && matchesStore;
     });
-  }, [allStoreItems, searchTerm, selectedStore, selectedCategory]);
+  }, [allStoreItems, searchTerm, selectedStore]);
 
   // recalcula métricas a partir dos itens filtrados
   const totalItems = filteredItems.length;
@@ -62,13 +76,20 @@ export function StoreLevelView() {
   // resetar página quando filtros mudarem (UX comum)
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, selectedStore, selectedCategory, perPage]);
+  }, [searchTerm, selectedStore, perPage]);
 
   // items atualmente visíveis na página
   const paginatedItems = useMemo(() => {
     const start = (page - 1) * perPage;
     return filteredItems.slice(start, start + perPage);
   }, [filteredItems, page, perPage]);
+
+  // lista de fornecedores para o seletor, extraída dos itens
+  const supplierOptions = useMemo(() => {
+    const s = new Set();
+    allStoreItems.forEach(it => s.add(resolveSupplierName(it)));
+    return Array.from(s).filter(x => x && x !== '—').sort();
+  }, [allStoreItems]);
 
   // formatação de preço BRL
   const fmtBRL = (value) =>
@@ -135,7 +156,7 @@ export function StoreLevelView() {
             <div>
               <label className="block mb-2">Pesquisar Itens</label>
               <Input
-                placeholder="Pesquise por nome, SKU, ou categoria..."
+                placeholder="Pesquise por nome ou SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -144,26 +165,12 @@ export function StoreLevelView() {
               <label className="block mb-2">Fornecedores</label>
               <Select value={selectedStore} onValueChange={(val) => setSelectedStore(val)}>
                 <SelectTrigger className={'w-full'}>
-                  <SelectValue placeholder="Selecionar loja" />
+                  <SelectValue placeholder="Selecionar fornecedor" />
                 </SelectTrigger>
                 <SelectContent className={'w-full'}>
                   <SelectItem value="all">Todos os fornecedores</SelectItem>
-                  {stores.map(store => (
-                    <SelectItem key={store} value={store} className={'w-full'}>{store}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block mb-2">Categorias</label>
-              <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val)} className={'w-full'}>
-                <SelectTrigger className={'w-full'}>
-                  <SelectValue placeholder="Selecionar categoria" />
-                </SelectTrigger>
-                <SelectContent className={'w-full'}>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  {supplierOptions.map(name => (
+                    <SelectItem key={name} value={name} className={'w-full'}>{name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -183,9 +190,7 @@ export function StoreLevelView() {
               <TableRow>
                 <TableHead>Status</TableHead>
                 <TableHead>Item</TableHead>
-                <TableHead>Marca</TableHead>
-                <TableHead>Categorias</TableHead>
-                <TableHead>Fornecedores</TableHead>
+                <TableHead>Fornecedor</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Estoque Atual</TableHead>
                 <TableHead>Min Estoque</TableHead>
@@ -195,7 +200,6 @@ export function StoreLevelView() {
             <TableBody>
               {paginatedItems.map(item => {
                 const stockStatus = getStockStatus(item.currentStock, item.minimumStock);
-                const difference = item.currentStock - item.minimumStock;
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
@@ -204,30 +208,12 @@ export function StoreLevelView() {
                     <TableCell className="max-w-xs">
                       <div className="font-medium">{item.name}</div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{item.brand}</Badge>
-                    </TableCell>
-                    <TableCell>{item.category}</TableCell>
                     <TableCell>{item.store}</TableCell>
                     <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                     <TableCell>
                       <span className={stockStatus.textColor}>{item.currentStock}</span>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{item.displayStock}</Badge>
-                    </TableCell>
                     <TableCell>{item.minimumStock}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className={stockStatus.textColor}>
-                          {difference > 0 ? '+' : ''}{difference}
-                        </span>
-                        <Badge variant={stockStatus.badgeVariant} className="text-xs">
-                          {stockStatus.status === 'good' ? 'Good' :
-                            stockStatus.status === 'warning' ? 'Warning' : 'Critical'}
-                        </Badge>
-                      </div>
-                    </TableCell>
                     <TableCell>{fmtBRL(item.price)}</TableCell>
                   </TableRow>
                 );

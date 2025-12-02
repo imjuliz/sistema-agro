@@ -88,7 +88,7 @@ const getStatusColor = (status) => {
 };
 
 
-export function EstoqueTab() {
+export function EstoqueTab({ fazenda }) {
 
   return (
     <div className="flex gap-6">
@@ -125,7 +125,7 @@ export function EstoqueTab() {
         </Card>
       </div>
       <div className=" flex-1 min-w-0 space-y-6">
-        <InventoryProvider>
+      <InventoryProvider defaultUnidadeId={fazenda?.id}>
           <StoreLevelView />
         </InventoryProvider>
 

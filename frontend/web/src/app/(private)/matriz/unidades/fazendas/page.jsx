@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus } from "lucide-react";
+import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
@@ -29,6 +29,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/navigation'; // App Router
 import { useRef } from 'react';
+// (adicione entre seus imports existentes)
+import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
 
 
 // corrige o caminho dos ícones padrão em bundlers modernos
@@ -54,6 +56,8 @@ export default function FazendasPage() {
     const [perPage, setPerPage] = useState(8);
     const [sheetUnit, setSheetUnit] = useState(null);
     const [metrics, setMetrics] = useState({ total: 0, active: 0, inactive: 0 });
+    const [orderBy, setOrderBy] = useState('nome_asc');
+    const [totalResults, setTotalResults] = useState(0);
 
     // filtros avançados: tipos e status e local
     const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // rascunho
@@ -66,16 +70,18 @@ export default function FazendasPage() {
     const [draftLocationFilter, setDraftLocationFilter] = useState(""); // cidade/estado rascunho
     const [draftResponsibleQuery, setDraftResponsibleQuery] = useState("");
     const [draftAreaQuery, setDraftAreaQuery] = useState("");
+    const [citySuggestions, setCitySuggestions] = useState([]);
+    const citySuggestTimer = useRef(null);
 
     // filtros aplicados (só atualiza quando clicar em APLICAR)
     const [appliedFilters, setAppliedFilters] = useState({
         typeFilters: typeFilters,
         statusFilters: statusFilters,
         locationFilter: "",
+        locationEstado: "",
         responsibleQuery: "",
         areaQuery: ""
     });
-
 
     useEffect(() => {
         setLoading(true);
@@ -89,71 +95,56 @@ export default function FazendasPage() {
 
         async function fetchFazendas() {
             setLoading(true);
-            try {
-                const url = `${API_URL}unidades/fazendas`;
-                console.debug("[fetchFazendas] GET", url);
-                const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
+                try {
+                    const params = new URLSearchParams();
+                    if (query) params.set('q', query);
+                    const loc = String(appliedFilters.locationFilter || '').trim();
+                    if (loc) params.set('cidade', loc);
+                    const estadoParam = String(appliedFilters.locationEstado || '').trim();
+                    if (estadoParam) params.set('estado', estadoParam);
+                    const resp = String(appliedFilters.responsibleQuery || '').trim();
+                    if (resp) params.set('responsible', resp);
+                    const area = String(appliedFilters.areaQuery || '').trim();
+                    if (area) params.set('minArea', area);
+                    // send status filters and type filters to backend as comma-separated lists
+                    const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([,v]) => v).map(([k]) => k) : [];
+                    if (types.length > 0) params.set('tipos', types.join(','));
+                    const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([,v]) => v).map(([k]) => k.toUpperCase()) : [];
+                    if (statuses.length > 0) params.set('status', statuses.join(','));
+                    params.set('page', String(page));
+                    params.set('perPage', String(perPage));
+                    params.set('orderBy', orderBy);
 
-                if (res.status === 401) {
-                    console.warn("[fetchFazendas] 401 Unauthorized");
-                    if (!mounted) return;
-                    setUnits([]); // garante array
+                    const url = `${API_URL}unidades/fazendas?${params.toString()}`;
+                console.debug('[fetchFazendas] GET', url);
+                const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
+                if (!res.ok) {
+                    console.warn('[fetchFazendas] resposta não OK', res.status);
+                    setUnits([]);
+                    setTotalResults(0);
                     return;
                 }
-
                 const body = await res.json().catch(() => null);
-                console.debug("[fetchFazendas] body:", body);
-
-                // Normaliza possíveis formatos
-                let unidades = null;
-                if (!body) unidades = null;
-                else if (Array.isArray(body)) unidades = body;
-                else if (Array.isArray(body.unidades)) unidades = body.unidades;
-                else if (Array.isArray(body.data?.unidades)) unidades = body.data.unidades;
-                else if (body.sucesso && Array.isArray(body.unidades)) unidades = body.unidades;
-                else unidades = null;
-
-                if (!mounted) return;
-
-                if (unidades && Array.isArray(unidades) && unidades.length > 0) {
-                    const normalized = unidades.map(u => {
-                        // normaliza tipo (FAZENDA -> Fazenda), status (ATIVA -> Ativa) e id como Number
-                        const rawType = String(u.tipo ?? u.type ?? "").trim();
-                        const type = rawType.length === 0 ? "Fazenda"
-                            : rawType.toUpperCase() === "FAZENDA" ? "Fazenda"
-                                : rawType[0]?.toUpperCase() + rawType.slice(1).toLowerCase();
-
-                        const rawStatus = String(u.status ?? "").trim();
-                        const status = rawStatus.length === 0 ? "Ativa"
-                            : rawStatus.toUpperCase() === "ATIVA" ? "Ativa"
-                                : rawStatus[0]?.toUpperCase() + rawStatus.slice(1).toLowerCase();
-
-                        return {
-                            id: Number(u.id),
-                            name: u.nome ?? u.name ?? String(u.id),
-                            type,
-                            location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
-                            manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
-                            status,
-                            sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
-                            areaHa: u.areaProdutiva ? Number(u.areaProdutiva) : (u.areaHa ?? 0),
-                            latitude: u.latitude != null ? Number(u.latitude)
-                                : (u.lat != null ? Number(u.lat)
-                                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
-                            longitude: u.longitude != null ? Number(u.longitude)
-                                : (u.lng != null ? Number(u.lng)
-                                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null))
-                        };
-                    });
-
-                    setUnits(normalized);
+                const unidades = body?.unidades ?? [];
+                const total = body?.total ?? 0;
+                if (Array.isArray(unidades) && unidades.length > 0) {
+                    const normalized = unidades.map(normalizeUnit);
+                    if (mounted) {
+                        setUnits(normalized);
+                        setTotalResults(total);
+                    }
                 } else {
-                    console.info("[fetchFazendas] nenhum item encontrado, corpo:", body);
-                    setUnits([]); // garante que .filter funcione
+                    if (mounted) {
+                        setUnits([]);
+                        setTotalResults(total);
+                    }
                 }
             } catch (err) {
-                console.error("Erro ao carregar fazendas:", err);
-                setUnits([]);
+                console.error('Erro ao carregar fazendas:', err);
+                if (mounted) {
+                    setUnits([]);
+                    setTotalResults(0);
+                }
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -161,7 +152,7 @@ export default function FazendasPage() {
 
         fetchFazendas();
         return () => { mounted = false; };
-    }, [fetchWithAuth]);
+    }, [fetchWithAuth, appliedFilters, page, perPage, query, orderBy]);
 
     // Buscar métricas de fazendas (total, ativas, inativas, etc)
     useEffect(() => {
@@ -224,7 +215,7 @@ export default function FazendasPage() {
         if (!id || prefetchCache.current.has(id)) return;
         router.prefetch(`/matriz/unidades/fazendas/${id}`);
         try {
-            const url = `${API_URL}matriz/unidades/${id}`;
+            const url = `${API_URL}unidades/${id}`;
             const res = await fetchWithAuth(url);
             if (!res.ok) return;
             const body = await res.json().catch(() => null);
@@ -293,6 +284,21 @@ export default function FazendasPage() {
         setStatusFilters({ Ativa: true, Inativa: true });
         setTypeFilters({ Matriz: true, Fazenda: true, Loja: true });
         setPage(1);
+        // clear drafts and applied filters as well
+        setDraftAreaQuery('');
+        setDraftLocationFilter('');
+        setDraftResponsibleQuery('');
+        setDraftStatusFilters({ Ativa: true, Inativa: true });
+        setDraftTypeFilters({ Matriz: true, Fazenda: true, Loja: true });
+        setCitySuggestions([]);
+        setAppliedFilters({
+            typeFilters: { Matriz: true, Fazenda: true, Loja: true },
+            statusFilters: { Ativa: true, Inativa: true },
+            locationFilter: '',
+            locationEstado: '',
+            responsibleQuery: '',
+            areaQuery: ''
+        });
     }
 
     function selectAllOnPage() {
@@ -304,6 +310,63 @@ export default function FazendasPage() {
         setUnits(prev => prev.filter(u => !selected.includes(u.id)));
         setSelected([]);
     }
+
+    // estado para controlar modal
+    const [openAddFazenda, setOpenAddFazenda] = useState(false);
+
+    // normalizador (mesma lógica que você já usa na fetchFazendas)
+    function normalizeUnit(u) {
+        const rawType = String(u.tipo ?? u.type ?? '').trim();
+        const type = rawType.length === 0 ? 'Fazenda'
+            : rawType.toUpperCase() === 'FAZENDA' ? 'Fazenda'
+                : rawType[0]?.toUpperCase() + rawType.slice(1).toLowerCase();
+
+        const rawStatus = String(u.status ?? '').trim();
+        const status = rawStatus.length === 0 ? 'Ativa'
+            : rawStatus.toUpperCase() === 'ATIVA' ? 'Ativa'
+                : rawStatus[0]?.toUpperCase() + rawStatus.slice(1).toLowerCase();
+
+        return {
+            id: Number(u.id),
+            name: u.nome ?? u.name ?? String(u.id),
+            type,
+            location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
+            manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
+            status,
+            sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
+            areaHa: u.areaProdutiva ? Number(u.areaProdutiva) : (u.areaHa ?? 0),
+            latitude: u.latitude != null ? Number(u.latitude)
+                : (u.lat != null ? Number(u.lat)
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
+            longitude: u.longitude != null ? Number(u.longitude)
+                : (u.lng != null ? Number(u.lng)
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null))
+        };
+    }
+
+    // callback quando modal criar fazenda com sucesso
+    function handleCreated(novaUnidade) {
+        try {
+            const normalized = normalizeUnit(novaUnidade);
+            // evita duplicatas (se por acaso já existe)
+            setUnits(prev => {
+                if (prev.some(u => u.id === normalized.id)) return prev;
+                return [normalized, ...prev];
+            });
+            // atualiza métricas rápido (incrementa total e, se ativa, incrementa active)
+            setMetrics(prev => {
+                const total = (prev.total || 0) + 1;
+                const active = (prev.active || 0) + ((String(normalized.status).toUpperCase() === 'ATIVA') ? 1 : 0);
+                const inactive = Math.max(0, total - active);
+                return { total, active, inactive };
+            });
+            // opcional: ir para primeira página para ver novo item
+            setPage(1);
+        } catch (err) {
+            console.error('handleCreated error', err);
+        }
+    }
+
 
     // ---------------------------------------------------------------------
     // grafico de barras "Fazendas mais produtivas"
@@ -423,7 +486,7 @@ export default function FazendasPage() {
                                                 <div className="text-xs text-muted-foreground mb-1">Status</div>
                                                 <div className="flex gap-2">
                                                     {["Ativa", "Inativa"].map(s => (
-                                                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
+                                                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded dark:hover:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
                                                             <Checkbox
                                                                 checked={!!draftStatusFilters[s]}
                                                                 onCheckedChange={() => {
@@ -440,7 +503,35 @@ export default function FazendasPage() {
                                             {/* LOCALIZAÇÃO */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                                                <Input placeholder="Filtrar por cidade / estado" value={locationFilter} onChange={(e) => { setLocationFilter(e.target.value); setPage(1); }} />
+                                                    <div className="relative">
+                                                        <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
+                                                            const v = e.target.value;
+                                                            setDraftLocationFilter(v);
+                                                            setPage(1);
+                                                            // debounce suggestions
+                                                            if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
+                                                            citySuggestTimer.current = setTimeout(async () => {
+                                                                try {
+                                                                    const q = v.trim();
+                                                                    if (!q || q.length < 2) { setCitySuggestions([]); return; }
+                                                                    const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
+                                                                    const res = await fetchWithAuth(url);
+                                                                    if (!res.ok) { setCitySuggestions([]); return; }
+                                                                    const body = await res.json().catch(() => null);
+                                                                    setCitySuggestions(body?.suggestions ?? []);
+                                                                } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
+                                                            }, 300);
+                                                        }} />
+                                                        {citySuggestions.length > 0 && (
+                                                            <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
+                                                                {citySuggestions.map((s, idx) => (
+                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                        <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                             </div>
                                             <Separator />
                                             {/* RESPONSAVEL - ainda nn funciona */}
@@ -460,7 +551,11 @@ export default function FazendasPage() {
                                                 <Input
                                                     placeholder="Filtrar por área (ha)"
                                                     value={draftAreaQuery}
-                                                    onChange={(e) => { setDraftAreaQuery(e.target.value); }}
+                                                    onChange={(e) => { 
+                                                        // aceita apenas números (garantia do usuário)
+                                                        const digits = String(e.target.value || '').replace(/\D/g, '');
+                                                        setDraftAreaQuery(digits);
+                                                    }}
                                                 />
 
                                             </div>
@@ -469,21 +564,32 @@ export default function FazendasPage() {
                                             <div className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <Button size="sm" onClick={() => {
+                                                        // parse draftLocationFilter which may contain "Cidade, ESTADO"
+                                                        const parts = String(draftLocationFilter || '').split(',').map(s => s.trim()).filter(Boolean);
+                                                        const cidade = parts[0] || '';
+                                                        const estado = parts[1] || '';
+
                                                         setAppliedFilters({
                                                             typeFilters: draftTypeFilters,
                                                             statusFilters: draftStatusFilters,
-                                                            locationFilter: draftLocationFilter,
+                                                            locationFilter: cidade,
+                                                            locationEstado: estado,
                                                             responsibleQuery: draftResponsibleQuery,
                                                             areaQuery: draftAreaQuery
                                                         });
                                                         setPage(1);
-                                                        // opcional: fechar popover — se seu Popover suportar controle externo, feche aqui
                                                     }}
                                                     >
                                                         Aplicar
                                                     </Button>
 
-                                                    <Button size="sm" variant="ghost" onClick={() => resetFilters()}>Limpar</Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => {
+                                                        resetFilters();
+                                                        setDraftAreaQuery('');
+                                                        setDraftLocationFilter('');
+                                                        setDraftResponsibleQuery('');
+                                                        setCitySuggestions([]);
+                                                    }}>Limpar</Button>
                                                 </div>
                                             </div>
 
@@ -493,10 +599,31 @@ export default function FazendasPage() {
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                                    <span className="text-sm">Ordenar Por</span>
-                                    <div className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded dark:bg-neutral-800 bg-neutral-200 dark:text-neutral-300 text-neutral-700 text-xs">1</div>
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                            <span className="text-sm">Ordenar Por</span>
+                                            <div className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded dark:bg-neutral-800 bg-neutral-200 dark:text-neutral-300 text-neutral-700 text-xs">
+                                                {orderBy === 'nome_asc' ? 'AZ' : orderBy === 'nome_desc' ? 'ZA' : orderBy === 'mais_recente' ? 'REC' : 'ANT'}
+                                            </div>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align='start'>
+                                        <DropdownMenuItem onClick={() => { setOrderBy('nome_asc'); setPage(1); }}>
+                                            A - Z (Nome)
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setOrderBy('nome_desc'); setPage(1); }}>
+                                            Z - A (Nome)
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => { setOrderBy('mais_recente'); setPage(1); }}>
+                                            Mais Recente
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setOrderBy('mais_antigo'); setPage(1); }}>
+                                            Mais Antigo
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
                                 <div className="flex items-center gap-2 ml-3">
                                     <DropdownMenu>
@@ -507,7 +634,7 @@ export default function FazendasPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align='end'>
-                                            <DropdownMenuItem onClick={() => handleExport()}>
+                                            <DropdownMenuItem onClick={() => handleExportCSV(units)}>
                                                 <FileTextIcon className='mr-2 h-4 w-4' />
                                                 Exportar CSV
                                             </DropdownMenuItem>
@@ -519,9 +646,15 @@ export default function FazendasPage() {
                                     </DropdownMenu>
                                 </div>
 
-                                <Button variant="" size="sm" className="flex items-center gap-1">
+                                <Button
+                                    variant=""
+                                    size="sm"
+                                    className="flex items-center gap-1"
+                                    onClick={() => setOpenAddFazenda(true)}
+                                >
                                     <span className="flex flex-row gap-3 items-center text-sm"><Plus />Adicionar fazenda</span>
                                 </Button>
+
                             </div>
                         </div>
                     </CardHeader>
@@ -537,7 +670,7 @@ export default function FazendasPage() {
                             <div>
                                 {/* Grid of cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                    {paged.map(u => (
+                                    {units.map(u => (
                                         <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`} onMouseEnter={() => prefetchFazenda(u.id)}>
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex flex-col items-start justify-between gap-3">
@@ -552,9 +685,6 @@ export default function FazendasPage() {
                                                         <div className="text-base font-medium">Área: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
                                                 </div>
-
-
-
                                                 <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div>
                                             </div>
                                         </Link>
@@ -562,10 +692,82 @@ export default function FazendasPage() {
                                 </div>
 
                                 {/* Empty state */}
-                                {filtered.length === 0 && (
+                                {units.length === 0 && !loading && (
                                     <div className="py-8 flex flex-col items-center gap-4 text-center text-muted-foreground">
                                         <Tractor size={50} />
                                         <p className="font-medium">Nenhuma fazenda encontrada.</p>
+                                    </div>
+                                )}
+
+                                {/* Pagination controls */}
+                                {units.length > 0 && (
+                                    <div className="mt-6 flex items-center justify-between">
+                                        <div className="text-sm text-muted-foreground">
+                                            Página <span className="font-semibold">{page}</span> de{' '}
+                                            <span className="font-semibold">{Math.ceil(totalResults / perPage) || 1}</span>
+                                            {' '} ({totalResults} resultado{totalResults !== 1 ? 's' : ''})
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                                disabled={page === 1}
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                                Anterior
+                                            </Button>
+                                            <div className="flex items-center gap-1">
+                                                {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, i) => {
+                                                    const totalPages = Math.ceil(totalResults / perPage);
+                                                    let pageNum;
+                                                    if (totalPages <= 5) {
+                                                        pageNum = i + 1;
+                                                    } else if (page <= 3) {
+                                                        pageNum = i + 1;
+                                                    } else if (page >= totalPages - 2) {
+                                                        pageNum = totalPages - 4 + i;
+                                                    } else {
+                                                        pageNum = page - 2 + i;
+                                                    }
+                                                    return (
+                                                        <Button
+                                                            key={pageNum}
+                                                            variant={pageNum === page ? "default" : "outline"}
+                                                            size="sm"
+                                                            onClick={() => setPage(pageNum)}
+                                                        >
+                                                            {pageNum}
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))}
+                                                disabled={page >= Math.ceil(totalResults / perPage)}
+                                            >
+                                                Próximo
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-muted-foreground">Por página:</span>
+                                            <select
+                                                value={perPage}
+                                                onChange={(e) => {
+                                                    setPerPage(Number(e.target.value));
+                                                    setPage(1);
+                                                }}
+                                                className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700"
+                                            >
+                                                <option value="8">8</option>
+                                                <option value="16">16</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -578,7 +780,7 @@ export default function FazendasPage() {
                     <Card>
                         <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
                         <CardContent>
-                            <div className='h-100 rounded-md overflow-hidden'>
+                            <div className='h-100 rounded-md overflow-hidden z-0 relative'>
                                 <MapContainer
                                     style={{ height: "100%", width: "100%" }}
                                     center={[-14.235004, -51.92528]} // fallback (centro do Brasil)
@@ -671,6 +873,15 @@ export default function FazendasPage() {
                 </div>
 
             </div>
+
+            {/* Add Fazenda Modal */}
+            <AddFazendaModal
+                open={openAddFazenda}
+                onOpenChange={(v) => setOpenAddFazenda(v)}
+                onCreated={handleCreated}
+                className="z-[999]"
+            />
+
         </div>
     );
 }

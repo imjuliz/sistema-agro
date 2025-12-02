@@ -1,6 +1,9 @@
 "use client"
 import * as React from 'react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/config';
+import { toast } from 'sonner';
 import { Pie, PieChart } from "recharts"
 //ui
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -8,103 +11,238 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Layers, TriangleAlert, TrendingUpDown } from 'lucide-react'
+import { Layers, TrendingUpDown } from 'lucide-react'
 //mui
 
 export function SectionCards() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+    const [loading, setLoading] = useState(true);
+    const [animaisCount, setAnimaisCount] = useState(0);
+    const [lotesCount, setLotesCount] = useState(0);
+    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadCounts() {
+            if (!unidadeId) {
+                setLoading(false);
+                return;
+            }
+            setError(false);
+            setErrorMessage("");
+
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const aRes = await fetchFn(`${API_URL}/animais`);
+                if (!aRes.ok) {
+                    const errBody = await aRes.json().catch(() => null);
+                    throw new Error(errBody?.erro || errBody?.message || JSON.stringify(errBody) || `HTTP ${aRes.status}`);
+                }
+                const aJson = await aRes.json().catch(() => null);
+                const animaisArr = aJson?.animais ?? (Array.isArray(aJson) ? aJson : null);
+                if (!Array.isArray(animaisArr)) throw new Error('Resposta inválida ao buscar animais');
+                const animaisFiltrados = animaisArr.filter((a) => Number(a.unidadeId) === Number(unidadeId));
+                const lRes = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
+                if (!lRes.ok) {
+                    const errBody = await lRes.json().catch(() => null);
+                    throw new Error(errBody?.erro || errBody?.message || JSON.stringify(errBody) || `HTTP ${lRes.status}`);
+                }
+                const lJson = await lRes.json().catch(() => null);
+                const lotesArr = lJson?.lotes ?? lJson?.data ?? (Array.isArray(lJson) ? lJson : null);
+                if (!Array.isArray(lotesArr)) throw new Error('Resposta inválida ao buscar lotes');
+
+                if (!mounted) return;
+                setAnimaisCount(animaisFiltrados.length);
+                setLotesCount(lotesArr.length);
+            } catch (err) {
+                console.error('Erro carregando contadores:', err);
+                const msg = err?.message || String(err);
+                setError(true);
+                setErrorMessage(msg);
+                toast.error('Erro ao carregar indicadores');
+            }
+            finally { if (mounted) setLoading(false); }
+        }
+
+        loadCounts();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
+
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
-            <Card className="h-fit p-0">
-                <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg"><Layers className="size-10" /></div>
-                        <div>
-                            <CardDescription>Animais ativos</CardDescription>
-                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">627</CardTitle>
+        <>
+            {error && (
+                <div className="mx-8 mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-800">
+                    <strong>falha ao puxar informações</strong>
+                    {errorMessage ? `: ${errorMessage}` : ''}
+                </div>
+            )}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
+                <Card className="h-fit p-0">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg"><Layers className="size-10" /></div>
+                            <div>
+                                <CardDescription>Animais ativos</CardDescription>
+                                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{loading ? '—' : animaisCount}</CardTitle>
+                            </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="h-fit p-0">
-                <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg">
-                            <Layers className="size-10" />
+                    </CardContent>
+                </Card>
+                <Card className="h-fit p-0">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg"><Layers className="size-10" /></div>
+                            <div>
+                                <CardDescription>Lotes ativos</CardDescription>
+                                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{loading ? '—' : lotesCount}</CardTitle>
+                            </div>
                         </div>
-                        <div>
-                            <CardDescription>Lotes ativos</CardDescription>
-                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">120</CardTitle>
+                    </CardContent>
+                </Card>
+                <Card className="h-fit p-0 gap-0">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg"><TrendingUpDown className="size-10" /></div>
+                            <div>
+                                <CardDescription>Rentabilidade por lote</CardDescription>
+                                <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">R$ 0,00</CardTitle>
+                            </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="h-fit p-0 gap-0">
-                <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg">
-                            <TrendingUpDown className="size-10" />
-                        </div>
-                        <div>
-                            <CardDescription>Rentabilidade por lote</CardDescription>
-                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl flex items-center justify-between">R$ 15,09F</CardTitle>
-                        </div>
-                    </div>
-                </CardContent>
-                <CardFooter className="flex-col items-start gap-1.5 text-sm p-4">
-                    <div className="line-clamp-1 flex gap-2 font-medium">Receita - Custo por lote</div>
-                    <div className="text-muted-foreground">Bom</div>
-                    <Select />
-                </CardFooter>
-            </Card>
-        </div>
+                    </CardContent>
+                    <CardFooter className="flex-col items-start gap-1.5 text-sm p-4">
+                        <div className="line-clamp-1 flex gap-2 font-medium">Receita - Custo por lote</div>
+                        <div className="text-muted-foreground">—</div>
+                        <Select />
+                    </CardFooter>
+                </Card>
+            </div>
+        </>
     );
 }
 
-//grafico de pizza
-const chartData = [
-    { browser: "Bovinos", visitors: 275, fill: "var(--color-chrome)" }, { browser: "Suínos", visitors: 200, fill: "var(--color-safari)" },
-    { browser: "Aves", visitors: 187, fill: "var(--color-firefox)" }
-]
-
-const chartConfig = {
-    visitors: { label: "Visitors", }, chrome: { label: "Bovinos", color: "var(--chart-1)", },
-    safari: { label: "Suínos", color: "var(--chart-2)", }, firefox: { label: "Aves", color: "var(--chart-3)", }
-}
 export function ChartPieDonut() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+    const [chartDataState, setChartDataState] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadChart() {
+            if (!unidadeId) {
+                setLoading(false);
+                return;
+            }
+            // reset errors before new attempt
+            setError(false);
+            setErrorMessage("");
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/dashboard/fazenda/${unidadeId}`);
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => null);
+                    throw new Error(errBody?.erro || errBody?.message || JSON.stringify(errBody) || `HTTP ${res.status}`);
+                }
+                const json = await res.json().catch(() => null);
+                const chart = json?.chart ?? null;
+                if (!Array.isArray(chart)) throw new Error('Resposta inválida ao buscar gráfico');
+                if (!mounted) return;
+                setChartDataState(chart);
+            } catch (err) {
+                console.error('Erro carregando chart:', err);
+                const msg = err?.message || String(err);
+                setError(true);
+                setErrorMessage(msg);
+                toast.error('Erro ao carregar gráfico');
+            }
+            finally {if (mounted) setLoading(false);}
+        }
+        loadChart();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
+
+    const config = { visitors: { label: "Valor" } };
+
     return (
         <Card className="flex flex-col w-full h-full">
             <CardHeader className="items-center pb-0">
                 <CardTitle>Lotes em andamento</CardTitle>
-                <CardDescription>750</CardDescription>
+                <CardDescription>{loading ? '—' : (chartDataState.reduce((s, i) => s + (i.value || 0), 0) || '—')}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 flex justify-center items-center">
-                <ChartContainer config={chartConfig} className="w-[90%] h-[90%] flex justify-center items-center">
-                    <PieChart width={300} height={300}>
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        <Pie data={chartData} dataKey="visitors" nameKey="browser" innerRadius={80} outerRadius={120} />
-                    </PieChart>
-                </ChartContainer>
+                {error ? (
+                    <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded">
+                        <strong>falha ao puxar informações</strong>
+                        {errorMessage ? `: ${errorMessage}` : ''}
+                    </div>
+                ) : (
+                    <ChartContainer config={config} className="w-[90%] h-[90%] flex justify-center items-center">
+                        <PieChart width={300} height={300}>
+                            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                            <Pie data={chartDataState} dataKey="value" nameKey="label" innerRadius={80} outerRadius={120} />
+                        </PieChart>
+                    </ChartContainer>
+                )}
             </CardContent>
         </Card>
     )
-}
-
-
-const atividades = [
-    { id: 1, descricao: "Engordamento dos bois", tipo: "Alimentação", lote: "127", data: "16/10", responsavel: "Ana Costa" },
-    { id: 2, descricao: "Vacinação das ovelhas", tipo: "Vacinação", lote: "58", data: "16/10", responsavel: "Eduardo" },
-    { id: 3, descricao: "Pesagem dos suínos", tipo: "Monitoramento", lote: "34", data: "17/10", responsavel: "Mariana Lopes" },
-    { id: 4, descricao: "Limpeza dos bebedouros", tipo: "Higiene", lote: "127", data: "18/10", responsavel: "Carlos Mendes" },
-    { id: 5, descricao: "Aplicação de vermífugo nos bovinos", tipo: "Medicação", lote: "127", data: "19/10", responsavel: "Fernanda Silva" },
-    { id: 6, descricao: "Troca de cama das aves", tipo: "Higiene", lote: "22", data: "20/10", responsavel: "João Pereira" },
-    { id: 7, descricao: "Separação dos animais por idade", tipo: "Organização", lote: "58", data: "21/10", responsavel: "Luciana Rocha" },
-    { id: 8, descricao: "Inspeção veterinária dos equinos", tipo: "Saúde", lote: "45", data: "22/10", responsavel: "Roberto Lima" }
-];
-
+};
 
 export function TableDemo() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
     const [categoria, setCategoria] = useState("");
     const [busca, setBusca] = useState("");
+    const [atividadesState, setAtividadesState] = useState([]);
+    const [atividadesError, setAtividadesError] = useState(false);
+    const [atividadesErrorMessage, setAtividadesErrorMessage] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        let localError = false;
+        async function loadLotesAnimais() {
+            if (!unidadeId) return;
+            // reset errors
+            setAtividadesError(false);
+            setAtividadesErrorMessage("");
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => null);
+                    throw new Error(errBody?.erro || errBody?.message || JSON.stringify(errBody) || `HTTP ${res.status}`);
+                }
+                const data = await res.json().catch(() => null);
+                if (!mounted) return;
+                    const arr = data?.lotes ?? data?.data ?? (Array.isArray(data) ? data : null);
+                    if (!Array.isArray(arr)) throw new Error('Resposta inválida ao buscar lotes/atividades');
+                if (Array.isArray(arr)) {
+                    const mappedActivities = arr.slice(0, 8).map((l, idx) => ({
+                        id: l.id ?? idx + 1,
+                        descricao: l.nome || l.produto || `Lote ${l.id}`,
+                        tipo: l.tipo || 'Monitoramento',
+                        lote: l.talhao || l.local || '-',
+                        data: l.plantio || l.dataPlantio || '-',
+                        responsavel: l.responsavel || '-'
+                    }));
+                    setAtividadesState(mappedActivities);
+                }
+            } catch (err) {
+                console.error('Erro carregando dados de animais:', err);
+                const msg = err?.message || String(err);
+                setAtividadesState([]);
+                setAtividadesError(true);
+                setAtividadesErrorMessage(msg);
+                toast.error('Erro ao carregar dados de animais');
+            }
+        }
+        loadLotesAnimais();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
 
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
@@ -125,7 +263,15 @@ export function TableDemo() {
                 </div>
                 <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
             </div>
-            <Table>
+            {atividadesError ? (
+                    <div className="p-3 rounded bg-red-50 border border-red-200 text-red-800">
+                        <strong>falha ao puxar informações</strong>
+                    {atividadesErrorMessage ? `: ${atividadesErrorMessage}` : ''}
+                </div>
+            ) : atividadesState.length === 0 ? (
+                <div className="p-3 text-sm text-muted-foreground">Nenhuma atividade encontrada.</div>
+            ) : (
+                <Table>
                 <TableCaption>Atividades Animais</TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-700">
@@ -138,7 +284,7 @@ export function TableDemo() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {atividades.map((atvd) => (
+                    {atividadesState.map((atvd) => (
                         <TableRow key={atvd.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <TableCell className="font-medium">{atvd.id}</TableCell>
                             <TableCell>{atvd.descricao}</TableCell>
@@ -149,26 +295,53 @@ export function TableDemo() {
                         </TableRow>
                     ))}
                 </TableBody>
-            </Table>
+                </Table>
+            )}
         </div>
     )
 }
 
-//tabela de lotes(animais)
-const lotes = [
-    { id: 1, animal: "Nelore", tipo: "Bovinos", preco: "450", unMedida: "arroba", status: "Em desenvolvimento", finalidade: "Corte", qtd: "500" },
-    { id: 2, animal: "Merina", tipo: "Ovinos", preco: "360", unMedida: "arroba", status: "Em reprodução", finalidade: "Lã", qtd: "275" },
-    { id: 3, animal: "Galinha", tipo: "Aves", preco: "750", unMedida: "un", status: "Em engorda", finalidade: "Corte", qtd: "1200" },
-    { id: 4, animal: "Nelore", tipo: "Bovinos", preco: "560", unMedida: "arroba", status: "Em reprodução", finalidade: "Corte", qtd: "320" },
-    { id: 5, animal: "Angus", tipo: "Bovinos", preco: "480", unMedida: "arroba", status: "Em engorda", finalidade: "Corte", qtd: "450" },
-    { id: 6, animal: "Leiteiro Holandês", tipo: "Bovinos", preco: "520", unMedida: "arroba", status: "Produzindo leite", finalidade: "Leite", qtd: "150" },
-    { id: 7, animal: "Cabra Saanen", tipo: "Caprinos", preco: "390", unMedida: "arroba", status: "Em reprodução", finalidade: "Leite", qtd: "200" },
-    { id: 8, animal: "Peru", tipo: "Aves", preco: "680", unMedida: "un", status: "Em engorda", finalidade: "Corte", qtd: "300" }
-];
-
 export function TableDemo2() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
     const [categoria, setCategoria] = useState("");
     const [busca, setBusca] = useState("");
+    const [lotesAnimais, setLotesAnimais] = useState([]);
+    const [lotesAnimaisError, setLotesAnimaisError] = useState(false);
+    const [lotesAnimaisErrorMessage, setLotesAnimaisErrorMessage] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadAnimais() {
+            if (!unidadeId) return;
+            // reset errors
+            setLotesAnimaisError(false);
+            setLotesAnimaisErrorMessage("");
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/animais`);
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => null);
+                    throw new Error(errBody?.erro || errBody?.message || JSON.stringify(errBody) || `HTTP ${res.status}`);
+                }
+                const json = await res.json().catch(() => null);
+                    const arr = json?.animais ?? (Array.isArray(json) ? json : null);
+                    if (!Array.isArray(arr)) throw new Error('Resposta inválida ao buscar animais');
+                    const filtered = arr.filter(a => Number(a.unidadeId) === Number(unidadeId));
+                if (!mounted) return;
+                setLotesAnimais(filtered);
+            } catch (err) {
+                console.error('Erro carregando animais:', err);
+                const msg = err?.message || String(err);
+                setLotesAnimais([]);
+                setLotesAnimaisError(true);
+                setLotesAnimaisErrorMessage(msg);
+                toast.error('Erro ao carregar lotes de animais');
+            }
+        }
+        loadAnimais();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
 
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
@@ -219,7 +392,13 @@ export function TableDemo2() {
                 </div>
                 <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
             </div>
-            <Table>
+            {lotesAnimaisError ? (
+                <div className="p-3 rounded bg-red-50 border border-red-200 text-red-800">
+                    <strong>falha ao puxar informações</strong>
+                    {lotesAnimaisErrorMessage ? `: ${lotesAnimaisErrorMessage}` : ''}
+                </div>
+            ) : (
+                <Table>
                 <TableCaption>Lotes de Animais</TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-700">
@@ -233,19 +412,20 @@ export function TableDemo2() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {lotes.map((lote) => (
-                        <TableRow key={lote.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <TableCell className="font-medium">{lote.id}</TableCell>
-                            <TableCell>{lote.animal}</TableCell>
-                            <TableCell>{lote.tipo}</TableCell>
-                            <TableCell>R$ {lote.preco}</TableCell>
-                            <TableCell>{lote.qtd}{lote.unMedida}</TableCell>
-                            <TableCell>{lote.status}</TableCell>
-                            <TableCell>{lote.finalidade}</TableCell>
+                    {lotesAnimais.map((a) => (
+                        <TableRow key={a.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <TableCell className="font-medium">{a.id}</TableCell>
+                            <TableCell>{a.animal}</TableCell>
+                            <TableCell>{a.raca}</TableCell>
+                            <TableCell>{a.quantidade ?? '-'}</TableCell>
+                            <TableCell>{a.tipo}</TableCell>
+                            <TableCell>{a.custo ? `R$ ${a.custo}` : '-'}</TableCell>
+                            <TableCell>{a.loteId ?? '-'}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
-            </Table>
+                </Table>
+            )}
         </div>
     )
 }

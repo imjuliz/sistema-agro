@@ -52,7 +52,7 @@ import { TabNavigation } from '@/components/matriz/Unidades/Fazenda/TabNavigatio
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { CenterPanel } from '@/components/matriz/Unidades/Fazenda/CenterPanel';
 import { RightPanel } from '@/components/matriz/Unidades/Fazenda/RightPanel';
-import { AddJobModal } from '@/components/matriz/Unidades/Fazenda/AddJobModal';
+import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
 import { LogActivityModal } from '@/components/matriz/Unidades/Fazenda/LogActivityModal';
 import { AddContactModal } from '@/components/matriz/Unidades/Fazenda/AddContactModal';
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
@@ -86,7 +86,7 @@ export default function FazendaDetalhe(props) {
       </div>
 
       {/* Modals */}
-      <AddJobModal open={showAddJob} onOpenChange={setShowAddJob} />
+      <AddFazendaModal open={showAddJob} onOpenChange={setShowAddJob} />
       <LogActivityModal open={showLogActivity} onOpenChange={setShowLogActivity} />
       <AddContactModal open={showAddContact} onOpenChange={setShowAddContact} />
     </div>

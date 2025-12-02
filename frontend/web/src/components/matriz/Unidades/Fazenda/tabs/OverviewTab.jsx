@@ -1,11 +1,17 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import buildImageUrl from '@/lib/image';
 import { TrendingUp, TrendingDown, Users, Briefcase, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -234,11 +240,131 @@ const cultivosConfig = {
   }
 }
 
-export function OverviewTab() {
+export function OverviewTab({ fazendaId }) {
+  const { fetchWithAuth } = useAuth()
+  const [dadosFazenda, setDadosFazenda] = useState(null)
+  const [contatosPrincipais, setContatosPrincipais] = useState([])
+  const [carregando, setCarregando] = useState(true)
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
   const [columnVisibility, setColumnVisibility] = useState({})
   const [rowSelection, setRowSelection] = useState({})
+
+  // Carregar dados da fazenda ao montar o componente
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        setCarregando(true)
+        if (!fazendaId) {
+          console.warn("fazendaId não fornecido")
+          return
+        }
+
+        const response = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`)
+        
+        if (!response.ok) {
+          console.error("Erro ao carregar dados da fazenda: status", response.status)
+          return
+        }
+
+        const body = await response.json()
+        const unidade = body?.unidade ?? body
+        
+        if (unidade) {
+          setDadosFazenda(unidade)
+        } else {
+          console.error("Erro ao carregar dados da fazenda:", body)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados da fazenda:", error)
+      } finally {
+        setCarregando(false)
+      }
+    }
+
+    if (fazendaId) {
+      carregarDados()
+    }
+  }, [fazendaId, fetchWithAuth])
+
+  // corrige ícones do leaflet em bundlers (mesma lógica usada em outras páginas)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+        iconUrl: require('leaflet/dist/images/marker-icon.png'),
+        shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+      });
+    } catch (e) {
+      // ignore in SSR or bundlers that don't allow require at runtime
+    }
+  }, []);
+
+  // formatter: CNPJ (00.000.000/0000-00)
+  function formatCNPJ(value) {
+    if (!value) return '-';
+    const digits = String(value).replace(/\D/g, '');
+    if (digits.length === 0) return '-';
+    const padded = digits.padEnd(14, '0').slice(0, 14);
+    return padded.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+
+  // small phone formatter (brasileiro-ish)
+  function formatPhone(v) {
+    if (!v) return '-';
+    const d = String(v).replace(/\D/g, '');
+    if (d.length <= 2) return d;
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
+  }
+
+  // buscar contatos da unidade e escolher até 3: priorizar GERENTE_FAZENDA, complementar com FUNCIONARIO_LOJA
+  useEffect(() => {
+    let mounted = true;
+    async function fetchContacts() {
+      if (!fazendaId) return;
+      try {
+        const url = `${API_URL}unidades/${fazendaId}/usuarios`;
+        const res = await fetchWithAuth(url);
+        if (!res.ok) return;
+        const body = await res.json().catch(() => null);
+        const users = Array.isArray(body) ? body : (body?.usuarios ?? body?.usuarios ?? []);
+        // fallback: if body.unidade?.usuarios
+        const usuarios = users.length ? users : (body?.unidade?.usuarios ?? []);
+
+        // normalize and filter
+        const gerentes = usuarios.filter(u => u?.perfil?.funcao === 'GERENTE_FAZENDA');
+        const funcionariosLoja = usuarios.filter(u => u?.perfil?.funcao === 'FUNCIONARIO_LOJA');
+
+        const selected = [];
+        for (const g of gerentes) {
+          if (selected.length >= 3) break;
+          selected.push(g);
+        }
+        for (const f of funcionariosLoja) {
+          if (selected.length >= 3) break;
+          selected.push(f);
+        }
+
+        if (mounted) setContatosPrincipais(selected.map(u => ({
+          id: u.id,
+          name: u.nome ?? u.name,
+          title: u.perfil?.funcao ?? '',
+          email: u.email,
+          phone: u.telefone ?? u.phone,
+          avatar: u.ftPerfil ?? null
+        })));
+      } catch (err) {
+        // ignore
+      }
+    }
+    fetchContacts();
+    return () => { mounted = false; };
+  }, [fazendaId, fetchWithAuth]);
+
   const table = useReactTable({
     data,
     columns,
@@ -272,28 +398,36 @@ export function OverviewTab() {
               <Building2 className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Culturas atuais</div>
-                <div className="text-sm text-muted-foreground">Foco produtivo (ex.: Milho, soja)</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando
+                    ? "Carregando..."
+                    : (
+                      Array.isArray(dadosFazenda?.focoProdutivo)
+                        ? dadosFazenda.focoProdutivo.join(', ')
+                        : (dadosFazenda?.focoProdutivo ?? '—')
+                    )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Users className="size-4 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Tamanho da empresa</div>
-                <div className="text-sm text-muted-foreground">500-1000 funcionários</div>
+                <div className="text-sm font-medium">Quantidade de funcionários</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : dadosFazenda?.quantidadeFuncionarios || "0"}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Calendar className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Criado em</div>
-                <div className="text-sm text-muted-foreground">Março de 2023</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : (dadosFazenda?.criadoEm ? new Date(dadosFazenda.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }) : "-")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <DollarSign className="size-4 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Valor do contrato</div>
-                <div className="text-sm text-muted-foreground">R$1500/mês</div>
+                <div className="text-sm font-medium">CNPJ</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatCNPJ(dadosFazenda?.cnpj)}</div>
               </div>
             </div>
           </CardContent>
@@ -308,34 +442,40 @@ export function OverviewTab() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {contacts.map((contact) => (
-              <div key={contact.id} className="flex items-start gap-3">
-                <Avatar className="size-10">
-                  <AvatarImage src={contact.avatar} alt={contact.name} />
-                  <AvatarFallback>{contact.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="font-medium text-sm">{contact.name}</div>
-                    {contact.status === 'primary' && (
-                      <Badge variant="default" className="text-xs">Primary</Badge>
+            {contatosPrincipais.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhum contato principal encontrado.</div>
+            ) : (
+              contatosPrincipais.map((contact) => (
+                <div key={contact.id} className="flex items-start gap-3">
+                  <Avatar className="size-10">
+                    {contact.avatar ? (
+                      <AvatarImage src={buildImageUrl(contact.avatar)} alt={contact.name} />
+                    ) : (
+                      <AvatarFallback>{String(contact.name || '').split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{contact.title}</div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Button variant="ghost" size="sm" className="h-7 px-2">
-                      <Phone className="size-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 px-2">
-                      <Mail className="size-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 px-2">
-                      <MessageSquare className="size-3" />
-                    </Button>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-sm">{contact.name}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{contact.title}</div>
+                    <div className="text-xs text-muted-foreground">{contact.email}</div>
+                    <div className="text-xs text-muted-foreground">{formatPhone(contact.phone)}</div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button variant="ghost" size="sm" className="h-7 px-2">
+                        <Phone className="size-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2">
+                        <Mail className="size-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2">
+                        <MessageSquare className="size-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -387,7 +527,7 @@ export function OverviewTab() {
                   <LandPlot className="size-10" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">150 ha</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal ? `${parseFloat(dadosFazenda.areaTotal).toFixed(2)} ha` : "0 ha")}</div>
                   <div className="text-sm text-muted-foreground">Área Total</div>
                 </div>
               </div>
@@ -400,7 +540,7 @@ export function OverviewTab() {
                   <Tractor className="size-10" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">120 ha</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaProdutiva ? `${parseFloat(dadosFazenda.areaProdutiva).toFixed(2)} ha` : "0 ha")}</div>
                   <div className="text-sm text-muted-foreground">Área Produtiva</div>
                 </div>
               </div>
@@ -414,7 +554,7 @@ export function OverviewTab() {
                   <Trees className="size-10 " />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">30 ha</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal && dadosFazenda?.areaProdutiva ? `${(parseFloat(dadosFazenda.areaTotal) - parseFloat(dadosFazenda.areaProdutiva)).toFixed(2)} ha` : "0 ha")}</div>
                   <div className="text-sm text-muted-foreground">Não Produtiva</div>
                 </div>
               </div>
@@ -504,17 +644,7 @@ export function OverviewTab() {
           </div>
         </div>
 
-        {/* mapa */}
-        <div className=''>
-          <Card>
-            <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
-            <CardContent>
-              <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
-                <div>Mapa interativo (Leaflet / Mapbox) — pins das unidades</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        
 
         {/* Uso do Solo e Cultivo */}
         <div className="flex gap-8">
@@ -544,30 +674,43 @@ export function OverviewTab() {
           </Card>
 
           <div className="flex flex-col gap-6 flex-1 min-w-0">
-            {/* <div className="grid grid-cols-4 gap-4"> */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-
-                  <div>
-                    <div className="text-2xl font-medium">80%</div>
-                    <div className="text-sm text-muted-foreground">Área produtiva</div>
+            {/* mapa */}
+        <div className='h-full'>
+          <Card className='h-full'>
+            <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
+              <CardContent className='h-full'>
+                {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
+                  <div className='h-full rounded-md overflow-hidden'>
+                    <MapContainer
+                      style={{ height: '100%', width: '100%' }}
+                      center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
+                      zoom={12}
+                      scrollWheelZoom={false}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
+                        <Popup>
+                          <div className="min-w-[160px]">
+                            <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
+                            <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    </MapContainer>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-
-                  <div>
-                    <div className="text-2xl font-medium">Rotação de culturas</div>
-                    <div className="text-sm text-muted-foreground">Sistema de cultivo</div>
+                ) : (
+                  <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
+                    <div>Coordenadas não disponíveis para esta unidade.</div>
                   </div>
-                </div>
+                )}
               </CardContent>
-            </Card>
+          </Card>
+        </div>
+
+            
 
           </div>
         </div>
