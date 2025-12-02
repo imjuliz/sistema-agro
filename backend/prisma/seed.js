@@ -3,22 +3,13 @@ import 'dotenv/config'
 import { configDotenv } from "dotenv";
 configDotenv();
 import prisma from "./client.js";
-// const { PrismaClient } = require('@prisma/client');
-// const prisma = new PrismaClient();
-import * as pkg from "./generated/client.js";
+import * as pkg from "./generated/client.ts";
 
 // Extrai enums
-const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote } = pkg;
+const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote, ContaStatus } = pkg;
 
 // Fallbacks para enums
-const TP = TipoPerfil ?? {
-    GERENTE_MATRIZ: "GERENTE_MATRIZ",
-    GERENTE_FAZENDA: "GERENTE_FAZENDA",
-    GERENTE_LOJA: "GERENTE_LOJA",
-    FUNCIONARIO_LOJA: "FUNCIONARIO_LOJA",
-    FUNCIONARIO_FAZENDA: "FUNCIONARIO_FAZENDA"
-};
-
+const TP = TipoPerfil ?? { GERENTE_MATRIZ: "GERENTE_MATRIZ", GERENTE_FAZENDA: "GERENTE_FAZENDA", GERENTE_LOJA: "GERENTE_LOJA", FUNCIONARIO_LOJA: "FUNCIONARIO_LOJA", FUNCIONARIO_FAZENDA: "FUNCIONARIO_FAZENDA" };
 const TU = TipoUnidade ?? { MATRIZ: "MATRIZ", FAZENDA: "FAZENDA", LOJA: "LOJA" };
 const TL = TipoLote ?? { GADO: "GADO", SOJA: "SOJA", LEITE: "LEITE", OUTRO: "OUTRO", PLANTIO: "PLANTIO" };
 const TRS = TipoRegistroSanitario ?? { VACINA: "VACINA", MEDICACAO: "MEDICACAO", RACAO: "RACAO", OUTRO: "OUTRO" };
@@ -41,18 +32,9 @@ const SPLANT = StatusPlantacao ?? { EM_DESENVOLVIMENTO: "EM_DESENVOLVIMENTO", CO
 const TANIMALIA = TipoAnimalia ?? { VACINACAO: "VACINACAO", VERMIFUGACAO: "VERMIFUGACAO", ANTIBIOTICO: "ANTIBIOTICO", TESTE_TUBERCULOSE: "TESTE_TUBERCULOSE", TESTE_BRUCELOSE: "TESTE_BRUCELOSE", SANIDADE_GERAL: "SANIDADE_GERAL", NUTRICAO: "NUTRICAO", SUPLEMENTACAO: "SUPLEMENTACAO", CONSUMO_RACAO: "CONSUMO_RACAO", AJUSTE_DIETA: "AJUSTE_DIETA", INSEMINACAO: "INSEMINACAO", MONITORAMENTO_CIO: "MONITORAMENTO_CIO", MONITORAMENTO_GESTACAO: "MONITORAMENTO_GESTACAO", PARTO: "PARTO", SECAGEM: "SECAGEM", TOURO_MANEJO: "TOURO_MANEJO", MANEJO_GERAL: "MANEJO_GERAL", MANEJO_PESAGEM: "MANEJO_PESAGEM", MANEJO_CARREIRA: "MANEJO_CARREIRA", MOVIMENTACAO_INTERNA: "MOVIMENTACAO_INTERNA", SEPARACAO_LOTE: "SEPARACAO_LOTE", ORDENHA_TESTE: "ORDENHA_TESTE", ORDENHA_DIARIA: "ORDENHA_DIARIA", COLETA_LEITE_AMOSTRA: "COLETA_LEITE_AMOSTRA", AVALIACAO_MASTITE: "AVALIACAO_MASTITE", RECEBIMENTO: "RECEBIMENTO", TRANSFERENCIA: "TRANSFERENCIA", VENDA_ANIMAL: "VENDA_ANIMAL", BAIXA_ANIMAL: "BAIXA_ANIMAL", BANHO: "BANHO", HIGIENIZACAO_AMBIENTE: "HIGIENIZACAO_AMBIENTE", TRATAMENTO_PE: "TRATAMENTO_PE", CURATIVO: "CURATIVO", OCORRENCIA: "OCORRENCIA", TRATAMENTO_URGENCIA: "TRATAMENTO_URGENCIA" };
 const SPEDIDO = StatusPedido ?? { PENDENTE: "PENDENTE", ENVIADO: "ENVIADO", EM_TRANSITO: "EM_TRANSITO", ENTREGUE: "ENTREGUE", CANCELADO: "CANCELADO" };
 const SPROD = StatusProducao ?? { PLANEJADA: "PLANEJADA", EM_ANDAMENTO: "EM_ANDAMENTO", FINALIZADA: "FINALIZADA", CANCELADA: "CANCELADA", EM_ANALISE: "EM_ANALISE" };
-const CtgInsumo = CategoriaInsumo ?? {
-    SEMENTE: "SEMENTE",
-    FERTILIZANTE: "FERTILIZANTE",
-    DEFENSIVO: "DEFENSIVO",
-    RACAO: "RACAO",
-    MEDICAMENTO: "MEDICAMENTO",
-    SUPLEMENTO: "SUPLEMENTO",
-    VACINA: "VACINA",
-    OUTROS: "OUTROS",
-    LATICINIOS: "LATICINIOS"
-};
+const CtgInsumo = CategoriaInsumo ?? { SEMENTE: "SEMENTE", FERTILIZANTE: "FERTILIZANTE", DEFENSIVO: "DEFENSIVO", RACAO: "RACAO", MEDICAMENTO: "MEDICAMENTO", SUPLEMENTO: "SUPLEMENTO", VACINA: "VACINA", OUTROS: "OUTROS", LATICINIOS: "LATICINIOS" };
 const SLOTE = StatusLote ?? { PENDENTE: "PENDENTE", PRONTO: "PRONTO", ENVIADO: "ENVIADO" }
+const SCONTA = ContaStatus ?? { PENDENTE: "PENDENTE", PAGA: "PAGA", VENCIDA: "VENCIDA", CANCELADA: "CANCELADA" }
 
 async function main() {
     try {
@@ -3712,7 +3694,6 @@ async function main() {
         }
         console.log("");
 
-
         // --- Seed financeiro: criar lançamentos de exemplo para matriz, fazendas e lojas ---
         // colocar abaixo de onde unidadeMap e usuarioMap já existem (após criar unidades/usuarios)
         async function seedFinanceiro(prisma, unidadeMap, usuarioMap) {
@@ -3726,7 +3707,7 @@ async function main() {
                     usuarioId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
                     descricao: "Folha de pagamento - Novembro/2025",
-                    tipo: TSAIDA.SALARIOS,
+                    tipoMovimento: TM.SAIDA,
                     categoria: "Folha",
                     formaPagamento: TPAG.PIX,
                     valor: 12000,
@@ -3735,14 +3716,14 @@ async function main() {
                     vencimento: new Date("2025-11-30"),
                     parcela: 1,
                     totalParcelas: 1,
-                    status: "PENDENTE",
+                    status: SCONTA.PENDENTE,
                     documento: "FOLHA-202511"
                 },
                 {
                     usuarioId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
                     descricao: "Receita venda institucional (remessa interna)",
-                    tipo: TSAIDA.ESTOQUE,
+                    tipoMovimento: TM.ENTRADA,
                     categoria: "Receita",
                     formaPagamento: TPAG.PIX,
                     valor: 3500,
@@ -3750,7 +3731,7 @@ async function main() {
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-10),
                     dataPagamento: daysFromNow(-10),
-                    status: "PAGA",
+                    status: SCONTA.PAGA,
                     documento: "REC-MATRIZ-202511"
                 },
 
@@ -3759,19 +3740,19 @@ async function main() {
                     usuarioId: usuarioMap["Usuario Ficticio"], // gerente fazenda teste
                     unidadeId: unidadeMap["Fazenda Teste"],
                     descricao: "Compra de medicamentos veterinários",
-                    tipo: TSAIDA.ENERGIA,
+                    tipoMovimento: TM.SAIDA,
                     categoria: "Sanidade",
                     formaPagamento: TPAG.PIX,
                     valor: 1800,
                     vencimento: daysFromNow(7),
-                    status: "PENDENTE",
+                    status: SCONTA.PENDENTE,
                     documento: "NFVET-FT-202511"
                 },
                 {
                     usuarioId: usuarioMap["Richard Souza"],
                     unidadeId: unidadeMap["Fazenda Beta"],
                     descricao: "Venda de leite cru - remessa para Sabor do Campo",
-                    tipo: TSAIDA.MANUTENCAO,
+                    tipoMovimento: TM.ENTRADA,
                     categoria: "Venda",
                     formaPagamento: TPAG.PIX,
                     valor: 4200,
@@ -3779,7 +3760,7 @@ async function main() {
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-5),
                     dataPagamento: daysFromNow(-5),
-                    status: "PAGA",
+                    status: SCONTA.PAGA,
                     documento: "NFV-FAZB-202511"
                 },
 
@@ -3788,19 +3769,19 @@ async function main() {
                     usuarioId: usuarioMap["Renato Martins"],
                     unidadeId: unidadeMap["Sabor do Campo Laticínios"],
                     descricao: "Pagamento a fornecedor (Fazenda Beta) - romaneio 202511",
-                    tipo: TSAIDA.ESTOQUE,
+                    tipoMovimento: TM.SAIDA,
                     categoria: "Compras",
                     formaPagamento: TPAG.PIX,
                     valor: 2600,
                     vencimento: daysFromNow(3),
-                    status: "PENDENTE",
+                    status: SCONTA.PENDENTE,
                     documento: "PAG-FB-202511"
                 },
                 {
                     usuarioId: usuarioMap["Lorena Oshiro"],
                     unidadeId: unidadeMap["Loja Teste"],
                     descricao: "Recebimento venda - vendas em caixa (sintético)",
-                    tipo: TSAIDA.ESTOQUE,
+                    tipoMovimento: TM.ENTRADA,
                     categoria: "Vendas",
                     formaPagamento: TPAG.CARTAO,
                     valor: 1800,
@@ -3808,7 +3789,7 @@ async function main() {
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-2),
                     dataPagamento: daysFromNow(-2),
-                    status: "PAGA",
+                    status: SCONTA.PAGA,
                     documento: "REC-LT-202511"
                 },
 
@@ -3817,14 +3798,14 @@ async function main() {
                     usuarioId: usuarioMap["Juliana Correia"],
                     unidadeId: unidadeMap["Fazenda Alpha"],
                     descricao: "Parcelamento equipamento - parcela 2/12",
-                    tipo: TSAIDA.MANUTENCAO,
+                    tipoMovimento: TM.SAIDA,
                     categoria: "Equipamentos",
                     formaPagamento: TPAG.PIX,
                     valor: 500,
                     parcela: 2,
                     totalParcelas: 12,
                     vencimento: daysFromNow(15),
-                    status: "PENDENTE",
+                    status: SCONTA.PENDENTE,
                     documento: "EQP-ALPHA-202511"
                 }
             ];
@@ -3846,7 +3827,6 @@ async function main() {
 
         // Chame dentro do main depois que unidadeMap e usuarioMap existirem:
         await seedFinanceiro(prisma, unidadeMap, usuarioMap);
-
 
         console.log(" SEED CONCLUÍDO COM SUCESSO! Todas as etapas foram executadas na ordem correta.");
 

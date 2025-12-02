@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../prisma/generated"
 }
 
 datasource db {
@@ -48,7 +49,7 @@ model Unidade {
   destinoMovimento        EstoqueMovimento[] @relation("DestinoMovimento")
   origemMovimento         EstoqueMovimento[] @relation("OrigemMovimento")
   estoqueProdutos         EstoqueProduto[]   @relation("EstoqueProduto_fornecedorUnidade")
-  saidas                  Saidas[]
+  financeiro              Financeiro[]
   lotes                   Lote[]
   pedidosComoDestino      Pedido[]           @relation("PedidoDestino")
   pedidosComoOrigem       Pedido[]           @relation("PedidoOrigem")
@@ -91,7 +92,7 @@ model Usuario {
   atvdLote            AtvdLote[]
   atvdAgricola        AtvdAgricola[] @relation("UsuarioAtvdPlantio")
   caixas              Caixa[]
-  saidas              Saidas[]
+  financeiro          Financeiro[]
   lotes               Lote[]
   pedidoCriador       Pedido[]       @relation("PedidoCriador")
   producao            Producao[]
@@ -661,12 +662,13 @@ model ItemVenda {
   @@map("itens_vendas")
 }
 
-model Saidas {
+model Financeiro {
   id             Int           @id @default(autoincrement())
   usuarioId      Int
   unidadeId      Int
   descricao      String
-  tipo           TipoSaida
+  // tipo           TipoSaida
+  tipoMovimento  TipoMovimento
   categoria      String?
   subcategoria   String?
   formaPagamento String?
@@ -689,7 +691,8 @@ model Saidas {
 
   @@index([competencia])
   @@index([status])
-  @@index([tipo])
+  // @@index([tipo])
+  @@index([tipoMovimento])
   @@index([unidadeId])
   @@index([usuarioId])
   @@index([vencimento])
