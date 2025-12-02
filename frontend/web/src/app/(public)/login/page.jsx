@@ -1,7 +1,7 @@
 import { GalleryVerticalEnd } from "lucide-react"
 import { LoginForm } from "@/components/login-form"
 import { ThemeToggle } from "@/components/toggleSwitchTema";
-import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
+// import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 
 export default function LoginPage() {
   return (
@@ -21,7 +21,7 @@ export default function LoginPage() {
           <div className="w-full max-w-xs"><LoginForm /></div>
         </div>
       </div>
-      <div className="bg-muted relative hidden lg:block"><StarsBackground /></div>
+      {/* <div className="bg-muted relative hidden lg:block"><StarsBackground /></div> */}
     </div>
   );
 }

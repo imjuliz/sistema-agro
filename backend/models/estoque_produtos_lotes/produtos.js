@@ -2,7 +2,8 @@ import prisma from '../../prisma/client.js';
 
 export async function getProdutos() {//tem controller
     try {
-        const produtos = await prisma.produtos.findMany();
+        const produtos = await prisma.produto.findMany();
+
         return {
             sucesso: true,
             produtos,
@@ -11,14 +12,38 @@ export async function getProdutos() {//tem controller
     } catch (error) {
         return {
             sucesso: false,
-            message: "Erro ao listar produtos."
+            message: "Erro ao listar produtos.",
+            detalhes: error.message
         }
     }
-};
+}
+
+export async function getProdutosPelaCategoria(categoria) {
+  try {
+    const produtosCat = await prisma.produto.findMany({
+        where: { categoria: categoria }
+    })
+
+    if(!produtosCat) {
+        return {
+            sucesso: true,
+            produtosCat,
+            message: "Produtos pela categoria foram listados"
+        }
+    }
+  } catch (error) {
+    return {
+        sucesso: false,
+        message: "Erro ao listar produtos pela categoria",
+        detalhes: error.message
+    }
+  }
+}
 
 export async function getProdutoPorId(id) {//tem controller
     try {
-        const produto = await prisma.produtos.findUnique({ where: { id: id } });
+        const produto = await prisma.produto.findUnique({ where: { id: id } });
+        
         return {
             sucesso: true,
             produto,
@@ -26,7 +51,7 @@ export async function getProdutoPorId(id) {//tem controller
         }
     }
     catch (error) {
-        return {
+        throw {
             sucesso: false,
             message: "Erro ao encontrar produto.",
             detalhes: error.message 
@@ -36,7 +61,7 @@ export async function getProdutoPorId(id) {//tem controller
 
 export async function createProduto(data) {//tem controller
     try {
-        const produto = await prisma.produtos.create({ data });
+        const produto = await prisma.produto.create({ data });
         return {
             sucesso: true,
             produto,
@@ -53,7 +78,7 @@ export async function createProduto(data) {//tem controller
 
 export async function deleteProduto(id) {//tem controller
     try {
-        const produto = await prisma.produtos.delete({ where: { id } });
+        const produto = await prisma.produto.delete({ where: { id } });
         return {
             sucesso: true,
             produto,
