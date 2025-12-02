@@ -201,7 +201,8 @@ model EstoqueProduto {
   nome                String             @db.VarChar(255)
   sku                 String?            @db.VarChar(100)
   marca               String?            @db.VarChar(255)
-  quantidade          Int                @default(0)
+  qntdAtual           Int                @default(0)
+  qntdMin             Int                @default(0)
   estoqueId           Int
   produtoId           Int?
   producaoId          Int?

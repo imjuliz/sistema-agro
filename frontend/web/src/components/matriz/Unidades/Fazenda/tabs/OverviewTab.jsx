@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import buildImageUrl from '@/lib/image';
-import { TrendingUp, TrendingDown, Users, Briefcase, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -92,26 +92,26 @@ const contacts = [
   }
 ];
 
-const reminders = [
-  {
-    id: 1,
-    title: 'Follow up on Senior Developer role',
-    time: '2:00 PM today',
-    priority: 'high'
-  },
-  {
-    id: 2,
-    title: 'Call Sarah Johnson about new requirements',
-    time: 'Tomorrow 10:00 AM',
-    priority: 'medium'
-  },
-  {
-    id: 3,
-    title: 'Send candidate shortlist',
-    time: 'Dec 15, 3:00 PM',
-    priority: 'low'
-  }
-];
+// const reminders = [
+//   {
+//     id: 1,
+//     title: 'Follow up on Senior Developer role',
+//     time: '2:00 PM today',
+//     priority: 'high'
+//   },
+//   {
+//     id: 2,
+//     title: 'Call Sarah Johnson about new requirements',
+//     time: 'Tomorrow 10:00 AM',
+//     priority: 'medium'
+//   },
+//   {
+//     id: 3,
+//     title: 'Send candidate shortlist',
+//     time: 'Dec 15, 3:00 PM',
+//     priority: 'low'
+//   }
+// ];
 
 // --------------------------------------------------------------------------------
 // tabela de dados gerais da fazenda 
@@ -321,6 +321,19 @@ export function OverviewTab({ fazendaId }) {
     return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
   }
 
+  // monta link do WhatsApp a partir do número
+  function buildWhatsAppUrl(phone) {
+    if (!phone) return '#';
+    const digits = String(phone).replace(/\D/g, '');
+    if (!digits) return '#';
+    // se parecer com número BR (10 ou 11 dígitos) e não contém country code, adiciona 55
+    let full = digits;
+    if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
+      full = '55' + digits;
+    }
+    return `https://wa.me/${full}`;
+  }
+
   // buscar contatos da unidade e escolher até 3: priorizar GERENTE_FAZENDA, complementar com FUNCIONARIO_LOJA
   useEffect(() => {
     let mounted = true;
@@ -395,7 +408,7 @@ export function OverviewTab({ fazendaId }) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <Building2 className="size-4 text-muted-foreground" />
+              <Briefcase className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Culturas atuais</div>
                 <div className="text-sm text-muted-foreground">
@@ -424,7 +437,7 @@ export function OverviewTab({ fazendaId }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <DollarSign className="size-4 text-muted-foreground" />
+              <ScrollText className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">CNPJ</div>
                 <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatCNPJ(dadosFazenda?.cnpj)}</div>
@@ -437,9 +450,9 @@ export function OverviewTab({ fazendaId }) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Contatos principais</CardTitle>
-            <Button variant="ghost" size="sm">
+            {/* <Button variant="ghost" size="sm">
               <MoreHorizontal className="size-4" />
-            </Button>
+            </Button> */}
           </CardHeader>
           <CardContent className="space-y-4">
             {contatosPrincipais.length === 0 ? (
@@ -458,19 +471,23 @@ export function OverviewTab({ fazendaId }) {
                     <div className="flex items-center gap-2">
                       <div className="font-medium text-sm">{contact.name}</div>
                     </div>
-                    <div className="text-xs text-muted-foreground">{contact.title}</div>
-                    <div className="text-xs text-muted-foreground">{contact.email}</div>
-                    <div className="text-xs text-muted-foreground">{formatPhone(contact.phone)}</div>
+                    {/* <div className="text-xs text-muted-foreground">{contact.title}</div> */}
                     <div className="flex items-center gap-2 mt-2">
-                      <Button variant="ghost" size="sm" className="h-7 px-2">
-                        <Phone className="size-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2">
-                        <Mail className="size-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2">
-                        <MessageSquare className="size-3" />
-                      </Button>
+                      <a href={buildWhatsAppUrl(contact.phone)} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${contact.name}`}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2">
+                          <Phone className="size-3" />
+                        </Button>
+                      </a>
+                      <a href={`mailto:${encodeURIComponent(contact.email ?? '')}`} aria-label={`Email ${contact.name}`}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2">
+                          <Mail className="size-3" />
+                        </Button>
+                      </a>
+                      {/* future: message button
+                        <Button variant="ghost" size="sm" className="h-7 px-2">
+                          <MessageSquare className="size-3" />
+                        </Button>
+                      */}
                     </div>
                   </div>
                 </div>
@@ -480,7 +497,7 @@ export function OverviewTab({ fazendaId }) {
         </Card>
 
         {/* Reminders */}
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Reminders</CardTitle>
             <Bell className="size-4 text-muted-foreground" />
@@ -511,7 +528,7 @@ export function OverviewTab({ fazendaId }) {
               Add Reminder
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
 

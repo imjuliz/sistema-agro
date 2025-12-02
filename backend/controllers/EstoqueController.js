@@ -97,7 +97,7 @@
 // }
 
 
-import { getEstoques, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque } from "../models/estoque.js";
+import { getEstoques, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque, createMovimento } from "../models/estoque.js";
 
 export async function getEstoquesController(req, res) {
   try {
@@ -231,5 +231,37 @@ export async function deleteEstoqueController(req, res) {
     return res.json(result);
   } catch (error) {
     return res.status(500).json({ sucesso: false, erro: "Erro interno", detalhes: error.message });
+  }
+}
+
+export async function createMovimentoController(req, res) {
+  try {
+    const body = req.body || {};
+    const usuarioId = req.usuario?.id ?? null;
+
+    const payload = {
+      estoqueProdutoId: body.estoqueProdutoId ?? body.produtoId ?? body.rawItemId,
+      tipoMovimento: body.tipoMovimento ?? body.tipo ?? body.movimento,
+      quantidade: body.quantidade,
+      observacoes: body.observacoes ?? body.obs ?? null,
+      pedidoId: body.pedidoId ?? null,
+      origemUnidadeId: body.origemUnidadeId ?? null,
+      destinoUnidadeId: body.destinoUnidadeId ?? null,
+      vendaId: body.vendaId ?? null,
+      producaoId: body.producaoId ?? null,
+      usuarioId,
+    };
+
+    // Basic validations
+    if (!payload.estoqueProdutoId) return res.status(400).json({ sucesso: false, erro: 'estoqueProdutoId é obrigatório.' });
+    if (!payload.tipoMovimento) return res.status(400).json({ sucesso: false, erro: 'tipoMovimento é obrigatório.' });
+    if (!payload.quantidade || Number(payload.quantidade) <= 0) return res.status(400).json({ sucesso: false, erro: 'quantidade inválida.' });
+
+    const result = await createMovimento(payload);
+    if (!result.sucesso) return res.status(400).json(result);
+    return res.status(201).json({ sucesso: true, movimento: result.movimento, estoqueProduto: result.estoqueProduto });
+  } catch (error) {
+    console.error('[EstoqueController] createMovimentoController error', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao registrar movimentação.', detalhes: error.message });
   }
 }

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, Mail, Phone, Calendar, Star, Eye, MessageSquare, MoreHorizontal, Building2, Users, DollarSign } from 'lucide-react';
+import { ArrowLeftRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
 import { InventoryProvider } from '@/contexts/InventoryContext';
@@ -123,6 +123,13 @@ export function EstoqueTab({ fazenda }) {
             </div>
           </CardContent>
         </Card>
+
+        <div>
+          <Button variant="" size="sm" className="w-full mb-2">
+            <ArrowLeftRight className="mr-2" />
+            Registrar movimentação de estoque 
+          </Button>
+        </div>
       </div>
       <div className=" flex-1 min-w-0 space-y-6">
       <InventoryProvider defaultUnidadeId={fazenda?.id}>
