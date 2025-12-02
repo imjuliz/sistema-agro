@@ -43,6 +43,13 @@ export async function getProdutosPelaCategoria(categoria) {
 export async function getProdutoPorId(id) {//tem controller
     try {
         const produto = await prisma.produto.findUnique({ where: { id: id } });
+
+        if(!produto) {
+            return {
+                sucesso: false,
+                message: "Produto nao encontrado."
+            }
+        }
         
         return {
             sucesso: true,
