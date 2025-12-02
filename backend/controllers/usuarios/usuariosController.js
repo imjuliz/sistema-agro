@@ -106,9 +106,10 @@ export const listarGerentesDisponiveisController = async (req, res) => {
 
 export const criarUsuarioController = async (req, res) => {
   try {
-    const { nome, email, senha, telefone, role } = req.body;
-    // For security, do not trust client-sent unidadeId. Prefer the unidadeId from the authenticated user (req.usuario)
-    const unidadeIdFromReq = req.usuario?.unidadeId || req.session?.usuario?.unidadeId || null;
+    const { nome, email, senha, telefone, role, unidadeId: bodyUnidadeId } = req.body;
+    // Prioridade: unidadeId do body (útil ao criar usuários junto com unidade)
+    // Se não vier no body, usa do usuário autenticado
+    const unidadeIdFromReq = bodyUnidadeId || req.usuario?.unidadeId || req.session?.usuario?.unidadeId || null;
 
     if (!nome || !email || !senha || !telefone || !role) {
       return res.status(400).json({ sucesso: false, erro: "Nome, email, senha, telefone e papel são obrigatórios." });

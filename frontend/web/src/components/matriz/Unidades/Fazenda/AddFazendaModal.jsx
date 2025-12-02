@@ -41,6 +41,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [cepPreenchido, setCepPreenchido] = useState(false);
   const [enderecoNumero, setEnderecoNumero] = useState("");
   const [unidadesMedidaOptions, setUnidadesMedidaOptions] = useState([]);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
 
   // Novos estados para fornecedores externos
   const [existingFornecedores, setExistingFornecedores] = useState([]);
@@ -116,7 +118,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     setNome(''); setEndereco(''); setCep(''); setCidade(''); setEstado(''); setCnpj(''); setEmail(''); setTelefone('');
     setImagemFile(null); setImagemPreview(null); setAreaProdutiva(''); setAreaTotal(''); setCultura(''); setHorarioAbertura(''); setHorarioFechamento(''); setDescricaoCurta('');
     setEnderecoNumero(''); setFornecedores([]); setContracts([]); setTeamInvites([]);
-    setFocoProdutivo(''); setCepPreenchido(false);
+    setFocoProdutivo(''); setCepPreenchido(false); setLatitude(null); setLongitude(null);
     setStep(0);
     setErrors({});
     setFormError('');
@@ -225,11 +227,14 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       }
 
       // extrai os dados diretamente de json (não precisa de json.data)
-      const { endereco: logradouro, complemento, bairro, cidade: localidade, estado: uf } = json;
+      const { endereco: logradouro, complemento, bairro, cidade: localidade, estado: uf, latitude: lat, longitude: lng } = json;
       const enderecoMontado = [logradouro, bairro, complemento].filter(Boolean).join(", ");
       if (enderecoMontado) setEndereco(enderecoMontado);
       if (localidade) setCidade(localidade);
       if (uf) setEstado(uf);
+      // Capturar coordenadas se disponíveis
+      if (lat !== null && lat !== undefined) setLatitude(lat);
+      if (lng !== null && lng !== undefined) setLongitude(lng);
       // atualiza cep formatado
       setCep(json.cep || formatCEP(digits));
       // marca CEP como preenchido para desabilitar campos
@@ -407,7 +412,7 @@ function addContract() {
     frequenciaEntregas: null,
     diaPagamento: '',
     formaPagamento: null,
-    status: 'ATIVA',
+    status: 'ATIVO',
     duration: ''
   };
 
@@ -424,60 +429,56 @@ function addContract() {
     setNewFuncionarioErrors({});
 
     if (type === "gerente") {
-      // se for criar novo gerente localmente (isCreatingNewGerente)
-      if (isCreatingNewGerente) {
-        const errors = {};
-        if (!newGerenteData.nome || !newGerenteData.nome.trim()) errors.nome = "Nome é obrigatório.";
-        if (!newGerenteData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newGerenteData.email)) errors.email = "Email inválido.";
-        if (!newGerenteData.telefone || !onlyDigits(newGerenteData.telefone)) errors.telefone = "Telefone é obrigatório.";
-        if (!newGerenteData.senha || !newGerenteData.senha.trim()) errors.senha = "Senha é obrigatória.";
-        if (!newGerenteData.confirmaSenha || !newGerenteData.confirmaSenha.trim()) errors.confirmaSenha = "Confirmação de senha é obrigatória.";
-        if (newGerenteData.senha && newGerenteData.confirmaSenha && newGerenteData.senha !== newGerenteData.confirmaSenha) {
-          errors.confirmaSenha = "As senhas não correspondem.";
-        }
-
-        if (Object.keys(errors).length > 0) {
-          setNewGerenteErrors(errors);
-          return;
-        }
-
-        const tempId = `temp_user_${Date.now()}`;
-        setTeamInvites(prev => [
-          ...prev,
-          {
-            id: tempId,
-            nome: newGerenteData.nome.trim(),
-            email: newGerenteData.email.trim(),
-            telefone: onlyDigits(newGerenteData.telefone),
-            role: "GERENTE_FAZENDA",
-            isNew: true,
-            _raw: { ...newGerenteData }
-          }
-        ]);
-
-        setIsCreatingNewGerente(false);
-        setSelectedGerenteId(tempId);
-        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "", confirmaSenha: "" });
-        setNewGerenteErrors({});
-      } else {
-        // adicionar gerente existente
-        if (!selectedGerenteId) { setFormError("Selecione um gerente ou crie um novo."); return; }
-        const existing = existingGerentes.find(g => String(g.id) === selectedGerenteId);
-        if (!existing) { setFormError("Gerente selecionado não encontrado."); return; }
-        if (!teamInvites.some(u => String(u.id) === String(existing.id) && u.role === "GERENTE_FAZENDA")) {
-          setTeamInvites(prev => [...prev, {
-            id: existing.id,
-            nome: existing.nome,
-            email: existing.email,
-            telefone: existing.telefone,
-            role: "GERENTE_FAZENDA",
-            isNew: false,
-            backendId: existing.id
-          }]);
-        } else {
-          setFormError("Este gerente já foi adicionado.");
-        }
+      // Sempre criar novo gerente (isCreatingNewGerente sempre é true no passo 2)
+      const errors = {};
+      if (!newGerenteData.nome || !newGerenteData.nome.trim()) errors.nome = "Nome é obrigatório.";
+      if (!newGerenteData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newGerenteData.email)) errors.email = "Email inválido.";
+      if (!newGerenteData.telefone || !onlyDigits(newGerenteData.telefone)) errors.telefone = "Telefone é obrigatório.";
+      if (!newGerenteData.senha || !newGerenteData.senha.trim()) errors.senha = "Senha é obrigatória.";
+      if (!newGerenteData.confirmaSenha || !newGerenteData.confirmaSenha.trim()) errors.confirmaSenha = "Confirmação de senha é obrigatória.";
+      if (newGerenteData.senha && newGerenteData.confirmaSenha && newGerenteData.senha !== newGerenteData.confirmaSenha) {
+        errors.confirmaSenha = "As senhas não correspondem.";
       }
+
+      // Validar se email já existe em teamInvites ou em gerentes existentes
+      const emailJaExiste = teamInvites.some(u => u.email.toLowerCase() === newGerenteData.email.toLowerCase()) ||
+                           existingGerentes.some(g => g.email && g.email.toLowerCase() === newGerenteData.email.toLowerCase());
+      if (emailJaExiste) {
+        errors.email = "Este email já está cadastrado.";
+      }
+
+      // Validar se telefone já existe em teamInvites ou em gerentes existentes
+      const telefoneDigitos = onlyDigits(newGerenteData.telefone);
+      const telefoneJaExiste = teamInvites.some(u => onlyDigits(u.telefone) === telefoneDigitos) ||
+                              existingGerentes.some(g => g.telefone && onlyDigits(g.telefone) === telefoneDigitos);
+      if (telefoneJaExiste) {
+        errors.telefone = "Este telefone já está cadastrado.";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setNewGerenteErrors(errors);
+        return;
+      }
+
+      const tempId = `temp_user_${Date.now()}`;
+      setTeamInvites(prev => [
+        ...prev,
+        {
+          id: tempId,
+          nome: newGerenteData.nome.trim(),
+          email: newGerenteData.email.trim(),
+          telefone: onlyDigits(newGerenteData.telefone),
+          role: "GERENTE_FAZENDA",
+          isNew: true,
+          _raw: { ...newGerenteData }
+        }
+      ]);
+
+      setIsCreatingNewGerente(false);
+      setSelectedGerenteId(tempId);
+      setNewGerenteData({ nome: "", email: "", telefone: "", senha: "", confirmaSenha: "" });
+      setNewGerenteErrors({});
+      setFormError('✅ Gerente adicionado com sucesso!');
 
     } else if (type === "funcionario") {
       // funcionário novo — mantemos criação local (isNew true)
@@ -489,6 +490,19 @@ function addContract() {
       if (!newFuncionarioData.confirmaSenha || !newFuncionarioData.confirmaSenha.trim()) errors.confirmaSenha = "Confirmação de senha é obrigatória.";
       if (newFuncionarioData.senha && newFuncionarioData.confirmaSenha && newFuncionarioData.senha !== newFuncionarioData.confirmaSenha) {
         errors.confirmaSenha = "As senhas não correspondem.";
+      }
+
+      // Validar se email já existe em teamInvites
+      const emailJaExiste = teamInvites.some(u => u.email.toLowerCase() === newFuncionarioData.email.toLowerCase());
+      if (emailJaExiste) {
+        errors.email = "Este email já está cadastrado.";
+      }
+
+      // Validar se telefone já existe em teamInvites
+      const telefoneDigitos = onlyDigits(newFuncionarioData.telefone);
+      const telefoneJaExiste = teamInvites.some(u => onlyDigits(u.telefone) === telefoneDigitos);
+      if (telefoneJaExiste) {
+        errors.telefone = "Este telefone já está cadastrado.";
       }
 
       if (Object.keys(errors).length > 0) {
@@ -632,13 +646,22 @@ function addContract() {
     // monta payload unidade
     const enderecoCompleto = endereco.trim() + (enderecoNumero && enderecoNumero.trim() ? `, nº ${enderecoNumero.trim()}` : '');
       // build payload without sending `null` for optional fields (Zod expects omitted fields instead)
+      
+      // Determinar status da fazenda: ATIVA apenas se tiver AMBOS os tipos de contrato
+      // 1. Contrato como consumidora (recebe de fornecedor externo)
+      // 2. Contrato como fornecedora (envia para lojas via fornecedorUnidadeId)
+      const temContratoComoConsumidora = contracts?.some(c => c.fornecedorExternoId);
+      const temContratoComoFornecedora = contracts?.some(c => c.fornecedorUnidadeId);
+      const fazeindaStatus = (temContratoComoConsumidora && temContratoComoFornecedora) ? 'ATIVA' : 'INATIVA';
+      
       const payload = {
         nome: nome.trim(),
         endereco: enderecoCompleto,
         cep: onlyDigits(cep).trim(),
         cidade: cidade.trim(),
         estado: estado.trim(),
-        tipo: 'FAZENDA'
+        tipo: 'FAZENDA',
+        status: fazeindaStatus
       };
 
       if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim();
@@ -647,6 +670,8 @@ function addContract() {
       if (imagemPreview) payload.imagemBase64 = imagemPreview;
       if (areaTotal !== '' && !Number.isNaN(Number(areaTotal))) payload.areaTotal = Number(areaTotal);
       if (areaProdutiva !== '' && !Number.isNaN(Number(areaProdutiva))) payload.areaProdutiva = Number(areaProdutiva);
+      if (latitude !== null && latitude !== undefined) payload.latitude = latitude;
+      if (longitude !== null && longitude !== undefined) payload.longitude = longitude;
       if (cultura) payload.cultura = cultura;
       if (horarioAbertura) payload.horarioAbertura = horarioAbertura;
       if (horarioFechamento) payload.horarioFechamento = horarioFechamento;
@@ -726,7 +751,7 @@ function addContract() {
           dataInicio: c.dataInicio || new Date().toISOString().slice(0,10),
           dataFim: c.dataFim || null,
           dataEnvio: c.dataEnvio || c.dataInicio || new Date().toISOString().slice(0,10),
-          status: c.status || 'ATIVA',
+          status: c.status || 'ATIVO',
           frequenciaEntregas: c.frequenciaEntregas || null,
           diaPagamento: c.diaPagamento || '',
           formaPagamento: c.formaPagamento || null,
@@ -767,7 +792,7 @@ function addContract() {
             senha: u._raw.senha,
             telefone: onlyDigits(u._raw.telefone),
             role: u.role,
-            unidadeId: unidade.id
+            unidadeId: unidade.unidade?.id || unidade.id // Enviar o ID da unidade recém-criada
           };
           const resp = await fetchWithAuth(`${base}/usuarios/criar`, {
             method: 'POST',
@@ -794,7 +819,7 @@ function addContract() {
             const updateResp = await fetchWithAuth(`${base}/usuarios/${u.backendId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ unidadeId: unidade.id })
+              body: JSON.stringify({ unidadeId: unidade.unidade?.id || unidade.id })
             });
             if (!updateResp.ok) {console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);}
           }
@@ -845,55 +870,63 @@ function updateNewItem(contractIndex, field, value) {
   setNewItems(prev => ({
     ...prev,
     [contractIndex]: {
-      ...prev[contractIndex],
+      ...(prev[contractIndex] || {}),
       [field]: value
     }
   }));
 }
 
-function addItemToContract(contractIndex) {
-  const item = newItems[contractIndex];
-  if (!item || !item.nome) return;
+  function addItemToContract(contractIndex) {
+    const item = newItems[contractIndex];
+    
+    // Validar que temos um nome de item
+    if (!item || !item.nome || !item.nome.trim()) {
+      setFormError('Nome do item é obrigatório.');
+      return;
+    }
 
-  setContracts(prev => {
-    const copy = [...prev];
-    copy[contractIndex].itens = copy[contractIndex].itens || [];
-
-    // Checagem de duplicata mais específica: nome + unidade + preço (evita falso positivo só por nome)
-    const nomeNorm = (item.nome || '').trim().toLowerCase();
-    const unidadeNorm = item.unidadeMedida || '';
-    const precoNorm = item.precoUnitario !== undefined && item.precoUnitario !== null ? String(item.precoUnitario) : '';
-
-    const jaExiste = copy[contractIndex].itens.some(i => {
-      const inome = (i.nome || '').trim().toLowerCase();
-      const iunidade = i.unidadeMedida || '';
-      const ipreco = i.precoUnitario !== undefined && i.precoUnitario !== null ? String(i.precoUnitario) : '';
-      return inome === nomeNorm && iunidade === unidadeNorm && ipreco === precoNorm;
-    });
+    // Verificar se o item já existe NA LISTA ATUAL DE CONTRACTS (state atual)
+    const nomeItemNorm = item.nome.trim().toLowerCase();
+    const itensAtuais = contracts[contractIndex]?.itens || [];
+    
+    const jaExiste = itensAtuais.some(i => 
+      (i.nome || '').trim().toLowerCase() === nomeItemNorm
+    );
 
     if (jaExiste) {
       setFormError('Este item já foi adicionado ao contrato.');
-      return copy;
+      return;
     }
 
-    copy[contractIndex].itens.push({
-      nome: item.nome,
-      quantidade: item.quantidade ? Number(item.quantidade) : undefined,
-      unidadeMedida: item.unidadeMedida || undefined,
-      precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : undefined,
-      pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : undefined,
-      raca: item.raca || undefined
+    // Se passou nas validações, adicionar o item
+    setContracts(prev => {
+      const copy = [...prev];
+      
+      // Garantir que itens existe
+      if (!copy[contractIndex].itens) {
+        copy[contractIndex].itens = [];
+      }
+
+      copy[contractIndex].itens.push({
+        nome: item.nome.trim(),
+        quantidade: item.quantidade ? Number(item.quantidade) : undefined,
+        unidadeMedida: item.unidadeMedida || undefined,
+        precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : undefined,
+        pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : undefined,
+        raca: item.raca || undefined
+      });
+      
+      return copy;
     });
-    return copy;
-  });
 
-  setNewItems(prev => ({
-    ...prev,
-    [contractIndex]: {}
-  }));
-}
-
-function removeItem(contractIndex, itemIndex) {
+    // Limpar o formulário do novo item
+    setNewItems(prev => ({
+      ...prev,
+      [contractIndex]: {}
+    }));
+    
+    setFormError('');
+  }function removeItem(contractIndex, itemIndex) {
   setContracts(prev => {
     const copy = [...prev];
     copy[contractIndex].itens = copy[contractIndex].itens.filter((_, idx) => idx !== itemIndex);
@@ -1518,15 +1551,13 @@ function updateContractField(contractIndex, field, value) {
               <section className="space-y-6">
                 <h3 className="text-lg font-semibold">Convidar equipe</h3>
                 <div className="space-y-4">
-                  <h4 className="font-semibold">Gerente (obrigatório)</h4>
+                  <h4 className="font-semibold">Gerente *</h4>
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label>Gerente *</Label>
                       <p className="text-sm text-muted-foreground">Será criado um novo gerente para esta fazenda. Preencha os dados abaixo.</p>
                     </div>
                   </div>
 
-                  {isCreatingNewGerente && (
                     <div className="space-y-4 p-4 border rounded-md bg-muted/20">
                       <h4 className="font-semibold">Dados do Novo Gerente</h4>
                       <div className="grid grid-cols-2 gap-4">
@@ -1607,7 +1638,6 @@ function updateContractField(contractIndex, field, value) {
                         </div>
                       </div>
                     </div>
-                  )}
 
                   <Button onClick={() => addTeamInvite("gerente")} disabled={loading}>Adicionar Gerente</Button>
 
@@ -1704,7 +1734,7 @@ function updateContractField(contractIndex, field, value) {
                   <h4 className="font-medium">Equipe a convidar</h4>
                   <ul className="mt-2 space-y-2">
                     {teamInvites.map((u, i) => (
-                      <li key={u.email} className="p-2 border rounded flex justify-between items-center">
+                      <li key={i} className="p-2 border rounded flex justify-between items-center">
                         <div>
                           <div className="font-semibold">{u.nome} — {u.role === "GERENTE_FAZENDA" ? "Gerente" : "Funcionário"}</div>
                           <div className="text-sm text-muted-foreground">{u.email}</div>
