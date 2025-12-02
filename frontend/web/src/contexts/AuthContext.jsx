@@ -130,24 +130,29 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
 
         let data;
         let responseText = '';
+        // Ler como texto primeiro e tentar parsear como JSON; em respostas de erro o servidor
+        // pode devolver texto simples (ex: "Internal Server Error"). Evitamos explodir o app
+        // e retornamos um objeto com a mensagem de erro para a UI.
+        responseText = await res.text();
         try {
-          responseText = await res.text();
           data = JSON.parse(responseText);
         } catch (parseErr) {
-          // Capturar o corpo da resposta para diagnosticar
-          console.error(`[login] Erro ao parsear JSON na tentativa ${attempt}:`, parseErr);
-          console.error(`[login] Corpo da resposta:`, responseText.substring(0, 500));
-          console.error(`[login] Status HTTP:`, res.status);
-          lastError = `Erro de servidor (${res.status}): ${responseText.substring(0, 100)}`;
-          
-          // Se a tentativa falhou por erro de parse, aguarda e tenta novamente
-          if (attempt < maxRetries) {
-            const delay = 500 * attempt; // delay exponencial: 500ms, 1s, 1.5s
-            console.log(`[login] Aguardando ${delay}ms antes de retry...`);
+          // Não-JSON: registrar e criar fallback com o texto bruto
+          console.warn(`[login] resposta não-JSON na tentativa ${attempt}:`, parseErr);
+          console.warn(`[login] Corpo da resposta (texto):`, responseText ? responseText.substring(0, 500) : '<vazio>');
+          console.warn(`[login] Status HTTP:`, res.status, res.statusText);
+          data = { error: responseText || res.statusText || `HTTP ${res.status}` };
+
+          // Se o status for 5xx ou 4xx, e ainda quiser tentar retry em caso específico,
+          // podemos continuar o loop. Atualmente, tentamos retry só quando o parse falhava
+          // por motivos transitórios — manter comportamento de retry breve.
+          if (!res.ok && attempt < maxRetries) {
+            const delay = 500 * attempt;
+            console.log(`[login] Aguardando ${delay}ms antes de retry devido a resposta não-JSON...`);
             await new Promise(r => setTimeout(r, delay));
             continue;
           }
-          return { success: false, error: lastError, status: res.status };
+          if (!res.ok) return { success: false, error: data.error, status: res.status };
         }
 
         if (!res.ok) {

@@ -29,14 +29,31 @@ export const auth = (perfisPermitidos = []) => {
           return res.status(403).json({ mensagem: "Token inválido" });
         }
 
+        // basic validation of decoded contents
+        if (!decoded || (typeof decoded.id === 'undefined' && typeof decoded.sub === 'undefined')) {
+          console.debug('[auth] token decodificado inválido:', decoded);
+          return res.status(403).json({ mensagem: 'Token inválido (payload)' });
+        }
+
         // busca usuário no DB com perfil
-        user = await prisma.usuario.findUnique({
-          where: { id: decoded.id },
-          include: { perfil: true },
-        });
+        try {
+          const userId = Number(decoded.id ?? decoded.sub);
+          if (Number.isNaN(userId)) {
+            console.debug('[auth] id do token não é numérico:', decoded.id ?? decoded.sub);
+            return res.status(403).json({ mensagem: 'Token inválido (id)' });
+          }
+
+          user = await prisma.usuario.findUnique({
+            where: { id: userId },
+            include: { perfil: true },
+          });
+        } catch (dbErr) {
+          console.error('[auth] erro ao buscar usuário no DB:', dbErr);
+          return res.status(500).json({ mensagem: 'Erro interno de autenticação (DB)', detalhes: dbErr?.message });
+        }
 
         if (!user) {
-          console.debug("[auth] usuário do token não encontrado:", decoded.id);
+          console.debug("[auth] usuário do token não encontrado:", decoded.id ?? decoded.sub);
           return res.status(401).json({ mensagem: "Usuário não encontrado" });
         }
 
@@ -91,7 +108,8 @@ export const auth = (perfisPermitidos = []) => {
       return next();
     } catch (err) {
       console.error("[auth] erro inesperado:", err);
-      return res.status(500).json({ mensagem: "Erro interno de autenticação" });
+      // Return 401 to indicate authentication failure rather than a generic 500
+      return res.status(401).json({ mensagem: "Não autorizado: erro de autenticação", detalhes: err?.message });
     }
   };
 };

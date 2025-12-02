@@ -103,14 +103,17 @@ const COOKIE_NAME = process.env.REFRESH_COOKIE_NAME || 'refreshToken';
 
 export async function loginController(req, res) {
   try {
+    console.log('[loginController] chamada recebida. body:', req.body);
     const { email, senha } = req.body;
     if (!email || !senha) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
 
     // buscar usuário incluindo perfil
+    console.log('[loginController] buscando usuário por email:', email);
     const user = await prisma.usuario.findUnique({
       where: { email },
       include: { perfil: true },
     });
+    console.log('[loginController] resultado prisma.usuario.findUnique:', !!user);
     if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
 
     // validar senha

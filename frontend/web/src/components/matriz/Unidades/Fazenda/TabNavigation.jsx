@@ -5,7 +5,7 @@ const tabs = [
   // { id: 'jobs', label: 'Jobs', count: 12 },
   { id: 'estoque', label: 'Estoque', count: null },
   { id: 'equipe', label: 'Equipe', count: null },
-  { id: 'atividades', label: 'Atividades', count: null },
+  // { id: 'atividades', label: 'Atividades', count: null },
   { id: 'financeiro', label: 'Financeiro', count: null },
   { id: 'fornecedores', label: 'Fornecedores', count: null },
   { id: 'comunicados', label: 'Comunicados', count: 47 },
