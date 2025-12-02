@@ -24,11 +24,19 @@ export const mostrarEstoque = async (unidadeId) => { //ok
 //SOMA A QUANTIDADE DE ITENS NO ESTOQUE
 export const somarQtdTotalEstoque = async (unidadeId) => { //ok
     try {
-        const resultado = await prisma.estoque.aggregate({
-            _sum: { quantidade: true, },
-            where: { unidadeId: Number(unidadeId) },
+        // The schema stores current quantities on EstoqueProduto.qntdAtual.
+        // First find the estoque record for this unidade (unique by unidadeId), then sum qntdAtual from EstoqueProduto.
+        const estoque = await prisma.estoque.findUnique({ where: { unidadeId: Number(unidadeId) } });
+        if (!estoque) {
+            return { sucesso: true, totalItens: 0, message: "Nenhum estoque encontrado para a unidade." };
+        }
+
+        const resultado = await prisma.estoqueProduto.aggregate({
+            _sum: { qntdAtual: true },
+            where: { estoqueId: Number(estoque.id) }
         });
-        const total = resultado._sum.quantidade || 0;
+
+        const total = Number(resultado._sum.qntdAtual ?? 0);
 
         return {
             sucesso: true,

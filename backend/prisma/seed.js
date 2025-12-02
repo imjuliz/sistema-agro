@@ -2276,9 +2276,8 @@ async function main() {
             const sku = `${prefixo}-${pedidoItem.produtoId ?? pedidoItem.fornecedorItemId ?? pedidoItem.id}`.slice(0, 100);
             const marca = pedidoItem.produto?.marca ?? null;
 
-            const quantidadeRaw = pedidoItem.quantidade ?? 0;
-            // converte decimal-string para integer onde fizer sentido; aqui guardamos como INT truncado
-            const quantidade = Math.max(0, Math.floor(Number(quantidadeRaw)));
+            const quantidadeRaw = pedidoItem.qntdAtual ?? pedidoItem.quantidade ?? 0;
+            const qntdAtual = Math.max(0, Math.floor(Number(quantidadeRaw)));
 
             const precoUnitario = pedidoItem.precoUnitario ? Number(pedidoItem.precoUnitario) : 0;
 
@@ -2286,7 +2285,7 @@ async function main() {
                 nome,
                 sku,
                 marca,
-                quantidade,
+                qntdAtual,
                 estoqueId: Number(estoqueId),
                 produtoId: pedidoItem.produtoId ?? null,
                 loteId: pedidoItem.loteId ?? null,
@@ -2300,7 +2299,93 @@ async function main() {
             };
         }
 
+        // async function seedEstoqueProdutosFromDeliveredPedidos(prisma) {
+        //     const docRefs = [
+        //         "Romaneio-AGB-20241203",
+        //         "Nota-VET-20240905",
+        //         "Romaneio-AGL-20240818",
+        //         "Romaneio-LAT-20240822",
+        //         "Romaneio-PVS-20241103",
+        //         "Romaneio-GEN-20250204",
+        //         "Romaneio-AGV-20250105",
+        //         "Romaneio-CFE-20250712",
+        //         "Romaneio-LOJA-20250603",
+        //         "Romaneio-CU-20250418"
+        //     ];
+
+        //     // Busca os pedidos com os itens (observe include: { itens: true })
+        //     const pedidos = await prisma.pedido.findMany({
+        //         where: { documentoReferencia: { in: docRefs } },
+        //         include: {
+        //             itens: { include: { fornecedorItem: true, produto: true, lote: true } },
+        //             destinoUnidade: true,
+        //             fornecedorExterno: true
+        //         }
+        //     });
+
+        //     if (!pedidos || pedidos.length === 0) {
+        //         console.warn("Nenhum pedido encontrado para as referências informadas.");
+        //         return;
+        //     }
+
+        //     const created = [];
+        //     for (const pedido of pedidos) {
+        //         const destinoUnidadeId = pedido.destinoUnidadeId ?? pedido.destinoUnidade?.id;
+        //         if (!destinoUnidadeId) {
+        //             console.warn("Pedido sem destinoUnidadeId:", pedido.documentoReferencia);
+        //             continue;
+        //         }
+
+        //         const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(destinoUnidadeId) } });
+        //         if (!estoque) {
+        //             console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, "(pedido)", pedido.documentoReferencia);
+        //             continue;
+        //         }
+
+        //         const items = pedido.itens ?? [];
+        //         if (!items.length) {
+        //             console.warn("Pedido sem itens:", pedido.documentoReferencia);
+        //             continue;
+        //         }
+
+        //         // Inserir um a um para garantir vinculações e capturar erros
+        //         for (const pi of items) {
+        //             // valida qtd
+        //             const qtd = Number(pi.qntdAtual ?? 0);
+        //             if (!qtd || isNaN(qtd) || qtd <= 0) {
+        //                 console.warn("Quantidade inválida em pedidoItem:", pi.id, "pedido", pedido.documentoReferencia);
+        //                 continue;
+        //             }
+
+        //             const prefix = slugifyForSku(pi.fornecedorItem?.nome ?? pi.produto?.nome ?? `PED${pedido.id}-ITEM${pi.id}`);
+        //             const entrada = gerarEntradasDeEstoqueParaPedidoItem({
+        //                 pedido,
+        //                 pedidoItem: pi,
+        //                 estoqueId: estoque.id,
+        //                 prefixo: prefix,
+        //                 dataEntrada: pedido.dataRecebimento ?? new Date()
+        //             });
+
+        //             // Atenção: create pode falhar devido a unique constraint (estoqueId+produtoId). Tratamos com try/catch.
+        //             try {
+        //                 const novo = await prisma.estoqueProduto.create({ data: entrada });
+        //                 created.push(novo);
+        //             } catch (err) {
+        //                 // se houver constraint, logamos e pulamos
+        //                 console.warn("Falha ao criar EstoqueProduto para pedidoItem", pi.id, "erro:", err.message);
+        //             }
+        //         }
+        //     }
+
+        //     console.log("Finalizado seedEstoqueProdutosFromDeliveredPedidos — criados:", created.length);
+        //     return created.length;
+        // }
+
+        // await seedEstoqueProdutosFromDeliveredPedidos(prisma);
+
         async function seedEstoqueProdutosFromDeliveredPedidos(prisma) {
+            console.log("\n📦 Iniciando seed de EstoqueProduto a partir dos pedidos entregues...");
+
             const docRefs = [
                 "Romaneio-AGB-20241203",
                 "Nota-VET-20240905",
@@ -2314,76 +2399,157 @@ async function main() {
                 "Romaneio-CU-20250418"
             ];
 
-            // Busca os pedidos com os itens (observe include: { itens: true })
+            // Buscar pedidos com status ENTREGUE e incluir todos os relacionamentos necessários
             const pedidos = await prisma.pedido.findMany({
-                where: { documentoReferencia: { in: docRefs } },
+                where: {
+                    documentoReferencia: { in: docRefs },
+                    status: "ENTREGUE" // Apenas pedidos entregues
+                },
                 include: {
-                    itens: { include: { fornecedorItem: true, produto: true, lote: true } },
-                    destinoUnidade: true,
-                    fornecedorExterno: true
+                    itens: {
+                        include: {
+                            fornecedorItem: true,
+                            produto: true,
+                            lote: true
+                        }
+                    },
+                    destinoUnidade: {
+                        include: {
+                            estoques: true // Incluir o estoque da unidade destino
+                        }
+                    },
+                    fornecedorExterno: true,
+                    origemUnidade: true
                 }
             });
 
             if (!pedidos || pedidos.length === 0) {
-                console.warn("Nenhum pedido encontrado para as referências informadas.");
-                return;
+                console.warn("⚠️  Nenhum pedido ENTREGUE encontrado para processar.");
+                return 0;
             }
 
-            const created = [];
+            console.log(`✓ Encontrados ${pedidos.length} pedidos entregues para processar`);
+
+            let totalCriados = 0;
+            let totalErros = 0;
+
             for (const pedido of pedidos) {
-                const destinoUnidadeId = pedido.destinoUnidadeId ?? pedido.destinoUnidade?.id;
+                const destinoUnidadeId = pedido.destinoUnidadeId;
+
                 if (!destinoUnidadeId) {
-                    console.warn("Pedido sem destinoUnidadeId:", pedido.documentoReferencia);
+                    console.warn(`⚠️  Pedido ${pedido.documentoReferencia} sem destinoUnidadeId - pulando`);
                     continue;
                 }
 
-                const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(destinoUnidadeId) } });
+                // Buscar ou criar estoque para a unidade destino
+                let estoque = await prisma.estoque.findFirst({
+                    where: { unidadeId: destinoUnidadeId }
+                });
+
                 if (!estoque) {
-                    console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, "(pedido)", pedido.documentoReferencia);
-                    continue;
-                }
-
-                const items = pedido.itens ?? [];
-                if (!items.length) {
-                    console.warn("Pedido sem itens:", pedido.documentoReferencia);
-                    continue;
-                }
-
-                // Inserir um a um para garantir vinculações e capturar erros
-                for (const pi of items) {
-                    // valida qtd
-                    const qtd = Number(pi.quantidade ?? 0);
-                    if (!qtd || isNaN(qtd) || qtd <= 0) {
-                        console.warn("Quantidade inválida em pedidoItem:", pi.id, "pedido", pedido.documentoReferencia);
-                        continue;
-                    }
-
-                    const prefix = slugifyForSku(pi.fornecedorItem?.nome ?? pi.produto?.nome ?? `PED${pedido.id}-ITEM${pi.id}`);
-                    const entrada = gerarEntradasDeEstoqueParaPedidoItem({
-                        pedido,
-                        pedidoItem: pi,
-                        estoqueId: estoque.id,
-                        prefixo: prefix,
-                        dataEntrada: pedido.dataRecebimento ?? new Date()
+                    // Criar estoque se não existir
+                    estoque = await prisma.estoque.create({
+                        data: {
+                            unidadeId: destinoUnidadeId,
+                            descricao: `Estoque principal - ${pedido.destinoUnidade?.nome || 'Unidade'}`,
+                            qntdItens: 0
+                        }
                     });
+                    console.log(`✓ Estoque criado para unidade ${destinoUnidadeId}`);
+                }
 
-                    // Atenção: create pode falhar devido a unique constraint (estoqueId+produtoId). Tratamos com try/catch.
+                const items = pedido.itens || [];
+
+                if (!items.length) {
+                    console.warn(`⚠️  Pedido ${pedido.documentoReferencia} sem itens - pulando`);
+                    continue;
+                }
+
+                console.log(`\n📋 Processando pedido: ${pedido.documentoReferencia} (${items.length} itens)`);
+
+                for (const pi of items) {
                     try {
-                        const novo = await prisma.estoqueProduto.create({ data: entrada });
-                        created.push(novo);
+                        // CORREÇÃO 1: Usar pi.quantidade ao invés de pi.qntdAtual
+                        const quantidadeStr = pi.quantidade;
+
+                        if (!quantidadeStr) {
+                            console.warn(`   ⚠️  Item ${pi.id}: quantidade null/undefined - pulando`);
+                            totalErros++;
+                            continue;
+                        }
+
+                        const quantidade = Number(quantidadeStr);
+
+                        // CORREÇÃO 2: Validação mais robusta
+                        if (isNaN(quantidade) || quantidade <= 0) {
+                            console.warn(`   ⚠️  Item ${pi.id}: quantidade inválida (${quantidadeStr}) - pulando`);
+                            totalErros++;
+                            continue;
+                        }
+
+                        const qntdInteira = Math.floor(quantidade);
+
+                        // Determinar nome do produto
+                        const nomeItem = pi.fornecedorItem?.nome ||
+                            pi.produto?.nome ||
+                            pi.observacoes ||
+                            `Item do pedido ${pi.id}`;
+
+                        // Gerar SKU único
+                        const timestamp = Date.now();
+                        const random = Math.floor(Math.random() * 1000);
+                        const sku = `EST-${estoque.id}-${pi.id}-${timestamp}-${random}`;
+
+                        // Preparar dados para inserção
+                        const dadosEstoque = {
+                            nome: nomeItem,
+                            sku: sku,
+                            marca: pi.produto?.marca || null,
+                            qntdAtual: qntdInteira,
+                            qntdMin: 0,
+                            estoqueId: estoque.id,
+                            produtoId: pi.produtoId || null,
+                            loteId: pi.loteId || null,
+                            precoUnitario: pi.precoUnitario ? Number(pi.precoUnitario) : null,
+                            pesoUnidade: pi.fornecedorItem?.pesoUnidade || pi.produto?.pesoUnidade || null,
+                            unidadeBase: pi.unidadeMedida,
+                            pedidoId: pedido.id,
+                            pedidoItemId: pi.id,
+                            fornecedorUnidadeId: pedido.origemUnidadeId || null,
+                            fornecedorExternoId: pedido.origemFornecedorExternoId || null,
+                            dataEntrada: pedido.dataRecebimento || new Date()
+                        };
+
+                        // Tentar criar o registro
+                        const novoEstoque = await prisma.estoqueProduto.create({
+                            data: dadosEstoque
+                        });
+
+                        totalCriados++;
+                        console.log(`   ✓ Item ${pi.id}: ${nomeItem} - ${qntdInteira} unidades adicionadas`);
+
                     } catch (err) {
-                        // se houver constraint, logamos e pulamos
-                        console.warn("Falha ao criar EstoqueProduto para pedidoItem", pi.id, "erro:", err.message);
+                        totalErros++;
+
+                        // Verificar se é erro de constraint única
+                        if (err.code === 'P2002') {
+                            console.warn(`   ⚠️  Item ${pi.id}: já existe no estoque (constraint única) - pulando`);
+                        } else {
+                            console.error(`   ❌ Item ${pi.id}: Erro ao criar - ${err.message}`);
+                        }
                     }
                 }
             }
 
-            console.log("Finalizado seedEstoqueProdutosFromDeliveredPedidos — criados:", created.length);
-            return created.length;
+            console.log(`\n📊 Resumo do seed de EstoqueProduto:`);
+            console.log(`   ✓ Registros criados: ${totalCriados}`);
+            console.log(`   ⚠️  Erros/Pulos: ${totalErros}`);
+            console.log(`   📦 Total processado: ${totalCriados + totalErros}\n`);
+
+            return totalCriados;
         }
 
         await seedEstoqueProdutosFromDeliveredPedidos(prisma);
-
         const animals = [
             // Fazenda Beta: 4 vacas Holandesas (agreguei 4 registros repetidos em 1)
             {

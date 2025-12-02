@@ -5,9 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useInventory } from '@/contexts/InventoryContext';
 import { Button } from '../ui/button';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-import { useAuth } from '@/contexts/AuthContext';
-import { API_URL } from '@/lib/api';
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -20,74 +17,11 @@ function getStockStatus(current, minimum) {
   return { status: 'critical', color: 'bg-red-500', textColor: 'text-red-700', badgeVariant: 'destructive' };
 }
 
-export function StoreLevelView() {
+export function StoreLevelView({ onOpenMovimento }) {
   const { getStoreItems, storeMapping, refresh } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
 
-  // movimentação modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalItem, setModalItem] = useState(null);
-  const [movimentoTipo, setMovimentoTipo] = useState('ENTRADA');
-  const [movimentoQuantidade, setMovimentoQuantidade] = useState('');
-  const [movimentoObs, setMovimentoObs] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { fetchWithAuth } = useAuth();
-
-  function openMovimentoModal(item) {
-    setModalItem(item);
-    setMovimentoTipo('ENTRADA');
-    setMovimentoQuantidade('');
-    setMovimentoObs('');
-    setIsModalOpen(true);
-  }
-
-  function closeMovimentoModal() {
-    setIsModalOpen(false);
-    setModalItem(null);
-  }
-
-  async function submitMovimento() {
-    if (!modalItem) return;
-    const quantidade = Number(movimentoQuantidade);
-    if (isNaN(quantidade) || quantidade <= 0) {
-      alert('Informe uma quantidade válida maior que zero.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const body = {
-        estoqueProdutoId: modalItem.rawItemId ?? modalItem.rawItemId,
-        tipoMovimento: movimentoTipo,
-        quantidade,
-        observacoes: movimentoObs || undefined
-      };
-
-      const url = `${API_URL}estoque/movimento`;
-      let res;
-      try {
-        res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      } catch (e) {
-        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      }
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => null);
-        const msg = txt || `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-
-      // success -> refresh inventory to show updated quantities
-      await refresh();
-      closeMovimentoModal();
-    } catch (err) {
-      console.error('Erro ao registrar movimentação', err);
-      alert(String(err?.message ?? err));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   // paginacao
   const [page, setPage] = useState(1);
@@ -265,7 +199,7 @@ export function StoreLevelView() {
                 <TableHead>Estoque Atual</TableHead>
                 <TableHead>Min Estoque</TableHead>
                 <TableHead>Preço unitário</TableHead>
-                <TableHead>Ações</TableHead>
+                {/* <TableHead>Ações</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -287,10 +221,10 @@ export function StoreLevelView() {
                     <TableCell>{item.minimumStock}</TableCell>
                     <TableCell>{fmtBRL(item.price)}</TableCell>
                     <TableCell>
-                      <Button size="sm" onClick={() => openMovimentoModal(item)}>
-                        Registrar
-                      </Button>
-                    </TableCell>
+                            <Button size="sm" onClick={() => onOpenMovimento ? onOpenMovimento(item) : null}>
+                              Registrar
+                            </Button>
+                          </TableCell>
                   </TableRow>
                 );
               })}
@@ -345,47 +279,7 @@ export function StoreLevelView() {
           </CardFooter>
         </CardContent>
       </Card>
-      {/* Movimentação Modal */}
-      <AlertDialog open={isModalOpen} onOpenChange={(open) => { if (!open) closeMovimentoModal(); setIsModalOpen(open); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Registrar movimentação</AlertDialogTitle>
-            <AlertDialogDescription>
-              {modalItem ? `Item: ${modalItem.name} — Estoque atual: ${modalItem.currentStock}` : 'Selecionar item e informar os dados da movimentação.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="grid gap-3 py-2">
-            <div>
-              <Label>Tipo</Label>
-              <Select value={movimentoTipo} onValueChange={(v) => setMovimentoTipo(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ENTRADA">Entrada</SelectItem>
-                  <SelectItem value="SAIDA">Saída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Quantidade</Label>
-              <Input value={movimentoQuantidade} onChange={(e) => setMovimentoQuantidade(e.target.value)} placeholder="Informe a quantidade" />
-            </div>
-
-            <div>
-              <Label>Observações (opcional)</Label>
-              <Textarea value={movimentoObs} onChange={(e) => setMovimentoObs(e.target.value)} />
-            </div>
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeMovimentoModal}>Fechar</AlertDialogCancel>
-            <AlertDialogAction onClick={submitMovimento} disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Registrar'}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Movimentação modal is handled by parent (page) via onOpenMovimento prop */}
     </div>
   );
 }

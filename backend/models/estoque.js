@@ -127,9 +127,10 @@ function normalizeFornecedores(estoque) {
       }
     }
 
-    // compute quantities (qntdAtual, qntdMin) with sensible fallbacks
-    const qntdAtual = Number(p.quantidade ?? p.qntdAtual ?? 0);
-    const qntdMin = Number(p.minimo ?? p.minimum ?? p.qntdMin ?? estoque?.minimo ?? 0);
+  // compute quantities (qntdAtual, qntdMin) with sensible fallbacks
+  // Prefer explicit qntdAtual/qntdMin fields from the DB. Avoid relying on legacy `quantidade` field.
+  const qntdAtual = Number(p.qntdAtual ?? p.quantidade ?? 0);
+  const qntdMin = Number(p.qntdMin ?? p.minimo ?? p.minimum ?? estoque?.minimo ?? 0);
 
     return { ...p, fornecedorResolved, qntdAtual, qntdMin };
   });
@@ -156,7 +157,8 @@ export async function getEstoques({ unidadeId = null, q = null } = {}) {
           select: {
             id: true,
             nome: true,
-            quantidade: true,
+            qntdAtual: true,
+            qntdMin: true,
             sku: true,
             marca: true,
             estoqueId: true,
@@ -266,7 +268,8 @@ export async function getEstoquePorId(id) {
             id: true,
             estoqueId: true,
             tipoMovimento: true,
-            quantidade: true,
+            qntdAtual: true,
+            qntdMin: true,
             producaoId: true,
             pedidoId: true,
             vendaId: true,
@@ -345,7 +348,8 @@ export async function updateEstoque(id, data) {
           select: {
             id: true,
             tipoMovimento: true,
-            quantidade: true,
+            qntdAtual: true,
+            qntdMin: true,
             data: true,
             origemUnidade: { select: { id: true, nome: true } },
             destinoUnidade: { select: { id: true, nome: true } }

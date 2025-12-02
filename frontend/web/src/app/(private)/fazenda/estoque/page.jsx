@@ -7,7 +7,7 @@ import { InventoryProvider } from '@/contexts/InventoryContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
-import {ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight } from 'lucide-react';
 
 export default function estoqueFazenda() {
   const { fetchWithAuth } = useAuth();
@@ -15,8 +15,69 @@ export default function estoqueFazenda() {
 
   const [activeView, setActiveView] = useState('store');
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalItem, setModalItem] = useState(null);
+  const [movimentoTipo, setMovimentoTipo] = useState('ENTRADA');
+  const [movimentoQuantidade, setMovimentoQuantidade] = useState('');
+  const [movimentoObs, setMovimentoObs] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function openMovimentoModal(item) {
+    setModalItem(item);
+    setMovimentoTipo('ENTRADA');
+    setMovimentoQuantidade('');
+    setMovimentoObs('');
+    setIsModalOpen(true);
+  }
+
+  function closeMovimentoModal() {
+    setIsModalOpen(false);
+    setModalItem(null);
+  }
+
+  async function submitMovimento() {
+    if (!modalItem) return;
+    const quantidade = Number(movimentoQuantidade);
+    if (isNaN(quantidade) || quantidade <= 0) {
+      alert('Informe uma quantidade válida maior que zero.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const body = {
+        estoqueProdutoId: modalItem.rawItemId ?? modalItem.rawItemId,
+        tipoMovimento: movimentoTipo,
+        quantidade,
+        observacoes: movimentoObs || undefined
+      };
+
+      const url = `${API_URL}estoque/movimento`;
+      let res;
+      try {
+        res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      } catch (e) {
+        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      }
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => null);
+        const msg = txt || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      // success -> refresh inventory to show updated quantities
+      await refresh();
+      closeMovimentoModal();
+    } catch (err) {
+      console.error('Erro ao registrar movimentação', err);
+      alert(String(err?.message ?? err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
   return (
- <div className="flex gap-6">
+    <div className="flex gap-6">
 
       <div className="w-80 space-y-6">
         {/* Company Details */}
@@ -52,12 +113,12 @@ export default function estoqueFazenda() {
         <div>
           <Button variant="" size="sm" className="w-full mb-2">
             <ArrowLeftRight className="mr-2" />
-            Registrar movimentação de estoque 
+            Registrar movimentação de estoque
           </Button>
         </div>
       </div>
       <div className=" flex-1 min-w-0 space-y-6">
-      <InventoryProvider defaultUnidadeId={fazenda?.id}>
+        <InventoryProvider defaultUnidadeId={fazenda?.id}>
           <StoreLevelView />
         </InventoryProvider>
 
