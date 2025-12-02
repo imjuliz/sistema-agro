@@ -59,7 +59,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   // Novos estados para gerentes e funcionários
   const [existingGerentes, setExistingGerentes] = useState([]);
   const [selectedGerenteId, setSelectedGerenteId] = useState(""); // "" para "Criar Novo"
-  const [isCreatingNewGerente, setIsCreatingNewGerente] = useState(false);
+  const [isCreatingNewGerente, setIsCreatingNewGerente] = useState(true);
   const [newGerenteData, setNewGerenteData] = useState({
     nome: "",
     email: "",
@@ -407,7 +407,7 @@ function addContract() {
     frequenciaEntregas: null,
     diaPagamento: '',
     formaPagamento: null,
-    status: 'ATIVO',
+    status: 'ATIVA',
     duration: ''
   };
 
@@ -631,25 +631,27 @@ function addContract() {
 
     // monta payload unidade
     const enderecoCompleto = endereco.trim() + (enderecoNumero && enderecoNumero.trim() ? `, nº ${enderecoNumero.trim()}` : '');
-    const payload = {
-      nome: nome.trim(),
-      endereco: enderecoCompleto,
-      cep: onlyDigits(cep).trim(),
-      cidade: cidade.trim(),
-      estado: estado.trim(),
-      cnpj: onlyDigits(cnpj).trim() || null,
-      email: email.trim() || null,
-      telefone: onlyDigits(telefone).trim() || null,
-      tipo: 'FAZENDA',
-      imagemBase64: imagemPreview || null,
-      areaTotal: areaTotal !== '' ? Number(areaTotal) : null,
-      areaProdutiva: areaProdutiva !== '' ? Number(areaProdutiva) : null,
-      cultura: cultura || null,
-      horarioAbertura: horarioAbertura || null,
-      horarioFechamento: horarioFechamento || null,
-      descricaoCurta: descricaoCurta || null,
-      focoProdutivo: focoProdutivo.trim() || null
-    };
+      // build payload without sending `null` for optional fields (Zod expects omitted fields instead)
+      const payload = {
+        nome: nome.trim(),
+        endereco: enderecoCompleto,
+        cep: onlyDigits(cep).trim(),
+        cidade: cidade.trim(),
+        estado: estado.trim(),
+        tipo: 'FAZENDA'
+      };
+
+      if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim();
+      if (email && email.trim()) payload.email = email.trim();
+      if (telefone && onlyDigits(telefone).trim()) payload.telefone = onlyDigits(telefone).trim();
+      if (imagemPreview) payload.imagemBase64 = imagemPreview;
+      if (areaTotal !== '' && !Number.isNaN(Number(areaTotal))) payload.areaTotal = Number(areaTotal);
+      if (areaProdutiva !== '' && !Number.isNaN(Number(areaProdutiva))) payload.areaProdutiva = Number(areaProdutiva);
+      if (cultura) payload.cultura = cultura;
+      if (horarioAbertura) payload.horarioAbertura = horarioAbertura;
+      if (horarioFechamento) payload.horarioFechamento = horarioFechamento;
+      if (descricaoCurta) payload.descricaoCurta = descricaoCurta;
+      if (focoProdutivo && focoProdutivo.trim()) payload.focoProdutivo = focoProdutivo.trim();
 
     setLoading(true);
 
@@ -724,7 +726,7 @@ function addContract() {
           dataInicio: c.dataInicio || new Date().toISOString().slice(0,10),
           dataFim: c.dataFim || null,
           dataEnvio: c.dataEnvio || c.dataInicio || new Date().toISOString().slice(0,10),
-          status: c.status || 'ATIVO',
+          status: c.status || 'ATIVA',
           frequenciaEntregas: c.frequenciaEntregas || null,
           diaPagamento: c.diaPagamento || '',
           formaPagamento: c.formaPagamento || null,
@@ -856,25 +858,31 @@ function addItemToContract(contractIndex) {
   setContracts(prev => {
     const copy = [...prev];
     copy[contractIndex].itens = copy[contractIndex].itens || [];
-    
-    // Verificar se item com mesmo nome já existe
-    const itemNomeNormalizado = item.nome.trim().toLowerCase();
-    const jaExiste = copy[contractIndex].itens.some(
-      i => i.nome.trim().toLowerCase() === itemNomeNormalizado
-    );
-    
+
+    // Checagem de duplicata mais específica: nome + unidade + preço (evita falso positivo só por nome)
+    const nomeNorm = (item.nome || '').trim().toLowerCase();
+    const unidadeNorm = item.unidadeMedida || '';
+    const precoNorm = item.precoUnitario !== undefined && item.precoUnitario !== null ? String(item.precoUnitario) : '';
+
+    const jaExiste = copy[contractIndex].itens.some(i => {
+      const inome = (i.nome || '').trim().toLowerCase();
+      const iunidade = i.unidadeMedida || '';
+      const ipreco = i.precoUnitario !== undefined && i.precoUnitario !== null ? String(i.precoUnitario) : '';
+      return inome === nomeNorm && iunidade === unidadeNorm && ipreco === precoNorm;
+    });
+
     if (jaExiste) {
       setFormError('Este item já foi adicionado ao contrato.');
       return copy;
     }
-    
+
     copy[contractIndex].itens.push({
       nome: item.nome,
-      quantidade: item.quantidade ? Number(item.quantidade) : null,
-      unidadeMedida: item.unidadeMedida || null,
-      precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : null,
-      pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : null,
-      raca: item.raca || null
+      quantidade: item.quantidade ? Number(item.quantidade) : undefined,
+      unidadeMedida: item.unidadeMedida || undefined,
+      precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : undefined,
+      pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : undefined,
+      raca: item.raca || undefined
     });
     return copy;
   });
@@ -1513,27 +1521,8 @@ function updateContractField(contractIndex, field, value) {
                   <h4 className="font-semibold">Gerente (obrigatório)</h4>
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="select-gerente">Gerente *</Label>
-                      <Select
-                        value={selectedGerenteId}
-                        onValueChange={(value) => {
-                          setSelectedGerenteId(value);
-                          setIsCreatingNewGerente(value === "new");
-                          setNewGerenteErrors({});
-                        }}
-                      >
-                        <SelectTrigger id="select-gerente">
-                          <SelectValue placeholder="Selecionar ou criar novo gerente" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[1001]">
-                          <SelectItem value="new">Criar Novo Gerente</SelectItem>
-                          {existingGerentes.map((g) => (
-                            <SelectItem key={g.id} value={String(g.id)}>
-                              {g.nome} ({g.email})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Gerente *</Label>
+                      <p className="text-sm text-muted-foreground">Será criado um novo gerente para esta fazenda. Preencha os dados abaixo.</p>
                     </div>
                   </div>
 
