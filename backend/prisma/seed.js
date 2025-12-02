@@ -3,7 +3,7 @@ import 'dotenv/config'
 import { configDotenv } from "dotenv";
 configDotenv();
 import prisma from "./client.js";
-import * as pkg from "./generated/client.ts";
+// import * as pkg from "./generated/";
 
 // Extrai enums
 const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote, ContaStatus } = pkg;
