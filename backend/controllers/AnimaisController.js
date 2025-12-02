@@ -1,16 +1,11 @@
 import { getAnimais, getAnimaisPelaRaca, calcularRentabilidadeAnimal, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
-import { getLotePorId } from "../models/lote.js";
 import { animaisSchema, idSchema, loteIdSchema } from "../schemas/animaisSchemas.js";
 
 export async function getAnimaisController(req, res) {
   try {
     const animais = await getAnimais();
     
-    return res.status(200).json({
-      sucesso: true,
-      animais,
-      message: "Animais listados com sucesso.",
-    })
+    return res.status(200).json({animais})
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -78,7 +73,6 @@ export async function calcularRentabilidadeAnimalController(req, res) {
     });
   }
 }
-
 
 export async function getAnimaisPorIdController(req, res) {
   try {

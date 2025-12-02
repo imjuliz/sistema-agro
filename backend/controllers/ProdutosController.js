@@ -1,32 +1,27 @@
-import { getProdutos, getProdutosPelaCategoria, getProdutoLotePorId, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
-import { produtoSchema } from "../schemas/produtoSchema.js";
+import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto } from "../models/estoque_produtos_lotes/produtos.js";
+import { produtoSchema, IdsSchema } from "../schemas/produtoSchema.js";
 
 export async function getProdutosController(req, res) {
   try {
     const produto = await getProdutos();
-    return {
-      sucesso: true,
-      produto,
-      message: "Produtos listados com sucesso.",
-    };
+
+    return res.status(200).json(produto);
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar produtos.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
 export async function getProdutosPelaCategoriaController(req, res) {
   try {
-    const { categoria } = req.query;
+    const { categoria } = produtoSchema.partial().parse(req.query);
+
     const produtos = await getProdutosPelaCategoria(categoria);
-    return {
-      sucesso: true,
-      produtos,
-      message: "Produtos de animalia listados com sucesso.",
-    };
+
+    return res.status(200).json({produtos});
   } catch (error) {
     return {
       sucesso: false,
