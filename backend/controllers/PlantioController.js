@@ -1,9 +1,10 @@
 import { getPlantio, getPlantioCategoria, createPlantio, updatePlantio, deletePlantio } from "../models/plantio.js";
-import { plantioSchema } from "../schemas/plantioSchema.js";
+import { plantioSchema, IdsSchema } from "../schemas/plantioSchema.js";
 
 export async function getPlantioController(req, res) {
   try {
     const plantios = await getPlantio();
+
     return res.status(200).json({
       sucesso: true,
       plantios,
@@ -20,7 +21,7 @@ export async function getPlantioController(req, res) {
 
 export async function getPlantioCategoriaController(req, res) {
   try {
-    const { categoria } = req.params;
+    const { categoria } = plantioSchema.partial().parse(req.query);
 
     //Validações
     if(!categoria) {
@@ -31,7 +32,7 @@ export async function getPlantioCategoriaController(req, res) {
 
     return res.status(200).json({
       sucesso: true,
-      plantio_categoria,
+      catPlantio,
       message: "Plantios da categoria listados com sucesso.",
     })
   } catch (error) {
@@ -46,9 +47,20 @@ export async function getPlantioCategoriaController(req, res) {
 export async function createPlantioController(req, res) {
   try {
     const data = plantioSchema.parse(req.body);
-    const { unidadeId, loteId } = req.params;
+    const usuario = req.usuario;
+    const { unidadeId, loteId } = IdsSchema.partial().parse(req.params);
 
     //Validações
+    if (
+      usuario.perfil.nome !== "GERENTE_FAZENDA" &&
+      usuario.unidadeId !== unidadeId
+    ) {
+      return res.status(403).json({
+        sucesso: false,
+        erro: "Você não tem permissão para criar lotes nesta unidade."
+      });
+    }
+
     if(isNaN(data.fornecedorId) || !data.fornecedorId) {
       return res.status(400).json({erro: "Fornecedor nao encontrado."})
     }
@@ -78,9 +90,20 @@ export async function createPlantioController(req, res) {
 export async function updatePlantioController(req, res) {
   try {
     const data = plantioSchema.parse(req.body);
-    const { id, unidadeId, loteId } = req.params;
+    const usuario = req.usuario;
+    const { id, unidadeId, loteId } = IdsSchema.parse(req.params);
 
     //Validações
+    if (
+      usuario.perfil.nome !== "GERENTE_FAZENDA" &&
+      usuario.unidadeId !== unidadeId
+    ) {
+      return res.status(403).json({
+        sucesso: false,
+        erro: "Você não tem permissão para criar lotes nesta unidade."
+      });
+    }
+
     if(isNaN(data.fornecedorId) || !data.fornecedorId) {
       return res.status(400).json({erro: "Fornecedor nao encontrado."})
     }
@@ -112,7 +135,7 @@ export async function updatePlantioController(req, res) {
 
 export async function deletePlantioController(req, res) {
   try {
-    const { id } = req.params;
+    const { id } = IdsSchema.partial().parse(req.params);
 
     //Validações
     if(isNaN(id) || !id) {

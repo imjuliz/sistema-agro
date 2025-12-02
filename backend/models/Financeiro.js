@@ -4,10 +4,10 @@ import fs from "fs";
 import path from "path";
 //aqui estarão as funções da questão financeira (entradas, saídas, vendas, caixa, etc.)
 
-export const listarSaidas = async (unidadeId, tipo, data) => {//tem controller
+export const listarSaidas = async (unidadeId) => {//tem controller
     try {
-        const saidas = await prisma.Saidas.findMany({ 
-            where: { unidadeId: Number(unidadeId), tipo, data}, 
+        const saidas = await prisma.financeiro.findMany({ 
+            where: { unidadeId: Number(unidadeId)}, 
         })
         return ({
             sucesso: true,
@@ -421,9 +421,9 @@ export const calcularSaldoLiquido = async (unidadeId) => {
 //select de tudo em saidas
 export async function listarSaidasPorUnidade(unidadeId) {
     try {
-        const saidas = await prisma.saidas.findMany({
+        const saidas = await prisma.financeiro.findMany({
             where: { unidadeId: Number(unidadeId) }, // filtra todos com a mesma unidade
-            orderBy: { data: "desc", },
+            // orderBy: { data: "desc", },
         });
 
         return {

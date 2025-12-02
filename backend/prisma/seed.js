@@ -3,7 +3,9 @@ import 'dotenv/config'
 import { configDotenv } from "dotenv";
 configDotenv();
 import prisma from "./client.js";
-import * as pkg from "./generated/client.ts";
+// const { PrismaClient } = require('@prisma/client');
+// const prisma = new PrismaClient();
+import * as pkg from "./generated/client.js";
 
 // Extrai enums
 const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote } = pkg;
@@ -86,11 +88,11 @@ async function main() {
             { nome: "AgroBoi", endereco: "Rua Norte, 23", tipo: TU.LOJA, cidade: "Guarulhos", estado: "SP", cep: "07010-000", latitude: -23.4628, longitude: -46.5333, cnpj: "12345678000303", email: "lojanorte@empresa.com", telefone: "1140000003", horarioAbertura: new Date('1970-01-01T09:00:00Z'), horarioFechamento: new Date('1970-01-01T18:00:00Z'), status: SUNI.ATIVA, },
             { nome: "Casa Útil Mercado", endereco: "Av. Sul, 45", tipo: TU.LOJA, cidade: "Santo André", estado: "SP", cep: "09010-000", latitude: -23.6639, longitude: -46.5361, cnpj: "12345678000404", email: "lojasul@empresa.com", telefone: "1140000004", horarioAbertura: new Date('1970-01-01T10:00:00Z'), horarioFechamento: new Date('1970-01-01T20:00:00Z'), status: SUNI.ATIVA, },
             { nome: "Sabor do Campo Laticínios", endereco: "Praça Leste, 10", tipo: TU.LOJA, cidade: "São Bernardo", estado: "SP", cep: "09810-000", latitude: -23.6916, longitude: -46.5644, cnpj: "12345678000505", email: "lojaleste@empresa.com", telefone: "1140000005", horarioAbertura: new Date('1970-01-01T09:30:00Z'), horarioFechamento: new Date('1970-01-01T19:30:00Z'), status: SUNI.ATIVA, },
-            { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 100", tipo: TU.FAZENDA, cidade: "Campinas", estado: "SP", cep: "13010-000", areaTotal: 1500.5, areaProdutiva: 1200.3, latitude: -22.9099, longitude: -47.0626, cnpj: "12345678100110", email: "fazendaalpha@empresa.com", telefone: "1930001001", status: SUNI.ATIVA, focoProdutivo: "gado" },
-            { nome: "Fazenda Gamma", endereco: "Rod. BR-101, km 150", tipo: TU.FAZENDA, cidade: "Ribeirão Preto", estado: "SP", cep: "14010-000", areaTotal: 980.75, areaProdutiva: 760.0, latitude: -21.1775, longitude: -47.8103, cnpj: "12345678100220", email: "fazendabeta@empresa.com", telefone: "1630001002", status: SUNI.ATIVA, focoProdutivo: "grãos e cereais" },
-            { nome: "Fazenda Beta", endereco: "Estrada Rural, 77", tipo: TU.FAZENDA, cidade: "Piracicaba", estado: "SP", cep: "13400-000", areaTotal: 420.0, areaProdutiva: 365.25, latitude: -22.7127, longitude: -47.6476, cnpj: "12345678100330", email: "fazendagamma@empresa.com", telefone: "1930001003", status: SUNI.ATIVA, focoProdutivo: "laticínios e gado" },
-            { nome: "Fazenda Delta", endereco: "Estrada Rural, 88", tipo: TU.FAZENDA, cidade: "Limeira", estado: "SP", cep: "13480-000", areaTotal: 600.0, areaProdutiva: 480.5, latitude: -22.5641, longitude: -47.4019, cnpj: "12345678100440", email: "fazendadelta@empresa.com", telefone: "1930001004", status: SUNI.ATIVA, focoProdutivo: "hortaliças e vegetais" },
-            { nome: "Fazenda Teste", endereco: "Rua Teste, 9", tipo: TU.FAZENDA, cidade: "Itu", estado: "SP", cep: "13300-000", areaTotal: 50.0, areaProdutiva: 40.0, latitude: -23.2646, longitude: -47.2995, cnpj: "12345678100550", email: "teste@empresa.com", telefone: "1140000099", status: SUNI.ATIVA, focoProdutivo: "laticínios e gado" },
+            { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 100", tipo: TU.FAZENDA, cidade: "Campinas", estado: "SP", cep: "13010-000", areaTotal: 1500.5, areaProdutiva: 1200.3, latitude: -22.9099, longitude: -47.0626, cnpj: "12345678100110", email: "fazendaalpha@empresa.com", telefone: "1930001001", status: SUNI.ATIVA, },
+            { nome: "Fazenda Gamma", endereco: "Rod. BR-101, km 150", tipo: TU.FAZENDA, cidade: "Ribeirão Preto", estado: "SP", cep: "14010-000", areaTotal: 980.75, areaProdutiva: 760.0, latitude: -21.1775, longitude: -47.8103, cnpj: "12345678100220", email: "fazendabeta@empresa.com", telefone: "1630001002", status: SUNI.ATIVA, },
+            { nome: "Fazenda Beta", endereco: "Estrada Rural, 77", tipo: TU.FAZENDA, cidade: "Piracicaba", estado: "SP", cep: "13400-000", areaTotal: 420.0, areaProdutiva: 365.25, latitude: -22.7127, longitude: -47.6476, cnpj: "12345678100330", email: "fazendagamma@empresa.com", telefone: "1930001003", status: SUNI.ATIVA, },
+            { nome: "Fazenda Delta", endereco: "Estrada Rural, 88", tipo: TU.FAZENDA, cidade: "Limeira", estado: "SP", cep: "13480-000", areaTotal: 600.0, areaProdutiva: 480.5, latitude: -22.5641, longitude: -47.4019, cnpj: "12345678100440", email: "fazendadelta@empresa.com", telefone: "1930001004", status: SUNI.ATIVA, },
+            { nome: "Fazenda Teste", endereco: "Rua Teste, 9", tipo: TU.FAZENDA, cidade: "Itu", estado: "SP", cep: "13300-000", areaTotal: 50.0, areaProdutiva: 40.0, latitude: -23.2646, longitude: -47.2995, cnpj: "12345678100550", email: "teste@empresa.com", telefone: "1140000099", status: SUNI.ATIVA, },
             { nome: "Loja Teste", endereco: "Av. Caetano Limeira, 2205", tipo: TU.LOJA, cidade: "Atibaia", estado: "SP", cep: "04610-000", latitude: -23.6639, longitude: -46.5361, cnpj: "12345678951244", email: "teste.loja@empresa.com", telefone: "1145003151", horarioAbertura: new Date('1970-01-01T10:00:00Z'), horarioFechamento: new Date('1970-01-01T20:00:00Z'), status: SUNI.ATIVA, },
         ];
         await prisma.unidade.createMany({ data: unidadesData, skipDuplicates: true });
@@ -2452,7 +2454,7 @@ async function main() {
                 dataEntrada: new Date("2025-09-08T00:00:00.000Z"),
                 fornecedorId: null,
                 quantidade: 5,
-                tipo: TAN.ORDENHA,
+                tipo: TAN.REPRODUCAO,
                 custo: 3200.00,
                 unidadeId: unidadeMap['Fazenda Teste'],
                 loteId: null
@@ -2864,9 +2866,19 @@ async function main() {
         // ===== CRIAR ATIVIDADES PARA ANIMAIS (AtvdAnimalia) =====
         console.log("\n🐄 Criando atividades de manejo animal...");
 
+        const tiposAnimais = [
+            TL.GADO,
+            TL.BOVINOS,
+            TL.SUINOS,
+            TL.OVINOS,
+            TL.AVES,
+            TL.EQUINO,
+            TL.CAPRINOS
+        ].filter(Boolean); // remove todos os undefined automaticamente
+
         const lotesAnimais = await prisma.lote.findMany({
             where: {
-                tipo: { in: [TL.GADO, TL.BOVINOS, TL.SUINOS, TL.OVINOS, TL.AVES, TL.EQUINO, TL.CAPRINOS] }
+                tipo: { in: tiposAnimais }
             },
             include: {
                 animals: true,
@@ -3714,10 +3726,10 @@ async function main() {
                     usuarioId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
                     descricao: "Folha de pagamento - Novembro/2025",
-                    tipo: TM.SAIDA,
+                    tipo: TSAIDA.SALARIOS,
                     categoria: "Folha",
                     formaPagamento: TPAG.PIX,
-                    valor: 12000.00,
+                    valor: 12000,
                     valorPago: null,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: new Date("2025-11-30"),
@@ -3730,11 +3742,11 @@ async function main() {
                     usuarioId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
                     descricao: "Receita venda institucional (remessa interna)",
-                    tipo: TM.ENTRADA,
+                    tipo: TSAIDA.ESTOQUE,
                     categoria: "Receita",
                     formaPagamento: TPAG.PIX,
-                    valor: 3500.00,
-                    valorPago: 3500.00,
+                    valor: 3500,
+                    valorPago: 3500,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-10),
                     dataPagamento: daysFromNow(-10),
@@ -3747,10 +3759,10 @@ async function main() {
                     usuarioId: usuarioMap["Usuario Ficticio"], // gerente fazenda teste
                     unidadeId: unidadeMap["Fazenda Teste"],
                     descricao: "Compra de medicamentos veterinários",
-                    tipo: TM.SAIDA,
+                    tipo: TSAIDA.ENERGIA,
                     categoria: "Sanidade",
                     formaPagamento: TPAG.PIX,
-                    valor: 1800.00,
+                    valor: 1800,
                     vencimento: daysFromNow(7),
                     status: "PENDENTE",
                     documento: "NFVET-FT-202511"
@@ -3759,11 +3771,11 @@ async function main() {
                     usuarioId: usuarioMap["Richard Souza"],
                     unidadeId: unidadeMap["Fazenda Beta"],
                     descricao: "Venda de leite cru - remessa para Sabor do Campo",
-                    tipo: TM.ENTRADA,
+                    tipo: TSAIDA.MANUTENCAO,
                     categoria: "Venda",
                     formaPagamento: TPAG.PIX,
-                    valor: 4200.00,
-                    valorPago: 4200.00,
+                    valor: 4200,
+                    valorPago: 4200,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-5),
                     dataPagamento: daysFromNow(-5),
@@ -3776,10 +3788,10 @@ async function main() {
                     usuarioId: usuarioMap["Renato Martins"],
                     unidadeId: unidadeMap["Sabor do Campo Laticínios"],
                     descricao: "Pagamento a fornecedor (Fazenda Beta) - romaneio 202511",
-                    tipo: TM.SAIDA,
+                    tipo: TSAIDA.ESTOQUE,
                     categoria: "Compras",
                     formaPagamento: TPAG.PIX,
-                    valor: 2600.00,
+                    valor: 2600,
                     vencimento: daysFromNow(3),
                     status: "PENDENTE",
                     documento: "PAG-FB-202511"
@@ -3788,11 +3800,11 @@ async function main() {
                     usuarioId: usuarioMap["Lorena Oshiro"],
                     unidadeId: unidadeMap["Loja Teste"],
                     descricao: "Recebimento venda - vendas em caixa (sintético)",
-                    tipo: TM.ENTRADA,
+                    tipo: TSAIDA.ESTOQUE,
                     categoria: "Vendas",
                     formaPagamento: TPAG.CARTAO,
-                    valor: 1800.00,
-                    valorPago: 1800.00,
+                    valor: 1800,
+                    valorPago: 1800,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-2),
                     dataPagamento: daysFromNow(-2),
@@ -3805,10 +3817,10 @@ async function main() {
                     usuarioId: usuarioMap["Juliana Correia"],
                     unidadeId: unidadeMap["Fazenda Alpha"],
                     descricao: "Parcelamento equipamento - parcela 2/12",
-                    tipo: TM.SAIDA,
+                    tipo: TSAIDA.MANUTENCAO,
                     categoria: "Equipamentos",
                     formaPagamento: TPAG.PIX,
-                    valor: 500.00,
+                    valor: 500,
                     parcela: 2,
                     totalParcelas: 12,
                     vencimento: daysFromNow(15),

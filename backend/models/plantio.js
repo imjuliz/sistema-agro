@@ -3,6 +3,7 @@ import prisma from "../prisma/client.js";
 export async function getPlantio() {
   try {
     const plantio = await prisma.plantio.findMany();
+
     return {
       sucesso: true,
       plantio,
@@ -21,7 +22,7 @@ export async function getPlantioCategoria(categoria) {
     const plantioCategoria = await prisma.plantio.findMany({
       where: { categoria: categoria },
     });
-    if(!catPlantio) {
+    if(!plantioCategoria) {
       return res.status(400).json({erro: "Categoria de plantio nao encontrada."})
     }
 
@@ -45,6 +46,14 @@ export async function createPlantio(data, unidadeId, loteId) {
     if(!unidade) {
       return res.status(400).json({erro: "Unidade nao encontrada."})
     }
+
+    if (unidade.tipo !== "FAZENDA") {
+      return {
+        sucesso: false,
+        message: "Somente unidades do tipo FAZENDA podem criar plantios!"
+      };
+    }
+
     const lote = await prisma.lote.findUnique({ where: { id: loteId } });
     if(!lote) {
       return res.status(400).json({erro: "Lote nao encontrado."})
@@ -83,6 +92,14 @@ export async function updatePlantio(id, data, unidadeId, loteId) {
     if(!unidade) {
       return res.status(400).json({erro: "Unidade nao encontrada."})
     }
+
+    if (unidade.tipo !== "FAZENDA") {
+      return {
+        sucesso: false,
+        message: "Somente unidades do tipo FAZENDA podem criar plantios!"
+      };
+    }
+    
     const lote = await prisma.lote.findUnique({ where: { id: loteId } });
     if(!lote) {
       return res.status(400).json({erro: "Lote nao encontrado."})

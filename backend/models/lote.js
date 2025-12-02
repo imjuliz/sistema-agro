@@ -153,6 +153,10 @@ export async function createLote(data, unidadeId, contratoId) {
       return {sucesso: false, message: "Responsavel nao encontrado!!"}
     }
 
+    if (responsavel.unidadeId !== unidadeId) {
+      return { sucesso: false, message: "Responsável não pertence a esta unidade!" };
+    }
+
     const novoLote = await prisma.lote.create({
       data: {
         unidadeId: unidadeId,
@@ -192,6 +196,10 @@ export async function updateLote(id, data, unidadeId, contratoId) {
       return {sucesso: false, message: "Responsavel nao encontrado!!"}
     }
 
+    if (responsavel.unidadeId !== unidadeId) {
+      return { sucesso: false, message: "Responsável não pertence a esta unidade!" };
+    }
+
     const loteAtualizado = await prisma.lote.update({
       where: { id },
       data: {
@@ -224,6 +232,7 @@ export async function deleteLote(id) {
     const loteDeletado = await prisma.lote.delete({
       where: { id },
     })
+    
     return {
       sucesso: true,
       loteDeletado,
