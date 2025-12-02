@@ -281,18 +281,18 @@ export const listarVendasController = async (req, res) => { //FUNCIONANDO
   }
 }
 
-export const listarDespesasController = async (req, res) => { 
+export const listarDespesasController = async (req, res) => {
   try {
-      const unidadeId = req.params.unidadeId;
-      const despesas = await listarDespesas(unidadeId);
-      if (despesas.sucesso) {
-          return res.status(200).json(despesas);
-      } else {
-          return res.status(500).json({ erro: despesas.erro });
-      }
+    const unidadeId = req.params.unidadeId;
+    const despesas = await listarDespesas(unidadeId);
+    if (despesas.sucesso) {
+      return res.status(200).json(despesas);
+    } else {
+      return res.status(500).json({ erro: despesas.erro });
+    }
   } catch (error) {
-      console.error(error);
-      return res.status(500).json({ erro: 'Erro ao listar despesas.' });
+    console.error(error);
+    return res.status(500).json({ erro: 'Erro ao listar despesas.' });
   }
 };
 
