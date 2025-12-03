@@ -19,16 +19,16 @@ export function BentoSection() {
     {
       id: 1,
       content: <FirstBentoAnimation />,
-      title: "Real-time Spending Analysis",
+      title: "Atendimento ao Cliente",
       description:
-        "Track every transaction instantly. Get immediate insights into spending patterns, unusual purchases, and budget performance.",
+        "Na RuralTech, nosso foco é oferecer suporte rápido, personalizado e eficiente, garantindo que cada cliente tenha a melhor experiência possível.",
     },
     {
       id: 2,
       content: <SecondBentoAnimation />,
-      title: "Rastreabilidade Completa",
+      title: "Rastreabilidade e Segurança",
       description:
-        "Rastreie cada lote desde o talhão até a prateleira: vinculação de lotes, origem dos insumos e histórico de transporte. Garanta transparência e conformidade para recall e certificações.",
+        "Cada produto é rastreado desde a fazenda até a prateleira, utilizando tecnologia avançada para assegurar qualidade, transparência e confiança aos clientes.",
     },
     {
       id: 3,
@@ -40,16 +40,16 @@ export function BentoSection() {
           ]}
         />
       ),
-      title: "Sua empresa sobe de nível",
+      title: "Crescimento RuralTech",
       description:
-        "Aumente receita e eficiência com análises que identificam oportunidades de lucro por lote, produto e canal. Painel com indicadores práticos para escalar operações.",
+        "A RuralTech impulsiona o agronegócio com soluções inovadoras, aumentando a eficiência e promovendo resultados consistentes em toda a cadeia produtiva.",
     },
     {
       id: 4,
       content: <FourthBentoAnimation once={false} />,
-      title: "Planejamento & Monitoramento",
+      title: "Planejamento e Excelência",
       description:
-        "Planeje safras, estoque e vendas com previsões inteligentes. Monitore desempenho em tempo real, receba alertas e tome decisões informadas para reduzir perdas e maximizar produtividade.",
+        "Nossa equipe planeja e executa estratégias que garantem qualidade, segurança e inovação, consolidando a RuralTech como referência no setor agroindustrial.",
     },
   ];
 
@@ -59,10 +59,10 @@ export function BentoSection() {
       <div className="relative">
         <SectionHeader>
           <h2 className="text-3xl font-semibold sm:text-5xl tracking-tighter text-center text-balance pb-1">
-            Leve seu agronegócio para o próximo nível
+             Transformando o Agronegócio com Inovação
           </h2>
           <p className="text-muted-foreground text-center text-balance font-medium">
-            Experience AI-powered spending insights, predictive budgeting, and real-time financial health monitoring to optimize your money management.
+             Uma empresa comprometida em transformar o agronegócio com tecnologia, inovação e soluções inteligentes.
           </p>
         </SectionHeader>
 

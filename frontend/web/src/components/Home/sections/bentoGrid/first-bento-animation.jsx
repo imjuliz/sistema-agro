@@ -7,8 +7,10 @@ import {
   ReasoningContent,
   ReasoningResponse,
 } from "@/components/ui/reasoning";
-import { AnimatePresence, motion, useInView } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { useInView } from "react-intersection-observer";
+
 
 export function ReasoningBasic() {
   const reasoningText = `Based on your spending patterns and financial behavior, I recommend reducing dining out expenses by 30% and consolidating subscriptions. This optimization could save you $400 monthly while maintaining your current lifestyle and financial goals.`;
