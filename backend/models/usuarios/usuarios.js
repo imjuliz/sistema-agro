@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs'; // Certifique-se de que o bcrypt está importado
 //Aqui serão feitas as funções relacionadas a outros usuários (ex: listar, filtrar, editar, apagar)
 
 export const listarFuncionarios = async (unidadeId) => { // TESTAR
-    try {
-        const funcionarios = await prisma.Usuario.findMany({ where: { unidadeId: Number(unidadeId) }, })
+  try {
+    const funcionarios = await prisma.usuario.findMany({ where: { unidadeId: Number(unidadeId) }, })
         return ({
             sucesso: true,
             funcionarios,
@@ -21,8 +21,8 @@ export const listarFuncionarios = async (unidadeId) => { // TESTAR
 };
 
 export const listarAdmins = async (unidadeId) => {
-    try {
-        const admins = await prisma.Usuario.findMany({
+  try {
+    const admins = await prisma.usuario.findMany({
             where: {
                 unidadeId: Number(unidadeId),
                 perfilId: 3 //os administradores (os que podem acessar o sistema) terão o perfilId. Os funcionarios normais não.
@@ -60,9 +60,7 @@ export const getPerfilIdByRole = async (roleName) => {
 export const listarGerentesDisponiveis = async () => {
   try {
     const gerentePerfilId = await getPerfilIdByRole("GERENTE_FAZENDA");
-    if (!gerentePerfilId) {
-      return { sucesso: false, erro: "Perfil de GERENTE_FAZENDA não encontrado." };
-    }
+    if (!gerentePerfilId) {return { sucesso: false, erro: "Perfil de GERENTE_FAZENDA não encontrado." };}
 
     const gerentes = await prisma.usuario.findMany({
       where: {
@@ -97,14 +95,10 @@ export const criarUsuario = async (userData) => {
   try {
     const { nome, email, senha, telefone, role, unidadeId } = userData;
 
-    if (!nome || !email || !senha || !telefone || !role) {
-      return { sucesso: false, erro: "Nome, email, senha, telefone e papel são obrigatórios.", field: null };
-    }
+    if (!nome || !email || !senha || !telefone || !role) {return { sucesso: false, erro: "Nome, email, senha, telefone e papel são obrigatórios.", field: null };}
 
     const perfilId = await getPerfilIdByRole(role);
-    if (!perfilId) {
-      return { sucesso: false, erro: `Papel "${role}" inválido.`, field: null };
-    }
+    if (!perfilId) {return { sucesso: false, erro: `Papel "${role}" inválido.`, field: null };}
 
     // Verificar duplicidade por email ou telefone (retorna primeiro encontrado)
     const existing = await prisma.usuario.findFirst({
@@ -147,9 +141,7 @@ export const criarUsuario = async (userData) => {
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
     // Prisma unique constraint fallback
-    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-      return { sucesso: false, erro: "Email já cadastrado.", field: "email" };
-    }
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {return { sucesso: false, erro: "Email já cadastrado.", field: "email" };}
     return { sucesso: false, erro: "Erro ao criar usuário.", detalhes: error.message, field: null };
   }
 };
@@ -185,9 +177,7 @@ export const updateUsuario = async (id, data) => {
   try {
     const { senha, ...updateData } = data; // Evita atualizar a senha diretamente aqui sem hash
 
-    if (senha) {
-      updateData.senha = await bcrypt.hash(senha, 10);
-    }
+    if (senha) {updateData.senha = await bcrypt.hash(senha, 10);}
 
     const updatedUser = await prisma.usuario.update({
       where: { id: Number(id) },
@@ -209,9 +199,8 @@ export const updateUsuario = async (id, data) => {
     };
   } catch (error) {
     console.error("Erro ao atualizar usuário:", error);
-    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-      return { sucesso: false, erro: "Email já cadastrado." };
-    }
+    
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {return { sucesso: false, erro: "Email já cadastrado." };}
     return { sucesso: false, erro: "Erro ao atualizar usuário.", detalhes: error.message };
   }
 };

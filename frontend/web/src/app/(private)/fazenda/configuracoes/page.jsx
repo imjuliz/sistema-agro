@@ -1,433 +1,368 @@
+// Página de Configurações: Permitir ajustes do sistema e personalização.
+// layout: Aba de preferências (idioma, moeda, unidades de medida). Aba de integrações (IoT, contabilidade).
+
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import buildImageUrl from '@/lib/image';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { User, CreditCard, Image as ImageIcon, Bell, Monitor, AlertTriangle, Copy } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
-import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
-import { useAuth } from "@/contexts/AuthContext";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
-import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils"; // Assuming you have this utility
+import {Search,User,Settings as SettingsIcon, Bell,Link as LinkIcon,Info,Copy,ExternalLink,AlertTriangle,Home,FileText,HelpCircle,Book,Menu,X,} from "lucide-react";
+import { useState } from "react";
 
-export default function SettingsPage() {
-    usePerfilProtegido("GERENTE_FAZENDA");
+const defaultProps = {
+  teamName: "SERP AI's projects",
+  teamUrlSlug: "serp-ais-projects",
+  teamId: "team_edTxn3CaRm3NCYyMOUC0OM5V",
+  userAvatarSrc:"https://imagedelivery.net/Kpcbofvpelk1jdjXmWIr5w/15656e6c-1315-435d-fa59-ec0ce2ac0700/public",
+  activeSidebarItem: "General",
+  sidebarItems: [
+    {
+      category: "Team",
+      icon: User,
+      items: [
+        "General",
+        "Billing",
+        "Invoices",
+        "Members",
+        "Access Groups",
+        "Log Drains",
+        "Security & Privacy",
+        "Deployment Protection",
+        "Environment Variables",
+      ],
+    },
+    {category: "Account",icon: SettingsIcon,items: ["My Notifications"],},
+  ],
+  texts: {
+    settings: "Settings",
+    menu: "Menu",
+    searchPlaceholder: "Search...",
+    teamNameTitle: "Team Name",
+    teamNameDescription:"This is your team's visible name within SERP. For example, the name of your company or department.",
+    teamNameInputHint: "Please use 32 characters at maximum.",
+    teamUrlTitle: "Team URL",
+    teamUrlDescription: "This is your team's URL namespace on SERP. Within it, your team can inspect their projects, check out any recent activity, or configure settings to their liking.",
+    teamUrlInputHint: "Please use 48 characters at maximum.",
+    teamAvatarTitle: "Team Avatar",
+    teamAvatarDescription: "This is your team's avatar. Click on the avatar to upload a custom one from your files.",
+    teamAvatarRecommended: "An avatar is optional but strongly recommended.",
+    changeAvatarButton: "Change Avatar",
+    previewDeploymentSuffixTitle: "Preview Deployment Suffix",
+    previewDeploymentSuffixDescription:"By default, the URL of every new Preview Deployment ends with .SERP.app. This setting allows you to choose your own custom domain in place of this suffix.",
+    proPlanFeature: "This feature is available on the",
+    proPlanLink: "Pro plan",
+    proPlanPrice: "$100 per month",
+    teamIdTitle: "Team ID",
+    teamIdDescription: "This is your team's ID within SERP.",
+    teamIdHint: "Used when interacting with the SERP API.",
+    serpToolbarTitle: "SERP Toolbar",
+    serpToolbarDescription: "Enable the SERP Toolbar on your Deployments.",
+    preProdDeployments: "Pre-Production Deployments",
+    prodDeployments: "Production Deployments",
+    toolbarInfo:"To use the toolbar in production your team members need the Chrome extension or to enable the toolbar for that domain in the toolbar menu. Learn more about using the toolbar in production.",
+    allowOverride: "Allow this setting to be overridden on the project level.",
+    learnMoreToolbar: "Learn more about the SERP Toolbar",
+    transferTitle: "Transfer",
+    transferDescription:"Transfer your projects to another team without downtime or workflow interruptions.",
+    learnMoreTransfer: "Learn more about Transferring Projects",
+    transferButton: "Transfer",
+    leaveTeamTitle: "Leave Team",
+    leaveTeamDescription:"Revoke your access to this Team. Any resources you've added to the Team will remain.",
+    leaveTeamWarning:"To leave this Team, ensure at least one more Member has the Owner role.",
+    deleteTeamTitle: "Delete Team",
+    deleteTeamDescription:"Permanently remove your team and all of its contents from the SERP platform. This action is not reversible — please continue with caution.",
+    deleteTeamWarningTitle: "Warning",
+    deleteTeamWarningDescription:"To delete your account, visit Account Settings.",
+    deleteTeamButton: "Delete Team",
+    footerHome: "Home",
+    footerDocs: "Docs",
+    footerGuides: "Guides",
+    footerHelp: "Help",
+    footerContact: "Contact",
+    footerLegal: "Legal",
+    footerStatus: "All systems normal",
+    footerStatusMobile: "Systems OK",
+    saveButton: "Save",
+    upgradeButton: "Upgrade",
+  },
+  links: {
+    proPlan: "#",
+    chromeExtension: "#",
+    toolbarInProduction: "#",
+    serpToolbar: "#",
+    transferringProjects: "#",
+    accountSettings: "#",
+    home: "#",
+    docs: "#",
+    guides: "#",
+    help: "#",
+    contact: "#",
+  },
+};
 
-    const { user, loading, initialized, fetchWithAuth, doRefresh } = useAuth();
-    const { toast } = useToast();
-    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+export default function Settings1(props) {
+  const {
+    teamName = defaultProps.teamName,
+    teamUrlSlug = defaultProps.teamUrlSlug,
+    teamId = defaultProps.teamId,
+    userAvatarSrc = defaultProps.userAvatarSrc,
+    texts = defaultProps.texts ?? {},
+    links = defaultProps.links ?? {},
+  } = props;
 
-    const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-
-    const [active, setActive] = useState("Perfil");
-    const [username, setUsername] = useState("agrotech_admin");
-    const [telefone, setTelefone] = useState("");
-    const [emailSelect, setEmailSelect] = useState("");
-    const [nome, setNome] = useState("");
-    const [urls, setUrls] = useState(["https://agrotech.com.br"]);
-    const [avatarUrl, setAvatarUrl] = useState("");
-    const fileRef = useRef(null);
-
-    // Estados locais para edição temporária antes de salvar
-    const [localTheme, setLocalTheme] = useState(globalTheme); 
-    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
-
-    const [emailNotifications, setEmailNotifications] = useState(true);
-    const [profileEditing, setProfileEditing] = useState(false);
-    const [companyEditing, setCompanyEditing] = useState(false);
-    const [companyName, setCompanyName] = useState("");
-    const [companyAvatarUrl, setCompanyAvatarUrl] = useState("");
-
-    // Sincronizar estados locais com o contexto global na montagem e quando o contexto muda
-    useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-    }, [globalTheme, globalSelectedFontSize]);
-
-    // Remover useEffects antigos de tema e font size
-    // ... (o conteúdo dos useEffects para theme e selectedFontSize deve ser removido aqui)
-    
-    // popula os estados quando user chegar (dep array estável - primitivos)
-    useEffect(() => {
-        if (!loading && user) {
-            setNome(user.nome ?? "");
-            const firstName = user.nome ? String(user.nome).split(' ')[0] : null;
-            setUsername(firstName || (user.email ? user.email.split('@')?.[0] : "") || "");
-            setEmailSelect(user.email ?? "");
-            setTelefone(user.telefone ?? "");
-            setAvatarUrl(user.ftPerfil ?? ""); // Usar ftPerfil do backend
-            // se backend não retorna urls ou companyName, mantenha defaults
-        }
-
-        if (!loading && !user) {
-            // limpar campos se não autenticado
-            setNome("");
-            setUsername("");
-            setEmailSelect("");
-            setTelefone("");
-            setAvatarUrl("");
-            setUrls(["https://agrotech.com.br"]);
-        }
-    }, [
-        loading,
-        user?.id,
-        user?.nome,
-        user?.email,
-        user?.telefone,
-        user?.ftPerfil // Usar ftPerfil aqui
-    ]);
-
-    // handlers (mantidos)
-    function handleAvatarChange(e) {
-        const f = e.target.files?.[0];
-        if (!f) return;
-        const url = URL.createObjectURL(f);
-        setAvatarUrl(url);
-    }
-    function handleCompanyAvatarChange(e) {
-        const f = e.target.files?.[0];
-        if (!f) return;
-        const url = URL.createObjectURL(f);
-        setCompanyAvatarUrl(url);
-    }
-    function addUrl() { setUrls((s) => [...s, ""]); }
-    function updateUrl(index, value) { setUrls((s) => s.map((u, i) => (i === index ? value : u))); }
-    function removeUrl(index) { setUrls((s) => s.filter((_, i) => i !== index)); }
-    async function saveProfile() {
-        console.log("saveProfile - Função chamada.");
-        setProfileEditing(false);
+  return (
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
+      {/* Main content wrapper */}
+      <div className="relative flex flex-1 md:flex-row">
         
-        const dataToUpdate = {
-            nome: nome,
-            telefone: telefone,
-            ftPerfil: avatarUrl, // Mapear avatarUrl para ftPerfil
-        };
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 pb-28 md:p-8 md:pb-28">
+          <h1 className="mb-6 hidden text-3xl font-bold md:mb-8 md:block">{texts.settings}</h1>
 
-        console.log("saveProfile - Dados a enviar:", dataToUpdate);
-
-        try {
-            const res = await fetchWithAuth("/api/auth/me", { // Alterado para usar /api/auth/me
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(dataToUpdate),
-            });
-
-            const result = await res.json();
-            console.log("saveProfile - Resposta da API:", res.status, result);
-
-            if (res.ok) {
-                console.log("saveProfile - Chamando toast de sucesso.");
-                toast({
-                    title: "Sucesso",
-                    description: result.mensagem || "Perfil atualizado com sucesso!",
-                });
-                await doRefresh(); 
-            } else {
-                console.log("saveProfile - Chamando toast de erro.");
-                toast({
-                    title: "Erro",
-                    description: result.erro || "Falha ao atualizar perfil.",
-                    variant: "destructive",
-                });
-            }
-        } catch (error) {
-            console.error("saveProfile - Erro ao salvar perfil:", error);
-            toast({
-                title: "Erro",
-                description: "Ocorreu um erro inesperado ao salvar o perfil.",
-                variant: "destructive",
-            });
-        }
-    }
-
-    function cancelProfileEdit() { setProfileEditing(false); }
-    function saveCompany() { setCompanyEditing(false); }
-    function cancelCompanyEdit() { setCompanyEditing(false); }
-
-    async function savePreferences() {
-        console.log("savePreferences - Função chamada.");
-        applyPreferences(localTheme, localSelectedFontSize); 
-        console.log("savePreferences - Chamando toast de sucesso.");
-        toast({
-            title: "Sucesso",
-            description: "Preferências salvas com sucesso!",
-        });
-    }
-
-    // --- Render de carregamento / não autenticado (diagnóstico)
-    if (!initialized || loading) {
-        return (
-            <div className="container mx-auto py-8">
-                <h1 className="text-2xl font-bold mb-2"><Transl>Configurações</Transl></h1>
-                <p className="text-muted-foreground mb-6"><Transl>Carregando informações do usuário…</Transl></p>
-
-                {/* debug útil temporário — remova em produção */}
-                <pre className="whitespace-pre-wrap text-xs mt-4 bg-muted p-4 rounded">
-                    {JSON.stringify({ loading, initialized, user: user ? { id: user.id, email: user.email, nome: user.nome } : null }, null, 2)}
-                </pre>
+          {/* Team Name Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.teamNameTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.teamNameDescription}</p>
+            <div className="w-full max-w-md">
+              <div className="flex items-center gap-2">
+                <Input type="text" defaultValue={teamName} className="flex-1" />
+                <Button size="sm">{texts.saveButton}</Button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{texts.teamNameInputHint}</p>
             </div>
-        );
-    }
+          </div>
+          <Separator className="my-8" />
 
-    if (!user) {
-        return (
-            <div className="container mx-auto py-8">
-                <h1 className="text-2xl font-bold mb-2"><Transl>Configurações</Transl></h1>
-                <p className="text-muted-foreground mb-6"><Transl>Usuário não autenticado.</Transl></p>
+          {/* Team URL Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.teamUrlTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.teamUrlDescription}</p>
+            <div className="w-full max-w-md">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-1 items-center">
+                  <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                    SERP.com/
+                  </span>
+                  <Input type="text" defaultValue={teamUrlSlug} className="min-w-0 flex-1 rounded-l-none"/>
+                </div>
+                <Button size="sm">{texts.saveButton}</Button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{texts.teamUrlInputHint}</p>
             </div>
-        );
-    }
+          </div>
+          <Separator className="my-8" />
 
-    const regexTelefone = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
-
-    function formatarTelefoneBR(tel) {
-        if (!tel) return "";
-
-        const digits = tel.replace(/\D/g, ""); // remove tudo que não é número
-
-        // 11 dígitos → celular: (11) 98765-4321
-        if (digits.length === 11) {
-            return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-        }
-
-        // 10 dígitos → fixo: (11) 3876-4321
-        if (digits.length === 10) {
-            return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-        }
-
-        return tel; // fallback: retorna como está
-    }
-
-    return (
-        <div className="container mx-auto py-8">
-            
-            <div className="flex gap-6">
-                {/* Sidebar */}
-                <aside className="w-72 h-fit rounded-lg border border-border bg-background p-4">
-                    <nav className="flex flex-col gap-1">
-                        {[
-                            { key: "Perfil", label: "Perfil", icon: User },
-                            { key: "Aparencia", label: "Aparência", icon: ImageIcon },
-                            // { key: "Notificacoes", label: "Notificações", icon: Bell }
-                        ].map((it) => {
-                            const Icon = it.icon;
-                            const selected = active === it.key;
-                            return (
-                                <button key={it.key} onClick={() => setActive(it.key)} className={`flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm ${selected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50 text-foreground"}`}>
-                                    <Icon className="h-4 w-4" />
-                                    <span><Transl>{it.label}</Transl></span>
-                                </button>
-                            );
-                        })}
-                    </nav>
-                </aside>
-
-                {/* Content */}
-                <section className="flex-1">
-                    <div className="rounded-lg border border-border bg-background p-6">
-                        {/* ---------- Perfil ---------- */}
-                        {active === "Perfil" && (
-                            <>
-                                <h2 className="text-lg font-semibold mb-4"><Transl>Perfil</Transl></h2>
-                                <div className="flex gap-6">
-                                    <div className="flex-1 gap-6">
-                                        <div className="grid gap-4">
-                                            <div className="w-48">
-                                                <div className="flex items-center gap-4">
-                                                    <Avatar className="h-20 w-20">
-                                                        {avatarUrl ? (
-                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" />
-                                                        ) : (
-                                                            <AvatarFallback>
-                                                                {username?.[0]?.toUpperCase() || "A"}
-                                                            </AvatarFallback>
-                                                        )}
-                                                    </Avatar>
-                                                    <div>
-                                                        {/* mostrar upload somente em modo edição */}
-                                                        {profileEditing ? (
-                                                            <>
-                                                                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-                                                                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                                                                    <Transl>Fazer upload</Transl>
-                                                                </Button>
-                                                            </>
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <Label className={"pb-3 font-bold"} htmlFor="nome"><Transl>Nome completo</Transl></Label>
-                                                {profileEditing ? (
-                                                    <>
-                                                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Digite seu nome completo.</Transl>
-                                                        </p>
-                                                    </>
-
-                                                ) : (<p className="text-sm text-foreground">{nome || "Nome não informado"}</p>)}
-
-                                            </div>
-
-                                            <div>
-                                                <Label className="pb-3 font-bold" htmlFor="emailInput">
-                                                    <Transl>Email</Transl>
-                                                </Label>
-
-                                                {profileEditing ? (
-                                                    <>
-                                                        <Input
-                                                            id="emailInput"
-                                                            type="email"
-                                                            value={emailSelect}
-                                                            onChange={(e) => setEmailSelect(e.target.value)}
-                                                        />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Gerencie seus emails.</Transl>
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <p className="text-sm text-foreground">
-                                                        {emailSelect || "Email não informado"}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div>
-                                                <Label className={"pb-3 font-bold"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
-                                                {profileEditing ? (
-                                                    <><Input id="telefone" value={formatarTelefoneBR(telefone)} onChange={(e) => { const value = e.target.value; if (value === "" || regexTelefone.test(value)) { setTelefone(value); } }} />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Telefone de contato.</Transl>
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <p className="text-sm text-foreground">
-                                                        {telefone ? formatarTelefoneBR(telefone) : "Telefone não informado"}
-                                                    </p>
-                                                )}
-
-                                            </div>
-
-                                            {/* <div>
-                                                <Label className={"pb-3 font-bold"}>URLs</Label>
-                                                <p className="text-sm text-muted-foreground mb-2">
-                                                    <Transl>Adicione links do site da unidade, blog ou perfis sociais.</Transl>
-                                                </p>
-                                                <div className="flex flex-col gap-2">
-                                                    {profileEditing ? (
-                                                        urls.map((u, i) => (
-                                                            <div key={i} className="flex items-center gap-2">
-                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1" />
-                                                                <Button variant="outline" size="sm" onClick={() => removeUrl(i)}>
-                                                                    <Transl>Remover</Transl>
-                                                                </Button>
-                                                            </div>
-                                                        ))
-                                                    ) : (urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>)))}
-                                                    {profileEditing ? (
-                                                        <div>
-                                                            <Button size="sm" onClick={addUrl} variant="secondary">
-                                                                <Transl>Adicionar URL</Transl>
-                                                            </Button>
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div> */}
-
-                                            <div className="pt-3">
-                                                {profileEditing ? (
-                                                    <div className="flex gap-2">
-                                                        <Button onClick={saveProfile}><Transl>Salvar</Transl></Button>
-                                                        <Button variant="outline" onClick={cancelProfileEdit}><Transl>Cancelar</Transl></Button>
-                                                    </div>
-                                                ) : (<Button onClick={() => setProfileEditing(true)}><Transl>Editar perfil</Transl></Button>)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {/* ---------- Aparencia ---------- */}
-                        {active === "Aparencia" && (
-                            <>
-                                <h2 className="text-lg font-semibold mb-4"><Transl>Aparência</Transl></h2>
-                                <div className="grid gap-4">
-                                    <div>
-                                        <Label className="pb-3 font-bold"><Transl>Tamanho da fonte</Transl></Label>
-                                        <Select onValueChange={(v) => setLocalSelectedFontSize(v)} value={localSelectedFontSize}>
-                                            <SelectTrigger className="w-64">
-                                                <SelectValue placeholder={<Transl>Selecionar tamanho</Transl>} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="text-sm"><Transl>Pequeno</Transl></SelectItem>
-                                                <SelectItem value="text-base"><Transl>Médio</Transl></SelectItem>
-                                                <SelectItem value="text-lg"><Transl>Grande</Transl></SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            <Transl>Defina o tamanho da fonte de sua preferência.</Transl>
-                                        </p>
-                                    </div>
-
-                                    {/* Language selector */}
-                                    <div className="flex items-center gap-2">
-                                        <Label htmlFor="language-select" className="hidden md:inline-block font-bold"><Transl>Idioma</Transl></Label>
-                                        <Select value={lang} onValueChange={(v) => changeLang(v)}>
-                                            <SelectTrigger id="language-select" className="w-40">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {languageOptions.map(opt => (
-                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div>
-                                        <Label className="pb-3 font-bold"><Transl>Tema</Transl></Label>
-                                        <div className="flex items-start gap-6 mt-3">
-                                            <button onClick={() => setLocalTheme("light")} className={`rounded-lg border p-3 ${localTheme === "light" ? "border-primary" : "border-border"}`} aria-pressed={localTheme === "light"}>
-                                                <div className="w-32 h-20 bg-white border rounded" />
-                                                <div className="text-sm mt-2 text-center"><Transl>Claro</Transl></div>
-                                            </button>
-
-                                            <button onClick={() => setLocalTheme("dark")} className={`rounded-lg border p-3 ${localTheme === "dark" ? "border-primary" : "border-border"}`} aria-pressed={localTheme === "dark"}>
-                                                <div className="w-32 h-20 bg-slate-900 border rounded" />
-                                                <div className="text-sm mt-2 text-center"><Transl>Escuro</Transl></div>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-2">
-                                        <Button onClick={savePreferences}><Transl>Salvar preferências</Transl></Button> 
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                    </div>
-                </section>
+          {/* Team Avatar Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.teamAvatarTitle}</h2>
+            <p className="mb-4 text-muted-foreground">
+              {texts.teamAvatarDescription?.split("Click on")[0]}
+              <br className="md:hidden" />
+              {texts.teamAvatarDescription?.split(". ")[1]}
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Avatar className="h-16 w-16 cursor-pointer border-2 border-muted hover:border-primary">
+                <AvatarImage src={userAvatarSrc} alt="Team Avatar" />
+                <AvatarFallback>{teamName ?.split(" ") .map((n) => n[0]) .join("") .toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="mb-2 text-sm text-muted-foreground">{texts.teamAvatarRecommended}</p>
+                <Button size="sm" variant="outline">{texts.changeAvatarButton}</Button>
+              </div>
             </div>
+          </div>
+          <Separator className="my-8" />
+
+          {/* Preview Deployment Suffix Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.previewDeploymentSuffixTitle}</h2>
+            <p className="mb-4 text-muted-foreground">
+              {texts.previewDeploymentSuffixDescription?.split(".SERP.app")[0]}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground">
+                .SERP.app
+              </code>
+              {texts.previewDeploymentSuffixDescription?.split(".SERP.app")[1]}
+            </p>
+            <div className="w-full max-w-md">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-1 items-center">
+                  <Input type="text" placeholder="my-deployment" className="min-w-0 flex-1 rounded-r-none" disabled />
+                  <span className="inline-flex h-10 items-center rounded-r-md border border-l-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                    .SERP.app
+                  </span>
+                </div>
+                <Button size="sm" variant="secondary">{texts.upgradeButton}</Button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {texts.proPlanFeature}{" "}
+                <a href={links.proPlan} className="text-primary underline">
+                  {texts.proPlanLink}{" "}<ExternalLink className="ml-0.5 inline h-3 w-3" />
+                </a>{" "}
+                for an additional{" "}
+                <span className="font-semibold text-foreground">{texts.proPlanPrice}</span>
+                .
+              </p>
+            </div>
+          </div>
+          <Separator className="my-8" />
+
+          {/* Team ID Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.teamIdTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.teamIdDescription}</p>
+            <div className="w-full max-w-md">
+              <div className="flex flex-wrap items-center gap-2">
+                <Input type="text" value={teamId} readOnly className="flex-grow font-mono text-sm"/>
+                <Button variant="outline" size="icon" aria-label="Copy Team ID">
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{texts.teamIdHint}</p>
+            </div>
+          </div>
+          <Separator className="my-8" />
+
+          {/* SERP Toolbar Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.serpToolbarTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.serpToolbarDescription}</p>
+            <div className="mb-4 grid w-full max-w-lg grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <Label htmlFor="pre-prod-toolbar" className="text-sm font-medium text-muted-foreground">
+                  {texts.preProdDeployments}
+                </Label>
+                <Select defaultValue="on">
+                  <SelectTrigger id="pre-prod-toolbar" className="mt-1">
+                    <SelectValue placeholder="Select setting" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="on">Default (on)</SelectItem>
+                    <SelectItem value="off">Off</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="prod-toolbar" className="text-sm font-medium text-muted-foreground">
+                  {texts.prodDeployments}
+                </Label>
+                <Select defaultValue="on">
+                  <SelectTrigger id="prod-toolbar" className="mt-1">
+                    <SelectValue placeholder="Select setting" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="on">Default (on)</SelectItem>
+                    <SelectItem value="off">Off</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="mb-4 flex max-w-lg flex-wrap items-start gap-2 rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">
+              <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>
+                {texts.toolbarInfo?.split("Chrome extension")[0]}
+                <a href={links.chromeExtension} className="text-primary underline">Chrome extension</a>
+                {texts.toolbarInfo ?.split("Chrome extension")[1] .split("toolbar in production")[0]}
+                <a href={links.toolbarInProduction} className="text-primary underline">toolbar in production</a>.
+              </span>
+            </div>
+            <div className="mb-4 flex items-center space-x-2">
+              <Switch id="allow-override" defaultChecked={true} />
+              <Label htmlFor="allow-override" className="text-sm">{texts.allowOverride}</Label>
+            </div>
+            <div className="flex max-w-lg items-center justify-end">
+              <p className="mr-4 text-sm text-muted-foreground">
+                {texts.learnMoreToolbar?.split("SERP Toolbar")[0]}
+                <a href={links.serpToolbar} className="text-primary underline">
+                  SERP Toolbar{" "}
+                  <ExternalLink className="ml-0.5 inline h-3 w-3" />
+                </a>
+              </p>
+              <Button size="sm">{texts.saveButton}</Button>
+            </div>
+          </div>
+          <Separator className="my-8" />
+
+          {/* Transfer Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.transferTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.transferDescription}</p>
+            <div className="flex max-w-md items-center justify-end">
+              <p className="mr-4 text-sm text-muted-foreground">
+                {texts.learnMoreTransfer?.split("Transferring Projects")[0]}
+                <a href={links.transferringProjects} className="text-primary underline">
+                  Transferring Projects{" "}<ExternalLink className="ml-0.5 inline h-3 w-3" />
+                </a>
+              </p>
+              <Button size="sm" variant="secondary">{texts.transferButton}</Button>
+            </div>
+          </div>
+          <Separator className="my-8" />
+
+          {/* Leave Team Section */}
+          <div className="mb-8">
+            <h2 className="mb-2 text-xl font-semibold">{texts.leaveTeamTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.leaveTeamDescription}</p>
+            <p className="max-w-md text-sm text-muted-foreground">{texts.leaveTeamWarning}</p>
+          </div>
+          <Separator className="my-8" />
+
+          {/* Delete Team Section */}
+          <div>
+            <h2 className="mb-2 text-xl font-semibold text-destructive">{texts.deleteTeamTitle}</h2>
+            <p className="mb-4 text-muted-foreground">{texts.deleteTeamDescription}</p>
+            <Alert variant="destructive" className="mb-4 max-w-md">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>{texts.deleteTeamWarningTitle}</AlertTitle>
+              <AlertDescription>
+                {texts.deleteTeamWarningDescription?.split("Account Settings",)[0]}
+                <a href={links.accountSettings} className="font-medium underline">Account Settings</a>
+                .
+              </AlertDescription>
+            </Alert>
+            <Button variant="destructive">{texts.deleteTeamButton}</Button>
+          </div>
+        </main>
+      </div>
+
+      {/* Footer - made responsive */}
+      <footer className="left-0 right-0 z-40 flex flex-col border-t bg-background px-4 py-2 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-8 md:text-sm">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 overflow-x-auto pb-1 md:pb-0">
+          <span>▲</span>
+          <a href={links.home} className="hover:text-foreground">{texts.footerHome}</a>
+          <a href={links.docs} className="hover:text-foreground">{texts.footerDocs}</a>
+          <a href={links.guides} className="hover:text-foreground md:block">{texts.footerGuides}</a>
+          <a href={links.help} className="hover:text-foreground md:block">{texts.footerHelp}</a>
+          <a href={links.contact} className="hover:text-foreground md:block">{texts.footerContact}</a>
+          <span className="hidden shrink-0 sm:inline-block">
+            © {new Date().getFullYear()} SERP Inc.
+          </span>
+          <div className="hidden sm:inline-block">
+            <Select defaultValue="legal">
+              <SelectTrigger className="h-auto border-none bg-transparent px-1 py-0 text-xs shadow-none focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder={texts.footerLegal} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="legal">{texts.footerLegal}</SelectItem>
+                {/* Add other legal links */}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-    );
+        <div className="flex items-center justify-between md:space-x-4">
+          <span className="flex items-center text-green-500">
+            <span className="mr-1.5 h-2 w-2 rounded-full bg-green-500"></span>
+            <span className="hidden sm:inline">{texts.footerStatus}</span>
+            <span className="sm:hidden">{texts.footerStatusMobile}</span>
+          </span>
+          <Button variant="ghost" size="icon" className="md:hidden"><SettingsIcon className="h-4 w-4" /></Button>
+        </div>
+      </footer>
+    </div>
+  );
 }

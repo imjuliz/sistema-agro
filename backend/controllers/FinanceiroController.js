@@ -4,9 +4,9 @@ import fs from "fs";
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId || req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." }); }
+    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada." }); }
     const resultado = await mostrarSaldoF(Number(unidadeId));
 
     return res.status(200).json({
@@ -28,12 +28,12 @@ export const mostrarSaldoFController = async (req, res) => {
 //CONTAR VENDAS DOS ULTIMOS 6 MESES -- rota feita
 export const contarVendasPorMesUltimos6MesesController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId || req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
       return res.status(401).json({
         sucesso: false,
-        erro: "Usuário não possui unidade vinculada à sessão."
+        erro: "Usuário não possui unidade vinculada."
       });
     }
     const resultado = await contarVendasPorMesUltimos6Meses(Number(unidadeId));
@@ -56,7 +56,7 @@ export const contarVendasPorMesUltimos6MesesController = async (req, res) => {
 //CRIAR VENDA --rota feita
 export const criarVendaController = async (req, res) => {
   try {
-    const usuario = req.session?.usuario;
+    const usuario = req.usuario || req.session?.usuario;
 
     if (!usuario || !usuario.unidadeId) {
       return res.status(401).json({
@@ -83,7 +83,7 @@ export const criarVendaController = async (req, res) => {
 // CALCULA SALDO LÍQUIDO -- rota feita
 export const calcularSaldoLiquidoController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId || req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
       return res.status(401).json({
@@ -107,7 +107,7 @@ export const calcularSaldoLiquidoController = async (req, res) => {
 // LISTA SAÍDAS DA UNIDADE -- rota feita
 export const listarSaidasPorUnidadeController = async (req, res) => { //FUNCIONANDO
   try {
-    const unidadeId = req.params.unidadeId;
+    const unidadeId = req.params.unidadeId || req.usuario?.unidadeId || req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
       return res.status(401).json({

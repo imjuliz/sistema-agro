@@ -55,11 +55,8 @@ export default function estoqueFazenda() {
 
       const url = `${API_URL}estoque/movimento`;
       let res;
-      try {
-        res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      } catch (e) {
-        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      }
+      try {res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });}
+      catch (e) {res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });}
 
       if (!res.ok) {
         const txt = await res.text().catch(() => null);
@@ -73,9 +70,8 @@ export default function estoqueFazenda() {
     } catch (err) {
       console.error('Erro ao registrar movimentação', err);
       alert(String(err?.message ?? err));
-    } finally {
-      setIsSubmitting(false);
     }
+    finally {setIsSubmitting(false);}
   }
   return (
     <div className="flex gap-6">
@@ -122,7 +118,6 @@ export default function estoqueFazenda() {
         <InventoryProvider defaultUnidadeId={fazenda?.id}>
           <StoreLevelView />
         </InventoryProvider>
-
       </div>
     </div>
   );

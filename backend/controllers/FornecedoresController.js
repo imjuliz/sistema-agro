@@ -214,7 +214,11 @@ export const verContratosComFazendasController = async (req, res) =>{ //funciona
         erro: "Usuário não possui unidade vinculada!"
       })
     }
+    
+    console.log('[verContratosComFazendasController] Recebida requisição para unidadeId:', unidadeId);
     const contratos = await verContratosComFazendas(unidadeId);
+    console.log('[verContratosComFazendasController] Resposta:', contratos);
+    
     return res.status(200).json({
       sucesso: true,
       contratos,
@@ -222,6 +226,7 @@ export const verContratosComFazendasController = async (req, res) =>{ //funciona
     });
 
   } catch (error) {
+    console.error('[verContratosComFazendasController] Erro:', error);
     return res.status(500).json({
       sucesso: false,
       erro: "erro no controller ao ver contratos com lojas.",

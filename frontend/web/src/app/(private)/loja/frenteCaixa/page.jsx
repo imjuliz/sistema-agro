@@ -1,65 +1,42 @@
 "use client"
-import React, { useState , useEffect} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, Receipt, Trash2 , BarChart, DollarSign, Layers, } from 'lucide-react';
+import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, Receipt, Trash2, BarChart, DollarSign, Layers, } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 
-const productsFallback = [
-  { id: 'PROD-001', name: 'Wireless Headphones', price: 89.99, stock: 45, category: 'Electronics', barcode: '123456789012', image: '/api/placeholder/80/80' },
-  { id: 'PROD-002', name: 'Office Chair', price: 299.99, stock: 8, category: 'Furniture', barcode: '123456789013', image: '/api/placeholder/80/80' },
-  { id: 'PROD-003', name: 'Water Bottle', price: 24.99, stock: 120, category: 'Home & Garden', barcode: '123456789014', image: '/api/placeholder/80/80' },
-  { id: 'PROD-004', name: 'Laptop Stand', price: 45.00, stock: 32, category: 'Electronics', barcode: '123456789015', image: '/api/placeholder/80/80' },
-  { id: 'PROD-005', name: 'Yoga Mat', price: 69.99, stock: 35, category: 'Sports & Fitness', barcode: '123456789016', image: '/api/placeholder/80/80' },
-  { id: 'PROD-006', name: 'Coffee Mug', price: 12.99, stock: 78, category: 'Home & Garden', barcode: '123456789017', image: '/api/placeholder/80/80' },
-  { id: 'PROD-007', name: 'USB Cable', price: 19.99, stock: 156, category: 'Electronics', barcode: '123456789018', image: '/api/placeholder/80/80' },
-  { id: 'PROD-008', name: 'Desk Lamp', price: 89.99, stock: 23, category: 'Furniture', barcode: '123456789019', image: '/api/placeholder/80/80' }
-];
-
-const customersFallback = [
-  { id: 'CUST-001', name: 'John Smith', email: 'john@email.com', phone: '+1-555-0101', loyaltyPoints: 1250 },
-  { id: 'CUST-002', name: 'Sarah Johnson', email: 'sarah@email.com', phone: '+1-555-0102', loyaltyPoints: 890 },
-  { id: 'CUST-003', name: 'Michael Chen', email: 'michael@email.com', phone: '+1-555-0103', loyaltyPoints: 2340 },
-  { id: 'CUST-004', name: 'Emily Rodriguez', email: 'emily@email.com', phone: '+1-555-0104', loyaltyPoints: 567 }
-];
-
-const recentSalesFallback = [
-  {id: 'TXN-001',date: '2024-01-26 14:23',customer: 'John Smith',items: 3,total: 234.97,paymentMethod: 'Credit Card',cashier: 'Alice Wilson',status: 'completed'},
-  {id: 'TXN-002',date: '2024-01-26 14:18',customer: 'Walk-in Customer',items: 1,total: 89.99,paymentMethod: 'Cash',cashier: 'Bob Johnson',status: 'completed'},
-  {id: 'TXN-003',date: '2024-01-26 14:12',customer: 'Sarah Johnson',items: 2,total: 159.98,paymentMethod: 'Debit Card',cashier: 'Alice Wilson',status: 'completed'}
-];
-
-const dailyStatsFallback = {
-  totalSales: 2847.65,
-  totalTransactions: 24,
-  averageTransaction: 118.65,
-  cashSales: 856.43,
-  cardSales: 1991.22,
-  topProduct: 'Wireless Headphones',
-  peakHour: '14:00 - 15:00'
-};
-
-//---- POSModule ------
 export default function app() {
   const { fetchWithAuth, user } = useAuth();
   usePerfilProtegido("GERENTE_LOJA");
+  // Guarda as últimas respostas (normalizadas) por endpoint/key — não causa re-render
+  const lastResponsesRef = useRef({});
 
-  // remote-backed state (fall back to local constants)
-  const [productsList, setProductsList] = useState(productsFallback);
-  const [customersList, setCustomersList] = useState(customersFallback);
-  const [recentSalesList, setRecentSalesList] = useState(recentSalesFallback);
-  const [dailyStatsState, setDailyStatsState] = useState(dailyStatsFallback);
+  const [productsList, setProductsList] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(null);
+
+  const [customersList, setCustomersList] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [customersError, setCustomersError] = useState(null);
+
+  const [recentSalesList, setRecentSalesList] = useState([]);
+  const [salesLoading, setSalesLoading] = useState(true);
+  const [salesError, setSalesError] = useState(null);
+
+  const [dailyStatsState, setDailyStatsState] = useState(null);
+  const [financeLoading, setFinanceLoading] = useState(true);
+  const [financeError, setFinanceError] = useState(null);
 
   // finance/dashboard states
   const [saldoFinal, setSaldoFinal] = useState(0);
@@ -79,7 +56,6 @@ export default function app() {
   const [amountReceived, setAmountReceived] = useState(0);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const categories = ['all', ...Array.from(new Set((productsList || []).map(p => p.category || ''))).filter(c => c)];
-
   const filteredProducts = (productsList || []).filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const term = searchTerm.trim().toLowerCase();
@@ -90,15 +66,12 @@ export default function app() {
   const addToCart = (product) => {
     setCart((c) => {
       const existing = c.find(i => i.id === product.id);
-      if (existing) {return c.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);}
+      if (existing) { return c.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i); }
       return [...c, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
     });
   };
 
-  const updateQuantity = (id, newQuantity) => {
-    setCart((c) => c.map(i => i.id === id ? { ...i, quantity: Math.max(0, newQuantity) } : i).filter(i => i.quantity > 0));
-  };
-
+  const updateQuantity = (id, newQuantity) => { setCart((c) => c.map(i => i.id === id ? { ...i, quantity: Math.max(0, newQuantity) } : i).filter(i => i.quantity > 0)) };
   const removeFromCart = (id) => { setCart((c) => c.filter(i => i.id !== id)); };
   const getSubtotal = () => cart.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0);
   const getDiscountAmount = () => (getSubtotal() * (Number(discountPercent || 0) / 100));
@@ -106,61 +79,84 @@ export default function app() {
   const getTotal = () => (getSubtotal() - getDiscountAmount() + getTax());
   const getChange = () => Math.max(0, Number(amountReceived || 0) - getTotal());
   const clearCart = () => { setCart([]); setDiscountPercent(0); setAmountReceived(0); };
-  // Resilient fetch helper: try fetchWithAuth (context), fallback to direct fetch to API_URL with credentials included
+  const ENDPOINTS = {
+    produtosList: '/produtos/listar',
+    produtosBase: '/produtos',
+    saldoFinal: '/saldo-final',
+    vendasMedia: '/vendas/media-por-transacao',
+    vendasPagamentos: '/vendas/divisao-pagamentos',
+    produtoMaisVendido: '/financeiro/produto-mais-vendido',
+    usuariosUnidadeListar: '/usuarios/unidade/listar',
+    listarVendas: (unidadeId) => `/listarVendas/${unidadeId}`,
+    vendasCriar: '/vendas/criar'
+  };
+
+  const makeUrl = (path) => {
+    if (!path) return API_URL;
+    if (typeof path === 'function') path = path();
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const base = (API_URL || '').replace(/\/+$/, '');
+    const clean = String(path).replace(/^\/+/, '');
+    return `${base}/${clean}`;
+  };
+
   const safeFetchJson = async (path, opts = {}) => {
-    const makeUrl = (p) => {
-      if (!p) return p;
-      // if path already absolute, return as-is
-      if (/^https?:\/\//i.test(p)) return p;
-      const defaultBase = 'http://localhost:3000/api';
-      const rawBase = (API_URL && API_URL.trim()) || defaultBase;
-      const base = rawBase.replace(/\/$/, ''); // remove trailing slash
+    // Accept either a path string or an ENDPOINTS key function/value
+    const resolvedPath = (typeof path === 'string' && path in ENDPOINTS) ? ENDPOINTS[path] : path;
 
-      // normalize endpoint to start with '/'
-      let endpoint = p.startsWith('/') ? p : `/${p}`;
+    // derive a stable key for storing last response
+    let responseKey = 'unknown';
+    try {
+      if (typeof path === 'string' && path in ENDPOINTS) responseKey = path;
+      else if (typeof resolvedPath === 'string') responseKey = String(resolvedPath).replace(/^\/+|\/+$/g, '').replace(/[^a-zA-Z0-9_\-]/g, '_') || 'root';
+    } catch (e) { responseKey = 'unknown'; }
 
-      // If endpoint already contains /api at start, avoid duplicating it
-      if (endpoint.startsWith('/api/')) {
-        if (base.endsWith('/api')) return base + endpoint.slice(4); // remove '/api' from endpoint
-        return base + endpoint;
-      }
-
-      // endpoint does not start with /api
-      if (base.endsWith('/api')) return base + endpoint; // base already provides /api
-      return base + '/api' + endpoint; // add /api between
+    // helper to persist and return result
+    const persistAndReturn = (result) => {
+      try { lastResponsesRef.current[responseKey] = result; window.__lastResponses = lastResponsesRef.current; } catch (e) { /* ignore */ }
+      return result;
     };
 
-    // try fetchWithAuth first (keeps existing auth flow)
+    // If fetchWithAuth is available, prefer it but still build the correct URL
     if (typeof fetchWithAuth === 'function') {
       try {
-        const url = makeUrl(path);
+        const url = makeUrl(resolvedPath);
         const resp = await fetchWithAuth(url, opts);
         const contentType = resp.headers && resp.headers.get ? resp.headers.get('content-type') || '' : '';
         if (!resp.ok) {
           const txt = await resp.text().catch(() => null);
-          return { ok: false, status: resp.status, text: txt };
+          return persistAndReturn({ sucesso: false, erro: typeof txt === 'string' ? txt.slice(0, 2000) : `HTTP ${resp.status}`, detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status: resp.status });
         }
-        if (contentType.includes('application/json')) return await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
+        if (contentType.includes('application/json')) {
+          const parsed = await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
+          return persistAndReturn(parsed);
+        }
         const text = await resp.text().catch(() => null);
-        return { ok: false, text };
-      } catch (err) {console.debug('fetchWithAuth failed, falling back to direct fetch:', err.message || err)}
+        // Normaliza respostas non-JSON para um objeto JSON consistente
+        const fallback = { sucesso: false, erro: typeof text === 'string' ? text.slice(0, 2000) : 'Resposta não-JSON', detalhes: typeof text === 'string' ? text.slice(0, 2000) : null, status: resp.status };
+        return persistAndReturn(fallback);
+      } catch (err) { console.debug('fetchWithAuth failed, falling back to direct fetch:', err.message || err) }
     }
 
-    // fallback: direct fetch to API_URL with credentials included
     try {
-      const url = makeUrl(path);
+      const url = makeUrl(resolvedPath);
       const merged = { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...opts };
       const resp = await fetch(url, merged);
       const contentType = resp.headers.get('content-type') || '';
+
       if (!resp.ok) {
         const txt = await resp.text().catch(() => null);
-        return { ok: false, status: resp.status, text: txt };
+        return persistAndReturn({ sucesso: false, erro: typeof txt === 'string' ? txt.slice(0, 2000) : `HTTP ${resp.status}`, detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status: resp.status });
       }
-      if (contentType.includes('application/json')) return await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
+
+      if (contentType.includes('application/json')) {
+        const parsed = await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
+        return persistAndReturn(parsed);
+      }
       const text = await resp.text().catch(() => null);
-      return { ok: false, text };
+      return persistAndReturn({ sucesso: false, erro: typeof text === 'string' ? text.slice(0, 2000) : 'Resposta não-JSON', detalhes: typeof text === 'string' ? text.slice(0, 2000) : null, status: resp.status });
     }
-    catch (error) {return { ok: false, error: error.message }}
+    catch (error) { return persistAndReturn({ ok: false, error: error.message }); }
   };
 
   const processSale = async () => {
@@ -171,13 +167,14 @@ export default function app() {
 
     try {
       const itens = cart.map((i) => {
-        const numeric = Number(i.id);if (!Number.isNaN(numeric) && Number.isFinite(numeric) && numeric > 0) {
-          return { produtoId: numeric, quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 }}
+        const numeric = Number(i.id); if (!Number.isNaN(numeric) && Number.isFinite(numeric) && numeric > 0) {
+          return { produtoId: numeric, quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 }
+        }
         return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
       });
 
       const payload = { pagamento: paymentMethod, itens };
-      const resp = await safeFetchJson('/vendas/criar', { method: 'POST', body: JSON.stringify(payload) });
+  const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
 
       if (!resp || resp.sucesso === false) {
         console.error('Erro ao criar venda', resp);
@@ -190,7 +187,7 @@ export default function app() {
       setIsPaymentOpen(false);
 
       // atualizar saldo final
-      const s = await safeFetchJson('/saldo-final');
+  const s = await safeFetchJson(ENDPOINTS.saldoFinal);
       if (s && typeof s.saldoFinal !== 'undefined') setSaldoFinal(Number(s.saldoFinal ?? 0));
 
     } catch (error) {
@@ -198,149 +195,177 @@ export default function app() {
       alert('Erro ao processar venda. Veja console para detalhes.');
     }
   };
-  useEffect(() => {
+  const loadFinance = async () => {
     let mounted = true;
-    const loadFinance = async () => {
+    setFinanceLoading(true); setFinanceError(null);
+    setProductsLoading(true); setProductsError(null);
+    setCustomersLoading(true); setCustomersError(null);
+    setSalesLoading(true); setSalesError(null);
+
+    try {
+      const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
+  safeFetchJson(ENDPOINTS.saldoFinal),
+  safeFetchJson(ENDPOINTS.vendasMedia),
+  safeFetchJson(ENDPOINTS.vendasPagamentos),
+  safeFetchJson(ENDPOINTS.produtoMaisVendido),
+      ]);
+
+      if (!mounted) return;
+      if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') { setSaldoFinal(Number(saldoRes.saldoFinal ?? 0)) }
+      else if (saldoRes && saldoRes.text) { console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes) }
+
+      if (mediaRes && mediaRes.sucesso !== false && typeof mediaRes.media !== 'undefined') {
+        setTotalSales(Number(mediaRes.total ?? 0));
+        setTotalTransactions(Number(mediaRes.quantidade ?? 0));
+        setAverageTransactionValue(Number(mediaRes.media ?? 0));
+      }
+      else if (mediaRes && mediaRes.text) { console.warn('/vendas/media-por-transacao returned non-JSON:', mediaRes.text?.slice ? mediaRes.text.slice(0, 300) : mediaRes); }
+
+      if (pagamentosRes && pagamentosRes.sucesso !== false && pagamentosRes.detalhamento) {
+        const det = pagamentosRes.detalhamento;
+        setPaymentsBreakdown({
+          PIX: Number(det.PIX ?? det.Pix ?? det.pix ?? 0),
+          DINHEIRO: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
+          CARTAO: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
+        });
+      }
+      else if (pagamentosRes && pagamentosRes.text) { console.warn('/vendas/divisao-pagamentos returned non-JSON:', pagamentosRes.text?.slice ? pagamentosRes.text.slice(0, 300) : pagamentosRes) }
+
+      if (produtoRes && produtoRes.sucesso) setTopProduct(produtoRes.produto || null);
+      else if (produtoRes && produtoRes.text) console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes);
+
       try {
-        const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
-          safeFetchJson('/saldo-final'),
-          safeFetchJson('/vendas/media-por-transacao'),
-          safeFetchJson('/vendas/divisao-pagamentos'),
-          safeFetchJson('/financeiro/produto-mais-vendido'),
-        ]);
+        const total = Number(mediaRes?.total ?? 0);
+        const quantidade = Number(mediaRes?.quantidade ?? 0);
+        const media = Number(mediaRes?.media ?? 0);
+        const det = pagamentosRes?.detalhamento ?? {};
+        setDailyStatsState({
+          totalSales: total,
+          totalTransactions: quantidade,
+          averageTransaction: media,
+          cashSales: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
+          cardSales: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
+          topProduct: produtoRes?.produto?.nome ?? produtoRes?.produto ?? null,
+          peakHour: '—'
+        });
+      } catch (err) { console.debug('Erro ao montar dailyStatsState:', err) }
 
-        if (!mounted) return;
-        if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') {setSaldoFinal(Number(saldoRes.saldoFinal ?? 0))}
-        else if (saldoRes && saldoRes.text) {console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes)}
+    } catch (error) {
+      console.error('Erro ao carregar dados financeiros:', error);
+      setFinanceError('Não foi possível carregar os dados financeiros.');
+    }
+    finally { setFinanceLoading(false); }
 
-        if (mediaRes && mediaRes.sucesso !== false && typeof mediaRes.media !== 'undefined') {
-          setTotalSales(Number(mediaRes.total ?? 0));
-          setTotalTransactions(Number(mediaRes.quantidade ?? 0));
-          setAverageTransactionValue(Number(mediaRes.media ?? 0));
-        }
-        else if (mediaRes && mediaRes.text) {console.warn('/vendas/media-por-transacao returned non-JSON:', mediaRes.text?.slice ? mediaRes.text.slice(0, 300) : mediaRes)}
+    // Produtos e usuários
+    try {
+      setProductsLoading(true); setProductsError(null);
+      setCustomersLoading(true); setCustomersError(null);
+      const [produtosResp, usuariosResp] = await Promise.all([
+  safeFetchJson(ENDPOINTS.produtosList),
+  safeFetchJson(ENDPOINTS.usuariosUnidadeListar)
+      ]);
 
-        if (pagamentosRes && pagamentosRes.sucesso !== false && pagamentosRes.detalhamento) {
-          const det = pagamentosRes.detalhamento;
-          setPaymentsBreakdown({
-            PIX: Number(det.PIX ?? det.Pix ?? det.pix ?? 0),
-            DINHEIRO: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
-            CARTAO: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
-          });
-        }
-        else if (pagamentosRes && pagamentosRes.text) {console.warn('/vendas/divisao-pagamentos returned non-JSON:', pagamentosRes.text?.slice ? pagamentosRes.text.slice(0, 300) : pagamentosRes)}
+      if (Array.isArray(produtosResp)) setProductsList(produtosResp);
+      else if (produtosResp && Array.isArray(produtosResp.produtos)) setProductsList(produtosResp.produtos);
+      else if (produtosResp && Array.isArray(produtosResp.estoques)) {
+        const flattened = [];
+        produtosResp.estoques.forEach(est => { (est.estoqueProdutos || []).forEach(ep => flattened.push({ id: ep.id, name: ep.nome ?? ep.produto?.nome, price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0), stock: Number(ep.quantidade ?? ep.qntdAtual ?? 0), category: ep.categoria ?? ep.produto?.categoria ?? '—', barcode: ep.sku ?? ep.codigo ?? '', image: ep.imagem ?? '/loja/placeholder/80/80' })); });
+        if (flattened.length) setProductsList(flattened);
+      }
+      else { if (produtosResp && produtosResp.ok === false) setProductsError(produtosResp.text || 'Erro ao carregar produtos') }
 
-        if (produtoRes && produtoRes.sucesso) {setTopProduct(produtoRes.produto || null)}
-        else if (produtoRes && produtoRes.text) {console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes)}
+      if (usuariosResp && usuariosResp.sucesso && Array.isArray(usuariosResp.usuarios)) setCustomersList(usuariosResp.usuarios);
+      else if (usuariosResp && usuariosResp.ok === false) setCustomersError(usuariosResp.text || 'Erro ao carregar clientes');
+    } catch (err) {
+      console.warn('Erro ao carregar produtos/usuarios:', err);
+      setProductsError('Não foi possível carregar produtos.');
+      setCustomersError('Não foi possível carregar clientes.');
+    } finally {
+      setProductsLoading(false);
+      setCustomersLoading(false);
+    }
 
-        // montar dailyStatsState a partir das respostas financeiras
-        try {
-          const total = Number(mediaRes?.total ?? 0);
-          const quantidade = Number(mediaRes?.quantidade ?? 0);
-          const media = Number(mediaRes?.media ?? 0);
-          const det = pagamentosRes?.detalhamento ?? {};
-          setDailyStatsState({
-            totalSales: total,
-            totalTransactions: quantidade,
-            averageTransaction: media,
-            cashSales: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
-            cardSales: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
-            topProduct: produtoRes?.produto?.nome ?? produtoRes?.produto ?? null,
-            peakHour: dailyStatsState?.peakHour ?? '—'
-          });
-        } catch (err) { console.debug('Erro ao montar dailyStatsState:', err); }
+    // Vendas recentes
+    try {
+      setSalesLoading(true); setSalesError(null);
+      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+  if (unidadeId) {
+  const vendasResp = await safeFetchJson(ENDPOINTS.listarVendas(unidadeId));
+        if (Array.isArray(vendasResp)) setRecentSalesList(vendasResp);
+        else if (vendasResp && vendasResp.sucesso && Array.isArray(vendasResp.vendas)) setRecentSalesList(vendasResp.vendas);
+        else if (vendasResp && Array.isArray(vendasResp.listaVendas)) setRecentSalesList(vendasResp.listaVendas);
+        else if (vendasResp && vendasResp.ok === false) setSalesError(vendasResp.text || 'Erro ao carregar vendas');
+      }
+      else { setRecentSalesList([]); }
+    } catch (err) {
+      console.warn('Erro ao carregar vendas recentes:', err);
+      setSalesError('Não foi possível carregar vendas recentes.');
+    }
+    finally { setSalesLoading(false); }
+  };
 
-        // buscar produtos e usuários para a UI (com parsing resiliente)
-        try {
-          const [produtosResp, usuariosResp] = await Promise.all([
-            safeFetchJson('/produtos'),
-            safeFetchJson('/usuarios/unidade/listar')
-          ]);
-
-          if (Array.isArray(produtosResp)) {
-            setProductsList(produtosResp);
-          } else if (produtosResp && Array.isArray(produtosResp.produtos)) {
-            setProductsList(produtosResp.produtos);
-          } else if (produtosResp && Array.isArray(produtosResp.estoques)) {
-            const flattened = [];
-            produtosResp.estoques.forEach(est => { (est.estoqueProdutos||[]).forEach(ep => flattened.push({ id: ep.id, name: ep.nome ?? ep.produto?.nome, price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0), stock: Number(ep.quantidade ?? ep.qntdAtual ?? 0), category: ep.categoria ?? ep.produto?.categoria ?? '—', barcode: ep.sku ?? ep.codigo ?? '', image: ep.imagem ?? '/api/placeholder/80/80' })); });
-            if (flattened.length) setProductsList(flattened);
-          }
-
-          if (usuariosResp && usuariosResp.sucesso && Array.isArray(usuariosResp.usuarios)) {
-            setCustomersList(usuariosResp.usuarios);
-          }
-        } catch (err) { console.warn('Erro ao carregar produtos/usuarios:', err); }
-
-        // buscar vendas recentes (por unidade, se disponível)
-        try {
-          const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-          if (unidadeId) {
-            const vendasResp = await safeFetchJson(`/listarVendas/${unidadeId}`);
-            if (Array.isArray(vendasResp)) setRecentSalesList(vendasResp);
-            else if (vendasResp && vendasResp.sucesso && Array.isArray(vendasResp.vendas)) setRecentSalesList(vendasResp.vendas);
-            else if (vendasResp && Array.isArray(vendasResp.listaVendas)) setRecentSalesList(vendasResp.listaVendas);
-          }
-        } catch (err) { console.warn('Erro ao carregar vendas recentes:', err); }
-
-      } catch (error) { console.error('Erro ao carregar dados financeiros:', error); }
-    };
-
-    loadFinance();
-    return () => { mounted = false; };
-  }, [fetchWithAuth, user]);
+  useEffect(() => { loadFinance(); }, [fetchWithAuth, user]);
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
-              <ShoppingCart className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <p className="text-xs text-muted-foreground">{totalTransactions} transações</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
+            <ShoppingCart className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {financeLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : financeError ? (<div className="text-sm text-red-600">{financeError}</div>) : (
+              <>
+                <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground">{totalTransactions} transações</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-         
+        {/* Média por transação */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Média por transação</CardTitle>
+            <BarChart className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {financeLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : financeError ? (<div className="text-sm text-red-600">{financeError}</div>) : (
+              <>
+                <div className="text-2xl font-bold">R$ {Number(averageTransactionValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground">{totalTransactions} transações hoje</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Média por transação */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Média por transação</CardTitle>
-              <BarChart className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">R$ {Number(averageTransactionValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <p className="text-xs text-muted-foreground">{totalTransactions} transações hoje</p>
-            </CardContent>
-          </Card>
-
-          {/* Divisão por pagamentos / Produto mais vendido (compact) */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Divisão / Top produto</CardTitle>
-              <Layers className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
+        {/* Divisão por pagamentos / Produto mais vendido (compact) */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Divisão / Top produto</CardTitle>
+            <Layers className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {financeLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : financeError ? (
+              <div className="text-sm text-red-600">{financeError}</div>
+) : (
               <div className="text-sm">
                 <div className="flex justify-between"><span>PIX</span><strong>R$ {Number(paymentsBreakdown.PIX ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <div className="flex justify-between"><span>Dinheiro</span><strong>R$ {Number(paymentsBreakdown.DINHEIRO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <div className="flex justify-between"><span>Cartão</span><strong>R$ {Number(paymentsBreakdown.CARTAO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <hr className="my-2" />
                 <div className="text-xs text-muted-foreground">Produto mais vendido:</div>
-                <div className="font-medium">{topProduct ? `${topProduct.nome} (${topProduct.quantidadeVendida})` : '—'}</div>
+                <div className="font-medium">{dailyStatsState?.topProduct ? dailyStatsState.topProduct : (topProduct ? (topProduct.nome ?? String(topProduct)) : '—')}</div>
               </div>
-            </CardContent>
-          </Card>
-        
-
-        
-
-       
-
-       
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="pos" className="space-y-4">
@@ -374,23 +399,31 @@ export default function app() {
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-96 overflow-y-auto">
-                    {filteredProducts.map((product) => (
-                      <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => addToCart(product)}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center space-x-3">
-                            <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded" />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{product.name}</div>
-                              <div className="text-sm text-muted-foreground">{product.category}</div>
-                              <div className="flex justify-between items-center mt-1">
-                                <span className="font-bold text-green-600">R$ {product.price.toFixed(2)}</span>
-                                <span className="text-xs text-muted-foreground">Estoque: {product.stock}</span>
+                    {productsLoading ? (
+                      <div className="text-sm text-muted-foreground p-4">Carregando produtos...</div>
+                    ) : productsError ? (
+                      <div className="text-sm text-red-600 p-4">{productsError} <Button variant="ghost" size="sm" onClick={() => loadFinance()}>Tentar novamente</Button></div>
+                    ) : filteredProducts.length === 0 ? (
+                      <div className="text-sm text-muted-foreground p-4">Nenhum produto encontrado</div>
+                    ) : (
+                      filteredProducts.map((product) => (
+                        <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => addToCart(product)}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center space-x-3">
+                              <img src={product.image || '/loja/placeholder/80/80'} alt={product.name} className="w-12 h-12 object-cover rounded" />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{product.name}</div>
+                                <div className="text-sm text-muted-foreground">{product.category}</div>
+                                <div className="flex justify-between items-center mt-1">
+                                  <span className="font-bold text-green-600">R$ {(Number(product.price || 0)).toFixed(2)}</span>
+                                  <span className="text-xs text-muted-foreground">Estoque: {product.stock ?? 0}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -411,7 +444,7 @@ export default function app() {
                     <Label>Cliente</Label>
                     <div className="flex gap-2">
                       <Button variant="outline" className="flex-1 justify-start" onClick={() => setIsCustomerSelectOpen(true)}>
-                        <User className="size-4 mr-2" />{selectedCustomer ? selectedCustomer.name : 'Cliente avulso'}
+                        <User className="size-4 mr-2" />{selectedCustomer ? (selectedCustomer.nome ?? selectedCustomer.name) : 'Cliente avulso'}
                       </Button>
                       {selectedCustomer && (<Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Limpar</Button>)}
                     </div>
@@ -478,16 +511,24 @@ export default function app() {
               </DialogHeader>
               <div className="space-y-4">
                 <Input placeholder="Buscar clientes..." />
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {customersList.map((customer) => (
-                    <div key={customer.id || customer.email || customer.telefone} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => {setSelectedCustomer(customer);setIsCustomerSelectOpen(false);}}>
-                      <div>
-                        <div className="font-medium">{customer.nome ?? customer.name}</div>
-                        <div className="text-sm text-muted-foreground">{customer.email}</div>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {customersLoading ? (
+                    <div className="text-sm text-muted-foreground p-4">Carregando clientes...</div>
+                  ) : customersError ? (
+                    <div className="text-sm text-red-600 p-4">{customersError} <Button variant="ghost" size="sm" onClick={() => loadFinance()}>Tentar novamente</Button></div>
+                  ) : customersList.length === 0 ? (
+                    <div className="text-sm text-muted-foreground p-4">Nenhum cliente encontrado</div>
+                  ) : (
+                    customersList.map((customer) => (
+                      <div key={customer.id || customer.email || customer.telefone} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => { setSelectedCustomer(customer); setIsCustomerSelectOpen(false); }}>
+                        <div>
+                          <div className="font-medium">{customer.nome ?? customer.name}</div>
+                          <div className="text-sm text-muted-foreground">{customer.email}</div>
+                        </div>
+                        <div className="text-sm"><Badge variant="outline">{customer.pontosFidelidade ?? customer.loyaltyPoints ?? 0} pts</Badge></div>
                       </div>
-                      <div className="text-sm"><Badge variant="outline">{customer.pontosFidelidade ?? customer.loyaltyPoints ?? 0} pts</Badge></div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </DialogContent>
@@ -567,23 +608,37 @@ export default function app() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentSalesList.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell className="font-medium">{sale.id}</TableCell>
-                        <TableCell>{sale.data ?? sale.date}</TableCell>
-                        <TableCell>{sale.nomeCliente ?? sale.customer}</TableCell>
-                        <TableCell>{sale.itens ?? sale.items}</TableCell>
-                        <TableCell>R$ {Number(sale.total ?? sale.valor ?? 0).toFixed(2)}</TableCell>
-                        <TableCell>{sale.pagamento ?? sale.paymentMethod}</TableCell>
-                        <TableCell>{sale.usuarioNome ?? sale.cashier}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">Ver</Button>
-                            <Button variant="outline" size="sm">Imprimir</Button>
-                          </div>
-                        </TableCell>
+                    {salesLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">Carregando vendas...</TableCell>
                       </TableRow>
-                    ))}
+                    ) : salesError ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-red-600">{salesError} <Button variant="ghost" size="sm" onClick={() => loadFinance()}>Tentar novamente</Button></TableCell>
+                      </TableRow>
+                    ) : recentSalesList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma venda encontrada</TableCell>
+                      </TableRow>
+                    ) : (
+                      recentSalesList.map((sale) => (
+                        <TableRow key={sale.id}>
+                          <TableCell className="font-medium">{sale.id}</TableCell>
+                          <TableCell>{sale.data ?? sale.date}</TableCell>
+                          <TableCell>{sale.nomeCliente ?? sale.customer}</TableCell>
+                          <TableCell>{sale.itens ?? sale.items}</TableCell>
+                          <TableCell>R$ {Number(sale.total ?? sale.valor ?? 0).toFixed(2)}</TableCell>
+                          <TableCell>{sale.pagamento ?? sale.paymentMethod}</TableCell>
+                          <TableCell>{sale.usuarioNome ?? sale.cashier}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">Ver</Button>
+                              <Button variant="outline" size="sm">Imprimir</Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
