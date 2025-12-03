@@ -196,7 +196,10 @@ export const verContratosComLojas = async (fornecedorUnidadeId) => { //função 
 export const verContratosExternos = async(unidadeId) =>{
   try {
     const contratosExternos = await prisma.contrato.findMany({
-      where: { unidadeId: Number(unidadeId) },
+      where: { 
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null }  // Filtra apenas contratos externos
+      },
       include: {
         unidade: {
           select: {
@@ -204,10 +207,20 @@ export const verContratosExternos = async(unidadeId) =>{
           }
         },
           itens :{
-            select: {nome: true}
+            select: {
+              id: true,
+              nome: true
+            }
           },
           fornecedorExterno: {
-            select: { id: true, nomeEmpresa: true, cnpjCpf: true, email: true, telefone: true }
+            select: { 
+              id: true, 
+              nomeEmpresa: true, 
+              cnpjCpf: true, 
+              email: true, 
+              telefone: true,
+              descricaoEmpresa: true
+            }
           }
       }
     });
@@ -225,12 +238,12 @@ export const verContratosExternos = async(unidadeId) =>{
     return ({
       sucesso: true,
       contratosExternos,
-      message: "Contratos listados com sucesso!"
+      message: "Contratos externos listados com sucesso!"
     })
   } catch (error) {
     return {
       sucesso: false,
-      erro: "Erro ao listar fornecedores",
+      erro: "Erro ao listar contratos externos",
       detalhes: error.message
     }
   }
@@ -238,33 +251,57 @@ export const verContratosExternos = async(unidadeId) =>{
 
 export const verContratosComFazendas = async(unidadeId) =>{
 try {
-    const contratos = await prisma.contrato.findMany({
+    console.log('[verContratosComFazendas] Buscando contratos onde esta unidade é CONSUMIDOR (compra de outras fazendas) para unidadeId:', unidadeId);
+    
+    // DEBUG: Buscar TODOS os contratos desta unidade como consumidor
+    const allContratos = await prisma.contrato.findMany({
       where: { unidadeId: Number(unidadeId) },
+      select: {
+        id: true,
+        unidadeId: true,
+        fornecedorUnidadeId: true,
+        fornecedorExternoId: true,
+        status: true
+      }
+    });
+    console.log('[verContratosComFazendas] TODOS os contratos onde unidade é consumidor:', allContratos.length, allContratos);
+    
+    // Buscar apenas contratos internos (onde esta unidade CONSOME de outras unidades)
+    const contratos = await prisma.contrato.findMany({
+      where: { 
+        unidadeId: Number(unidadeId),
+        fornecedorUnidadeId: { not: null }  // Tem um fornecedor interno (outro unidade/fazenda)
+      },
       include: {
-        // unidade: {
-        //   select: {
-        //     id: true, nome: true, cidade: true, estado: true
-        //   }
-        // },
         fornecedorInterno :{
-          select : {nome: true}
+          select : {
+            id: true,
+            nome: true,
+            cidade: true,
+            estado: true
+          }
         },
         itens :{
-          select: {nome: true}
+          select: {
+            id: true,
+            nome: true
+          }
         }
       }
-
     });
+
+    console.log('[verContratosComFazendas] Contratos internos encontrados (onde esta unidade CONSOME):', contratos.length, contratos);
 
     return ({
       sucesso: true,
       contratos,
-      message: "Contratos listados com sucesso!"
+      message: "Contratos internos (onde você consome de outras unidades) listados com sucesso!"
     })
   } catch (error) {
+    console.error('[verContratosComFazendas] Erro:', error);
     return {
       sucesso: false,
-      erro: "Erro ao listar fornecedores",
+      erro: "Erro ao listar contratos internos",
       detalhes: error.message
     }
   }
