@@ -11,6 +11,7 @@ import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-r
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from '@/components/ui/textarea'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
 
 function getStockStatus(current, minimum) {
   const difference = current - minimum;
@@ -21,6 +22,10 @@ function getStockStatus(current, minimum) {
 
 export function StoreLevelView({ onOpenMovimento }) {
   const { getStoreItems, storeMapping, refresh, atualizarMinimumStockRemote, isGerenteMatriz, isGerenteFazenda, isGerenteLoja } = useInventory();
+  const [isMinModalOpen, setIsMinModalOpen] = useState(false);
+  const [minModalItem, setMinModalItem] = useState(null);
+  const [minInputValue, setMinInputValue] = useState('');
+  const [isSavingMin, setIsSavingMin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
 
@@ -83,6 +88,36 @@ export function StoreLevelView({ onOpenMovimento }) {
   useEffect(() => {
     setPage(1);
   }, [searchTerm, selectedStore, perPage]);
+
+  async function confirmUpdateMinimum() {
+    if (!minModalItem) return;
+    const epId = minModalItem.rawItemId ?? null;
+    const newVal = Number(String(minInputValue || '').trim());
+    if (!epId) return;
+    if (isNaN(newVal)) {
+      // keep it simple: don't use alert, log and keep modal open
+      console.warn('Valor inválido para mínimo:', minInputValue);
+      return;
+    }
+
+    setIsSavingMin(true);
+    try {
+      const resp = await atualizarMinimumStockRemote(epId, newVal);
+      if (!resp || resp.sucesso === false) {
+        console.error('Erro ao atualizar mínimo remoto', resp);
+        // keep modal open to allow retry
+        return;
+      }
+      // success: refresh inventory and close
+      await refresh();
+      setIsMinModalOpen(false);
+      setMinModalItem(null);
+    } catch (err) {
+      console.error('Erro confirmUpdateMinimum', err);
+    } finally {
+      setIsSavingMin(false);
+    }
+  }
 
   // items atualmente visíveis na página
   const paginatedItems = useMemo(() => {
@@ -234,42 +269,20 @@ export function StoreLevelView({ onOpenMovimento }) {
                                   {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
                                   <DropdownMenuItem>Editar</DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={async () => {
-                                    try {
-                                      const isManager = isGerenteMatriz || isGerenteFazenda || isGerenteLoja;
-                                      if (!isManager) {
-                                        alert('Ação disponível apenas para gerentes.');
-                                        return;
-                                      }
-
-                                      const epId = item.rawItemId ?? null;
-                                      if (!epId) {
-                                        alert('Esse item não suporta edição remota de mínimo.');
-                                        return;
-                                      }
-
-                                      const current = item.minimumStock ?? 0;
-                                      const input = window.prompt(`Quantidade mínima atual: ${current}\nDigite a nova quantidade mínima:`, String(current));
-                                      if (input === null) return; // cancelado
-                                      const newVal = Number(input.trim());
-                                      if (isNaN(newVal)) {
-                                        alert('Valor inválido. Insira um número.');
-                                        return;
-                                      }
-
-                                      const resp = await atualizarMinimumStockRemote(epId, newVal);
-                                      if (!resp.sucesso) {
-                                        alert('Erro ao atualizar: ' + (resp.erro || 'Falha')); 
-                                        return;
-                                      }
-
-                                      alert('Quantidade mínima atualizada.');
-                                      // refresh local view
-                                      refresh();
-                                    } catch (err) {
-                                      console.error('Erro ao atualizar mínimo:', err);
-                                      alert('Erro ao atualizar quantidade mínima.');
+                                  <DropdownMenuItem onClick={() => {
+                                    const isManager = isGerenteMatriz || isGerenteFazenda || isGerenteLoja;
+                                    if (!isManager) {
+                                      console.warn('Ação disponível apenas para gerentes.');
+                                      return;
                                     }
+                                    const epId = item.rawItemId ?? null;
+                                    if (!epId) {
+                                      console.warn('Esse item não suporta edição remota de mínimo.');
+                                      return;
+                                    }
+                                    setMinModalItem(item);
+                                    setMinInputValue(String(item.minimumStock ?? 0));
+                                    setIsMinModalOpen(true);
                                   }}>Editar mínimo</DropdownMenuItem>
                                   <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
                           {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
@@ -331,6 +344,30 @@ export function StoreLevelView({ onOpenMovimento }) {
         </CardContent>
       </Card>
       {/* Movimentação modal is handled by parent (page) via onOpenMovimento prop */}
+
+      {/* Modal para editar quantidade mínima */}
+      <AlertDialog open={isMinModalOpen} onOpenChange={(open) => { if (!open) { setIsMinModalOpen(false); setMinModalItem(null); } else setIsMinModalOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar quantidade mínima</AlertDialogTitle>
+            <AlertDialogDescription>
+              {minModalItem ? `Item: ${minModalItem.name} — Estoque atual: ${minModalItem.currentStock}` : 'Editar quantidade mínima do item.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-3 py-2">
+            <div>
+              <Label>Quantidade mínima</Label>
+              <Input value={minInputValue} onChange={(e) => setMinInputValue(e.target.value)} placeholder="Informe a quantidade mínima" />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setIsMinModalOpen(false); setMinModalItem(null); }}>Fechar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUpdateMinimum} disabled={isSavingMin}>{isSavingMin ? 'Guardando...' : 'Salvar'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

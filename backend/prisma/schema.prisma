@@ -63,6 +63,7 @@ model Unidade {
   filiais                 Unidade[]          @relation("UnidadeMatriz")
   usuarios                Usuario[]          @relation("UsuarioUnidade")
   vendas                  Venda[]
+  categoria               Categoria[]
 
   @@index([matrizId])
   @@index([gerenteId])
@@ -141,37 +142,37 @@ model ResetSenha {
 }
 
 model Produto {
-  id              Int                @id @default(autoincrement())
-  unidadeId       Int                @map("unidade_id")
-  origemUnidadeId Int?               @map("origem_unidade_id")
+  id              Int               @id @default(autoincrement())
+  unidadeId       Int               @map("unidade_id")
+  origemUnidadeId Int?              @map("origem_unidade_id")
   // fornecedorId    Int?               @map("fornecedor_id")
-  criadoPorId     Int?               @map("criado_por_id")
-  loteId          Int?               @map("lote_id")
-  nome            String             @db.VarChar(150)
-  sku             String             @unique @db.VarChar(50)
-  categoria       String?            @db.VarChar(100)
+  criadoPorId     Int?              @map("criado_por_id")
+  loteId          Int?              @map("lote_id")
+  nome            String            @db.VarChar(150)
+  sku             String            @unique @db.VarChar(50)
+  categoria       String?           @db.VarChar(100)
   descricao       String?
-  preco           Decimal            @db.Decimal(10, 2)
-  dataFabricacao  DateTime           @map("data_fabricacao")
-  dataValidade    DateTime           @map("data_validade")
-  criadoEm        DateTime           @default(now()) @map("criado_em")
-  atualizadoEm    DateTime           @default(now()) @updatedAt @map("atualizado_em")
-  unidadeMedida   UnidadesDeMedida?  @map("unidade_medida")
-  codigoBarras    String?            @map("codigo_barras")
-  ncm             String?            @map("ncm")
-  pesoUnidade     Decimal?           @map("peso_unidade") @db.Decimal(10, 3)
-  tags            Json?              @map("tags")
-  impostos        Json?              @map("impostos")
-  isForSale       Boolean            @default(false)
+  preco           Decimal           @db.Decimal(10, 2)
+  dataFabricacao  DateTime          @map("data_fabricacao")
+  dataValidade    DateTime          @map("data_validade")
+  criadoEm        DateTime          @default(now()) @map("criado_em")
+  atualizadoEm    DateTime          @default(now()) @updatedAt @map("atualizado_em")
+  unidadeMedida   UnidadesDeMedida? @map("unidade_medida")
+  codigoBarras    String?           @map("codigo_barras")
+  ncm             String?           @map("ncm")
+  pesoUnidade     Decimal?          @map("peso_unidade") @db.Decimal(10, 3)
+  tags            Json?             @map("tags")
+  impostos        Json?             @map("impostos")
+  isForSale       Boolean           @default(false)
   estoqueProdutos EstoqueProduto[]
   itensVendas     ItemVenda[]
   pedidoItems     PedidoItem[]
   producao        Producao[]
-  criadoPor       Usuario?           @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
+  criadoPor       Usuario?          @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
   // fornecedor      FornecedorExterno? @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id])
-  lote            Lote?              @relation(fields: [loteId], references: [id], onDelete: Restrict)
-  origemUnidade   Unidade?           @relation("ProdutoOrigem", fields: [origemUnidadeId], references: [id])
-  unidade         Unidade            @relation("ProdutoUnidade", fields: [unidadeId], references: [id])
+  lote            Lote?             @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  origemUnidade   Unidade?          @relation("ProdutoOrigem", fields: [origemUnidadeId], references: [id])
+  unidade         Unidade           @relation("ProdutoUnidade", fields: [unidadeId], references: [id])
 
   @@index([unidadeId])
   @@index([origemUnidadeId])
@@ -261,19 +262,19 @@ model EstoqueMovimento {
 }
 
 model FornecedorExterno {
-  id                Int              @id @default(autoincrement())
-  nomeEmpresa       String           @map("nome_empresa") @db.VarChar(200)
-  descricaoEmpresa  String           @map("descricao_empresa")
-  cnpjCpf           String?          @unique @map("cnpj_cpf") @db.VarChar(20)
-  email             String?          @db.VarChar(150)
-  telefone          String           @db.VarChar(20)
-  status            StatusFornecedor
-  endereco          String?
-  criadoEm          DateTime         @default(now()) @map("criado_em")
-  atualizadoEm      DateTime         @default(now()) @updatedAt @map("atualizado_em")
-  contratos         Contrato[]       @relation("ContratoFornecedorExterno")
-  estoqueProdutos   EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
-  pedidos           Pedido[]
+  id               Int              @id @default(autoincrement())
+  nomeEmpresa      String           @map("nome_empresa") @db.VarChar(200)
+  descricaoEmpresa String           @map("descricao_empresa")
+  cnpjCpf          String?          @unique @map("cnpj_cpf") @db.VarChar(20)
+  email            String?          @db.VarChar(150)
+  telefone         String           @db.VarChar(20)
+  status           StatusFornecedor
+  endereco         String?
+  criadoEm         DateTime         @default(now()) @map("criado_em")
+  atualizadoEm     DateTime         @default(now()) @updatedAt @map("atualizado_em")
+  contratos        Contrato[]       @relation("ContratoFornecedorExterno")
+  estoqueProdutos  EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
+  pedidos          Pedido[]
   // produtosRecebidos Produto[]        @relation("FornecedorProdutosRecebidos")
 
   @@map("fornecedor_externo")
@@ -627,7 +628,7 @@ model Caixa {
 
 model Venda {
   id                Int                @id @default(autoincrement())
-  nomeCliente String?
+  nomeCliente       String?
   caixaId           Int                @map("caixa_id")
   usuarioId         Int                @map("usuario_id")
   unidadeId         Int                @map("unidade_id")
@@ -664,40 +665,79 @@ model ItemVenda {
   @@map("itens_vendas")
 }
 
+model Categoria {
+  id            Int            @id @default(autoincrement())
+  unidadeId     Int            @map("unidade_id")
+  nome          String         @db.VarChar(255)
+  tipo          TipoMovimento
+  descricao     String?
+  ativa         Boolean        @default(true)
+  criadoEm      DateTime       @default(now()) @map("criado_em")
+  atualizadoEm  DateTime       @default(now()) @updatedAt @map("atualizado_em")
+  subcategorias Subcategoria[]
+  financeiros   Financeiro[]
+  unidade       Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@unique([unidadeId, nome])
+  @@index([unidadeId])
+  @@index([tipo])
+  @@index([ativa])
+  @@map("categoria")
+}
+
+model Subcategoria {
+  id           Int          @id @default(autoincrement())
+  categoriaId  Int          @map("categoria_id")
+  nome         String       @db.VarChar(255)
+  descricao    String?
+  ativa        Boolean      @default(true)
+  criadoEm     DateTime     @default(now()) @map("criado_em")
+  atualizadoEm DateTime     @default(now()) @updatedAt @map("atualizado_em")
+  categoria    Categoria    @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  financeiros  Financeiro[]
+
+  @@unique([categoriaId, nome])
+  @@index([categoriaId])
+  @@index([ativa])
+  @@map("subcategoria")
+}
+
 model Financeiro {
   id             Int           @id @default(autoincrement())
-  usuarioId      Int
-  unidadeId      Int
+  unidadeId      Int           @map("unidade_id")
+  categoriaId    Int?          @map("categoria_id")
+  subcategoriaId Int?          @map("subcategoria_id")
+  criadoPorId    Int?          @map("criado_por_id")
   descricao      String
-  // tipo           TipoSaida
-  tipoMovimento  TipoMovimento
-  categoria      String?
-  subcategoria   String?
-  formaPagamento String?
+  tipoMovimento  TipoMovimento @map("tipo_movimento")
+  formaPagamento String?       @map("forma_pagamento")
   valor          Decimal       @db.Decimal(12, 2)
-  valorPago      Decimal?      @db.Decimal(12, 2)
+  valorPago      Decimal?      @map("valor_pago") @db.Decimal(12, 2)
   competencia    DateTime?
   vencimento     DateTime
-  dataPagamento  DateTime?
+  dataPagamento  DateTime?     @map("data_pagamento")
   parcela        Int?
-  totalParcelas  Int?
+  totalParcelas  Int?          @map("total_parcelas")
   status         ContaStatus   @default(PENDENTE)
   documento      String?
   observacao     String?
   anexo          String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime?     @map("deletedAt")
-  unidade        Unidade       @relation(fields: [unidadeId], references: [id])
-  usuario        Usuario       @relation(fields: [usuarioId], references: [id])
+  criadoEm       DateTime      @default(now()) @map("criado_em")
+  atualizadoEm   DateTime      @default(now()) @updatedAt @map("atualizado_em")
+  deletadoEm     DateTime?     @map("deletado_em")
+  categoria      Categoria?    @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  subcategoria   Subcategoria? @relation(fields: [subcategoriaId], references: [id], onDelete: SetNull)
+  unidade        Unidade       @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  criadoPor      Usuario?      @relation(fields: [criadoPorId], references: [id], onDelete: SetNull)
 
   @@index([competencia])
   @@index([status])
-  // @@index([tipo])
   @@index([tipoMovimento])
   @@index([unidadeId])
-  @@index([usuarioId])
+  @@index([criadoPorId])
   @@index([vencimento])
+  @@index([categoriaId])
+  @@index([subcategoriaId])
   @@map("financeiro")
 }
 

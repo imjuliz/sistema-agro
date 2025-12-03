@@ -142,7 +142,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
   return (
     <div className="space-y-6 flex flex-col gap-12">
       {/* cards / kpis / indicadores */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos Ativos</CardDescription>
@@ -177,10 +177,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
             </CardAction>
           </CardHeader>
         </Card>
-      </div>
-
-      {/* card de fornecedores */}
-      <FornecedoresCard fornecedores={fornecedoresExternos} contratos={contratosExternos} pedidos={pedidosExternos} carregando={carregandoFornecedores} />
+      </div> */}
 
       {/* Tabs: Contratos como consumidor / Contratos como Fornecedor */}
       <Tabs defaultValue="consumidor" className="bg-card p-4 rounded-lg">
@@ -190,7 +187,12 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         </TabsList>
 
         <TabsContent value="consumidor" className="mt-4">
-          <ContratosComoConsumidor />
+          <ContratosComoConsumidor 
+            fornecedores={fornecedoresExternos} 
+            contratos={contratosExternos} 
+            pedidos={pedidosExternos} 
+            carregando={carregandoFornecedores} 
+          />
         </TabsContent>
 
         <TabsContent value="fornecedor" className="mt-4">
@@ -199,115 +201,44 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
       </Tabs>
 
       {/* produtos */}
-      <ProductCatalog />
+      {/* <ProductCatalog /> */}
       {/* produtos */}
-      <OrderManagement pedidos={pedidosExternos} />
       
     </div>
   );
 }
 
-function ContratosComoConsumidor() {
-  const { user, fetchWithAuth } = useAuth();
-  const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [contratos, setContratos] = useState([]);
-  const [fornecedores, setFornecedores] = useState([]);
-  const [pedidos, setPedidos] = useState([]);
-
-  useEffect(() => {
-    if (!unidadeId) return;
-    const load = async () => {
-      setLoading(true); setError(null);
-      try {
-        const cRes = await fetchWithAuth(`${API_URL}verContratosExternos/${unidadeId}`, { method: 'GET', credentials: 'include' });
-        const cBody = await cRes.json().catch(() => ({}));
-        const cData = cBody.contratosExternos ?? cBody.contratos ?? [];
-        const contratosArray = Array.isArray(cData) ? cData : [];
-        setContratos(contratosArray);
-
-        // Extrai fornecedores externos únicos diretamente dos contratos (prioridade)
-        const fornecedoresFromContratos = contratosArray
-          .map(c => c.fornecedorExterno)
-          .filter(f => f && (typeof f.id !== 'undefined'))
-          .reduce((acc, f) => {
-            if (!acc.find(x => x.id === f.id)) acc.push(f);
-            return acc;
-          }, []);
-
-        if (fornecedoresFromContratos.length > 0) {
-          setFornecedores(fornecedoresFromContratos);
-        } else {
-          // fallback: chama endpoint específico caso os contratos não retornem fornecedor direto
-          const fRes = await fetchWithAuth(`${API_URL}listarFornecedoresExternos/${unidadeId}`, { method: 'GET', credentials: 'include' });
-          const fBody = await fRes.json().catch(() => ({}));
-          const fData = fBody.fornecedores ?? [];
-          setFornecedores(Array.isArray(fData) ? fData : []);
-        }
-
-        const pRes = await fetchWithAuth(`${API_URL}estoque-produtos/pedidos-origem/${unidadeId}`, { method: 'GET', credentials: 'include' });
-        const pBody = await pRes.json().catch(() => ({}));
-        const pData = pBody.pedidos ?? [];
-        setPedidos(Array.isArray(pData) ? pData : []);
-      } catch (err) {
-        console.error('Erro ao carregar dados consumidor:', err);
-        setError(String(err?.message ?? err));
-      } finally { setLoading(false); }
-    };
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unidadeId]);
-
-  if (!unidadeId) return <div className="p-4">Unidade não identificada na sessão.</div>;
-  if (loading) return <div className="p-4">Carregando dados...</div>;
-  if (error) return <div className="p-4 text-destructive">Erro: {error}</div>;
-
+function ContratosComoConsumidor({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+  // This tab receives pre-fetched data from the parent `ConsumerDashboard` via props.
   return (
     <div className="space-y-6 flex flex-col gap-12">
-      {/* cards / kpis / indicadores */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos Ativos</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              7
-            </CardTitle>
-            <CardAction>
-              <FileCheck />
-            </CardAction>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">7</CardTitle>
+            <CardAction><FileCheck /></CardAction>
           </CardHeader>
         </Card>
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos pendentes</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              3
-            </CardTitle>
-            <CardAction>
-              <Clock />
-            </CardAction>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">3</CardTitle>
+            <CardAction><Clock /></CardAction>
           </CardHeader>
-         
         </Card>
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              24
-            </CardTitle>
-            <CardAction>
-              <CheckCircle />
-            </CardAction>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">24</CardTitle>
+            <CardAction><CheckCircle /></CardAction>
           </CardHeader>
         </Card>
       </div>
 
-      {/* card de fornecedores */}
-      <FornecedoresCard fornecedores={fornecedoresExternos} contratos={contratosExternos} pedidos={pedidosExternos} carregando={carregandoFornecedores} />
+      <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
 
-      <OrderManagement pedidos={pedidosExternos} />
-      
+      <OrderManagement pedidos={pedidos} />
     </div>
   );
 }
@@ -384,12 +315,25 @@ function ContratosComoFornecedor() {
         <h3 className="text-lg font-medium">Pedidos relacionados</h3>
         <ul className="mt-2 space-y-2">
           {pedidos.length === 0 && <li>Nenhum pedido encontrado.</li>}
-          {pedidos.map(p => (
-            <li key={p.id} className="p-3 border rounded">
-              <div className="font-semibold">Pedido #{p.id} — Status: {p.status}</div>
-              <div className="text-sm">Data: {p.dataPedido ?? p.data}</div>
-            </li>
-          ))}
+          {pedidos.map(p => {
+            const ref = p.documentoReferencia || p.referencia || p.numeroDocumento || p.numero || p.id;
+            const statusReadable = (s => {
+              if (!s) return '—';
+              const up = String(s).toUpperCase();
+              if (up === 'PENDENTE') return 'Pendente';
+              if (up === 'EM_TRANSITO' || up === 'EM TRÂNSITO' || up === 'EM_TRANSITO') return 'Em trânsito';
+              if (up === 'ENTREGUE') return 'Entregue';
+              if (up === 'CANCELADO') return 'Cancelado';
+              return s;
+            })(p.status);
+
+            return (
+              <li key={ref} className="p-3 border rounded">
+                <div className="font-semibold">Pedido {ref} — Status: {statusReadable}</div>
+                <div className="text-sm">Data: {p.dataPedido ?? p.data}</div>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </div>

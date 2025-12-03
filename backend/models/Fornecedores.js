@@ -298,6 +298,57 @@ export async function updateFornecedor(id, data) {
   }
 }
 
+export const getFornecedoresKpis = async (unidadeId) => {
+  try {
+    const contratosAtivos = await prisma.contrato.count({ where: { unidadeId: Number(unidadeId), status: 'ATIVO' } });
+    const contratosInativos = await prisma.contrato.count({ where: { unidadeId: Number(unidadeId), status: 'INATIVO' } });
+
+    const fornecedoresAtivos = await prisma.fornecedorExterno.count({
+      where: {
+        status: 'ATIVO',
+        contratos: { some: { unidadeId: Number(unidadeId) } }
+      }
+    });
+
+    const soma = await prisma.contrato.aggregate({
+      where: { unidadeId: Number(unidadeId), status: 'ATIVO' },
+      _sum: { valorTotal: true }
+    });
+
+    const valorTotalContratosAtivos = soma?._sum?.valorTotal ? Number(soma._sum.valorTotal) : 0;
+
+    return {
+      sucesso: true,
+      contratosAtivos,
+      contratosInativos,
+      fornecedoresAtivos,
+      valorTotalContratosAtivos,
+      message: 'KPIs calculados com sucesso.'
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: 'Erro ao calcular KPIs de fornecedores',
+      detalhes: error.message
+    };
+  }
+};
+
+export const deleteFornecedorWithContracts = async (fornecedorId) => {
+  try {
+    const idNum = Number(fornecedorId);
+    await prisma.$transaction(async (tx) => {
+      await tx.fornecedorExterno.update({ where: { id: idNum }, data: { status: 'INATIVO' } });
+      await tx.contrato.updateMany({ where: { fornecedorExternoId: idNum }, data: { status: 'INATIVO' } });
+    });
+
+    return { sucesso: true, message: 'Fornecedor e contratos marcados como inativos com sucesso.' };
+  } catch (error) {
+    console.error('[deleteFornecedorWithContracts] Erro:', error);
+    return { sucesso: false, erro: 'Erro ao deletar fornecedor', detalhes: error.message };
+  }
+};
+
 export const listarLojasAtendidas = async (unidadeId) => { //função para a fazenda ver as lojas para as quais ela fornece produtos
   try {
     const contratos = await prisma.contrato.findMany({

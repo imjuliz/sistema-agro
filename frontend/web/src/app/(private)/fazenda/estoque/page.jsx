@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 import { ArrowLeftRight } from 'lucide-react';
+import { Button } from '@/components/ui/button'
 
 export default function estoqueFazenda() {
   const { fetchWithAuth } = useAuth();

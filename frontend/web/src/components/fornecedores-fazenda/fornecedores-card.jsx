@@ -5,9 +5,81 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LayoutGrid, List, Search, Plus, ShoppingCart } from 'lucide-react';
+import { LayoutGrid, List, Search, Plus, ShoppingCart, Eye, Trash } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+    const router = useRouter();
+    const { user, fetchWithAuth } = useAuth();
+
+    // Small local state to hide removed suppliers without forcing parent refresh
+    const [removedIds, setRemovedIds] = useState(new Set());
+
+    const isUserGerenteMatriz = (() => {
+        if (!user) return false;
+        // Some APIs set perfil as string or object; also check roles array
+        const perfil = user.perfil;
+        if (typeof perfil === 'string' && String(perfil).toUpperCase() === 'GERENTE_MATRIZ') return true;
+        if (perfil && typeof perfil === 'object') {
+            const fn = String(perfil.funcao ?? perfil.nome ?? '').toUpperCase();
+            if (fn === 'GERENTE_MATRIZ') return true;
+        }
+        if (Array.isArray(user.roles) && user.roles.some(r => String(r).toUpperCase() === 'GERENTE_MATRIZ')) return true;
+        return false;
+    })();
+
+    const handleEdit = async (supplier) => {
+        if (!isUserGerenteMatriz) return alert('Apenas GERENTE_MATRIZ pode editar fornecedores.');
+        const id = supplier.id ?? supplier.raw?.id ?? supplier.raw?.ID;
+        if (!id) return alert('Fornecedor sem ID — não é possível editar.');
+
+        const newName = window.prompt('Editar nome do fornecedor:', supplier.name || supplier.nomeEmpresa || '');
+        if (newName === null) return; // cancelado
+        const payload = { nomeEmpresa: newName };
+        try {
+            const url = `${String(API_URL || '/api/').replace(/\/$/, '')}/fornecedores/${id}`;
+            const res = await fetchWithAuth(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!res.ok) {
+                const text = await res.text().catch(() => null);
+                throw new Error(text || `HTTP ${res.status}`);
+            }
+            // Optionally refresh page or update UI
+            router.refresh();
+            return alert('Fornecedor atualizado com sucesso.');
+        } catch (err) {
+            console.error('[FornecedoresCard] edit error', err);
+            return alert('Erro ao atualizar fornecedor: ' + (err?.message || err));
+        }
+    };
+
+    const handleDelete = async (supplier) => {
+        if (!isUserGerenteMatriz) return alert('Apenas GERENTE_MATRIZ pode excluir fornecedores.');
+        const id = supplier.id ?? supplier.raw?.id ?? supplier.raw?.ID;
+        if (!id) return alert('Fornecedor sem ID — não é possível excluir.');
+
+        const ok = window.confirm('Tem certeza que deseja excluir este fornecedor? Esta ação não poderá ser desfeita.');
+        if (!ok) return;
+
+        try {
+            const url = `${String(API_URL || '/api/').replace(/\/$/, '')}/fornecedores/${id}`;
+            const res = await fetchWithAuth(url, { method: 'DELETE' });
+            if (!res.ok) {
+                const text = await res.text().catch(() => null);
+                throw new Error(text || `HTTP ${res.status}`);
+            }
+            // hide locally
+            const next = new Set(removedIds);
+            next.add(id);
+            setRemovedIds(next);
+            router.refresh();
+            return alert('Fornecedor excluído com sucesso.');
+        } catch (err) {
+            console.error('[FornecedoresCard] delete error', err);
+            return alert('Erro ao excluir fornecedor: ' + (err?.message || err));
+        }
+    };
     // Normalize incoming suppliers into a predictable shape
     const suppliers = (fornecedores || []).map(s => ({
         id: s?.id ?? s?.ID ?? s?.raw?.id ?? null,
@@ -48,10 +120,28 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
 
     const filteredSuppliers = useMemo(() => {
         const q = (searchTerm || '').trim().toLowerCase();
+        const qDigits = q.replace(/\D/g, '');
         return suppliers.filter(s => {
             if (!s) return false;
             if (q === '') return true;
-            return (s.name || '').toLowerCase().includes(q) || (String(s.products || '')).includes(q) || (s.category || '').toLowerCase().includes(q);
+
+            const nameMatch = (s.name || '').toLowerCase().includes(q);
+            const productsMatch = (String(s.products || '')).includes(q);
+            const categoryMatch = (s.category || '').toLowerCase().includes(q);
+
+            // check raw CNPJ/CPF fields
+            const raw = s.raw || {};
+            const rawCnpj = (raw.cnpjCpf || raw.cnpj_cpf || raw.cnpj || raw.cnpjCpf || raw.cpf || '').toString();
+            const rawCnpjDigits = rawCnpj.replace(/\D/g, '');
+            const cnpjMatch = qDigits && rawCnpjDigits && rawCnpjDigits.includes(qDigits);
+
+            // also allow searching by email/phone
+            const email = (raw.email || raw.contato || raw.e_mail || '').toString().toLowerCase();
+            const phone = (raw.telefone || raw.phone || '').toString().replace(/\D/g, '');
+            const emailMatch = email.includes(q);
+            const phoneMatch = qDigits && phone.includes(qDigits);
+
+            return nameMatch || productsMatch || categoryMatch || cnpjMatch || emailMatch || phoneMatch;
         });
     }, [suppliers, searchTerm]);
 
@@ -142,6 +232,9 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     const email = pickRaw(raw, 'email', 'contato', 'e_mail');
                     const telefone = pickRaw(raw, 'telefone', 'phone');
 
+                    const sid = supplier.id ?? supplier.raw?.id ?? supplier.raw?.ID ?? supplier.name;
+                    if (removedIds.has(sid)) return null;
+
                     return (
                         <div key={supplier.id ?? supplier.name} className="p-4 border rounded">
                             <div className="flex justify-between items-center mb-2">
@@ -156,10 +249,10 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                             </div>
 
                             <div className="text-sm mb-2 space-y-1">
-                                        <div><strong>CNPJ:</strong> {cnpj ? formatCNPJ(cnpj) : '—'}</div>
-                                        <div><strong>Email:</strong> {email ?? '—'}</div>
-                                        <div><strong>Telefone:</strong> {telefone ? formatPhone(telefone) : '—'}</div>
-                                    </div>
+                                <div><strong>CNPJ:</strong> {cnpj ? formatCNPJ(cnpj) : '—'}</div>
+                                <div><strong>Email:</strong> {email ?? '—'}</div>
+                                <div><strong>Telefone:</strong> {telefone ? formatPhone(telefone) : '—'}</div>
+                            </div>
 
                             {/* <div className="text-sm mb-2">
                                 <strong>Contratos:</strong>
@@ -171,21 +264,58 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                                         </div>
                                     ))
                                 )}
-                            </div>
+                            </div> */}
 
-                            <div className="text-sm mb-2">
+                            {/* <div className="text-sm mb-2">
                                 <strong>Pedidos relacionados ({supplierPedidos.length})</strong>
                                 {supplierPedidos.length === 0 ? <div className="text-muted-foreground">Nenhum pedido relacionado.</div> : (
-                                    supplierPedidos.map((p, i) => (
-                                        <div key={p.id ?? i} className="p-2 border rounded mt-2">
-                                            <div className="font-medium">Pedido {p.id || p.numero || i + 1} — {p.status}</div>
-                                            <div className="text-xs">Origem: {p.origemUnidade?.nome || p.origem?.nome || '-'} — Destino: {p.destinoUnidade?.nome || p.destino?.nome || '-'}</div>
-                                        </div>
-                                    ))
+                                    supplierPedidos.map((p, i) => {
+                                        const ref = p.documentoReferencia || p.referencia || p.numeroDocumento || p.numero || p.id || `PED-${p.id ?? i}`;
+                                        const status = (s => {
+                                            if (!s) return '—';
+                                            const up = String(s).toUpperCase();
+                                            if (up === 'PENDENTE') return 'Pendente';
+                                            if (up === 'EM_TRANSITO' || up === 'EM TRÂNSITO' || up === 'EM_TRANSITO') return 'A caminho';
+                                            if (up === 'ENTREGUE') return 'Entregue';
+                                            if (up === 'CANCELADO') return 'Cancelado';
+                                            return s;
+                                        })(p.status);
+
+                                        const items = (p.itens || p.items || []).map((it, idx) => ({
+                                            name: it?.produto?.nome || it?.nome || it?.descricao || it?.produtoNome || `Item ${idx + 1}`,
+                                            qty: it?.quantidade ?? it?.qtd ?? it?.quantidadePedido ?? 0
+                                        }));
+
+                                        return (
+                                            <div key={ref} className="p-2 border rounded mt-2">
+                                                <div className="font-medium">Pedido {ref} — {status}</div>
+                                                <div className="text-xs">Origem: {p.origemUnidade?.nome || p.origem?.nome || '-'} — Destino: {p.destinoUnidade?.nome || p.destino?.nome || '-'}</div>
+                                                {items.length > 0 && (
+                                                    <div className="mt-2">
+                                                        <div className="text-xs font-semibold">Itens:</div>
+                                                        <ul className="list-disc pl-5 text-xs mt-1">
+                                                            {items.map((it, idx) => <li key={idx}>{it.name} — Qtde: {it.qty}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
                                 )}
                             </div> */}
 
-                            <Button className="w-full bg-[#99BF0F]/80 hover:bg-[#99BF0F] text-white"><ShoppingCart className="w-4 h-4 mr-2" /> Ver catálogo</Button>
+                            {isUserGerenteMatriz ? (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => handleEdit(supplier)}>
+                                        <Eye className="h-4 w-4 mr-1" />Editar
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleDelete(supplier)}>
+                                        <Trash className="h-4 w-4 mr-1" />Excluir
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="text-xs text-muted-foreground">Somente GERENTE_MATRIZ pode editar/excluir</div>
+                            )}
                         </div>
                     );
                 })
@@ -203,6 +333,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                         <TableHead>Categoria</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Produtos</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
 
@@ -297,6 +428,8 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                                 ))
                             )}
                         </div>
+                            <Button className="w-full bg-[#99BF0F]/80 hover:bg-[#99BF0F] text-white"><ShoppingCart className="w-4 h-4 mr-2" /> Ver catálogo</Button>
+
                     </div>
                 ))
             )}
@@ -340,7 +473,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     );
 
 
-    
+
 
     return (
         <div>

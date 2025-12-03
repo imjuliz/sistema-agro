@@ -190,7 +190,7 @@ export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
 
 export const listarVendas = async (unidadeId) => { //FUNCIONA 
     try {
-        const vendas = await prisma.Venda.findMany({ where: { unidadeId: Number(unidadeId) },});
+        const vendas = await prisma.venda.findMany({ where: { unidadeId: Number(unidadeId) },});
         return ({
             sucesso: true,
             vendas,
@@ -207,7 +207,7 @@ export const listarVendas = async (unidadeId) => { //FUNCIONA
 
 export const listarDespesas = async (unidadeId) => {
     try {
-      const despesas = await prisma.Financeiro.findMany({
+      const despesas = await prisma.financeiro.findMany({
         where: { unidadeId: Number(unidadeId), tipoMovimento: 'SAIDA' },
         select: {
           categoria: true,

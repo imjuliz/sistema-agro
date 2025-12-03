@@ -295,9 +295,161 @@ export const LojaService = {
 export async function createUnidade(data) {
   try {
     const unidade = await prisma.unidade.create({ data });
+    
+    // Criar estoque para a unidade
+    await criarEstoqueUnidade(unidade.id);
+    
+    // Criar categorias financeiras padrão para a unidade
+    await criarCategoriasPadraoUnidade(unidade.id);
+    
     return { sucesso: true, unidade, message: "Unidade criada com sucesso." };
   }
   catch (error) {return { sucesso: false, erro: "Erro ao criar unidade.", detalhes: error.message };}
+}
+
+// Função auxiliar para criar estoque da unidade
+async function criarEstoqueUnidade(unidadeId) {
+  try {
+    await prisma.estoque.create({
+      data: {
+        unidadeId,
+        descricao: "Estoque da unidade",
+        qntdItens: 0
+      }
+    });
+
+    console.log(`✅ Estoque criado para unidade ${unidadeId}`);
+  } catch (error) {
+    console.error(`❌ Erro ao criar estoque para unidade ${unidadeId}:`, error.message);
+    // Não lançar erro - a unidade já foi criada, apenas o estoque falharia
+  }
+}
+
+// Função auxiliar para criar categorias financeiras padrão
+async function criarCategoriasPadraoUnidade(unidadeId) {
+  try {
+    // Categorias de ENTRADA (Receitas)
+    await prisma.categoria.create({
+      data: {
+        unidadeId,
+        nome: "Vendas",
+        tipo: "ENTRADA",
+        descricao: "Receitas com vendas de produtos",
+        ativa: true,
+        subcategorias: {
+          createMany: {
+            data: [
+              { nome: "Vendas Locais", descricao: "Vendas realizadas no local", ativa: true },
+              { nome: "Vendas Online", descricao: "Vendas pela internet", ativa: true },
+              { nome: "Exportação", descricao: "Vendas para exportação", ativa: true }
+            ]
+          }
+        }
+      }
+    });
+
+    // Categorias de SAÍDA - Custos Operacionais
+    await prisma.categoria.create({
+      data: {
+        unidadeId,
+        nome: "Custos Operacionais",
+        tipo: "SAIDA",
+        descricao: "Despesas com operação da unidade",
+        ativa: true,
+        subcategorias: {
+          createMany: {
+            data: [
+              { nome: "Aluguel", descricao: "Aluguel da propriedade", ativa: true },
+              { nome: "Energia Elétrica", descricao: "Consumo de energia", ativa: true },
+              { nome: "Água", descricao: "Consumo de água", ativa: true }
+            ]
+          }
+        }
+      }
+    });
+
+    // Categorias de SAÍDA - Pessoal
+    await prisma.categoria.create({
+      data: {
+        unidadeId,
+        nome: "Pessoal",
+        tipo: "SAIDA",
+        descricao: "Despesas com funcionários e recursos humanos",
+        ativa: true,
+        subcategorias: {
+          createMany: {
+            data: [
+              { nome: "Salários", descricao: "Pagamento de salários dos funcionários", ativa: true },
+              { nome: "Encargos Sociais", descricao: "INSS, FGTS e outros encargos", ativa: true }
+            ]
+          }
+        }
+      }
+    });
+
+    // Categorias de SAÍDA - Insumos
+    await prisma.categoria.create({
+      data: {
+        unidadeId,
+        nome: "Insumos",
+        tipo: "SAIDA",
+        descricao: "Compra de insumos e matérias-primas",
+        ativa: true,
+        subcategorias: {
+          createMany: {
+            data: [
+              { nome: "Sementes", descricao: "Compra de sementes", ativa: true },
+              { nome: "Fertilizantes", descricao: "Compra de fertilizantes", ativa: true },
+              { nome: "Defensivos", descricao: "Compra de defensivos agrícolas", ativa: true }
+            ]
+          }
+        }
+      }
+    });
+
+    // Categorias de SAÍDA - Infraestrutura
+    await prisma.categoria.create({
+      data: {
+        unidadeId,
+        nome: "Infraestrutura",
+        tipo: "SAIDA",
+        descricao: "Despesas com manutenção e infraestrutura",
+        ativa: true,
+        subcategorias: {
+          createMany: {
+            data: [
+              { nome: "Manutenção Equipamentos", descricao: "Manutenção de máquinas e equipamentos", ativa: true },
+              { nome: "Reparos", descricao: "Reparos gerais da infraestrutura", ativa: true }
+            ]
+          }
+        }
+      }
+    });
+
+    // Categorias de SAÍDA - Financeiro
+    await prisma.categoria.create({
+      data: {
+        unidadeId,
+        nome: "Financeiro",
+        tipo: "SAIDA",
+        descricao: "Despesas financeiras (juros, taxas, etc)",
+        ativa: true,
+        subcategorias: {
+          createMany: {
+            data: [
+              { nome: "Juros", descricao: "Pagamento de juros", ativa: true },
+              { nome: "Taxas", descricao: "Taxas bancárias e outras taxas", ativa: true }
+            ]
+          }
+        }
+      }
+    });
+
+    console.log(`✅ Categorias financeiras padrão criadas para unidade ${unidadeId}`);
+  } catch (error) {
+    console.error(`❌ Erro ao criar categorias padrão para unidade ${unidadeId}:`, error.message);
+    // Não lançar erro - a unidade já foi criada, apenas as categorias falharam
+  }
 }
 
 // ATUALIZAR (implementei)

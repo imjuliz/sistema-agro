@@ -2464,7 +2464,7 @@ async function main() {
 
                 for (const pi of items) {
                     try {
-                        // CORREÇÃO 1: Usar pi.quantidade ao invés de pi.qntdAtual
+                        // Usar pi.quantidade do PedidoItem
                         const quantidadeStr = pi.quantidade;
 
                         if (!quantidadeStr) {
@@ -2475,7 +2475,6 @@ async function main() {
 
                         const quantidade = Number(quantidadeStr);
 
-                        // CORREÇÃO 2: Validação mais robusta
                         if (isNaN(quantidade) || quantidade <= 0) {
                             console.warn(`   ⚠️  Item ${pi.id}: quantidade inválida (${quantidadeStr}) - pulando`);
                             totalErros++;
@@ -2484,44 +2483,97 @@ async function main() {
 
                         const qntdInteira = Math.floor(quantidade);
 
-                        // Determinar nome do produto
+                        // Dentro do loop "for (const pi of items)", substituir a partir da criação de dadosEstoque:
+
                         const nomeItem = pi.fornecedorItem?.nome ||
                             pi.produto?.nome ||
                             pi.observacoes ||
                             `Item do pedido ${pi.id}`;
 
-                        // Gerar SKU único
                         const timestamp = Date.now();
                         const random = Math.floor(Math.random() * 1000);
                         const sku = `EST-${estoque.id}-${pi.id}-${timestamp}-${random}`;
 
-                        // Preparar dados para inserção
+                        // ✅ Determinar qntdMin baseado no tipo de unidade
+                        let qntdMin = 0;
+                        if (pedido.destinoUnidade?.tipo === "LOJA") {
+                            // Lojas: mínimo 10% da quantidade recebida
+                            qntdMin = Math.max(1, Math.floor(qntdInteira * 0.10));
+                        } else if (pedido.destinoUnidade?.tipo === "FAZENDA") {
+                            // Fazendas: mínimo 5% da quantidade recebida
+                            qntdMin = Math.max(1, Math.floor(qntdInteira * 0.05));
+                        }
+
+                        // ✅ Determinar validade baseado no tipo de produto
+                        let validade = null;
+                        const categoria = pi.fornecedorItem?.categoria || [];
+                        if (categoria.includes("Laticínios")) {
+                            // Laticínios: 7-30 dias dependendo do tipo
+                            if (nomeItem.toLowerCase().includes("leite")) {
+                                validade = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+                            } else if (nomeItem.toLowerCase().includes("queijo") || nomeItem.toLowerCase().includes("manteiga")) {
+                                validade = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+                            } else if (nomeItem.toLowerCase().includes("iogurte")) {
+                                validade = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000); // 15 dias
+                            }
+                        } else if (categoria.includes("Carne")) {
+                            // Carnes: 5-7 dias
+                            validade = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                        } else if (categoria.includes("Hortaliças")) {
+                            // Hortaliças: 3-10 dias
+                            validade = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+                        } else if (categoria.includes("Grãos")) {
+                            // Grãos: 1 ano
+                            validade = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+                        }
+
+                        // ✅ Buscar producaoId se for estoque de LOJA
+                        let producaoId = null;
+                        if (pedido.destinoUnidade?.tipo === "LOJA") {
+                            // Buscar produção relacionada ao pedido/item
+                            const producaoRelacionada = await prisma.producao.findFirst({
+                                where: {
+                                    destinoUnidadeId: pedido.destinoUnidadeId,
+                                    status: "FINALIZADA",
+                                    tipoProduto: {
+                                        contains: nomeItem.split(' ')[0], // busca pela primeira palavra do nome
+                                        mode: 'insensitive'
+                                    }
+                                },
+                                orderBy: { dataFim: 'desc' }
+                            });
+
+                            producaoId = producaoRelacionada?.id || null;
+                        }
+
                         const dadosEstoque = {
                             nome: nomeItem,
                             sku: sku,
                             marca: pi.produto?.marca || null,
                             qntdAtual: qntdInteira,
-                            qntdMin: 0,
+                            qntdMin: qntdMin,              // ✅ Calculado dinamicamente
                             estoqueId: estoque.id,
                             produtoId: pi.produtoId || null,
+                            producaoId: producaoId,        // ✅ Vinculado se for loja
                             loteId: pi.loteId || null,
                             precoUnitario: pi.precoUnitario ? Number(pi.precoUnitario) : null,
                             pesoUnidade: pi.fornecedorItem?.pesoUnidade || pi.produto?.pesoUnidade || null,
+                            validade: validade,            // ✅ Calculada por tipo de produto
                             unidadeBase: pi.unidadeMedida,
                             pedidoId: pedido.id,
                             pedidoItemId: pi.id,
                             fornecedorUnidadeId: pedido.origemUnidadeId || null,
                             fornecedorExternoId: pedido.origemFornecedorExternoId || null,
-                            dataEntrada: pedido.dataRecebimento || new Date()
+                            dataEntrada: pedido.dataRecebimento || new Date(),
+                            dataSaida: null
                         };
 
-                        // Tentar criar o registro
                         const novoEstoque = await prisma.estoqueProduto.create({
                             data: dadosEstoque
                         });
 
                         totalCriados++;
-                        console.log(`   ✓ Item ${pi.id}: ${nomeItem} - ${qntdInteira} unidades adicionadas`);
+                        console.log(`   ✓ Item ${pi.id}: ${nomeItem} - ${qntdInteira} unidades (min: ${qntdMin}, validade: ${validade ? validade.toLocaleDateString('pt-BR') : 'N/A'}, producao: ${producaoId || 'N/A'})`);
 
                     } catch (err) {
                         totalErros++;
@@ -2545,6 +2597,7 @@ async function main() {
         }
 
         await seedEstoqueProdutosFromDeliveredPedidos(prisma);
+
         const animals = [
             // Fazenda Beta: 4 vacas Holandesas (agreguei 4 registros repetidos em 1)
             {
@@ -3858,128 +3911,169 @@ async function main() {
         // --- Seed financeiro: criar lançamentos de exemplo para matriz, fazendas e lojas ---
         // colocar abaixo de onde unidadeMap e usuarioMap já existem (após criar unidades/usuarios)
         async function seedFinanceiro(prisma, unidadeMap, usuarioMap) {
-            // helpers de data
             const daysFromNow = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
-            const firstOfMonth = (y, m) => new Date(y, m - 1, 1); // ex: (2025,11) -> 2025-11-01
+            const firstOfMonth = (y, m) => new Date(y, m - 1, 1);
+
+            // ✅ Primeiro, criar categorias e subcategorias
+            const categorias = await Promise.all([
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["RuralTech"], nome: "Folha" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["RuralTech"], nome: "Folha", tipo: "SAIDA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["RuralTech"], nome: "Receita" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["RuralTech"], nome: "Receita", tipo: "ENTRADA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Fazenda Teste"], nome: "Sanidade" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Fazenda Teste"], nome: "Sanidade", tipo: "SAIDA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Fazenda Beta"], nome: "Venda" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Fazenda Beta"], nome: "Venda", tipo: "ENTRADA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Sabor do Campo Laticínios"], nome: "Compras" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Sabor do Campo Laticínios"], nome: "Compras", tipo: "SAIDA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Loja Teste"], nome: "Vendas" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Loja Teste"], nome: "Vendas", tipo: "ENTRADA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Fazenda Alpha"], nome: "Equipamentos" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Fazenda Alpha"], nome: "Equipamentos", tipo: "SAIDA" }
+                })
+            ]);
+
+            const categoriaMap = {
+                "Folha": categorias[0].id,
+                "Receita": categorias[1].id,
+                "Sanidade": categorias[2].id,
+                "Venda": categorias[3].id,
+                "Compras": categorias[4].id,
+                "Vendas": categorias[5].id,
+                "Equipamentos": categorias[6].id
+            };
 
             const dados = [
-                // MATRIZ (RuralTech) - despesas fixas + receita interna
                 {
-                    usuarioId: usuarioMap["Julia Alves"],
+                    criadoPorId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
+                    categoriaId: categoriaMap["Folha"],
+                    subcategoriaId: null,
                     descricao: "Folha de pagamento - Novembro/2025",
-                    tipoMovimento: TM.SAIDA,
-                    categoria: "Folha",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 12000,
                     valorPago: null,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: new Date("2025-11-30"),
                     parcela: 1,
                     totalParcelas: 1,
-                    status: SCONTA.PENDENTE,
+                    status: "PENDENTE",
                     documento: "FOLHA-202511"
                 },
                 {
-                    usuarioId: usuarioMap["Julia Alves"],
+                    criadoPorId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
+                    categoriaId: categoriaMap["Receita"],
+                    subcategoriaId: null,
                     descricao: "Receita venda institucional (remessa interna)",
-                    tipoMovimento: TM.ENTRADA,
-                    categoria: "Receita",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "PIX",
                     valor: 3500,
                     valorPago: 3500,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-10),
                     dataPagamento: daysFromNow(-10),
-                    status: SCONTA.PAGA,
+                    status: "PAGA",
                     documento: "REC-MATRIZ-202511"
                 },
-
-                // FAZENDAS (exemplos)
                 {
-                    usuarioId: usuarioMap["Usuario Ficticio"], // gerente fazenda teste
+                    criadoPorId: usuarioMap["Usuario Ficticio"],
                     unidadeId: unidadeMap["Fazenda Teste"],
+                    categoriaId: categoriaMap["Sanidade"],
+                    subcategoriaId: null,
                     descricao: "Compra de medicamentos veterinários",
-                    tipoMovimento: TM.SAIDA,
-                    categoria: "Sanidade",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 1800,
                     vencimento: daysFromNow(7),
-                    status: SCONTA.PENDENTE,
+                    status: "PENDENTE",
                     documento: "NFVET-FT-202511"
                 },
                 {
-                    usuarioId: usuarioMap["Richard Souza"],
+                    criadoPorId: usuarioMap["Richard Souza"],
                     unidadeId: unidadeMap["Fazenda Beta"],
+                    categoriaId: categoriaMap["Venda"],
+                    subcategoriaId: null,
                     descricao: "Venda de leite cru - remessa para Sabor do Campo",
-                    tipoMovimento: TM.ENTRADA,
-                    categoria: "Venda",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "PIX",
                     valor: 4200,
                     valorPago: 4200,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-5),
                     dataPagamento: daysFromNow(-5),
-                    status: SCONTA.PAGA,
+                    status: "PAGA",
                     documento: "NFV-FAZB-202511"
                 },
-
-                // LOJAS (exemplos)
                 {
-                    usuarioId: usuarioMap["Renato Martins"],
+                    criadoPorId: usuarioMap["Renato Martins"],
                     unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                    categoriaId: categoriaMap["Compras"],
+                    subcategoriaId: null,
                     descricao: "Pagamento a fornecedor (Fazenda Beta) - romaneio 202511",
-                    tipoMovimento: TM.SAIDA,
-                    categoria: "Compras",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 2600,
                     vencimento: daysFromNow(3),
-                    status: SCONTA.PENDENTE,
+                    status: "PENDENTE",
                     documento: "PAG-FB-202511"
                 },
                 {
-                    usuarioId: usuarioMap["Lorena Oshiro"],
+                    criadoPorId: usuarioMap["Lorena Oshiro"],
                     unidadeId: unidadeMap["Loja Teste"],
+                    categoriaId: categoriaMap["Vendas"],
+                    subcategoriaId: null,
                     descricao: "Recebimento venda - vendas em caixa (sintético)",
-                    tipoMovimento: TM.ENTRADA,
-                    categoria: "Vendas",
-                    formaPagamento: TPAG.CARTAO,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "CARTAO",
                     valor: 1800,
                     valorPago: 1800,
                     competencia: firstOfMonth(2025, 11),
                     vencimento: daysFromNow(-2),
                     dataPagamento: daysFromNow(-2),
-                    status: SCONTA.PAGA,
+                    status: "PAGA",
                     documento: "REC-LT-202511"
                 },
-
-                // exemplo de parcela
                 {
-                    usuarioId: usuarioMap["Juliana Correia"],
+                    criadoPorId: usuarioMap["Juliana Correia"],
                     unidadeId: unidadeMap["Fazenda Alpha"],
+                    categoriaId: categoriaMap["Equipamentos"],
+                    subcategoriaId: null,
                     descricao: "Parcelamento equipamento - parcela 2/12",
-                    tipoMovimento: TM.SAIDA,
-                    categoria: "Equipamentos",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 500,
                     parcela: 2,
                     totalParcelas: 12,
                     vencimento: daysFromNow(15),
-                    status: SCONTA.PENDENTE,
+                    status: "PENDENTE",
                     documento: "EQP-ALPHA-202511"
                 }
             ];
 
-            // cria registros (skipDuplicates evita duplicações se rodar o seed várias vezes)
             await prisma.financeiro.createMany({
-                data: dados.map(d => ({
-                    ...d,
-                    // garantir campos obrigatórios presenciais (nos casos omissos):
-                    competencia: d.competencia || null,
-                    dataPagamento: d.dataPagamento || null,
-                    valorPago: d.valorPago || null
-                })),
+                data: dados,
                 skipDuplicates: true
             });
 
