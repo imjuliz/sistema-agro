@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
-export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+export default function ConsumidoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();
 
@@ -207,7 +207,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     // Render helpers to keep JSX readable
     const renderHeader = () => (
         <header className="mb-4">
-            <h2 className="text-lg font-semibold mb-3">Fornecedores</h2>
+            <h2 className="text-lg font-semibold mb-3">Lojas Consumidoras</h2>
             <div className="flex flex-row gap-4 items-center">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -220,7 +220,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     {/* <button onClick={() => setViewMode('contracts')} className={`p-2 ${viewMode === 'contracts' ? 'bg-muted rounded' : ''}`} title="contracts">Contratos</button> */}
                 </div>
 
-                {isUserGerenteMatriz && <Button><Plus /> Novo fornecedor</Button>}
+                {isUserGerenteMatriz && <Button><Plus /> Nova loja</Button>}
             </div>
         </header>
     );
@@ -229,8 +229,8 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredSuppliers.length === 0 ? (
                 <div className="col-span-full p-8 text-center text-muted-foreground">
-                    <p className="text-lg">Nenhum fornecedor encontrado</p>
-                    {carregando && <p className="text-sm mt-2">Carregando fornecedores...</p>}
+                    <p className="text-lg">Nenhuma loja encontrada</p>
+                    {carregando && <p className="text-sm mt-2">Carregando lojas...</p>}
                 </div>
             ) : (
                 filteredSuppliers.map((supplier) => {
@@ -392,7 +392,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     <button onClick={() => setContractsViewMode('table')} className={`p-2 ${contractsViewMode === 'table' ? 'bg-muted rounded' : ''}`} title="table"><List className="h-4 w-4" /></button>
                 </div>
 
-                {isUserGerenteMatriz && <Button><Plus />Editar contrato</Button>}
+                {isUserGerenteMatriz && <Button><Plus />Novo contrato</Button>}
             </div>
         </header>
     );

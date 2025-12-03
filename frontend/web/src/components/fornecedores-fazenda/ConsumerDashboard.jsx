@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ProductCatalog } from './ProductCatalog';
+// import { ProductCatalog } from './ProductCatalog';
 // import { OrderManagement } from './OrderManagement';
 import { ChatInterface } from './ChatInterface';
 import { ComplaintSystem } from './ComplaintSystem';
@@ -12,6 +12,7 @@ import { ShoppingCart, MessageSquare, AlertTriangle, Search, TrendingUp, Clock, 
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { Card, CardContent, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card"
 import FornecedoresCard from './fornecedores-card';
+import ConsumidoresCard from './consumidores-card';
 import { OrderManagement } from './OrderManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
@@ -33,28 +34,53 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
       setCarregandoFornecedores(true);
       setFornecedorError(null);
       try {
-        console.log('[ConsumerDashboard] Buscando contratos externos para unidadeId:', unidadeId);
+        console.log('[ConsumerDashboard] Buscando contratos externos e internos para unidadeId:', unidadeId);
         
-        // 1) Busca contratos externos da unidade (PRIORIDADE TOTAL)
+        // 1) Busca contratos EXTERNOS da unidade
         const cRes = await fetchWithAuth(`${API_URL}verContratosExternos/${unidadeId}`, { 
           method: 'GET', 
           credentials: 'include' 
         });
         
         if (!cRes.ok) {
-          throw new Error(`Erro HTTP ${cRes.status} ao buscar contratos`);
+          throw new Error(`Erro HTTP ${cRes.status} ao buscar contratos externos`);
         }
         
         const cBody = await cRes.json().catch(() => ({}));
-        const contratosArray = Array.isArray(cBody.contratosExternos) ? cBody.contratosExternos : 
-                               Array.isArray(cBody.contratos) ? cBody.contratos : [];
+        let contratosArray = Array.isArray(cBody.contratosExternos) ? cBody.contratosExternos : 
+                             Array.isArray(cBody.contratos) ? cBody.contratos : [];
         
         console.log('[ConsumerDashboard] Contratos externos recebidos:', contratosArray.length, contratosArray);
+        
+        // 2) Busca contratos INTERNOS da unidade (com outras fazendas)
+        try {
+          const cInternRes = await fetchWithAuth(`${API_URL}verContratosComFazendas/${unidadeId}`, { 
+            method: 'GET', 
+            credentials: 'include' 
+          });
+          
+          if (cInternRes.ok) {
+            const cInternBody = await cInternRes.json().catch(() => ({}));
+            console.log('[ConsumerDashboard] Resposta completa de contratos internos:', cInternBody);
+            const contratosInternos = Array.isArray(cInternBody.contratos) ? cInternBody.contratos : 
+                                       (cInternBody.contratos?.contratos ? cInternBody.contratos.contratos : []);
+            console.log('[ConsumerDashboard] Contratos internos recebidos:', contratosInternos.length, contratosInternos);
+            
+            // Combina contratos externos e internos
+            contratosArray = [...contratosArray, ...contratosInternos];
+            console.log('[ConsumerDashboard] Total de contratos (externos + internos):', contratosArray.length);
+          } else {
+            console.warn('[ConsumerDashboard] Resposta de contratos internos não OK:', cInternRes.status);
+          }
+        } catch (e) {
+          console.warn('[ConsumerDashboard] Aviso ao buscar contratos internos:', e?.message);
+        }
+        
         setContratosExternos(contratosArray);
 
-        // 2) Extrai fornecedores ÚNICOS dos contratos (fonte única)
+        // 3) Extrai fornecedores ÚNICOS dos contratos (EXTERNOS e INTERNOS)
         const fornecedoresFromContratos = contratosArray
-          .map(c => c.fornecedorExterno)
+          .map(c => c.fornecedorExterno || c.fornecedorInterno)
           .filter(f => f && typeof f.id !== 'undefined')
           .reduce((acc, f) => {
             if (!acc.find(x => x.id === f.id)) acc.push(f);
@@ -63,7 +89,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
 
         console.log('[ConsumerDashboard] Fornecedores extraídos dos contratos:', fornecedoresFromContratos.length, fornecedoresFromContratos);
 
-        // 3) Normaliza fornecedores para o formato esperado pelo FornecedoresCard
+        // 4) Normaliza fornecedores para o formato esperado pelo FornecedoresCard
         let normalized = fornecedoresFromContratos.map(f => ({
           ...f,
           id: f.id ?? f.ID ?? null,
@@ -98,18 +124,40 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         console.log('[ConsumerDashboard] Fornecedores normalizados:', normalized.length, normalized);
         setFornecedoresExternos(normalized);
 
-        // 4) Buscar pedidos relacionados (opcional)
+        // 5) Buscar pedidos relacionados (externos + internos)
         try {
+          let allPedidos = [];
+          
+          // Busca pedidos externos
           const pRes = await fetchWithAuth(`${API_URL}pedidos-externos/${unidadeId}`, { 
             method: 'GET', 
             credentials: 'include' 
           });
           if (pRes.ok) {
             const pBody = await pRes.json().catch(() => ({}));
-            const pedidosArray = Array.isArray(pBody.pedidos) ? pBody.pedidos : [];
-            console.log('[ConsumerDashboard] Pedidos externos recebidos:', pedidosArray.length, pedidosArray);
-            setPedidosExternos(pedidosArray);
+            const pedidosExternos = Array.isArray(pBody.pedidos) ? pBody.pedidos : [];
+            console.log('[ConsumerDashboard] Pedidos externos recebidos:', pedidosExternos.length, pedidosExternos);
+            allPedidos = [...allPedidos, ...pedidosExternos];
           }
+          
+          // Busca pedidos internos (de outras unidades)
+          try {
+            const pInternRes = await fetchWithAuth(`${API_URL}estoque-produtos/pedidos/${unidadeId}`, { 
+              method: 'GET', 
+              credentials: 'include' 
+            });
+            if (pInternRes.ok) {
+              const pInternBody = await pInternRes.json().catch(() => ({}));
+              const pedidosInternos = Array.isArray(pInternBody.pedidos) ? pInternBody.pedidos : (Array.isArray(pInternBody) ? pInternBody : []);
+              console.log('[ConsumerDashboard] Pedidos internos recebidos:', pedidosInternos.length, pedidosInternos);
+              allPedidos = [...allPedidos, ...pedidosInternos];
+            }
+          } catch (e) {
+            console.warn('[ConsumerDashboard] Aviso ao buscar pedidos internos:', e?.message);
+          }
+          
+          console.log('[ConsumerDashboard] Total de pedidos (externos + internos):', allPedidos.length, allPedidos);
+          setPedidosExternos(allPedidos);
         } catch (e) {
           console.warn('[ConsumerDashboard] Aviso ao buscar pedidos:', e?.message);
         }
@@ -183,7 +231,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
       <Tabs defaultValue="consumidor" className="bg-card p-4 rounded-lg">
         <TabsList>
           <TabsTrigger value="consumidor">Contratos como consumidor</TabsTrigger>
-          <TabsTrigger value="fornecedor">Contratos como Fornecedor</TabsTrigger>
+          <TabsTrigger value="fornecedor">Contratos como fornecedor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="consumidor" className="mt-4">
@@ -255,26 +303,51 @@ function ContratosComoFornecedor() {
   useEffect(() => {
     if (!unidadeId) return;
     const load = async () => {
-      setLoading(true); setError(null);
+      setLoading(true);
+      setError(null);
       try {
+        // 1) Buscar contratos onde essa unidade é fornecedora
         const cRes = await fetchWithAuth(`${API_URL}verContratosComLojas/${unidadeId}`, { method: 'GET', credentials: 'include' });
         const cBody = await cRes.json().catch(() => ({}));
         const cData = cBody.contratos ?? [];
-        setContratos(Array.isArray(cData) ? cData : []);
+        const contratosArray = Array.isArray(cData) ? cData : [];
+        setContratos(contratosArray);
 
-        const fRes = await fetchWithAuth(`${API_URL}listarFornecedoresInternos/${unidadeId}`, { method: 'GET', credentials: 'include' });
-        const fBody = await fRes.json().catch(() => ({}));
-        const fData = fBody.fornecedores ?? [];
-        setFornecedoras(Array.isArray(fData) ? fData : []);
+        // 2) Extrai lojas consumidoras ÚNICAS dos contratos
+        const lojasFromContratos = contratosArray
+          .map(c => c.fornecedorUnidade || c.unidade)
+          .filter(f => f && typeof f.id !== 'undefined')
+          .reduce((acc, f) => {
+            if (!acc.find(x => x.id === f.id)) acc.push(f);
+            return acc;
+          }, []);
 
-        const pRes = await fetchWithAuth(`${API_URL}estoque-produtos/pedidos/${unidadeId}`, { method: 'GET', credentials: 'include' });
-        const pBody = await pRes.json().catch(() => ({}));
-        const pData = Array.isArray(pBody.pedidos) ? pBody.pedidos : (Array.isArray(pBody) ? pBody : []);
-        setPedidos(pData);
+        // 3) Normaliza lojas consumidoras para o formato esperado
+        const normalized = lojasFromContratos.map(f => ({
+          ...f,
+          id: f.id ?? f.ID ?? null,
+          name: f.nome || `Loja ${f.id}`,
+          status: (f.status && (String(f.status).toUpperCase() === 'ATIVO' || String(f.status).toUpperCase() === 'ATIVA')) ? 'Ativa' : 'Ativa',
+          products: f.produtosCount ?? f.produtos ?? 0,
+          category: f.categoria || f.tipo || 'Geral'
+        }));
+        setFornecedoras(normalized);
+
+        // 4) Buscar pedidos relacionados
+        try {
+          const pRes = await fetchWithAuth(`${API_URL}estoque-produtos/pedidos/${unidadeId}`, { method: 'GET', credentials: 'include' });
+          const pBody = await pRes.json().catch(() => ({}));
+          const pData = Array.isArray(pBody.pedidos) ? pBody.pedidos : (Array.isArray(pBody) ? pBody : []);
+          setPedidos(pData);
+        } catch (e) {
+          console.warn('[ContratosComoFornecedor] Aviso ao buscar pedidos:', e?.message);
+        }
       } catch (err) {
-        console.error('Erro ao carregar dados fornecedor:', err);
+        console.error('[ContratosComoFornecedor] Erro ao carregar dados:', err);
         setError(String(err?.message ?? err));
-      } finally { setLoading(false); }
+      } finally {
+        setLoading(false);
+      }
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -285,57 +358,40 @@ function ContratosComoFornecedor() {
   if (error) return <div className="p-4 text-destructive">Erro: {error}</div>;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-muted rounded">Contratos: {contratos.length}</div>
-        <div className="p-4 bg-muted rounded">Lojas/Clientes: {fornecedoras.length}</div>
-        <div className="p-4 bg-muted rounded">Pedidos: {pedidos.length}</div>
+    <div className="space-y-6 flex flex-col gap-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
+        <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
+          <CardHeader>
+            <CardDescription>Contratos Ativos</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {contratos.filter(c => c.status === 'ATIVO').length}
+            </CardTitle>
+            <CardAction><FileCheck /></CardAction>
+          </CardHeader>
+        </Card>
+        <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
+          <CardHeader>
+            <CardDescription>Lojas Consumidoras</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {fornecedoras.length}
+            </CardTitle>
+            <CardAction><ShoppingCart /></CardAction>
+          </CardHeader>
+        </Card>
+        <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
+          <CardHeader>
+            <CardDescription>Pedidos Pendentes</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {pedidos.filter(p => p.status === 'PENDENTE').length}
+            </CardTitle>
+            <CardAction><Clock /></CardAction>
+          </CardHeader>
+        </Card>
       </div>
 
-      <section>
-        <h3 className="text-lg font-medium">Contratos (fornecedor)</h3>
-        <ul className="mt-2 space-y-2">
-          {contratos.length === 0 && <li>Nenhum contrato encontrado.</li>}
-          {contratos.map((c) => (
-            <li key={c.id} className="p-3 border rounded">
-              <div className="font-semibold">Contrato #{c.id} — Status: {c.status}</div>
-              <div className="text-sm">Loja/Unidade: {c.unidade?.nome ?? c.unidade?.id ?? '—'}</div>
-              <div className="mt-2">
-                <strong>Itens:</strong>
-                <ul className="list-disc pl-6">
-                  {(c.itens || []).map((i, idx) => <li key={idx}>{i.nome ?? '—'}</li>)}
-                </ul>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <ConsumidoresCard fornecedores={fornecedoras} contratos={contratos} pedidos={pedidos} carregando={loading} />
 
-      <section>
-        <h3 className="text-lg font-medium">Pedidos relacionados</h3>
-        <ul className="mt-2 space-y-2">
-          {pedidos.length === 0 && <li>Nenhum pedido encontrado.</li>}
-          {pedidos.map(p => {
-            const ref = p.documentoReferencia || p.referencia || p.numeroDocumento || p.numero || p.id;
-            const statusReadable = (s => {
-              if (!s) return '—';
-              const up = String(s).toUpperCase();
-              if (up === 'PENDENTE') return 'Pendente';
-              if (up === 'EM_TRANSITO' || up === 'EM TRÂNSITO' || up === 'EM_TRANSITO') return 'Em trânsito';
-              if (up === 'ENTREGUE') return 'Entregue';
-              if (up === 'CANCELADO') return 'Cancelado';
-              return s;
-            })(p.status);
-
-            return (
-              <li key={ref} className="p-3 border rounded">
-                <div className="font-semibold">Pedido {ref} — Status: {statusReadable}</div>
-                <div className="text-sm">Data: {p.dataPedido ?? p.data}</div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+      <OrderManagement pedidos={pedidos} carregando={loading} />
     </div>
   );
 }

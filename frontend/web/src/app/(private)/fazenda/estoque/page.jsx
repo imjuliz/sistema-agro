@@ -3,18 +3,21 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
-import { InventoryProvider } from '@/contexts/InventoryContext';
+import { InventoryProvider, useInventory } from '@/contexts/InventoryContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 import { ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input';
 
 export default function estoqueFazenda() {
   const { fetchWithAuth } = useAuth();
   usePerfilProtegido("GERENTE_FAZENDA");
-
-  const [activeView, setActiveView] = useState('store');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalItem, setModalItem] = useState(null);
@@ -36,7 +39,7 @@ export default function estoqueFazenda() {
     setModalItem(null);
   }
 
-  async function submitMovimento() {
+  async function submitMovimento(refreshCallback) {
     if (!modalItem) return;
     const quantidade = Number(movimentoQuantidade);
     if (isNaN(quantidade) || quantidade <= 0) {
@@ -67,8 +70,11 @@ export default function estoqueFazenda() {
         throw new Error(msg);
       }
 
-      // success -> refresh inventory to show updated quantities
-      await refresh();
+      // Atualizar os dados após sucesso
+      if (refreshCallback) {
+        await refreshCallback();
+      }
+
       closeMovimentoModal();
     } catch (err) {
       console.error('Erro ao registrar movimentação', err);
@@ -77,6 +83,46 @@ export default function estoqueFazenda() {
       setIsSubmitting(false);
     }
   }
+
+  return (
+    <InventoryProvider defaultUnidadeId={null}>
+      <ConteudoEstoque 
+        onOpenMovimento={openMovimentoModal}
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        modalItem={modalItem}
+        setModalItem={setModalItem}
+        movimentoTipo={movimentoTipo}
+        setMovimentoTipo={setMovimentoTipo}
+        movimentoQuantidade={movimentoQuantidade}
+        setMovimentoQuantidade={setMovimentoQuantidade}
+        movimentoObs={movimentoObs}
+        setMovimentoObs={setMovimentoObs}
+        isSubmitting={isSubmitting}
+        submitMovimento={submitMovimento}
+        closeMovimentoModal={closeMovimentoModal}
+      />
+    </InventoryProvider>
+  );
+}
+
+function ConteudoEstoque({
+  onOpenMovimento,
+  isModalOpen,
+  setIsModalOpen,
+  modalItem,
+  setModalItem,
+  movimentoTipo,
+  setMovimentoTipo,
+  movimentoQuantidade,
+  setMovimentoQuantidade,
+  movimentoObs,
+  setMovimentoObs,
+  isSubmitting,
+  submitMovimento,
+  closeMovimentoModal
+}) {
+  const { refresh } = useInventory();
   return (
     <div className="flex gap-6">
 
@@ -111,19 +157,53 @@ export default function estoqueFazenda() {
           </CardContent>
         </Card>
 
-        <div>
-          <Button variant="" size="sm" className="w-full mb-2">
-            <ArrowLeftRight className="mr-2" />
-            Registrar movimentação de estoque
-          </Button>
-        </div>
-      </div>
-      <div className=" flex-1 min-w-0 space-y-6">
-        <InventoryProvider defaultUnidadeId={fazenda?.id}>
-          <StoreLevelView />
-        </InventoryProvider>
 
       </div>
+      <div className=" flex-1 min-w-0 space-y-6">
+        <StoreLevelView onOpenMovimento={onOpenMovimento} />
+      </div>
+
+      {/* Movimentação Modal */}
+      <AlertDialog open={isModalOpen} onOpenChange={(open) => { if (!open) { setIsModalOpen(false); setModalItem(null); } else setIsModalOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar movimentação</AlertDialogTitle>
+            <AlertDialogDescription>
+              {modalItem ? `Item: ${modalItem.name} — Estoque atual: ${modalItem.currentStock}` : 'Selecionar item e informar os dados da movimentação.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-3 py-2">
+            <div>
+              <Label>Tipo</Label>
+              <Select value={movimentoTipo} onValueChange={(v) => setMovimentoTipo(v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ENTRADA">Entrada</SelectItem>
+                  <SelectItem value="SAIDA">Saída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Quantidade</Label>
+              <Input value={movimentoQuantidade} onChange={(e) => setMovimentoQuantidade(e.target.value)} placeholder="Informe a quantidade" />
+            </div>
+
+            <div>
+              <Label>Observações (opcional)</Label>
+              <Textarea value={movimentoObs} onChange={(e) => setMovimentoObs(e.target.value)} />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null); }}>Fechar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => submitMovimento(refresh)} disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Registrar'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
