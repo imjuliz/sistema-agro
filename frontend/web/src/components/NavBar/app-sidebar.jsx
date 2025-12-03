@@ -117,7 +117,7 @@ function getMenuByPerfil(perfil) {
         ],
         projects: [
           { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },
-          { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
+          // { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
           { name: "Fornecedores", url: "/fazenda/fornecedores", icon: Container, },
           { name: "Financeiro", url: "/fazenda/vendasDespesas", icon: Frame },
           { name: "Suporte", url: "/fazenda/configuracoes", icon: Frame },
