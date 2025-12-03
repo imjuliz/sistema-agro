@@ -66,6 +66,12 @@ function getMenuByPerfil(perfil) {
             url: "/loja/funcionarios",
             icon: UserCog,
           },
+          {
+            title: "Configurações",
+            url: "/loja/configuracoes",
+            icon: Settings2,
+            // items: [],
+          },
         ],
         projects: [
           { name: "Estoque", url: "/loja/estoque", icon: Boxes },
@@ -102,7 +108,12 @@ function getMenuByPerfil(perfil) {
             url: "/fazenda/novaAtividade",
             icon: Container,
           },
-
+          {
+            title: "Configurações",
+            url: "/fazenda/configuracoes",
+            icon: Settings2,
+            // items: [],
+          },
         ],
         projects: [
           { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },

@@ -19,7 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 export default function SettingsPage() {
-    usePerfilProtegido("GERENTE_FAZENDA");
+    usePerfilProtegido("GERENTE_LOJA");
 
     const { user, loading, initialized, fetchWithAuth, doRefresh } = useAuth();
     const { toast } = useToast();

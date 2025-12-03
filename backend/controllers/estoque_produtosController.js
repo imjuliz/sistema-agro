@@ -185,32 +185,6 @@ export const somarQtdTotalEstoqueController = async (req, res) => {
   }
 };
 
-// // LISTA O ESTOQUE -- rota feita
-// export const listarEstoqueController = async (req, res) => {
-//   try {
-//     // const unidade_id = req.session?.usuario?.unidade_id;
-//      const unidade_id = req.params.unidade_id;
-
-
-//     if (!unidade_id) {
-//       return res.status(401).json({
-//         sucesso: false,
-//         erro: "Sessão inválida ou unidade não identificada.",
-//       });
-//     }
-
-//     const resultado = await getEstoque(unidade_id);
-//     return res.status(200).json(resultado);
-//   } catch (error) {
-//     console.error("Erro ao listar estoque:", error);
-//     return res.status(500).json({
-//       sucesso: false,
-//       erro: "Erro ao listar estoque.",
-//       detalhes: error.message,
-//     });
-//   }
-// };
-
 export const listarEstoqueController = async (req, res) => { //FUNCIONANDO
     const unidadeId = req.params.unidadeId;
 
@@ -221,16 +195,6 @@ export const listarEstoqueController = async (req, res) => { //FUNCIONANDO
     return res.status(200).json(resultado);
 };
 
-// export const mostrarEstoqueController = async (req, res) => {
-//   try {
-//     const unidadeId = req.user?.unidadeId;
-//     const estoque = await mostrarEstoque(unidadeId);
-//     res.status(200).json(estoque);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ erro: 'Erro ao mostrar estoque da unidade de venda.' })
-//   }
-// }
 
 export const AtividadesLoteAgricolaController = async(req, res) =>{
   try{

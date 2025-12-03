@@ -16,7 +16,7 @@ import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 
-const products = [
+const productsFallback = [
   { id: 'PROD-001', name: 'Wireless Headphones', price: 89.99, stock: 45, category: 'Electronics', barcode: '123456789012', image: '/api/placeholder/80/80' },
   { id: 'PROD-002', name: 'Office Chair', price: 299.99, stock: 8, category: 'Furniture', barcode: '123456789013', image: '/api/placeholder/80/80' },
   { id: 'PROD-003', name: 'Water Bottle', price: 24.99, stock: 120, category: 'Home & Garden', barcode: '123456789014', image: '/api/placeholder/80/80' },
@@ -27,20 +27,20 @@ const products = [
   { id: 'PROD-008', name: 'Desk Lamp', price: 89.99, stock: 23, category: 'Furniture', barcode: '123456789019', image: '/api/placeholder/80/80' }
 ];
 
-const customers = [
+const customersFallback = [
   { id: 'CUST-001', name: 'John Smith', email: 'john@email.com', phone: '+1-555-0101', loyaltyPoints: 1250 },
   { id: 'CUST-002', name: 'Sarah Johnson', email: 'sarah@email.com', phone: '+1-555-0102', loyaltyPoints: 890 },
   { id: 'CUST-003', name: 'Michael Chen', email: 'michael@email.com', phone: '+1-555-0103', loyaltyPoints: 2340 },
   { id: 'CUST-004', name: 'Emily Rodriguez', email: 'emily@email.com', phone: '+1-555-0104', loyaltyPoints: 567 }
 ];
 
-const recentSales = [
+const recentSalesFallback = [
   {id: 'TXN-001',date: '2024-01-26 14:23',customer: 'John Smith',items: 3,total: 234.97,paymentMethod: 'Credit Card',cashier: 'Alice Wilson',status: 'completed'},
   {id: 'TXN-002',date: '2024-01-26 14:18',customer: 'Walk-in Customer',items: 1,total: 89.99,paymentMethod: 'Cash',cashier: 'Bob Johnson',status: 'completed'},
   {id: 'TXN-003',date: '2024-01-26 14:12',customer: 'Sarah Johnson',items: 2,total: 159.98,paymentMethod: 'Debit Card',cashier: 'Alice Wilson',status: 'completed'}
 ];
 
-const dailyStats = {
+const dailyStatsFallback = {
   totalSales: 2847.65,
   totalTransactions: 24,
   averageTransaction: 118.65,
@@ -51,9 +51,15 @@ const dailyStats = {
 };
 
 //---- POSModule ------
-export default function POSModule() {
-  const { fetchWithAuth } = useAuth();
+export default function app() {
+  const { fetchWithAuth, user } = useAuth();
   usePerfilProtegido("GERENTE_LOJA");
+
+  // remote-backed state (fall back to local constants)
+  const [productsList, setProductsList] = useState(productsFallback);
+  const [customersList, setCustomersList] = useState(customersFallback);
+  const [recentSalesList, setRecentSalesList] = useState(recentSalesFallback);
+  const [dailyStatsState, setDailyStatsState] = useState(dailyStatsFallback);
 
   // finance/dashboard states
   const [saldoFinal, setSaldoFinal] = useState(0);
@@ -72,9 +78,9 @@ export default function POSModule() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountReceived, setAmountReceived] = useState(0);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const categories = ['all', ...new Set(products.map(p => p.category))];
+  const categories = ['all', ...Array.from(new Set((productsList || []).map(p => p.category || ''))).filter(c => c)];
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = (productsList || []).filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const term = searchTerm.trim().toLowerCase();
     const matchesSearch = term === '' || product.name.toLowerCase().includes(term) || (product.barcode && product.barcode.includes(term));
@@ -84,9 +90,7 @@ export default function POSModule() {
   const addToCart = (product) => {
     setCart((c) => {
       const existing = c.find(i => i.id === product.id);
-      if (existing) {
-        return c.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
-      }
+      if (existing) {return c.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);}
       return [...c, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
     });
   };
@@ -139,9 +143,7 @@ export default function POSModule() {
         if (contentType.includes('application/json')) return await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
         const text = await resp.text().catch(() => null);
         return { ok: false, text };
-      } catch (err) {
-        console.debug('fetchWithAuth failed, falling back to direct fetch:', err.message || err);
-      }
+      } catch (err) {console.debug('fetchWithAuth failed, falling back to direct fetch:', err.message || err)}
     }
 
     // fallback: direct fetch to API_URL with credentials included
@@ -157,9 +159,8 @@ export default function POSModule() {
       if (contentType.includes('application/json')) return await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
       const text = await resp.text().catch(() => null);
       return { ok: false, text };
-    } catch (error) {
-      return { ok: false, error: error.message };
     }
+    catch (error) {return { ok: false, error: error.message }}
   };
 
   const processSale = async () => {
@@ -170,15 +171,12 @@ export default function POSModule() {
 
     try {
       const itens = cart.map((i) => {
-        const numeric = Number(i.id);
-        if (!Number.isNaN(numeric) && Number.isFinite(numeric) && numeric > 0) {
-          return { produtoId: numeric, quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
-        }
+        const numeric = Number(i.id);if (!Number.isNaN(numeric) && Number.isFinite(numeric) && numeric > 0) {
+          return { produtoId: numeric, quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 }}
         return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
       });
 
       const payload = { pagamento: paymentMethod, itens };
-
       const resp = await safeFetchJson('/vendas/criar', { method: 'POST', body: JSON.stringify(payload) });
 
       if (!resp || resp.sucesso === false) {
@@ -202,9 +200,6 @@ export default function POSModule() {
   };
   useEffect(() => {
     let mounted = true;
-
-    
-
     const loadFinance = async () => {
       try {
         const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
@@ -215,20 +210,15 @@ export default function POSModule() {
         ]);
 
         if (!mounted) return;
-
-        if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') {
-          setSaldoFinal(Number(saldoRes.saldoFinal ?? 0));
-        } else if (saldoRes && saldoRes.text) {
-          console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes);
-        }
+        if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') {setSaldoFinal(Number(saldoRes.saldoFinal ?? 0))}
+        else if (saldoRes && saldoRes.text) {console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes)}
 
         if (mediaRes && mediaRes.sucesso !== false && typeof mediaRes.media !== 'undefined') {
           setTotalSales(Number(mediaRes.total ?? 0));
           setTotalTransactions(Number(mediaRes.quantidade ?? 0));
           setAverageTransactionValue(Number(mediaRes.media ?? 0));
-        } else if (mediaRes && mediaRes.text) {
-          console.warn('/vendas/media-por-transacao returned non-JSON:', mediaRes.text?.slice ? mediaRes.text.slice(0, 300) : mediaRes);
         }
+        else if (mediaRes && mediaRes.text) {console.warn('/vendas/media-por-transacao returned non-JSON:', mediaRes.text?.slice ? mediaRes.text.slice(0, 300) : mediaRes)}
 
         if (pagamentosRes && pagamentosRes.sucesso !== false && pagamentosRes.detalhamento) {
           const det = pagamentosRes.detalhamento;
@@ -237,24 +227,68 @@ export default function POSModule() {
             DINHEIRO: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
             CARTAO: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
           });
-        } else if (pagamentosRes && pagamentosRes.text) {
-          console.warn('/vendas/divisao-pagamentos returned non-JSON:', pagamentosRes.text?.slice ? pagamentosRes.text.slice(0, 300) : pagamentosRes);
         }
+        else if (pagamentosRes && pagamentosRes.text) {console.warn('/vendas/divisao-pagamentos returned non-JSON:', pagamentosRes.text?.slice ? pagamentosRes.text.slice(0, 300) : pagamentosRes)}
 
-        if (produtoRes && produtoRes.sucesso) {
-          setTopProduct(produtoRes.produto || null);
-        } else if (produtoRes && produtoRes.text) {
-          console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes);
-        }
+        if (produtoRes && produtoRes.sucesso) {setTopProduct(produtoRes.produto || null)}
+        else if (produtoRes && produtoRes.text) {console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes)}
 
-      } catch (error) {
-        console.error('Erro ao carregar dados financeiros:', error);
-      }
+        // montar dailyStatsState a partir das respostas financeiras
+        try {
+          const total = Number(mediaRes?.total ?? 0);
+          const quantidade = Number(mediaRes?.quantidade ?? 0);
+          const media = Number(mediaRes?.media ?? 0);
+          const det = pagamentosRes?.detalhamento ?? {};
+          setDailyStatsState({
+            totalSales: total,
+            totalTransactions: quantidade,
+            averageTransaction: media,
+            cashSales: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
+            cardSales: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
+            topProduct: produtoRes?.produto?.nome ?? produtoRes?.produto ?? null,
+            peakHour: dailyStatsState?.peakHour ?? '—'
+          });
+        } catch (err) { console.debug('Erro ao montar dailyStatsState:', err); }
+
+        // buscar produtos e usuários para a UI (com parsing resiliente)
+        try {
+          const [produtosResp, usuariosResp] = await Promise.all([
+            safeFetchJson('/produtos'),
+            safeFetchJson('/usuarios/unidade/listar')
+          ]);
+
+          if (Array.isArray(produtosResp)) {
+            setProductsList(produtosResp);
+          } else if (produtosResp && Array.isArray(produtosResp.produtos)) {
+            setProductsList(produtosResp.produtos);
+          } else if (produtosResp && Array.isArray(produtosResp.estoques)) {
+            const flattened = [];
+            produtosResp.estoques.forEach(est => { (est.estoqueProdutos||[]).forEach(ep => flattened.push({ id: ep.id, name: ep.nome ?? ep.produto?.nome, price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0), stock: Number(ep.quantidade ?? ep.qntdAtual ?? 0), category: ep.categoria ?? ep.produto?.categoria ?? '—', barcode: ep.sku ?? ep.codigo ?? '', image: ep.imagem ?? '/api/placeholder/80/80' })); });
+            if (flattened.length) setProductsList(flattened);
+          }
+
+          if (usuariosResp && usuariosResp.sucesso && Array.isArray(usuariosResp.usuarios)) {
+            setCustomersList(usuariosResp.usuarios);
+          }
+        } catch (err) { console.warn('Erro ao carregar produtos/usuarios:', err); }
+
+        // buscar vendas recentes (por unidade, se disponível)
+        try {
+          const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+          if (unidadeId) {
+            const vendasResp = await safeFetchJson(`/listarVendas/${unidadeId}`);
+            if (Array.isArray(vendasResp)) setRecentSalesList(vendasResp);
+            else if (vendasResp && vendasResp.sucesso && Array.isArray(vendasResp.vendas)) setRecentSalesList(vendasResp.vendas);
+            else if (vendasResp && Array.isArray(vendasResp.listaVendas)) setRecentSalesList(vendasResp.listaVendas);
+          }
+        } catch (err) { console.warn('Erro ao carregar vendas recentes:', err); }
+
+      } catch (error) { console.error('Erro ao carregar dados financeiros:', error); }
     };
 
     loadFinance();
     return () => { mounted = false; };
-  }, [fetchWithAuth]);
+  }, [fetchWithAuth, user]);
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -313,8 +347,6 @@ export default function POSModule() {
         <TabsList>
           <TabsTrigger value="pos">Frente de Caixa</TabsTrigger>
           <TabsTrigger value="sales">Histórico de Vendas</TabsTrigger>
-          <TabsTrigger value="customers">Clientes</TabsTrigger>
-          <TabsTrigger value="reports">Relatórios Diários</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pos" className="space-y-4">
@@ -446,14 +478,14 @@ export default function POSModule() {
               </DialogHeader>
               <div className="space-y-4">
                 <Input placeholder="Buscar clientes..." />
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {customers.map((customer) => (
-                    <div key={customer.id} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => {setSelectedCustomer(customer);setIsCustomerSelectOpen(false);}}>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {customersList.map((customer) => (
+                    <div key={customer.id || customer.email || customer.telefone} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => {setSelectedCustomer(customer);setIsCustomerSelectOpen(false);}}>
                       <div>
-                        <div className="font-medium">{customer.name}</div>
+                        <div className="font-medium">{customer.nome ?? customer.name}</div>
                         <div className="text-sm text-muted-foreground">{customer.email}</div>
                       </div>
-                      <div className="text-sm"><Badge variant="outline">{customer.loyaltyPoints} pts</Badge></div>
+                      <div className="text-sm"><Badge variant="outline">{customer.pontosFidelidade ?? customer.loyaltyPoints ?? 0} pts</Badge></div>
                     </div>
                   ))}
                 </div>
@@ -535,15 +567,15 @@ export default function POSModule() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentSales.map((sale) => (
+                    {recentSalesList.map((sale) => (
                       <TableRow key={sale.id}>
                         <TableCell className="font-medium">{sale.id}</TableCell>
-                        <TableCell>{sale.date}</TableCell>
-                        <TableCell>{sale.customer}</TableCell>
-                        <TableCell>{sale.items}</TableCell>
-                        <TableCell>R$ {sale.total.toFixed(2)}</TableCell>
-                        <TableCell>{sale.paymentMethod}</TableCell>
-                        <TableCell>{sale.cashier}</TableCell>
+                        <TableCell>{sale.data ?? sale.date}</TableCell>
+                        <TableCell>{sale.nomeCliente ?? sale.customer}</TableCell>
+                        <TableCell>{sale.itens ?? sale.items}</TableCell>
+                        <TableCell>R$ {Number(sale.total ?? sale.valor ?? 0).toFixed(2)}</TableCell>
+                        <TableCell>{sale.pagamento ?? sale.paymentMethod}</TableCell>
+                        <TableCell>{sale.usuarioNome ?? sale.cashier}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm">Ver</Button>
@@ -554,143 +586,6 @@ export default function POSModule() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="customers" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestão de Clientes</CardTitle>
-              <CardDescription>Pesquisar e gerenciar informações dos clientes</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input placeholder="Buscar clientes..." className="pl-10" />
-                </div>
-                <Button>Adicionar Cliente</Button>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {customers.map((customer) => (
-                  <Card key={customer.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-muted-foreground">{customer.email}</div>
-                          <div className="text-sm text-muted-foreground">{customer.phone}</div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="outline">{customer.loyaltyPoints} pts</Badge>
-                          <div className="flex gap-2 mt-2">
-                            <Button variant="outline" size="sm">Editar</Button>
-                            <Button variant="outline" size="sm">Histórico</Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="reports" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader><CardTitle>Resumo Diário</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Vendas Totais:</span>
-                    <span className="font-bold">R$ {dailyStats.totalSales.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Transações:</span>
-                    <span>{dailyStats.totalTransactions}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Média por Transação:</span>
-                    <span>R$ {dailyStats.averageTransaction.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Hora de Pico:</span>
-                    <span className="text-sm">{dailyStats.peakHour}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Métodos de Pagamento</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Dinheiro</span>
-                      <span>R$ {dailyStats.cashSales.toFixed(2)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{ width: `${(dailyStats.cashSales / dailyStats.totalSales) * 100}%` }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Cartão</span>
-                      <span>R$ {dailyStats.cardSales.toFixed(2)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(dailyStats.cardSales / dailyStats.totalSales) * 100}%` }}></div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Produtos Principais</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Wireless Headphones</span><span>12 vendidos</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Coffee Mug</span><span>8 vendidos</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>USB Cable</span><span>6 vendidos</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Water Bottle</span><span>5 vendidos</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Gerar Relatórios</CardTitle>
-              <CardDescription>Criar relatórios detalhados de vendas e desempenho</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Button variant="outline" className="h-20 flex-col">
-                  <Receipt className="size-6 mb-2" />Vendas Diárias
-                </Button>
-                <Button variant="outline" className="h-20 flex-col">
-                  <Barcode className="size-6 mb-2" />Desempenho do Produto
-                </Button>
-                <Button variant="outline" className="h-20 flex-col">
-                  <User className="size-6 mb-2" />Relatório de Clientes
-                </Button>
-                <Button variant="outline" className="h-20 flex-col">
-                  <CreditCard className="size-6 mb-2" />Análise de Pagamentos
-                </Button>
               </div>
             </CardContent>
           </Card>
