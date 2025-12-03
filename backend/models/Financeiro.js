@@ -72,7 +72,7 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
 export const somarDiaria = async (unidadeId) => {//tem controller
     const result = await prisma.$queryRaw`
     SELECT COALESCE(SUM("total"), 0) AS total
-    FROM "vendas"
+    FROM "venda"
     WHERE DATE("criado_em") = CURRENT_DATE
       AND "unidade_id" = ${unidadeId};
   `;
@@ -84,7 +84,7 @@ export const calcularMediaPorTransacaoDiaria = async (unidadeId) => {
     try {
         const [res] = await prisma.$queryRaw`
             SELECT COALESCE(SUM("total"),0) AS total, COUNT(*) AS quantidade
-            FROM "vendas"
+            FROM "venda"
             WHERE DATE("criado_em") = CURRENT_DATE
               AND "unidade_id" = ${unidadeId};
         `;
@@ -114,7 +114,7 @@ export const somarPorPagamentoDiario = async (unidadeId) => {
     try {
         const rows = await prisma.$queryRaw`
             SELECT "pagamento" as pagamento, COALESCE(SUM("total"),0) as total
-            FROM "vendas"
+            FROM "venda"
             WHERE DATE("criado_em") = CURRENT_DATE
               AND "unidade_id" = ${unidadeId}
             GROUP BY "pagamento";
@@ -149,7 +149,7 @@ export const somarEntradaMensal = async (unidadeId) => { // Acho q agora funcion
       SELECT
         TO_CHAR(DATE_TRUNC('month', "criado_em"), 'YYYY-MM') AS mes,
         SUM("total") AS total_vendas
-      FROM "vendas"
+      FROM "venda"
       WHERE "unidade_id" = ${unidadeId}
       GROUP BY DATE_TRUNC('month', "criado_em")
       ORDER BY mes DESC;
@@ -158,34 +158,56 @@ export const somarEntradaMensal = async (unidadeId) => { // Acho q agora funcion
 }
   
 export const somarSaidas = async (unidadeId) => {
-    const result = await prisma.$queryRaw`
-    SELECT COALESCE (SUM(valor), 0) AS total
-    from "Saidas"
-    where date("data") = CURRENT_DATE
-    and "unidadeId" = ${unidadeId}`;
-    return result[0]?.total ?? 0;
-}
+    try {
+        const agora = new Date();
+        const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
+
+        const agg = await prisma.financeiro.aggregate({
+            _sum: { valor: true },
+            where: {
+                unidadeId: Number(unidadeId),
+                tipoMovimento: 'SAIDA',
+                criadoEm: { gte: inicioDoDia, lte: fimDoDia },
+            },
+        });
+
+        return Number(agg._sum.valor ?? 0);
+    } catch (e) {
+        console.error('Erro em somarSaidas:', e);
+        return 0;
+    }
+};
 
 export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
-    const [vendas] = await prisma.$queryRaw`
-    SELECT COALESCE(SUM(total), 0) AS total
-    FROM "vendas"
-    WHERE "unidade_id" = ${unidadeId}
-      AND DATE_TRUNC('month', "criado_em") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
-  `;
+  // Calcular soma de vendas e saídas do mês anterior usando aggregates Prisma
+  try {
+    const hoje = new Date();
+    const primeiroDiaMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+    const ultimoDiaMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23, 59, 59, 999);
 
-  const [saidas] = await prisma.$queryRaw`
-    SELECT COALESCE(SUM(valor), 0) AS total
-    FROM "Saidas"
-    WHERE "unidadeId" = ${unidadeId}
-      AND DATE_TRUNC('month', "data") = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
-  `;
+    const vendasAgg = await prisma.venda.aggregate({
+      _sum: { total: true },
+      where: { unidadeId: Number(unidadeId), criadoEm: { gte: primeiroDiaMesAnterior, lte: ultimoDiaMesAnterior } },
+    });
 
-  return {
-    total_vendas: vendas.total,
-    total_saidas: saidas.total,
-    lucro: vendas.total - saidas.total,
-  };
+    const saidasAgg = await prisma.financeiro.aggregate({
+      _sum: { valor: true },
+      where: { unidadeId: Number(unidadeId), tipoMovimento: 'SAIDA', criadoEm: { gte: primeiroDiaMesAnterior, lte: ultimoDiaMesAnterior } },
+    });
+
+    const totalVendas = Number(vendasAgg._sum.total ?? 0);
+    const totalSaidas = Number(saidasAgg._sum.valor ?? 0);
+
+    return {
+      total_vendas: totalVendas,
+      total_saidas: totalSaidas,
+      lucro: totalVendas - totalSaidas,
+    };
+  } catch (e) {
+    console.error('Erro em calcularLucroDoMes:', e);
+    return { total_vendas: 0, total_saidas: 0, lucro: 0 };
+  }
 }
 
 export const listarVendas = async (unidadeId) => { //FUNCIONA 
@@ -218,11 +240,8 @@ export const listarDespesas = async (unidadeId) => {
       // Agrupar as despesas por categoria
       const categorias = despesas.reduce((acc, despesa) => {
         const categoria = despesa.categoria || "Outros"; // Caso não tenha categoria, usar "Outros"
-        if (acc[categoria]) {
-          acc[categoria] += despesa.valor;
-        } else {
-          acc[categoria] = despesa.valor;
-        }
+        if (acc[categoria]) {acc[categoria] += despesa.valor;}
+        else {acc[categoria] = despesa.valor;}
         return acc;
       }, {});
   
@@ -331,12 +350,8 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 export async function criarVenda(req, res) {
     try {
         const { caixaId, usuarioId, unidadeId, pagamento, itens } = req.body;
-        // Basic validation: itens required
-        if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {
-            return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' });
-        }
+        if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
 
-        // If caixaId not provided, try to find today's caixa for the unidade
         let caixaIdToUse = caixaId ? Number(caixaId) : null;
         if (!caixaIdToUse) {
             const agora = new Date();
@@ -349,9 +364,7 @@ export async function criarVenda(req, res) {
             if (caixa) caixaIdToUse = caixa.id;
         }
 
-        if (!caixaIdToUse) {
-            return res.status(400).json({ sucesso: false, erro: 'Caixa não informado e nenhum caixa aberto encontrado para a unidade hoje.' });
-        }
+        if (!caixaIdToUse) {return res.status(400).json({ sucesso: false, erro: 'Caixa não informado e nenhum caixa aberto encontrado para a unidade hoje.' })}
 
         // Normalize payment method (accept frontend strings like 'cash','credit','debit','mobile')
         const normalizePagamento = (p) => {
@@ -364,8 +377,6 @@ export async function criarVenda(req, res) {
         };
 
         const pagamentoFinal = normalizePagamento(pagamento);
-
-        // Resolve items: support either produtoId (numeric) or produtoSku (string in item.produtoSku or item.produtoId)
         const itensResolvidos = await Promise.all(itens.map(async (item) => {
             // item: { produtoId | produtoSku, quantidade, precoUnitario, desconto }
             let produtoIdNum = Number(item.produtoId);
@@ -378,9 +389,7 @@ export async function criarVenda(req, res) {
                 }
             }
 
-            if (!produtoIdNum || Number.isNaN(produtoIdNum)) {
-                throw new Error(`Produto não encontrado ou id inválido para item: ${JSON.stringify(item)}`);
-            }
+            if (!produtoIdNum || Number.isNaN(produtoIdNum)) {throw new Error(`Produto não encontrado ou id inválido para item: ${JSON.stringify(item)}`)}
 
             const quantidade = Number(item.quantidade || 0);
             const precoUnitario = Number(item.precoUnitario || 0);
@@ -436,14 +445,14 @@ export const calcularSaldoLiquido = async (unidadeId) => {
             },
         });
 
-        const totalSaidas = await prisma.saidas.aggregate({// soma dos valores das saídas
-            _sum: { valor: true, },
-            where: { unidadeId: Number(unidadeId), },
-        });
+    const totalSaidas = await prisma.financeiro.aggregate({ // soma dos valores das saídas
+      _sum: { valor: true },
+      where: { unidadeId: Number(unidadeId), tipoMovimento: 'SAIDA' },
+    });
 
         const somaCaixas = Number(totalCaixas._sum.saldoFinal || 0);
         const somaSaidas = Number(totalSaidas._sum.valor || 0);
-        const saldoLiquido = somaCaixas - somaSaidas; // cálculo do saldo líquido
+        const saldoLiquido = somaCaixas - somaSaidas; 
 
         return {
             sucesso: true,
@@ -464,10 +473,9 @@ export async function listarSaidasPorUnidade(unidadeId) {
     try {
       const saidas = await prisma.financeiro.findMany({
         where: {
-          unidadeId: Number(unidadeId), // filtra todos com a mesma unidade
-          tipoMovimento: "SAIDA",        // filtra apenas os movimentos do tipo "SAIDA"
+          unidadeId: Number(unidadeId),
+          tipoMovimento: "SAIDA",   
         },
-        // orderBy: { data: "desc" }, // Você pode descomentar caso queira ordenar por data
       });
   
       return {
@@ -490,7 +498,7 @@ export const criarNotaFiscal = async (data) => {
     const { caixaId, usuarioId, unidadeId, itens, pagamento } = data;
 
     // 1 — Validar unidade
-    const unidade = await prisma.Unidade.findUnique({where: { id: Number(unidadeId) }});
+  const unidade = await prisma.unidade.findUnique({where: { id: Number(unidadeId) }});
 
     if (!unidade) {
       return {
@@ -500,14 +508,12 @@ export const criarNotaFiscal = async (data) => {
     }
 
     // 2 — Validar caixa
-    const caixa = await prisma.Caixa.findUnique({where: { id: Number(caixaId) }});
+  const caixa = await prisma.caixa.findUnique({where: { id: Number(caixaId) }});
 
     if (!caixa || caixa.unidadeId !== Number(unidadeId)) {return {sucesso: false,erro: "Caixa não pertence à unidade especificada"};}
 
     // 3 — Criar venda
-    const venda = await prisma.Venda.create({
-      data: {caixaId,usuarioId,unidadeId,pagamento,total: 0 }
-    });
+    const venda = await prisma.venda.create({data: {caixaId,usuarioId,unidadeId,pagamento,total: 0 }});
 
     let totalVenda = 0;
     const itensCriados = [];
@@ -518,7 +524,7 @@ export const criarNotaFiscal = async (data) => {
       totalVenda += subtotal;
 
       // Criar item
-      const novoItem = await prisma.ItemVenda.create({
+      const novoItem = await prisma.itemVenda.create({
         data: {
           vendaId: venda.id,
           produtoId: item.produtoId,
@@ -532,7 +538,7 @@ export const criarNotaFiscal = async (data) => {
       itensCriados.push(novoItem);
 
       // Buscar estoque da unidade
-      const estoque = await prisma.Estoque.findFirst({
+      const estoque = await prisma.estoque.findFirst({
         where: {unidadeId: Number(unidadeId),produtoId: item.produtoId}
       });
 
@@ -544,13 +550,13 @@ export const criarNotaFiscal = async (data) => {
       }
 
       // Atualizar estoque
-      await prisma.Estoque.update({
+      await prisma.estoque.update({
         where: { id: estoque.id },
         data: {quantidade: estoque.quantidade - item.quantidade}
       });
 
       // Registrar movimento
-      await prisma.EstoqueMovimento.create({
+      await prisma.estoqueMovimento.create({
         data: {
           estoqueId: estoque.id,
           tipoMovimento: "SAIDA",
@@ -562,7 +568,7 @@ export const criarNotaFiscal = async (data) => {
     }
 
     // 5 — Atualizar total
-    await prisma.Venda.update({where: { id: venda.id },data: { total: totalVenda } });
+    await prisma.venda.update({where: { id: venda.id },data: { total: totalVenda } });
 
     // 6 — Criar PDF
     const filePath = path.join(process.cwd(), `nota_fiscal_${venda.id}.pdf`);
