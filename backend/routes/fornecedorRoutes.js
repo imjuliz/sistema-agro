@@ -1,5 +1,5 @@
 import express from "express";
-import { listarTodosFornecedoresExternosController, criarFornecedorExternoController } from "../controllers/FornecedoresController.js";
+import { listarTodosFornecedoresExternosController, criarFornecedorExternoController, buscarPedidosExternosController } from "../controllers/fornecedoresController.js";
 import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -10,14 +10,7 @@ router.get("/externos", auth(["gerente_matriz", "gerente_fazenda"]), listarTodos
 // Rota para criar um novo fornecedor externo
 router.post("/externos", auth(["gerente_matriz", "gerente_fazenda"]), criarFornecedorExternoController);
 
+// Rota para buscar pedidos de fornecedores externos para uma unidade
+router.get("/pedidos-externos/:unidadeId", auth(["gerente_matriz", "gerente_fazenda"]), buscarPedidosExternosController);
+
 export default router;
-
-
-
-
-
-
-
-
-
-

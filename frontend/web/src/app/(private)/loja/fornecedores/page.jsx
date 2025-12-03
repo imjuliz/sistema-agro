@@ -12,15 +12,15 @@ import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProductCatalog } from "@/components/fornecedores/ProductCatalog";
+import { ProductCatalog } from "@/components/fornecedores-fazenda/ProductCatalog";
 // import { OrderManagement } from './OrderManagement';
-import { ChatInterface } from "@/components/fornecedores/ChatInterface";
-import { ComplaintSystem } from "@/components/fornecedores/ComplaintSystem";
+import { ChatInterface } from "@/components/fornecedores-fazenda/ChatInterface";
+import { ComplaintSystem } from "@/components/fornecedores-fazenda/ComplaintSystem";
 import { ShoppingCart, MessageSquare, AlertTriangle, Search, TrendingUp, Clock, CheckCircle, FileCheck } from "lucide-react";
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import { Card, CardContent, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import FornecedoresCard from "@/components/fornecedores/fornecedores-card";
-import { OrderManagement } from "@/components/fornecedores/OrderManagement";
+import FornecedoresCard from "@/components/fornecedores-fazenda/fornecedores-card";
+import { OrderManagement } from "@/components/fornecedores-fazenda/OrderManagement";
 
 export default function ConsumerDashboard() {
   const { fetchWithAuth, user } = useAuth();

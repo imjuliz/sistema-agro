@@ -1,5 +1,5 @@
 import prisma from "../prisma/client.js";
-import { somarQtdTotalEstoque, getEstoque,  getProdutoPorId, createProduto, deleteProduto,  listarProdutos } from "../models/estoque_produtos.js";
+import { somarQtdTotalEstoque, getEstoque,  getProdutoPorId, createProduto, deleteProduto,  listarProdutos, atualizarQntdMin } from "../models/estoque_produtos.js";
 import { lotesPlantio } from "../models/Fazendas.js";
 import { verPedidos, contarSaidas, listarPedidosEntrega, listarPedidosOrigem } from "../models/unidade-de-venda/Loja.js";
 
@@ -366,4 +366,33 @@ export const contarSaidasController = async (req, res) => {
     quantidade: resultado.quantidade,
     mensagem: "Quantidade de saídas obtida com sucesso!",
   });
+};
+
+// Atualiza a quantidade mínima (qntdMin) de um EstoqueProduto
+export const atualizarQntdMinController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { minimumStock, qntdMin } = req.body;
+
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ sucesso: false, erro: 'ID inválido.' });
+    }
+
+    const value = typeof minimumStock !== 'undefined' ? minimumStock : qntdMin;
+
+    if (typeof value === 'undefined' || value === null || isNaN(Number(value))) {
+      return res.status(400).json({ sucesso: false, erro: 'minimumStock (qntdMin) numérico obrigatório.' });
+    }
+
+    const resultado = await atualizarQntdMin(Number(id), Number(value));
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json({ sucesso: true, produto: resultado.produto, message: resultado.message });
+  } catch (error) {
+    console.error('Erro ao atualizar qntdMin:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao atualizar quantidade mínima.', detalhes: error.message });
+  }
 };

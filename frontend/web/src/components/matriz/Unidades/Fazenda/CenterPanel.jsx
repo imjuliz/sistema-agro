@@ -23,7 +23,7 @@ export function CenterPanel({ activeTab, fazenda }) {
       case 'financeiro':
         return <FinanceiroTab />;
       case 'fornecedores':
-        return <FornecedoresTab />;
+        return <FornecedoresTab fazenda={fazenda} />;
       case 'comunicados':
         return <ComunicadosTab />;
       default:

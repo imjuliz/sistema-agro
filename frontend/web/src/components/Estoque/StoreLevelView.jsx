@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useInventory } from '@/contexts/InventoryContext';
 import { Button } from '../ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react'
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -18,7 +20,7 @@ function getStockStatus(current, minimum) {
 }
 
 export function StoreLevelView({ onOpenMovimento }) {
-  const { getStoreItems, storeMapping, refresh } = useInventory();
+  const { getStoreItems, storeMapping, refresh, atualizarMinimumStockRemote, isGerenteMatriz, isGerenteFazenda, isGerenteLoja } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
 
@@ -199,7 +201,7 @@ export function StoreLevelView({ onOpenMovimento }) {
                 <TableHead>Estoque Atual</TableHead>
                 <TableHead>Min Estoque</TableHead>
                 <TableHead>Preço unitário</TableHead>
-                {/* <TableHead>Ações</TableHead> */}
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,10 +223,59 @@ export function StoreLevelView({ onOpenMovimento }) {
                     <TableCell>{item.minimumStock}</TableCell>
                     <TableCell>{fmtBRL(item.price)}</TableCell>
                     <TableCell>
-                            <Button size="sm" onClick={() => onOpenMovimento ? onOpenMovimento(item) : null}>
-                              Registrar
-                            </Button>
-                          </TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                                  {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
+                                  <DropdownMenuItem>Editar</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={async () => {
+                                    try {
+                                      const isManager = isGerenteMatriz || isGerenteFazenda || isGerenteLoja;
+                                      if (!isManager) {
+                                        alert('Ação disponível apenas para gerentes.');
+                                        return;
+                                      }
+
+                                      const epId = item.rawItemId ?? null;
+                                      if (!epId) {
+                                        alert('Esse item não suporta edição remota de mínimo.');
+                                        return;
+                                      }
+
+                                      const current = item.minimumStock ?? 0;
+                                      const input = window.prompt(`Quantidade mínima atual: ${current}\nDigite a nova quantidade mínima:`, String(current));
+                                      if (input === null) return; // cancelado
+                                      const newVal = Number(input.trim());
+                                      if (isNaN(newVal)) {
+                                        alert('Valor inválido. Insira um número.');
+                                        return;
+                                      }
+
+                                      const resp = await atualizarMinimumStockRemote(epId, newVal);
+                                      if (!resp.sucesso) {
+                                        alert('Erro ao atualizar: ' + (resp.erro || 'Falha')); 
+                                        return;
+                                      }
+
+                                      alert('Quantidade mínima atualizada.');
+                                      // refresh local view
+                                      refresh();
+                                    } catch (err) {
+                                      console.error('Erro ao atualizar mínimo:', err);
+                                      alert('Erro ao atualizar quantidade mínima.');
+                                    }
+                                  }}>Editar mínimo</DropdownMenuItem>
+                                  <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                          {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 );
               })}

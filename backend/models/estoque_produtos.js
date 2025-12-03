@@ -310,3 +310,29 @@ export const consultarLoteAgricola = async ( loteId) => {
 export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId) => {
 
 }
+
+// Atualiza a quantidade mínima (qntdMin) de um EstoqueProduto
+export const atualizarQntdMin = async (estoqueProdutoId, qntdMin) => {
+    try {
+        if (!estoqueProdutoId || isNaN(Number(estoqueProdutoId))) {
+            return { sucesso: false, erro: 'ID do produto em estoque inválido.' };
+        }
+
+        const produto = await prisma.estoqueProduto.update({
+            where: { id: Number(estoqueProdutoId) },
+            data: { qntdMin: Number(qntdMin) },
+        });
+
+        return {
+            sucesso: true,
+            produto,
+            message: 'Quantidade mínima atualizada com sucesso.'
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: 'Erro ao atualizar quantidade mínima.',
+            detalhes: error.message
+        };
+    }
+};

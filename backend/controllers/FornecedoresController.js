@@ -1,4 +1,4 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno } from "../models/Fornecedores.js";
+import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos } from "../models/Fornecedores.js";
 
 // Retorna metadados úteis para o frontend (enums / opções)
 export const listarMetaContratosController = async (req, res) => {
@@ -181,10 +181,16 @@ export const verContratosExternosController = async (req,res) =>{ //FUNCIONANDO 
         erro: "Usuário não possui unidade vinculada!"
       })
     }
-    const contratosExternos = await verContratosExternos(unidadeId);
+    console.log('[verContratosExternosController] recebida requisição. unidadeId=', unidadeId);
+    const result = await verContratosExternos(unidadeId);
+
+    // Normalize result: model may return { sucesso, contratosExternos, message } or an array directly
+    const contratosArray = Array.isArray(result) ? result : (Array.isArray(result?.contratosExternos) ? result.contratosExternos : []);
+    console.log('[verContratosExternosController] contratosExternos count (normalized)=', contratosArray.length);
+
     return res.status(200).json({
       sucesso: true,
-      contratosExternos,
+      contratosExternos: contratosArray,
       message: "Contratos listados com sucesso!"
     });
 
@@ -369,6 +375,35 @@ export const criarFornecedorExternoController = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ sucesso:false, erro: "Erro interno." });
+  }
+};
+
+export const buscarPedidosExternosController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params;
+
+    if (!unidadeId) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Unidade não informada."
+      });
+    }
+
+    const resultado = await buscarPedidosExternos(unidadeId);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+
+  } catch (error) {
+    console.error("Erro no controller ao buscar pedidos externos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno no servidor.",
+      detalhes: error.message
+    });
   }
 };
 

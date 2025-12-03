@@ -6,9 +6,9 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
-import {listarPedidosEntregaController, listarPedidosOrigemController } from "../controllers/estoque_produtosController.js";
+import {listarPedidosEntregaController, listarPedidosOrigemController, atualizarQntdMinController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController } from "../controllers/fornecedoresController.js";
+import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController } from "../controllers/fornecedoresController.js";
 import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
@@ -66,6 +66,7 @@ router.get("/listarFornecedoresInternos/:unidadeId", listarFornecedoresInternosC
 router.get("/listarLojasParceiras/:unidadeId", listarLojasAtendidasController);
 router.get("/verContratosComLojas/:fornecedorUnidadeId", verContratosComLojasController);
 router.get("/verContratosExternos/:unidadeId", verContratosExternosController);
+router.get("/pedidos-externos/:unidadeId", buscarPedidosExternosController);
 router.get("/verContratosComFazendas/:unidadeId", verContratosComFazendasController);
 router.post("/criarContratoInterno/:fazendaId", criarContratoInternoController);
 router.post("/criarContratoExterno/:unidadeId", criarContratoExternoController);
@@ -75,6 +76,8 @@ router.get("/meta/contratos", listarMetaContratosController);
 //estoque-produtos (pedidos) --------------------------------------------------------------------
 router.get("/estoque-produtos/pedidos/:unidadeId", listarPedidosEntregaController);
 router.get("/estoque-produtos/pedidos-origem/:unidadeId", listarPedidosOrigemController);
+// atualizar quantidade mínima de produto no estoque (qntdMin)
+router.put("/estoque-produtos/:id/minimum", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), atualizarQntdMinController);
 
 // dashboard - dados agregados para gráficos (por unidade)
 router.get('/dashboard/fazenda/:unidadeId', auth, getDashboardDataController);

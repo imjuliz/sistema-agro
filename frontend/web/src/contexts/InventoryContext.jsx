@@ -597,6 +597,32 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
     }
   }
 
+  // Atualiza qntdMin de um EstoqueProduto via endpoint dedicado e atualiza a lista local
+  async function atualizarMinimumStockRemote(estoqueProdutoId, minimum) {
+    try {
+      const url = `${API_URL}estoque-produtos/${estoqueProdutoId}/minimum`;
+      const res = await fetchWithAuth(url, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minimumStock: Number(minimum) })
+      });
+
+      if (!res.ok) {
+        let txt = await res.text().catch(() => null);
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+
+      // força recarga dos estoques para refletir a mudança
+      await load({ unidadeId: userUnidadeId });
+      return { sucesso: true };
+    } catch (err) {
+      console.error('Erro ao atualizar minimumStock remoto', err);
+      setError(String(err?.message ?? err));
+      return { sucesso: false, erro: String(err?.message ?? err) };
+    }
+  }
+
   // transform helpers...
   // logo após const [items, setItems] = useState(initialData);
   const storeMapping = useMemo(() => {
@@ -777,6 +803,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       loading,
       error,
       refresh,
+      atualizarMinimumStockRemote,
       updateItemRemote,
       addItemRemote,
       deleteItemRemote,

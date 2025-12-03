@@ -144,7 +144,7 @@ model Produto {
   id              Int                @id @default(autoincrement())
   unidadeId       Int                @map("unidade_id")
   origemUnidadeId Int?               @map("origem_unidade_id")
-  fornecedorId    Int?               @map("fornecedor_id")
+  // fornecedorId    Int?               @map("fornecedor_id")
   criadoPorId     Int?               @map("criado_por_id")
   loteId          Int?               @map("lote_id")
   nome            String             @db.VarChar(150)
@@ -168,14 +168,14 @@ model Produto {
   pedidoItems     PedidoItem[]
   producao        Producao[]
   criadoPor       Usuario?           @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
-  fornecedor      FornecedorExterno? @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id])
+  // fornecedor      FornecedorExterno? @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id])
   lote            Lote?              @relation(fields: [loteId], references: [id], onDelete: Restrict)
   origemUnidade   Unidade?           @relation("ProdutoOrigem", fields: [origemUnidadeId], references: [id])
   unidade         Unidade            @relation("ProdutoUnidade", fields: [unidadeId], references: [id])
 
   @@index([unidadeId])
   @@index([origemUnidadeId])
-  @@index([fornecedorId])
+  // @@index([fornecedorId])
   @@index([loteId])
   @@index([categoria])
   @@index([codigoBarras])
@@ -274,7 +274,7 @@ model FornecedorExterno {
   contratos         Contrato[]       @relation("ContratoFornecedorExterno")
   estoqueProdutos   EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
   pedidos           Pedido[]
-  produtosRecebidos Produto[]        @relation("FornecedorProdutosRecebidos")
+  // produtosRecebidos Produto[]        @relation("FornecedorProdutosRecebidos")
 
   @@map("fornecedor_externo")
 }
