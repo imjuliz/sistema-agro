@@ -206,8 +206,8 @@ export const calcularMediaPorTransacaoController = async (req, res) => {
 // DIVISÃO POR FORMAS DE PAGAMENTO (vendas do dia)
 export const divisaoPagamentosController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+    const unidadeId = Number(req.params.unidadeId) || req.session?.usuario?.unidadeId;
+    if (!unidadeId || isNaN(unidadeId)) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão ou ID inválido.' }); }
 
     const resultado = await somarPorPagamentoDiario(Number(unidadeId));
     if (!resultado.sucesso) { return res.status(500).json(resultado); }
@@ -222,8 +222,8 @@ export const divisaoPagamentosController = async (req, res) => {
 // BUSCAR PRODUTO MAIS VENDIDO (usando o model já existente)
 export const buscarProdutoMaisVendidoController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+    const unidadeId = Number(req.params.unidadeId) || req.session?.usuario?.unidadeId;
+    if (!unidadeId || isNaN(unidadeId)) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão ou ID inválido.' }); }
 
     const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
     if (!resultado.sucesso) { return res.status(404).json(resultado); }

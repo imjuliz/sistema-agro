@@ -84,9 +84,9 @@ export default function app() {
     produtosBase: '/produtos',
     saldoFinal: '/saldo-final',
     somarDiaria: (unidadeId) => `/somarDiaria/${unidadeId}`,
-vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
-    vendasPagamentos: '/vendas/divisao-pagamentos',
-    produtoMaisVendido: '/financeiro/produto-mais-vendido',
+    vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
+    vendasPagamentos: (unidadeId) => `/vendas/divisao-pagamentos/${unidadeId}`,
+    produtoMaisVendido: (unidadeId) => `/financeiro/produto-mais-vendido/${unidadeId}`,
     usuariosUnidadeListar: '/usuarios/unidade/listar',
     listarVendas: (unidadeId) => `/listarVendas/${unidadeId}`,
     vendasCriar: '/vendas/criar'
@@ -207,9 +207,9 @@ vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
       const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
       const [saldoRes, mediaRes, pagamentosRes, produtoRes, diarioRes] = await Promise.all([
         safeFetchJson(ENDPOINTS.saldoFinal),
-        safeFetchJson(ENDPOINTS.vendasMedia(unidadeId)),
-         safeFetchJson(ENDPOINTS.vendasPagamentos),
-        safeFetchJson(ENDPOINTS.produtoMaisVendido),
+        unidadeId ? safeFetchJson(ENDPOINTS.vendasMedia(unidadeId)) : Promise.resolve(null),
+        unidadeId ? safeFetchJson(ENDPOINTS.vendasPagamentos(unidadeId)) : Promise.resolve(null),
+        unidadeId ? safeFetchJson(ENDPOINTS.produtoMaisVendido(unidadeId)) : Promise.resolve(null),
         unidadeId ? safeFetchJson(ENDPOINTS.somarDiaria(unidadeId)) : Promise.resolve(null),
       ]);
 
@@ -369,7 +369,7 @@ vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
                 <div className="flex justify-between"><span>Cartão</span><strong>R$ {Number(paymentsBreakdown.CARTAO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <hr className="my-2" />
                 <div className="text-xs text-muted-foreground">Produto mais vendido:</div>
-                <div className="font-medium">{dailyStatsState?.topProduct ? dailyStatsState.topProduct : (topProduct ? (topProduct.nome ?? String(topProduct)) : '—')}</div>
+                <div className="font-medium">{topProduct?.nome ? `${topProduct.nome} (${topProduct.quantidadeVendida}x)` : '—'}</div>
               </div>
             )}
           </CardContent>
