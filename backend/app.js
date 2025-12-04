@@ -18,6 +18,7 @@ import animaisRoutes from './routes/animaisRoutes.js';
 import loteRoutes from './routes/loteRoutes.js';
 import plantioRoutes from './routes/plantioRoutes.js';
 import produtoRoutes from './routes/produtoRoutes.js';
+import planoProducaoRoutes from './routes/planoProducaoRoutes.js';
 
 dotenv.config({ path: ".env", quiet: true });
 
@@ -91,6 +92,7 @@ app.use('/animais', animaisRoutes);
 app.use('/lotes', loteRoutes);
 app.use('/plantio', plantioRoutes);
 app.use('/produtos', produtoRoutes);
+app.use('/plano-producao', planoProducaoRoutes);
 
 app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
 

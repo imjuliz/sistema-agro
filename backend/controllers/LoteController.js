@@ -120,18 +120,31 @@ export async function getLotePorIdController(req, res) {
 
 export async function createLoteController(req, res) {
   try {
-    const data = loteSchema.parse(req.body);
     const usuario = req.usuario;
-    const { unidadeId, contratoId } = IdsSchema.parse(req.params);
-
-    // Validações
-    if (!data.responsavelId) {
-      return res.status(400).json({ erro: "Responsável inválido." });
+    
+    // Pega unidadeId e contratoId do body ou params
+    const unidadeId = req.body.unidadeId || req.params.unidadeId;
+    const contratoId = req.body.contratoId || req.params.contratoId;
+    
+    // Validações de IDs
+    if (!unidadeId || isNaN(unidadeId)) {
+      return res.status(400).json({ 
+        sucesso: false,
+        erro: "Unidade não informada." 
+      });
     }
 
+    if (!contratoId || isNaN(contratoId)) {
+      return res.status(400).json({ 
+        sucesso: false,
+        erro: "Contrato não informado." 
+      });
+    }
+
+    // Validação de permissão
     if (
       usuario.perfil.nome !== "GERENTE_FAZENDA" &&
-      usuario.unidadeId !== unidadeId
+      usuario.unidadeId !== parseInt(unidadeId)
     ) {
       return res.status(403).json({
         sucesso: false,
@@ -139,20 +152,22 @@ export async function createLoteController(req, res) {
       });
     }
 
-    
-    if (!unidadeId || isNaN(unidadeId)) {
-      return res.status(400).json({ erro: "Unidade nao informada." });
+    // Validar dados do lote
+    const data = loteSchema.parse(req.body);
+
+    if (!data.responsavelId) {
+      return res.status(400).json({ 
+        sucesso: false,
+        erro: "Responsável inválido." 
+      });
     }
 
-    if (!contratoId || isNaN(contratoId)) {
-      return res.status(400).json({ erro: "Contrato nao informada." });
-    }
+    const lote = await createLote(data, parseInt(unidadeId), parseInt(contratoId));
 
-    const lote = await createLote(data, unidadeId, contratoId);
-
-    return res.status(201).json({lote});
+    return res.status(201).json(lote);
 
   } catch (error) {
+    console.error("Erro ao criar lote:", error);
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao criar lote.",

@@ -75,35 +75,36 @@ model Unidade {
 }
 
 model Usuario {
-  id                  Int            @id @default(autoincrement())
-  perfilId            Int            @map("perfil_id")
-  unidadeId           Int?           @map("unidade_id")
-  nome                String         @db.VarChar(100)
-  email               String         @unique @db.VarChar(100)
-  senha               String         @db.VarChar(255)
-  telefone            String         @db.VarChar(20)
-  ftPerfil            String?        @map("ft_perfil") @db.VarChar(1000)
-  status              Boolean        @default(true)
-  tokenVersion        Int            @default(0)
-  failedAttempts      Int            @default(0)
-  lockoutUntil        DateTime?
-  criadoEm            DateTime       @default(now()) @map("criado_em")
-  atualizadoEm        DateTime       @default(now()) @updatedAt @map("atualizado_em")
-  atvdAnimalia        AtvdAnimalia[] @relation("UsuarioAtvdAnimalia")
-  atvdLote            AtvdLote[]
-  atvdAgricola        AtvdAgricola[] @relation("UsuarioAtvdPlantio")
-  caixas              Caixa[]
-  financeiro          Financeiro[]
-  lotes               Lote[]
-  pedidoCriador       Pedido[]       @relation("PedidoCriador")
-  producao            Producao[]
-  produtos            Produto[]      @relation("ProdutoCriador")
-  resetSenhas         ResetSenha[]
-  sessoes             Sessao[]
-  unidadesGerenciadas Unidade[]      @relation("GerenteUnidade")
-  perfil              Perfil         @relation(fields: [perfilId], references: [id])
-  unidade             Unidade?       @relation("UsuarioUnidade", fields: [unidadeId], references: [id])
-  vendas              Venda[]
+  id                        Int             @id @default(autoincrement())
+  perfilId                  Int             @map("perfil_id")
+  unidadeId                 Int?            @map("unidade_id")
+  nome                      String          @db.VarChar(100)
+  email                     String          @unique @db.VarChar(100)
+  senha                     String          @db.VarChar(255)
+  telefone                  String          @db.VarChar(20)
+  ftPerfil                  String?         @map("ft_perfil") @db.VarChar(1000)
+  status                    Boolean         @default(true)
+  tokenVersion              Int             @default(0)
+  failedAttempts            Int             @default(0)
+  lockoutUntil              DateTime?
+  criadoEm                  DateTime        @default(now()) @map("criado_em")
+  atualizadoEm              DateTime        @default(now()) @updatedAt @map("atualizado_em")
+  atvdAnimalia              AtvdAnimalia[]  @relation("UsuarioAtvdAnimalia")
+  atvdLote                  AtvdLote[]
+  atvdAgricola              AtvdAgricola[]  @relation("UsuarioAtvdPlantio")
+  caixas                    Caixa[]
+  financeiro                Financeiro[]
+  lotes                     Lote[]
+  pedidoCriador             Pedido[]        @relation("PedidoCriador")
+  producao                  Producao[]
+  produtos                  Produto[]       @relation("ProdutoCriador")
+  resetSenhas               ResetSenha[]
+  sessoes                   Sessao[]
+  unidadesGerenciadas       Unidade[]       @relation("GerenteUnidade")
+  perfil                    Perfil          @relation(fields: [perfilId], references: [id])
+  unidade                   Unidade?        @relation("UsuarioUnidade", fields: [unidadeId], references: [id])
+  vendas                    Venda[]
+  producaoEtapasResponsavel ProducaoEtapa[] @relation("Usuario_ProducaoEtapa")
 
   @@index([unidadeId])
   @@index([perfilId])
@@ -555,8 +556,8 @@ model ProducaoEtapa {
   updatedAt          DateTime    @updatedAt
 
   // relações
-  producao    Producao @relation(fields: [producaoId], references: [id])
-  responsavel Usuario? @relation(fields: [responsavelId], references: [id])
+  producao    Producao @relation("Producao_Etapas", fields: [producaoId], references: [id])
+  responsavel Usuario? @relation("Usuario_ProducaoEtapa", fields: [responsavelId], references: [id])
 
   @@index([producaoId])
   @@map("producao_etapa")
