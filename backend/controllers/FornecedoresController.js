@@ -156,12 +156,16 @@ export const verContratosComLojasController = async (req, res) => {// FUNCIONAND
         erro: "Usuário não possui unidade vinculada!"
       })
     }
-    const contratos = await verContratosComLojas(fornecedorUnidadeId);
-    return res.status(200).json({
-      sucesso: true,
-      contratos,
-      message: "Contratos listados com sucesso!"
-    });
+    
+    const resultado = await verContratosComLojas(fornecedorUnidadeId);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    // Passa diretamente o shape padronizado do model:
+    // { sucesso: true, contratos: [...], message: "..." }
+    return res.status(200).json(resultado);
 
   } catch (error) {
     return res.status(500).json({

@@ -173,9 +173,15 @@ export const verContratosComLojas = async (fornecedorUnidadeId) => { //função 
             id: true, nome: true, cidade: true, estado: true
           }
         },
-        itens :{
-          select: {nome: true}
-        }
+        itens: {
+          select: {
+            id: true,
+            nome: true,
+            quantidade: true,
+            unidadeMedida: true,
+            precoUnitario: true
+          }
+        },
       }
     });
 

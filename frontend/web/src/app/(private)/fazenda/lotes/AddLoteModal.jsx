@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
@@ -212,12 +211,6 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
     }
   }
 
-  const steps = [
-    { id: 'select', title: 'Selecionar Contrato' },
-    { id: 'review', title: 'Revisar Contrato' },
-    { id: 'stages', title: 'Etapas de Produção' }
-  ];
-
   // --- JSX render ---
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -256,7 +249,6 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
                         </SelectItem>
                       );
                     })}
-                  </SelectContent>
                   </SelectContent>
                 </Select>
               ) : (
