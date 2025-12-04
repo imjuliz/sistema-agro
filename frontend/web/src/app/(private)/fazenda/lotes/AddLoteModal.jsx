@@ -199,6 +199,49 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
 
       const json = await res.json();
       toast.success('Lote criado com sucesso!');
+
+      // Criar planos de produção para o lote
+      if (json.id) {
+        try {
+          const planoPayload = {
+            contratoId: selectedContrato.id,
+            loteId: json.id,
+            unidadeId: actualUnidadeId,
+            usuarioId: user?.id,
+            itens: (selectedContrato.itens || []).map(item => ({
+              itemId: item.id,
+              nome: item.nome,
+              quantidade: item.quantidade,
+              unidadeMedida: item.unidadeMedida,
+              etapasProducao: (produtionStages[item.id] || []).map(stage => ({
+                nome: stage.nome,
+                descricao: stage.descricao || null,
+                duracao: stage.duracao ? parseInt(stage.duracao, 10) : null
+              }))
+            }))
+          };
+
+          const planoRes = await fetchWithAuth(`${base}/plano-producao/lote`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(planoPayload)
+          });
+
+          if (planoRes.ok) {
+            const planoJson = await planoRes.json();
+            toast.success(`${planoJson.quantidade} planos de produção criados!`);
+            console.log('[AddLoteModal] Planos criados:', planoJson);
+          } else {
+            console.error('[AddLoteModal] Erro ao criar planos de produção');
+            // Não interrompe o fluxo, apenas avisa
+            toast.warning('Lote criado, mas houve erro ao criar planos de produção');
+          }
+        } catch (err) {
+          console.error('[AddLoteModal] Erro ao criar planos:', err);
+          toast.warning('Lote criado, mas houve erro ao criar planos de produção');
+        }
+      }
+
       if (typeof onCreated === 'function') {
         onCreated(json);
       }
@@ -244,8 +287,8 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
                       console.log(`[AddLoteModal] Renderizando contrato ${idx}:`, c);
                       return (
                         <SelectItem key={String(c.id)} value={String(c.id)}>
-                          {c.titulo || c.nomeContrato || `Contrato ${c.id}`}
-                          {c.unidade?.nome && ` - ${c.unidade.nome}`}
+                          {/* {c.titulo || c.nomeContrato || `Contrato ${c.id}`} */}
+                          {`${c.unidade.nome}`}
                         </SelectItem>
                       );
                     })}
@@ -273,14 +316,6 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
             <Card className="p-4">
               <h3 className="font-semibold mb-3">Informações do Contrato</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">ID:</span>
-                  <p className="font-medium">{selectedContrato.id}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Título:</span>
-                  <p className="font-medium">{selectedContrato.titulo || selectedContrato.nomeContrato || 'N/A'}</p>
-                </div>
                 <div>
                   <span className="text-muted-foreground">Loja:</span>
                   <p className="font-medium">{selectedContrato.unidade?.nome || 'N/A'}</p>
@@ -339,11 +374,11 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
               <h3 className="font-semibold mb-4">Adicione as Etapas de Produção para Cada Item</h3>
               <div className="space-y-6">
                 {(selectedContrato.itens || []).map(item => (
-                  <Card key={item.id} className="p-4 border">
-                    <h4 className="font-medium mb-3">{item.nome}</h4>
+                  <Card key={item.id} className="p-4 ">
+                    <h4 className="font-medium mb-0">{item.nome}</h4>
                     <div className="space-y-3 mb-3">
                       {(produtionStages[item.id] || []).map((stage, idx) => (
-                        <Card key={stage.id} className="p-3 bg-muted">
+                        <div key={stage.id} className="p-3">
                           <div className="space-y-2">
                             <div className="flex justify-between items-start gap-2">
                               <div className="flex-1 space-y-2">
@@ -385,7 +420,7 @@ export default function AddLoteModal({ open, onOpenChange, onCreated, unidadeId 
                               </Button>
                             </div>
                           </div>
-                        </Card>
+                        </div>
                       ))}
                     </div>
                     <Button

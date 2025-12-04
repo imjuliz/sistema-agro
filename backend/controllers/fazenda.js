@@ -31,6 +31,8 @@ export const verificarProducaoLoteController = async (req, res) => {
   }
 };
 
+
+
 export const calcularMediaProducaoPorLoteController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;

@@ -138,17 +138,22 @@ export async function createLote(data, unidadeId, contratoId) {
       return { sucesso: false, message: "Responsável não pertence a esta unidade!" };
     }
 
+    // Separar itens do data para colocar como itensEsperados
+    const { itens, ...dataWithoutItens } = data;
+
     const novoLote = await prisma.lote.create({
       data: {
         unidadeId: unidadeId,
         contratoId: contratoId,
-        ...data
+        ...dataWithoutItens,
+        itensEsperados: itens || null
       },
     });
 
     return {
       sucesso: true,
-      novoLote,
+      id: novoLote.id,
+      ...novoLote,
       message: "Lote criado com sucesso!!",
     }
   } catch (error) {

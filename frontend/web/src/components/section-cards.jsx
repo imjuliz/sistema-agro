@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card"
 import { useEffect, useState } from 'react';
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from "@/config";
 export function SectionCards() {
 
   const [saldo, setSaldo] = useState([]);
@@ -11,39 +13,114 @@ export function SectionCards() {
   const [saldoLiq, setSaldoLiq] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => { fetchSaldoDiario(); }, []);
-  useEffect(() => { fetchQtdEstoque(); }, []);
-  useEffect(() => { fetchSaldoLiq(); }, []);
+  const { fetchWithAuth } = useAuth();
 
-  const fetchSaldoDiario = async () => {
-    try {
-      const response = await fetch('/saldo-final');
-      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-      const data = await response.json();
-      setSaldo(data);
-    }
-    catch (error) { setError(error.message); }
-  };
+  useEffect(() => {
+    let mounted = true;
 
-  const fetchSaldoLiq = async () => {
-    try {
-      const response = await fetch('/saldoLiquido');
-      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-      const data = await response.json();
-      setSaldoLiq(data);
-    }
-    catch (error) { setError(error.message); }
-  };
+    async function fetchSaldoDiario() {
+      try {
+        const url = `${API_URL}/saldo-final`;
+        const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
+        if (!res.ok) {
+          const text = await res.text().catch(() => null);
+          console.error('[fetchSaldoDiario] server responded with error', { status: res.status, statusText: res.statusText, bodyText: text });
+          if (!mounted) return;
+          setError(`Erro do servidor: ${res.status} ${res.statusText}`);
+          setSaldo([]);
+          return;
+        }
 
-  const fetchQtdEstoque = async () => {
-    try {
-      const response = await fetch('/estoqueSomar');
-      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-      const data = await response.json();
-      setQtdEstoque(data);
+        const body = await res.json().catch(async () => {
+          const t = await res.text().catch(() => null);
+          console.warn('[fetchSaldoDiario] resposta não-JSON, texto:', t);
+          return null;
+        });
+        const payload = body?.data ?? body ?? [];
+
+        if (!mounted) return;
+        setSaldo(Array.isArray(payload) ? payload : [payload]);
+      } catch (err) {
+        console.error('[fetchSaldoDiario] erro:', err);
+        if (mounted) setError(String(err?.message ?? err));
+      }
     }
-    catch (error) { setError(error.message); }
-  };
+
+    if (fetchWithAuth) fetchSaldoDiario();
+    return () => { mounted = false; };
+  }, [fetchWithAuth]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchSaldoLiq() {
+      try {
+        const url = `${API_URL}/saldoLiquido`;
+        const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => null);
+          console.error('[fetchSaldoLiq] server responded with error', { status: res.status, statusText: res.statusText, bodyText: text });
+          if (!mounted) return;
+          setError(`Erro do servidor: ${res.status} ${res.statusText}`);
+          setSaldoLiq([]);
+          return;
+        }
+
+        const body = await res.json().catch(async () => {
+          const t = await res.text().catch(() => null);
+          console.warn('[fetchSaldoLiq] resposta não-JSON, texto:', t);
+          return null;
+        });
+        const payload = body?.data ?? body ?? [];
+
+        if (!mounted) return;
+        setSaldoLiq(Array.isArray(payload) ? payload : [payload]);
+      } catch (err) {
+        console.error('[fetchSaldoLiq] erro:', err);
+        if (mounted) setError(String(err?.message ?? err));
+      }
+    }
+
+    if (fetchWithAuth) fetchSaldoLiq();
+    return () => { mounted = false; };
+  }, [fetchWithAuth]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchQtdEstoque() {
+      try {
+        const url = `${API_URL}/estoqueSomar`;
+        const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => null);
+          console.error('[fetchQtdEstoque] server responded with error', { status: res.status, statusText: res.statusText, bodyText: text });
+          if (!mounted) return;
+          setError(`Erro do servidor: ${res.status} ${res.statusText}`);
+          setQtdEstoque([]);
+          return;
+        }
+
+        const body = await res.json().catch(async () => {
+          const t = await res.text().catch(() => null);
+          console.warn('[fetchQtdEstoque] resposta não-JSON, texto:', t);
+          return null;
+        });
+        const payload = body?.data ?? body ?? [];
+
+        if (!mounted) return;
+        setQtdEstoque(Array.isArray(payload) ? payload : [payload]);
+      } catch (err) {
+        console.error('[fetchQtdEstoque] erro:', err);
+        if (mounted) setError(String(err?.message ?? err));
+      }
+    }
+
+    if (fetchWithAuth) fetchQtdEstoque();
+    return () => { mounted = false; };
+  }, [fetchWithAuth]);
 
   return (
     <div
