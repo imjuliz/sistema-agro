@@ -83,7 +83,8 @@ export default function app() {
     produtosList: '/produtos/listar',
     produtosBase: '/produtos',
     saldoFinal: '/saldo-final',
-    vendasMedia: '/vendas/media-por-transacao',
+    somarDiaria: (unidadeId) => `/somarDiaria/${unidadeId}`,
+vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
     vendasPagamentos: '/vendas/divisao-pagamentos',
     produtoMaisVendido: '/financeiro/produto-mais-vendido',
     usuariosUnidadeListar: '/usuarios/unidade/listar',
@@ -174,7 +175,7 @@ export default function app() {
       });
 
       const payload = { pagamento: paymentMethod, itens };
-  const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
+      const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
 
       if (!resp || resp.sucesso === false) {
         console.error('Erro ao criar venda', resp);
@@ -187,7 +188,7 @@ export default function app() {
       setIsPaymentOpen(false);
 
       // atualizar saldo final
-  const s = await safeFetchJson(ENDPOINTS.saldoFinal);
+      const s = await safeFetchJson(ENDPOINTS.saldoFinal);
       if (s && typeof s.saldoFinal !== 'undefined') setSaldoFinal(Number(s.saldoFinal ?? 0));
 
     } catch (error) {
@@ -203,19 +204,26 @@ export default function app() {
     setSalesLoading(true); setSalesError(null);
 
     try {
-      const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
-  safeFetchJson(ENDPOINTS.saldoFinal),
-  safeFetchJson(ENDPOINTS.vendasMedia),
-  safeFetchJson(ENDPOINTS.vendasPagamentos),
-  safeFetchJson(ENDPOINTS.produtoMaisVendido),
+      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+      const [saldoRes, mediaRes, pagamentosRes, produtoRes, diarioRes] = await Promise.all([
+        safeFetchJson(ENDPOINTS.saldoFinal),
+        safeFetchJson(ENDPOINTS.vendasMedia(unidadeId)),
+         safeFetchJson(ENDPOINTS.vendasPagamentos),
+        safeFetchJson(ENDPOINTS.produtoMaisVendido),
+        unidadeId ? safeFetchJson(ENDPOINTS.somarDiaria(unidadeId)) : Promise.resolve(null),
       ]);
 
       if (!mounted) return;
       if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') { setSaldoFinal(Number(saldoRes.saldoFinal ?? 0)) }
       else if (saldoRes && saldoRes.text) { console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes) }
 
+      if (diarioRes && typeof diarioRes.total !== 'undefined') {
+        setTotalSales(Number(diarioRes.total ?? 0));
+      } else if (diarioRes && diarioRes.text) {
+        console.warn('/somarDiaria returned non-JSON:', diarioRes.text?.slice ? diarioRes.text.slice(0, 300) : diarioRes);
+      }
+
       if (mediaRes && mediaRes.sucesso !== false && typeof mediaRes.media !== 'undefined') {
-        setTotalSales(Number(mediaRes.total ?? 0));
         setTotalTransactions(Number(mediaRes.quantidade ?? 0));
         setAverageTransactionValue(Number(mediaRes.media ?? 0));
       }
@@ -235,7 +243,7 @@ export default function app() {
       else if (produtoRes && produtoRes.text) console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes);
 
       try {
-        const total = Number(mediaRes?.total ?? 0);
+        const total = Number(diarioRes?.total ?? 0);
         const quantidade = Number(mediaRes?.quantidade ?? 0);
         const media = Number(mediaRes?.media ?? 0);
         const det = pagamentosRes?.detalhamento ?? {};
@@ -261,8 +269,8 @@ export default function app() {
       setProductsLoading(true); setProductsError(null);
       setCustomersLoading(true); setCustomersError(null);
       const [produtosResp, usuariosResp] = await Promise.all([
-  safeFetchJson(ENDPOINTS.produtosList),
-  safeFetchJson(ENDPOINTS.usuariosUnidadeListar)
+        safeFetchJson(ENDPOINTS.produtosList),
+        safeFetchJson(ENDPOINTS.usuariosUnidadeListar)
       ]);
 
       if (Array.isArray(produtosResp)) setProductsList(produtosResp);
@@ -289,8 +297,8 @@ export default function app() {
     try {
       setSalesLoading(true); setSalesError(null);
       const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-  if (unidadeId) {
-  const vendasResp = await safeFetchJson(ENDPOINTS.listarVendas(unidadeId));
+      if (unidadeId) {
+        const vendasResp = await safeFetchJson(ENDPOINTS.listarVendas(unidadeId));
         if (Array.isArray(vendasResp)) setRecentSalesList(vendasResp);
         else if (vendasResp && vendasResp.sucesso && Array.isArray(vendasResp.vendas)) setRecentSalesList(vendasResp.vendas);
         else if (vendasResp && Array.isArray(vendasResp.listaVendas)) setRecentSalesList(vendasResp.listaVendas);
@@ -318,8 +326,8 @@ export default function app() {
               <div className="text-sm text-muted-foreground">Carregando...</div>
             ) : financeError ? (<div className="text-sm text-red-600">{financeError}</div>) : (
               <>
-                <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <p className="text-xs text-muted-foreground">{totalTransactions} transações</p>
+                <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground">Total de vendas do dia</p>
               </>
             )}
           </CardContent>
@@ -354,7 +362,7 @@ export default function app() {
               <div className="text-sm text-muted-foreground">Carregando...</div>
             ) : financeError ? (
               <div className="text-sm text-red-600">{financeError}</div>
-) : (
+            ) : (
               <div className="text-sm">
                 <div className="flex justify-between"><span>PIX</span><strong>R$ {Number(paymentsBreakdown.PIX ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <div className="flex justify-between"><span>Dinheiro</span><strong>R$ {Number(paymentsBreakdown.DINHEIRO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>

@@ -81,32 +81,43 @@ export const somarDiaria = async (unidadeId) => {//tem controller
 
 // Média por transação das vendas do dia
 export const calcularMediaPorTransacaoDiaria = async (unidadeId) => {
-    try {
-        const [res] = await prisma.$queryRaw`
-            SELECT COALESCE(SUM("total"),0) AS total, COUNT(*) AS quantidade
-            FROM "venda"
-            WHERE DATE("criado_em") = CURRENT_DATE
-              AND "unidade_id" = ${unidadeId};
-        `;
+  try {
+    console.log("🔍 Rodando query com unidadeId:", unidadeId);
 
-        const total = Number(res.total || 0);
-        const quantidade = Number(res.quantidade || 0);
-        const media = quantidade > 0 ? total / quantidade : 0;
+    const [res] = await prisma.$queryRaw`
+      SELECT 
+        COALESCE(SUM("total"), 0) AS total,
+        COUNT(*) AS quantidade
+      FROM "venda"
+      WHERE DATE(("criado_em" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Sao_Paulo')
+            = (NOW() AT TIME ZONE 'America/Sao_Paulo')::date
+        AND "unidade_id" = ${unidadeId};
+    `;
 
-        return {
-            sucesso: true,
-            total,
-            quantidade,
-            media: Number(media.toFixed(2)),
-            message: "Média por transação calculada com sucesso",
-        };
-    } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao calcular média por transação",
-            detalhes: error.message,
-        };
-    }
+    console.log("📥 Resultado bruto SQL:", res);
+
+    const total = Number(res.total || 0);
+    const quantidade = Number(res.quantidade || 0);
+
+    console.log("📊 Parsed:", { total, quantidade });
+
+    const media = quantidade > 0 ? total / quantidade : 0;
+
+    return {
+      sucesso: true,
+      total,
+      quantidade,
+      media: Number(media.toFixed(2)),
+    };
+
+  } catch (error) {
+    console.error("❌ Erro na query:", error);
+    return {
+      sucesso: false,
+      erro: "Erro ao calcular média por transação",
+      detalhes: error.message,
+    };
+  }
 };
 
 // Soma das vendas do dia agrupadas por forma de pagamento

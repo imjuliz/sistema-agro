@@ -51,7 +51,7 @@ router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/listarDespesas/:unidadeId", listarDespesasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);
 router.get("/somarDiaria/:unidadeId", somarDiariaController);
-router.get("/vendas/media-por-transacao", auth, calcularMediaPorTransacaoController);
+router.get("/vendas/media-por-transacao/:unidadeId", calcularMediaPorTransacaoController);
 router.get("/vendas/divisao-pagamentos", auth, divisaoPagamentosController);
 router.get("/financeiro/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
 
