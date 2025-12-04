@@ -358,11 +358,9 @@ export default function app() {
             <Layers className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {financeLoading ? (
-              <div className="text-sm text-muted-foreground">Carregando...</div>
+            {financeLoading ? (<div className="text-sm text-muted-foreground">Carregando...</div>
             ) : financeError ? (
-              <div className="text-sm text-red-600">{financeError}</div>
-            ) : (
+              <div className="text-sm text-red-600">{financeError}</div>) : (
               <div className="text-sm">
                 <div className="flex justify-between"><span>PIX</span><strong>R$ {Number(paymentsBreakdown.PIX ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <div className="flex justify-between"><span>Dinheiro</span><strong>R$ {Number(paymentsBreakdown.DINHEIRO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
