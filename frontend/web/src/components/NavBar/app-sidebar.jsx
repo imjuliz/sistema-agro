@@ -137,9 +137,17 @@ export function AppSidebar({ ...props }) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={teamsExample} />
-      </SidebarHeader>
+      <SidebarHeader className="flex flex-row items-center justify-start p-4 gap-4">
+  <img
+    src="/img/ruraltech-logo.svg"
+    alt="RuralTech Logo"
+    className="h-8 w-auto"
+  />
+  <span className="text-lg  text-gray-900 dark:text-white">
+    RuralTech
+  </span>
+</SidebarHeader>
+
       <SidebarContent>
         <NavMain items={navMain} />
         <NavProjects projects={projects} />
