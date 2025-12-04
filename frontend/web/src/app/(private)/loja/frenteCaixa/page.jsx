@@ -174,7 +174,7 @@ export default function app() {
       });
 
       const payload = { pagamento: paymentMethod, itens };
-  const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
+      const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
 
       if (!resp || resp.sucesso === false) {
         console.error('Erro ao criar venda', resp);
@@ -187,7 +187,7 @@ export default function app() {
       setIsPaymentOpen(false);
 
       // atualizar saldo final
-  const s = await safeFetchJson(ENDPOINTS.saldoFinal);
+      const s = await safeFetchJson(ENDPOINTS.saldoFinal);
       if (s && typeof s.saldoFinal !== 'undefined') setSaldoFinal(Number(s.saldoFinal ?? 0));
 
     } catch (error) {
@@ -204,10 +204,10 @@ export default function app() {
 
     try {
       const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
-  safeFetchJson(ENDPOINTS.saldoFinal),
-  safeFetchJson(ENDPOINTS.vendasMedia),
-  safeFetchJson(ENDPOINTS.vendasPagamentos),
-  safeFetchJson(ENDPOINTS.produtoMaisVendido),
+        safeFetchJson(ENDPOINTS.saldoFinal),
+        safeFetchJson(ENDPOINTS.vendasMedia),
+        safeFetchJson(ENDPOINTS.vendasPagamentos),
+        safeFetchJson(ENDPOINTS.produtoMaisVendido),
       ]);
 
       if (!mounted) return;
@@ -261,8 +261,8 @@ export default function app() {
       setProductsLoading(true); setProductsError(null);
       setCustomersLoading(true); setCustomersError(null);
       const [produtosResp, usuariosResp] = await Promise.all([
-  safeFetchJson(ENDPOINTS.produtosList),
-  safeFetchJson(ENDPOINTS.usuariosUnidadeListar)
+        safeFetchJson(ENDPOINTS.produtosList),
+        safeFetchJson(ENDPOINTS.usuariosUnidadeListar)
       ]);
 
       if (Array.isArray(produtosResp)) setProductsList(produtosResp);
@@ -289,8 +289,8 @@ export default function app() {
     try {
       setSalesLoading(true); setSalesError(null);
       const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-  if (unidadeId) {
-  const vendasResp = await safeFetchJson(ENDPOINTS.listarVendas(unidadeId));
+      if (unidadeId) {
+        const vendasResp = await safeFetchJson(ENDPOINTS.listarVendas(unidadeId));
         if (Array.isArray(vendasResp)) setRecentSalesList(vendasResp);
         else if (vendasResp && vendasResp.sucesso && Array.isArray(vendasResp.vendas)) setRecentSalesList(vendasResp.vendas);
         else if (vendasResp && Array.isArray(vendasResp.listaVendas)) setRecentSalesList(vendasResp.listaVendas);
@@ -350,11 +350,9 @@ export default function app() {
             <Layers className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {financeLoading ? (
-              <div className="text-sm text-muted-foreground">Carregando...</div>
+            {financeLoading ? (<div className="text-sm text-muted-foreground">Carregando...</div>
             ) : financeError ? (
-              <div className="text-sm text-red-600">{financeError}</div>
-) : (
+              <div className="text-sm text-red-600">{financeError}</div>) : (
               <div className="text-sm">
                 <div className="flex justify-between"><span>PIX</span><strong>R$ {Number(paymentsBreakdown.PIX ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <div className="flex justify-between"><span>Dinheiro</span><strong>R$ {Number(paymentsBreakdown.DINHEIRO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
