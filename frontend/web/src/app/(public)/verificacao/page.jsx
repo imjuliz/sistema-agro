@@ -1,6 +1,24 @@
+import { Suspense } from "react";
 import { GalleryVerticalEnd } from "lucide-react";
 import Verific from "@/components/otp-input";
 import { ThemeToggle } from "@/components/toggleSwitchTema";
+
+function VerificWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="w-full max-w-md">
+        <div className="w-full h-full rounded-2xl border p-8 bg-white dark:bg-gray-800">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold mb-2">Verificar código</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Carregando...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <Verific />
+    </Suspense>
+  );
+}
 
 export default function verificacao() {
   return (
@@ -20,7 +38,7 @@ export default function verificacao() {
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
             <div className="w-full max-w-xs">
-              <Verific />
+              <VerificWrapper />
             </div>
           </div>
         </div>
