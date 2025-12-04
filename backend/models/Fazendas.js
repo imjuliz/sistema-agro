@@ -2,7 +2,7 @@ import prisma from '../prisma/client.js';
 
 export const lotesPlantio = async (unidadeId) => {
   try {
-    const lotes = await prisma.lote.findMany({ where: { unidadeId: Number(unidadeId), tipo: "Plantio" } });
+  const lotes = await prisma.lote.findMany({ where: { unidadeId: Number(unidadeId), tipo: "PLANTIO" } });
     return ({
       sucesso: true,
       lotes,
