@@ -75,35 +75,36 @@ model Unidade {
 }
 
 model Usuario {
-  id                  Int            @id @default(autoincrement())
-  perfilId            Int            @map("perfil_id")
-  unidadeId           Int?           @map("unidade_id")
-  nome                String         @db.VarChar(100)
-  email               String         @unique @db.VarChar(100)
-  senha               String         @db.VarChar(255)
-  telefone            String         @db.VarChar(20)
-  ftPerfil            String?        @map("ft_perfil") @db.VarChar(1000)
-  status              Boolean        @default(true)
-  tokenVersion        Int            @default(0)
-  failedAttempts      Int            @default(0)
-  lockoutUntil        DateTime?
-  criadoEm            DateTime       @default(now()) @map("criado_em")
-  atualizadoEm        DateTime       @default(now()) @updatedAt @map("atualizado_em")
-  atvdAnimalia        AtvdAnimalia[] @relation("UsuarioAtvdAnimalia")
-  atvdLote            AtvdLote[]
-  atvdAgricola        AtvdAgricola[] @relation("UsuarioAtvdPlantio")
-  caixas              Caixa[]
-  financeiro          Financeiro[]
-  lotes               Lote[]
-  pedidoCriador       Pedido[]       @relation("PedidoCriador")
-  producao            Producao[]
-  produtos            Produto[]      @relation("ProdutoCriador")
-  resetSenhas         ResetSenha[]
-  sessoes             Sessao[]
-  unidadesGerenciadas Unidade[]      @relation("GerenteUnidade")
-  perfil              Perfil         @relation(fields: [perfilId], references: [id])
-  unidade             Unidade?       @relation("UsuarioUnidade", fields: [unidadeId], references: [id])
-  vendas              Venda[]
+  id                        Int             @id @default(autoincrement())
+  perfilId                  Int             @map("perfil_id")
+  unidadeId                 Int?            @map("unidade_id")
+  nome                      String          @db.VarChar(100)
+  email                     String          @unique @db.VarChar(100)
+  senha                     String          @db.VarChar(255)
+  telefone                  String          @db.VarChar(20)
+  ftPerfil                  String?         @map("ft_perfil") @db.VarChar(1000)
+  status                    Boolean         @default(true)
+  tokenVersion              Int             @default(0)
+  failedAttempts            Int             @default(0)
+  lockoutUntil              DateTime?
+  criadoEm                  DateTime        @default(now()) @map("criado_em")
+  atualizadoEm              DateTime        @default(now()) @updatedAt @map("atualizado_em")
+  atvdAnimalia              AtvdAnimalia[]  @relation("UsuarioAtvdAnimalia")
+  atvdLote                  AtvdLote[]
+  atvdAgricola              AtvdAgricola[]  @relation("UsuarioAtvdPlantio")
+  caixas                    Caixa[]
+  financeiro                Financeiro[]
+  lotes                     Lote[]
+  pedidoCriador             Pedido[]        @relation("PedidoCriador")
+  producao                  Producao[]
+  produtos                  Produto[]       @relation("ProdutoCriador")
+  resetSenhas               ResetSenha[]
+  sessoes                   Sessao[]
+  unidadesGerenciadas       Unidade[]       @relation("GerenteUnidade")
+  perfil                    Perfil          @relation(fields: [perfilId], references: [id])
+  unidade                   Unidade?        @relation("UsuarioUnidade", fields: [unidadeId], references: [id])
+  vendas                    Venda[]
+  producaoEtapasResponsavel ProducaoEtapa[] @relation("Usuario_ProducaoEtapa")
 
   @@index([unidadeId])
   @@index([perfilId])
@@ -512,48 +513,101 @@ model Lote {
   @@map("lote")
 }
 
+// rascunho/planejamento leve
+model PlanoProducao {
+  id           Int      @id @default(autoincrement())
+  contratoId   Int?     @map("contrato_id")
+  loteId       Int?     @map("lote_id")
+  itemId       Int?     @map("item_id")
+  usuarioId    Int?     @map("usuario_id")
+  nome         String?  @db.VarChar(255)
+  descricao    String?
+  etapas       Json // array de objetos: { id, nome, descricao, duracaoDias, ordem, quantidadeEsperada, ... }
+  status       String   @default("RASCUNHO") // RASCUNHO | CONFIRMADO
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([contratoId])
+  @@index([itemId])
+  @@map("plano_producao")
+}
+
+// etapas reais da produção
+model ProducaoEtapa {
+  id                 Int         @id @default(autoincrement())
+  producaoId         Int         @map("producao_id")
+  nome               String      @db.VarChar(255)
+  descricao          String?
+  ordem              Int
+  duracaoDias        Int? // estimado
+  dataPrevInicio     DateTime?   @map("data_prev_inicio")
+  dataPrevFim        DateTime?   @map("data_prev_fim")
+  dataRealInicio     DateTime?   @map("data_real_inicio")
+  dataRealFim        DateTime?   @map("data_real_fim")
+  quantidadeEsperada Decimal?    @map("quantidade_esperada") @db.Decimal(14, 3)
+  quantidadeReal     Decimal?    @map("quantidade_real") @db.Decimal(14, 3)
+  status             StatusEtapa @default(PLANEJADA)
+  responsavelId      Int?        @map("responsavel_id")
+  observacoes        String?
+  custoMaoObra       Decimal?    @map("custo_mao_obra") @db.Decimal(14, 2)
+  outrosCustos       Decimal?    @map("outros_custos") @db.Decimal(14, 2)
+  custoTotal         Decimal?    @map("custo_total") @db.Decimal(14, 2)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  // relações
+  producao    Producao @relation("Producao_Etapas", fields: [producaoId], references: [id])
+  responsavel Usuario? @relation("Usuario_ProducaoEtapa", fields: [responsavelId], references: [id])
+
+  @@index([producaoId])
+  @@map("producao_etapa")
+}
+
 model Producao {
-  id                   Int                 @id @default(autoincrement())
-  loteId               Int                 @map("lote_id")
-  plantioId            Int?                @map("plantio_id")
-  animalId             Int?                @map("animal_id")
-  tipoProduto          String              @map("tipo_produto") @db.VarChar(255)
-  produtoId            Int?                @map("produto_id")
-  quantidadeBruta      Decimal             @map("quantidade_bruta") @db.Decimal(14, 3)
-  quantidadeLiquida    Decimal?            @map("quantidade_liquida") @db.Decimal(14, 3)
-  unidadeMedida        UnidadesDeMedida    @map("unidade_medida")
-  rendimentoPorHa      Decimal?            @map("rendimento_por_ha") @db.Decimal(12, 3)
-  perdaPercent         Decimal?            @map("perda_percent") @db.Decimal(5, 3)
-  custoMaoObra         Decimal?            @map("custo_mao_obra") @db.Decimal(14, 2)
-  outrosCustos         Decimal?            @map("outros_custos") @db.Decimal(14, 2)
-  custoTotal           Decimal?            @map("custo_total") @db.Decimal(14, 2)
-  custoUnitario        Decimal?            @map("custo_unitario") @db.Decimal(14, 4)
-  dataInicio           DateTime?           @map("data_inicio")
-  dataFim              DateTime?           @map("data_fim")
-  dataColheita         DateTime?           @map("data_colheita")
-  dataRegistro         DateTime            @default(now()) @map("data_registro")
-  status               StatusProducao      @default(PLANEJADA)
-  metodo               MetodoProducao?     @map("metodo")
-  responsavelId        Int?                @map("responsavel_id")
-  certificadoSanitario String?             @map("certificado_sanitario") @db.VarChar(255)
-  certificadoQualidade String?             @map("certificado_qualidade") @db.VarChar(255)
-  destinoUnidadeId     Int?                @map("destino_unidade_id")
-  destinoPedidoId      Int?                @map("destino_pedido_id")
+  id                   Int              @id @default(autoincrement())
+  loteId               Int              @map("lote_id")
+  plantioId            Int?             @map("plantio_id")
+  animalId             Int?             @map("animal_id")
+  tipoProduto          String           @map("tipo_produto") @db.VarChar(255)
+  produtoId            Int?             @map("produto_id")
+  quantidadeBruta      Decimal          @map("quantidade_bruta") @db.Decimal(14, 3)
+  quantidadeLiquida    Decimal?         @map("quantidade_liquida") @db.Decimal(14, 3)
+  unidadeMedida        UnidadesDeMedida @map("unidade_medida")
+  rendimentoPorHa      Decimal?         @map("rendimento_por_ha") @db.Decimal(12, 3)
+  perdaPercent         Decimal?         @map("perda_percent") @db.Decimal(5, 3)
+  custoMaoObra         Decimal?         @map("custo_mao_obra") @db.Decimal(14, 2)
+  outrosCustos         Decimal?         @map("outros_custos") @db.Decimal(14, 2)
+  custoTotal           Decimal?         @map("custo_total") @db.Decimal(14, 2)
+  custoUnitario        Decimal?         @map("custo_unitario") @db.Decimal(14, 4)
+  dataInicio           DateTime?        @map("data_inicio")
+  dataFim              DateTime?        @map("data_fim")
+  dataColheita         DateTime?        @map("data_colheita")
+  dataRegistro         DateTime         @default(now()) @map("data_registro")
+  status               StatusProducao   @default(PLANEJADA)
+  metodo               MetodoProducao?  @map("metodo")
+  responsavelId        Int?             @map("responsavel_id")
+  certificadoSanitario String?          @map("certificado_sanitario") @db.VarChar(255)
+  certificadoQualidade String?          @map("certificado_qualidade") @db.VarChar(255)
+  destinoUnidadeId     Int?             @map("destino_unidade_id")
+  destinoPedidoId      Int?             @map("destino_pedido_id")
   observacoes          String?
-  documentoReferencia  String?             @map("documento_referencia") @db.VarChar(255)
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
+  documentoReferencia  String?          @map("documento_referencia") @db.VarChar(255)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
   unidadeId            Int?
-  estoqueMovimentos    EstoqueMovimento[]
-  estoqueProdutos      EstoqueProduto[]
-  animal               Animal?             @relation(fields: [animalId], references: [id])
-  destinoUnidade       Unidade?            @relation("ProducaoDestino", fields: [destinoUnidadeId], references: [id])
-  lote                 Lote                @relation(fields: [loteId], references: [id])
-  plantio              Plantio?            @relation(fields: [plantioId], references: [id])
-  produto              Produto?            @relation(fields: [produtoId], references: [id])
-  responsavel          Usuario?            @relation(fields: [responsavelId], references: [id])
-  unidade              Unidade?            @relation(fields: [unidadeId], references: [id])
-  registroSanitarios   RegistroSanitario[]
+
+  // relações
+  estoqueMovimentos  EstoqueMovimento[]
+  estoqueProdutos    EstoqueProduto[]
+  animal             Animal?             @relation(fields: [animalId], references: [id])
+  destinoUnidade     Unidade?            @relation("ProducaoDestino", fields: [destinoUnidadeId], references: [id])
+  lote               Lote                @relation(fields: [loteId], references: [id])
+  plantio            Plantio?            @relation(fields: [plantioId], references: [id])
+  produto            Produto?            @relation(fields: [produtoId], references: [id])
+  responsavel        Usuario?            @relation(fields: [responsavelId], references: [id])
+  unidade            Unidade?            @relation(fields: [unidadeId], references: [id])
+  registroSanitarios RegistroSanitario[]
+  producaoEtapas     ProducaoEtapa[]     @relation("Producao_Etapas")
 
   @@index([loteId])
   @@index([plantioId])
@@ -982,4 +1036,12 @@ enum StatusLote {
   PENDENTE
   PRONTO
   ENVIADO
+}
+
+enum StatusEtapa {
+  PLANEJADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+  BLOQUEADA
 }
