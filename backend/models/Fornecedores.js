@@ -273,12 +273,26 @@ try {
         fornecedorUnidadeId: { not: null }  // Tem um fornecedor interno (outro unidade/fazenda)
       },
       include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            cidade: true,
+            estado: true,
+            telefone: true,
+            email: true,
+            cnpj: true
+          }
+        },
         fornecedorInterno :{
           select : {
             id: true,
             nome: true,
             cidade: true,
-            estado: true
+            estado: true,
+            telefone: true,
+            email: true,
+            cnpj: true
           }
         },
         itens :{
@@ -290,11 +304,28 @@ try {
       }
     });
 
-    console.log('[verContratosComFazendas] Contratos internos encontrados (onde esta unidade CONSOME):', contratos.length, contratos);
+    console.log('[verContratosComFazendas] Contratos internos encontrados (onde esta unidade CONSOME):', contratos.length);
+
+    // Sanitizar campos sensíveis para JSON (Dates -> ISO strings, Decimals -> Number)
+    const contratosSanitizados = contratos.map(c => ({
+      ...c,
+      valorTotal: c.valorTotal != null ? Number(c.valorTotal) : null,
+      dataInicio: c.dataInicio ? c.dataInicio.toISOString() : null,
+      dataFim: c.dataFim ? c.dataFim.toISOString() : null,
+      dataEnvio: c.dataEnvio ? c.dataEnvio.toISOString() : null,
+      itens: Array.isArray(c.itens) ? c.itens.map(it => ({
+        ...it,
+        quantidade: it.quantidade != null ? Number(it.quantidade) : null,
+        pesoUnidade: it.pesoUnidade != null ? Number(it.pesoUnidade) : null,
+        precoUnitario: it.precoUnitario != null ? Number(it.precoUnitario) : null,
+        criadoEm: it.criadoEm ? it.criadoEm.toISOString() : null,
+        atualizadoEm: it.atualizadoEm ? it.atualizadoEm.toISOString() : null
+      })) : []
+    }));
 
     return ({
       sucesso: true,
-      contratos,
+      contratos: contratosSanitizados,
       message: "Contratos internos (onde você consome de outras unidades) listados com sucesso!"
     })
   } catch (error) {

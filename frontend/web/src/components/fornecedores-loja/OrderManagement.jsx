@@ -12,69 +12,39 @@ import { Package, Clock, CheckCircle, XCircle, Truck, Eye, MessageSquare, Calend
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export function OrderManagement({ userType }) {
+export function OrderManagement({ pedidos: pedidosProp = [], carregando = false }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedPedidos, setSelectedPedidos] = useState(null);
   const [searchPedidos, setSearchPedidos] = useState('');
   const [selectedPedidosCategory, setSelectedPedidosCategory] = useState('all');
-  const categoriesPedidos = ['all', 'Pendente', 'A caminho', 'Entregue', 'Cancelado',];
+  const categoriesPedidos = ['all', 'PENDENTE', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO'];
 
-  const orders = [
-    {
-      id: 'ORD-001',
-      customer: userType === 'supplier' ? 'Bella Vista Restaurant' : 'Fresh Valley Farms',
-      items: [
-        { name: 'Premium Ribeye Steaks', quantity: 20, price: 24.99 },
-        { name: 'Organic Mixed Greens', quantity: 5, price: 8.50 }
-      ],
-      total: 542.30,
-      status: 'Pendente',
-      date: '2024-01-15',
-      estimatedDelivery: '2024-01-17',
-      notes: 'Please ensure cold chain delivery',
-      priority: 'alta'
-    },
-    {
-      id: 'ORD-002',
-      customer: userType === 'supplier' ? 'Grand Hotel Kitchen' : 'Premium Meats Co.',
-      items: [
-        { name: 'Fresh Atlantic Salmon', quantity: 15, price: 18.99 },
-        { name: 'Artisan Sourdough Bread', quantity: 24, price: 6.75 }
-      ],
-      total: 446.85,
-      status: 'Entregue',
-      date: '2024-01-14',
-      estimatedDelivery: '2024-01-16',
-      notes: 'Regular delivery time is fine',
-      priority: 'normal'
-    },
-    {
-      id: 'ORD-003',
-      customer: userType === 'supplier' ? 'Metro Bistro' : 'Ocean Fresh Seafood',
-      items: [{ name: 'Organic Mixed Greens', quantity: 10, price: 8.50 }],
-      total: 85.00,
-      status: 'A caminho',
-      date: '2024-01-12',
-      estimatedDelivery: '2024-01-14',
-      notes: '',
-      priority: 'normal'
-    },
-    {
-      id: 'ORD-004',
-      customer: userType === 'supplier' ? 'Seaside Cafe' : 'Artisan Bakery Supply',
-      items: [
-        { name: 'Artisan Sourdough Bread', quantity: 12, price: 6.75 },
-        { name: 'Premium Ribeye Steaks', quantity: 8, price: 24.99 }
-      ],
-      total: 280.92,
-      status: 'Cancelado',
-      date: '2024-01-10',
-      estimatedDelivery: '2024-01-12',
-      notes: 'Customer requested cancellation due to event postponement',
-      priority: 'baixa'
-    }
-  ];
+  // Normalizar pedidos do backend
+  const normalizedOrders = (pedidosProp || []).map((p, idx) => ({
+    id: p.id || `PED-${p.id}`,
+    uniqueKey: `${p.id}-${idx}`, // Chave única para evitar duplicatas ao combinar pedidos externos e internos
+    documentoReferencia: p.documentoReferencia || p.numeroDocumento || p.numero || p.id,
+    customer: p.fornecedorExterno?.nomeEmpresa || p.contrato?.fornecedorExterno?.nomeEmpresa || p.origemUnidade?.nome || 'Fornecedor desconhecido',
+    items: (p.itens || []).map(i => ({
+      name: i.produto?.nome || i.fornecedorItem?.nome || i.produtoNome || i.nome || i.descricao || `Item ${i.id || '?'}`,
+      quantity: Number(i.quantidade || 0),
+      price: Number(i.precoUnitario || 0)
+    })),
+    total: Number(p.valorTotal || (p.itens || []).reduce((sum, i) => sum + (Number(i.custoTotal) || 0), 0)),
+    status: p.status === 'PENDENTE' ? 'Pendente' : 
+            p.status === 'EM_TRANSITO' ? 'A caminho' :
+            p.status === 'ENTREGUE' ? 'Entregue' :
+            p.status === 'CANCELADO' ? 'Cancelado' : p.status,
+    date: p.dataPedido || new Date().toISOString(),
+    estimatedDelivery: p.dataEnvio || p.dataPedido || new Date().toISOString(),
+    dataRecebimento: p.dataRecebimento || null,
+    notes: p.observacoes || '',
+    priority: 'normal'
+  }));
+
+  // Use normalized orders from backend. If empty, UI shows "Nenhum pedido encontrado".
+  const orders = normalizedOrders;
 
   // decide qual filtro de status usar: select tem prioridade; se select === 'all' usamos activeTab
    const statusFilter = selectedPedidosCategory !== 'all' ? selectedPedidosCategory : activeTab;
@@ -140,12 +110,12 @@ export function OrderManagement({ userType }) {
        </DialogTrigger>
        <DialogContent className="max-w-2xl">
          <DialogHeader>
-           <DialogTitle>Detalhes - {order.id}</DialogTitle>
+           <DialogTitle>Detalhes - {order.documentoReferencia}</DialogTitle>
          </DialogHeader>
          <div className="space-y-6">
            <div className="grid grid-cols-2 gap-4">
              <div>
-               <Label>Consumidor/Fornecedor</Label>
+               <Label>Fornecedor</Label>
                <p className='mt-3'>{order.customer}</p>
              </div>
              <div>
@@ -162,26 +132,39 @@ export function OrderManagement({ userType }) {
                <p className='mt-3'>{new Date(order.date).toLocaleDateString()}</p>
              </div>
              <div>
-               <Label>Entrega Estimada</Label>
-               <p className='mt-3'>{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
+               <Label>{order.status === 'Entregue' ? 'Data de Recebimento' : 'Entrega Estimada'}</Label>
+               <p className='mt-3'>
+                 {order.status === 'Entregue' && order.dataRecebimento
+                   ? new Date(order.dataRecebimento).toLocaleDateString()
+                   : new Date(order.estimatedDelivery).toLocaleDateString()
+                 }
+               </p>
              </div>
            </div>
  
            <div>
              <Label>Itens Comprados</Label>
              <div className="mt-2 space-y-2">
-               {order.items.map((item, index) => (
-                 <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                   <div>
-                     <p>{item.name}</p>
-                     <p className="text-sm text-muted-foreground">Quantidade: {item.quantity}</p>
+               {order.items.map((item, index) => {
+                 // Garantir que temos um nome para o item
+                 const itemName = item.name || `Item ${index + 1}`;
+                 const quantity = item.quantity || 0;
+                 const price = item.price || 0;
+                 const itemTotal = quantity * price;
+                 
+                 return (
+                   <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                     <div>
+                       <p className="font-medium">{itemName}</p>
+                       <p className="text-sm text-muted-foreground">Quantidade: {quantity}</p>
+                     </div>
+                     <div className="text-right">
+                       <p>R$ {price.toFixed(2)} cada</p>
+                       <p className="text-sm">R$ {itemTotal.toFixed(2)}</p>
+                     </div>
                    </div>
-                   <div className="text-right">
-                     <p>R$ {item.price.toFixed(2)} cada</p>
-                     <p className="text-sm">R$ {(item.quantity * item.price).toFixed(2)}</p>
-                   </div>
-                 </div>
-               ))}
+                 );
+               })}
              </div>
              <div className="mt-4 p-3 bg-muted rounded-lg">
                <div className="flex justify-between items-center">
@@ -193,12 +176,12 @@ export function OrderManagement({ userType }) {
  
            {order.notes && (
              <div>
-               <Label>Order Notes</Label>
+               <Label>Notas do Pedido</Label>
                <p className="mt-1 p-3 bg-muted rounded-lg">{order.notes}</p>
              </div>
            )}
- 
-           {userType === 'supplier' && order.status === 'Pendente' && (
+
+           {order.status === 'Pendente' && (
              <div className="flex gap-2">
                <Button variant="outline" className="flex-1">
                  <XCircle className="h-4 w-4 mr-2" />
@@ -218,7 +201,7 @@ export function OrderManagement({ userType }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-0">
-        <h2 className="text-lg font-semibold mb-3">{userType === 'supplier' ? 'Order Management' : 'Pedidos'}</h2>
+        <h2 className="text-lg font-semibold mb-3">Pedidos</h2>
       </div>
 
       <div className="flex gap-4 items-center">
@@ -248,23 +231,21 @@ export function OrderManagement({ userType }) {
         <TabsContent value={activeTab} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-3">
             {filteredOrders.map((order) => (
-              <Card key={order.id}>
+              <Card key={order.uniqueKey}>
                 <CardContent className="px-6">
                   <div className="flex items-start justify-between gap-6 flex-col">
                     <div className="space-y-2 w-full">
                       <div className="flex items-center gap-4">
-                        <h4>{order.id}</h4>
+                        <h4>{order.documentoReferencia}</h4>
                         <Badge variant={getStatusVariant(order.status)} className="flex items-center gap-1">
                           {getStatusIcon(order.status)}
                           {order.status}
                         </Badge>
-                        <span className={`text-sm ${getPriorityColor(order.priority)}`}>
-                          Prioridade {order.priority}
-                        </span>
+                        
                       </div>
 
                       <p className="text-muted-foreground">
-                        {userType === 'supplier' ? 'Customer:' : 'Fornecedor:'} {order.customer}
+                        Fornecedor: {order.customer}
                       </p>
 
                     </div>
@@ -277,11 +258,11 @@ export function OrderManagement({ userType }) {
 
                       <div className="flex gap-2">
                         <OrderDetails order={order} />
-                        <Button variant="outline" size="sm">
+                        {/* <Button variant="outline" size="sm">
                           <MessageSquare className="h-4 w-4 mr-1" />
                           Bate-papo
-                        </Button>
-                        {userType === 'supplier' && order.status === 'Pendente' && (
+                        </Button> */}
+                        {order.status === 'Pendente' && (
                           <Button size="sm">
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Processar

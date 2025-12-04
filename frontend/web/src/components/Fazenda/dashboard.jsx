@@ -34,8 +34,8 @@ export function SectionCards() {
       try {
         const fetchFn = fetchWithAuth || fetch;
         
-        // Busca contratos onde a unidade é CONSUMIDOR
-        const cRes = await fetchFn(`${API_URL}/verContratosComFazendas/${unidadeId}`);
+        // Busca contratos onde a unidade é FORNECEDOR (as lojas que ela fornece)
+        const cRes = await fetchFn(`${API_URL}/verContratosComLojas/${unidadeId}`);
         const cJson = await cRes.json().catch(() => ({}));
         
         let totalContratos = [];

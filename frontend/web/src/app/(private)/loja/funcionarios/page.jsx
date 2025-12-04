@@ -16,11 +16,31 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Mail, Phone, MessageSquare, Calendar, Plus, Sliders, Pen, Trash } from 'lucide-react';
+import { Mail, Phone, MessageSquare, Calendar, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
 
+// Função para formatar telefone
+const formatarTelefone = (telefone) => {
+  if (!telefone) return '';
+  const cleaned = telefone.replace(/\D/g, '');
+  if (cleaned.length === 11) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+  } else if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+  }
+  return telefone;
+};
 
+// Função para formatar telefone enquanto digita
+const formatarTelefoneInput = (value) => {
+  if (!value) return '';
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length <= 2) return cleaned;
+  if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+  if (cleaned.length <= 11) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+  return value;
+};
 
-export default function FuncionariosLoja() {
+export default function FuncionariosFazenda() {
   const { fetchWithAuth, user } = useAuth();
   usePerfilProtegido("GERENTE_LOJA");
 
@@ -67,10 +87,13 @@ export default function FuncionariosLoja() {
     role: 'FUNCIONARIO_LOJA',
   });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  
   // Estados para convidar novo usuário
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteData, setInviteData] = useState({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
   const [inviteSaving, setInviteSaving] = useState(false);
+  const [showInvitePassword, setShowInvitePassword] = useState(false);
 
   // função reutilizável para carregar funcionários
   const loadFuncionarios = async () => {
@@ -201,9 +224,12 @@ export default function FuncionariosLoja() {
         setSelectedUser(null);
       } else {
         console.error("Erro na resposta:", response);
+        const mensagemErro = response.erro || response.mensagem || "Erro ao salvar as edições";
+        alert(mensagemErro);
       }
     } catch (error) {
       console.error("Erro ao salvar edições:", error);
+      alert("Erro ao salvar as edições");
     } finally {
       setSavingEdit(false);
     }
@@ -233,9 +259,12 @@ export default function FuncionariosLoja() {
         setSelectedUser(null);
       } else {
         console.error("Erro na resposta:", response);
+        const mensagemErro = response.erro || response.mensagem || "Erro ao deletar funcionário";
+        alert(mensagemErro);
       }
     } catch (error) {
       console.error("Erro ao deletar funcionário:", error);
+      alert("Erro ao deletar funcionário");
     }
   };
 
@@ -280,7 +309,7 @@ export default function FuncionariosLoja() {
   // Verificar se é gerente da loja (tolerante a diferentes formatos)
   const _userRoleRaw = user?.perfil?.funcao ?? user?.perfil ?? user?.role ?? '';
   const _userRole = typeof _userRoleRaw === 'string' ? _userRoleRaw.toUpperCase() : '';
-  const isGerenteLoja = _userRole === 'GERENTE_LOJA';
+  const isGerenteLoja = _userRole === 'GERENTE_LOJA' || _userRole === 'GERENTE_LOJA';
 
   return (
     <div className="flex gap-6">
@@ -322,7 +351,7 @@ export default function FuncionariosLoja() {
                     <div className="text-xs text-muted-foreground mb-1">Função</div>
                     <div className="grid grid-cols-1 gap-1">
                       {["GERENTE_LOJA", "FUNCIONARIO_LOJA"].map(t => (
-                        <label key={t} className="flex items-center justify-between px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
+                        <label key={t} className="flex items-center justify-between px-2 py-1 rounded hover:dark:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
                           <div className="flex items-center gap-2">
                             <Checkbox checked={!!tempTypeFilters[t]} onCheckedChange={(checked) => setTempTypeFilters(prev => ({ ...prev, [t]: !!checked }))} />
                             <div className="capitalize text-sm">{t === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}</div>
@@ -342,7 +371,7 @@ export default function FuncionariosLoja() {
                     <div className="text-xs text-muted-foreground mb-1">Status</div>
                     <div className="flex flex-col gap-1">
                       {["Ativo", "Inativo"].map(s => (
-                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-900 cursor-pointer">
+                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:dark:bg-neutral-900 hover:bg-neutral-10 cursor-pointer">
                           <Checkbox checked={!!tempStatusFilters[s]} onCheckedChange={(checked) => setTempStatusFilters(prev => ({ ...prev, [s]: !!checked }))} />
                           <div className="text-sm">{s}</div>
                         </label>
@@ -433,7 +462,7 @@ export default function FuncionariosLoja() {
                       {func.telefone && (
                         <div className="flex items-center gap-2 text-sm">
                           <Phone className="size-4 text-muted-foreground" />
-                          <span>{func.telefone}</span>
+                          <span>{formatarTelefone(func.telefone)}</span>
                         </div>
                       )}
                     </div>
@@ -459,13 +488,13 @@ export default function FuncionariosLoja() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 pt-4 border-t">
+                {/* <div className="flex items-center gap-2 pt-4 border-t">
                   <Button variant="outline" size="sm">
                     <Calendar className="size-4 mr-2" />
                     Marcar reunião
                   </Button>
                   <Button size="sm">Adicionar nota</Button>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           ))
@@ -503,19 +532,28 @@ export default function FuncionariosLoja() {
               <Input
                 id="telefone"
                 value={editingData.telefone}
-                onChange={e => setEditingData({ ...editingData, telefone: e.target.value })}
+                onChange={e => setEditingData({ ...editingData, telefone: formatarTelefoneInput(e.target.value) })}
                 className="col-span-3"
+                placeholder="(XX) XXXXX-XXXX"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="senha" className="text-right">Senha (opcional)</Label>
-              <Input
-                id="senha"
-                type="password"
-                value={editingData.senha}
-                onChange={e => setEditingData({ ...editingData, senha: e.target.value })}
-                className="col-span-3"
-              />
+              <div className="col-span-3 relative">
+                <Input
+                  id="senha"
+                  type={showEditPassword ? "text" : "password"}
+                  value={editingData.senha}
+                  onChange={e => setEditingData({ ...editingData, senha: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEditPassword(!showEditPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="role" className="text-right">Função</Label>
@@ -580,11 +618,20 @@ export default function FuncionariosLoja() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="invite-telefone" className="text-right">Telefone</Label>
-              <Input id="invite-telefone" value={inviteData.telefone} onChange={e => handleInviteChange('telefone', e.target.value)} className="col-span-3" />
+              <Input id="invite-telefone" value={inviteData.telefone} onChange={e => handleInviteChange('telefone', formatarTelefoneInput(e.target.value))} className="col-span-3" placeholder="(XX) XXXXX-XXXX" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="invite-senha" className="text-right">Senha</Label>
-              <Input id="invite-senha" type="password" value={inviteData.senha} onChange={e => handleInviteChange('senha', e.target.value)} className="col-span-3" />
+              <div className="col-span-3 relative">
+                <Input id="invite-senha" type={showInvitePassword ? "text" : "password"} value={inviteData.senha} onChange={e => handleInviteChange('senha', e.target.value)} />
+                <button
+                  type="button"
+                  onClick={() => setShowInvitePassword(!showInvitePassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showInvitePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="invite-role" className="text-right">Função</Label>

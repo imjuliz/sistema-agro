@@ -52,31 +52,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         
         console.log('[ConsumerDashboard] Contratos externos recebidos:', contratosArray.length, contratosArray);
         
-        // 2) Busca contratos INTERNOS da unidade (com outras fazendas) - onde esta unidade CONSOME
-        try {
-          const cInternRes = await fetchWithAuth(`${API_URL}verContratosComFazendas/${unidadeId}`, { 
-            method: 'GET', 
-            credentials: 'include' 
-          });
-          
-          if (cInternRes.ok) {
-            const cInternBody = await cInternRes.json().catch(() => ({}));
-            console.log('[ConsumerDashboard] Resposta completa de contratos internos (consumidor):', cInternBody);
-            const contratosInternos = Array.isArray(cInternBody.contratos) ? cInternBody.contratos : 
-                                       (cInternBody.contratos?.contratos ? cInternBody.contratos.contratos : []);
-            console.log('[ConsumerDashboard] Contratos internos (onde esta unidade CONSOME) recebidos:', contratosInternos.length, contratosInternos);
-            
-            // Combina contratos externos e internos
-            contratosArray = [...contratosArray, ...contratosInternos];
-            console.log('[ConsumerDashboard] Total de contratos (externos + internos consumidor):', contratosArray.length);
-          } else {
-            console.warn('[ConsumerDashboard] Resposta de contratos internos não OK:', cInternRes.status);
-          }
-        } catch (e) {
-          console.warn('[ConsumerDashboard] Aviso ao buscar contratos internos:', e?.message);
-        }
-
-        // 3) Busca contratos onde esta unidade é FORNECEDORA para outras unidades
+        // 2) Busca contratos onde esta unidade é FORNECEDORA para outras unidades
         try {
           const cFornecedorRes = await fetchWithAuth(`${API_URL}verContratosComFazendasAsFornecedor/${unidadeId}`, { 
             method: 'GET', 
@@ -92,7 +68,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
             
             // Combina com todos os contratos
             contratosArray = [...contratosArray, ...contratosAsFornecedor];
-            console.log('[ConsumerDashboard] Total de contratos (externos + internos consumidor + fornecedor):', contratosArray.length);
+            console.log('[ConsumerDashboard] Total de contratos (externos + fornecedor):', contratosArray.length);
           } else {
             console.warn('[ConsumerDashboard] Resposta de contratos como fornecedor não OK:', cFornecedorRes.status);
           }
@@ -102,7 +78,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         
         setContratosExternos(contratosArray);
 
-        // 3) Extrai fornecedores ÚNICOS dos contratos (EXTERNOS e INTERNOS)
+        // 3) Extrai fornecedores ÚNICOS dos contratos (EXTERNOS e FORNECEDOR)
         const fornecedoresFromContratos = contratosArray
           .map(c => c.fornecedorExterno || c.fornecedorInterno)
           .filter(f => f && typeof f.id !== 'undefined')

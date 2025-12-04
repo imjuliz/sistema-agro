@@ -246,9 +246,7 @@ export const verContratosComFazendasAsFornecedorController = async (req, res) =>
       })
     }
     
-    console.log('[verContratosComFazendasAsFornecedorController] Recebida requisição para unidadeId:', unidadeId);
     const contratos = await verContratosComFazendasAsFornecedor(unidadeId);
-    console.log('[verContratosComFazendasAsFornecedorController] Resposta:', contratos);
     
     return res.status(200).json({
       sucesso: true,
