@@ -1,4 +1,4 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts } from "../models/Fornecedores.js";
+import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts } from "../models/Fornecedores.js";
 import { fornecedorSchema } from "../schemas/fornecedorSchema.js";
 
 // Retorna metadados úteis para o frontend (enums / opções)
@@ -235,6 +235,37 @@ export const verContratosComFazendasController = async (req, res) =>{ //funciona
   }
 }
 
+export const verContratosComFazendasAsFornecedorController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+
+    if (!unidadeId) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: "Usuário não possui unidade vinculada!"
+      })
+    }
+    
+    console.log('[verContratosComFazendasAsFornecedorController] Recebida requisição para unidadeId:', unidadeId);
+    const contratos = await verContratosComFazendasAsFornecedor(unidadeId);
+    console.log('[verContratosComFazendasAsFornecedorController] Resposta:', contratos);
+    
+    return res.status(200).json({
+      sucesso: true,
+      contratos,
+      message: "Contratos onde você é fornecedor listados com sucesso!"
+    });
+
+  } catch (error) {
+    console.error('[verContratosComFazendasAsFornecedorController] Erro:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro no controller ao ver contratos como fornecedor.",
+      detalhes: error.message
+    })
+  }
+}
+
 export async function updateFornecedorController(req, res) {
     const { id } = req.params;
     try {
@@ -435,4 +466,3 @@ export const buscarPedidosExternosController = async (req, res) => {
     });
   }
 };
-

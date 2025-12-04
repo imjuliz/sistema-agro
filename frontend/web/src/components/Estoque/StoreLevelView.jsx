@@ -267,8 +267,7 @@ export function StoreLevelView({ onOpenMovimento }) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                                   {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                                  <DropdownMenuItem>Editar</DropdownMenuItem>
-                                  <DropdownMenuSeparator />
+                                  {/* <DropdownMenuSeparator /> */}
                                   <DropdownMenuItem onClick={() => {
                                     const isManager = isGerenteMatriz || isGerenteFazenda || isGerenteLoja;
                                     if (!isManager) {
@@ -284,6 +283,7 @@ export function StoreLevelView({ onOpenMovimento }) {
                                     setMinInputValue(String(item.minimumStock ?? 0));
                                     setIsMinModalOpen(true);
                                   }}>Editar mínimo</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onOpenMovimento(item)}>Registrar movimentação</DropdownMenuItem>
                                   <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
                           {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
                         </DropdownMenuContent>

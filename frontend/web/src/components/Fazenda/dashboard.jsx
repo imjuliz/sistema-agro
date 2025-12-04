@@ -33,14 +33,36 @@ export function SectionCards() {
       if (!unidadeId) return;
       try {
         const fetchFn = fetchWithAuth || fetch;
+        
+        // Busca contratos onde a unidade é CONSUMIDOR
         const cRes = await fetchFn(`${API_URL}/verContratosComFazendas/${unidadeId}`);
         const cJson = await cRes.json().catch(() => ({}));
-        if (mounted && cRes.ok) {
+        
+        let totalContratos = [];
+        
+        if (cRes.ok) {
           const arr = cJson.contratos ?? cJson ?? [];
-          const active = Array.isArray(arr) ? arr.filter(c => {
+          totalContratos = Array.isArray(arr) ? arr : [];
+        }
+        
+        // Busca contratos onde a unidade é FORNECEDOR
+        try {
+          const fRes = await fetchFn(`${API_URL}/verContratosComFazendasAsFornecedor/${unidadeId}`);
+          const fJson = await fRes.json().catch(() => ({}));
+          if (fRes.ok) {
+            const arr = fJson.contratos ?? fJson ?? [];
+            const contratosFornecedor = Array.isArray(arr) ? arr : [];
+            totalContratos = [...totalContratos, ...contratosFornecedor];
+          }
+        } catch (e) {
+          console.warn('Erro ao buscar contratos como fornecedor:', e);
+        }
+        
+        if (mounted && totalContratos.length > 0) {
+          const active = totalContratos.filter(c => {
             const s = (c.status || c.statusContrato || c.status_contrato || '').toString().toUpperCase();
             return s === 'ATIVO' || s === 'ACTIVE' || s === 'EM VIGOR';
-          }).length : 0;
+          }).length;
           setParceriasCount(active);
         }
         try {

@@ -51,14 +51,31 @@ export default function ConsumerDashboard() {
           setFornecedores(bodyFornecedores.fornecedores || []);
         }
 
-        // Carrega contratos
+        // Carrega contratos (onde a unidade é CONSUMIDOR)
+        let allContratos = [];
         const resContratos = await fetchWithAuth(
           `${API_URL}verContratosComFazendas/${unidadeId}`
         );
         if (resContratos.ok) {
           const bodyContratos = await resContratos.json();
-          setContratos(bodyContratos.contratos || []);
+          allContratos = bodyContratos.contratos || [];
         }
+
+        // Carrega contratos onde a unidade é FORNECEDORA
+        try {
+          const resContratosFornecedor = await fetchWithAuth(
+            `${API_URL}verContratosComFazendasAsFornecedor/${unidadeId}`
+          );
+          if (resContratosFornecedor.ok) {
+            const bodyContratosFornecedor = await resContratosFornecedor.json();
+            const contratosFornecedor = bodyContratosFornecedor.contratos || [];
+            allContratos = [...allContratos, ...contratosFornecedor];
+          }
+        } catch (e) {
+          console.warn('Erro ao buscar contratos como fornecedor:', e);
+        }
+
+        setContratos(allContratos);
 
         // Carrega pedidos
         const resPedidos = await fetchWithAuth(

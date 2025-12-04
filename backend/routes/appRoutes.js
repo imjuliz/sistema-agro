@@ -8,7 +8,7 @@ import { deletarUsuarioController } from "../controllers/UserController.js";
 import { listarUsuariosPorUnidadeController } from '../controllers/usuarios/usuariosController.js';
 import {listarPedidosEntregaController, listarPedidosOrigemController, atualizarQntdMinController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
-import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController } from "../controllers/fornecedoresController.js";
+import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController } from "../controllers/fornecedoresController.js";
 import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
@@ -91,6 +91,7 @@ router.get("/verContratosComLojas/:fornecedorUnidadeId", verContratosComLojasCon
 router.get("/verContratosExternos/:unidadeId", verContratosExternosController);
 router.get("/pedidos-externos/:unidadeId", buscarPedidosExternosController);
 router.get("/verContratosComFazendas/:unidadeId", verContratosComFazendasController);
+router.get("/verContratosComFazendasAsFornecedor/:unidadeId", verContratosComFazendasAsFornecedorController);
 router.post("/criarContratoInterno/:fazendaId", criarContratoInternoController);
 router.post("/criarContratoExterno/:unidadeId", criarContratoExternoController);
 // metadados para contratos (enums/options)

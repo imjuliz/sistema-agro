@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
-export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+export default function ConsumidoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();
     const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
@@ -208,7 +208,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     // Render helpers to keep JSX readable
     const renderHeader = () => (
         <header className="mb-4">
-            <h2 className="text-lg font-semibold mb-3">Fornecedores</h2>
+            <h2 className="text-lg font-semibold mb-3">Lojas Consumidoras</h2>
             <div className="flex flex-row gap-4 items-center">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -221,7 +221,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     {/* <button onClick={() => setViewMode('contracts')} className={`p-2 ${viewMode === 'contracts' ? 'bg-muted rounded' : ''}`} title="contracts">Contratos</button> */}
                 </div>
 
-                {isUserGerenteMatriz && <Button><Plus /> Novo fornecedor</Button>}
+                {isUserGerenteMatriz && <Button><Plus /> Nova loja</Button>}
             </div>
         </header>
     );
@@ -230,8 +230,8 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredSuppliers.length === 0 ? (
                 <div className="col-span-full p-8 text-center text-muted-foreground">
-                    <p className="text-lg">Nenhum fornecedor encontrado</p>
-                    {carregando && <p className="text-sm mt-2">Carregando fornecedores...</p>}
+                    <p className="text-lg">Nenhuma loja encontrada</p>
+                    {carregando && <p className="text-sm mt-2">Carregando lojas...</p>}
                 </div>
             ) : (
                 filteredSuppliers.map((supplier) => {
@@ -393,7 +393,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     <button onClick={() => setContractsViewMode('table')} className={`p-2 ${contractsViewMode === 'table' ? 'bg-muted rounded' : ''}`} title="table"><List className="h-4 w-4" /></button>
                 </div>
 
-                {isUserGerenteMatriz && <Button><Plus />Editar contrato</Button>}
+                {isUserGerenteMatriz && <Button><Plus />Novo contrato</Button>}
             </div>
         </header>
     );
@@ -402,13 +402,13 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(() => {
                 const allContratos = (Array.isArray(contratos) ? contratos : contratos?.contratos) || [];
-                // FILTRO: Mostrar apenas contratos onde esta unidade é CONSUMIDORA (unidadeId = unidadeAtual)
-                const contratosConsumidor = allContratos.filter(c => c.unidadeId === Number(unidadeId));
-                const filteredContratos = contratosConsumidor.filter(c => {
+                // FILTRO: Mostrar apenas contratos onde esta unidade é FORNECEDORA (fornecedorUnidadeId = unidadeAtual)
+                const contratasFornecedor = allContratos.filter(c => c.fornecedorUnidadeId === Number(unidadeId));
+                const filteredContratos = contratasFornecedor.filter(c => {
                     const q = (contractSearchTerm || '').trim().toLowerCase();
                     if (q === '') return true;
                     
-                    const nomeUnidade = (c?.fornecedorUnidade?.nome ?? c?.unidade?.nome ?? c?.unidadeOrigem?.nome ?? c?.origemUnidade?.nome ?? c?.fornecedorInterno?.nome ?? c?.nomeUnidade ?? '').toLowerCase();
+                    const nomeUnidade = (c?.unidade?.nome ?? c?.unidadeOrigem?.nome ?? c?.origemUnidade?.nome ?? c?.nomeUnidade ?? '').toLowerCase();
                     const nomeFornecedor = (c?.fornecedorExterno?.nomeEmpresa ?? c?.fornecedor?.nome ?? c?.nomeFornecedor ?? '').toLowerCase();
                     
                     return nomeUnidade.includes(q) || nomeFornecedor.includes(q);
@@ -422,16 +422,15 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                 ) : (
                     filteredContratos.map((c) => {
                         const nomeUnidade =
-                            c?.fornecedorUnidade?.nome ??
                             c?.unidade?.nome ??
                             c?.unidadeOrigem?.nome ??
                             c?.origemUnidade?.nome ??
-                            c?.fornecedorInterno?.nome ??
                             c?.nomeUnidade ??
                             '—';
 
                         const nomeFornecedor =
-                            c?.fornecedorExterno?.nomeEmpresa ??
+                            c?.fornecedorUnidade?.nome ??
+                            c?.fornecedorInterno?.nome ??
                             c?.fornecedor?.nome ??
                             c?.nomeFornecedor ??
                             '—';
@@ -442,7 +441,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                                 <div className="flex justify-between items-center mb-2">
                                     <div>
                                         <div className="font-semibold">{nomeUnidade} - {nomeFornecedor}</div>
-                                        <div className="text-sm text-muted-foreground">Fornecedor: {c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</div>
+                                        <div className="text-sm text-muted-foreground">Loja: {c.unidade?.nome ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</div>
                                     </div>
                                     <div className="text-right">
                                         <Badge variant="secondary">{String(c.status ?? '')}</Badge>
@@ -496,7 +495,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
 
                 <TableBody>
                     {((Array.isArray(contratos) ? contratos : contratos?.contratos) || [])
-                        .filter(c => c.unidadeId === Number(unidadeId))
+                        .filter(c => c.fornecedorUnidadeId === Number(unidadeId))
                         .map((c) => (
                         <TableRow key={c.id}>
                             <TableCell className="font-medium">{c.titulo || c.numero || `Contrato ${c.id}`}</TableCell>
@@ -527,7 +526,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
             '—';
 
         const nomeFornecedor =
-            selectedContrato?.fornecedorExterno?.nomeEmpresa ??
+            selectedContrato?.fornecedorUnidade?.nome ??
             selectedContrato?.fornecedor?.nome ??
             selectedContrato?.nomeFornecedor ??
             '—';

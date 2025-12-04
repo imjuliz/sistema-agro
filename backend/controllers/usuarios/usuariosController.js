@@ -298,4 +298,3 @@ export const removerFotoController = async (req, res) => {
     });
   }
 }
-
