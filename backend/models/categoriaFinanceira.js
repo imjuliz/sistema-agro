@@ -32,6 +32,15 @@ export const listarCategoriasPorUnidade = async (unidadeId) => {
       include: {
         subcategorias: {
           where: { ativa: true }
+        },
+        financeiros: {
+          select: {
+            parcela: true,
+            totalParcelas: true,
+            valor: true,
+             valorPago: true,
+             vencimento: true
+          }
         }
       },
       orderBy: [

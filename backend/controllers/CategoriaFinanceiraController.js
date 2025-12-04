@@ -15,7 +15,7 @@ import {
 
 export const criarCategoriaController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId;
     const { nome, tipo, descricao } = req.body;
 
     if (!unidadeId) {
@@ -51,8 +51,8 @@ export const criarCategoriaController = async (req, res) => {
 
 export const listarCategoriasController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
 
+    const unidadeId = req.usuario?.unidadeId;
     if (!unidadeId) {
       return res.status(401).json({
         sucesso: false,

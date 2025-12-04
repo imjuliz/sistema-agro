@@ -76,7 +76,7 @@ export const criarContaController = async (req, res) => {
 
 export const listarContasController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId;
 
     if (!unidadeId) {
       return res.status(401).json({

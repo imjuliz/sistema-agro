@@ -35,6 +35,7 @@ export function LoginForm({ className, ...props }) {
       const payload = result.payload ?? result.data ?? result.data?.data ?? null;
       const perfil = payload?.usuario?.perfil ?? payload?.usuario?.perfil ?? payload?.perfil ?? null;
       console.log('perfil detectado:', perfil);
+      localStorage.setItem('accessToken', payload.accessToken);
 
       // se não houver perfil, você pode chamar um endpoint /me com fetchWithAuth para pegar info
       switch (perfil) {

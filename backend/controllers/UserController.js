@@ -156,7 +156,7 @@ export async function loginController(req, res) {
     };
 
     // enviar cookie de refresh
-    res.cookie(COOKIE_NAME, refreshToken, cookieOptions);
+    res.cookie(COOKIE_NAME, refreshToken, cookieOptions, accessToken);
 
     return res.status(200).json({
       sucesso: true,
