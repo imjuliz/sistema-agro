@@ -2,7 +2,8 @@
 import * as React from 'react';
 import { Pie, PieChart } from "recharts"
 import { useState, useEffect } from 'react'
-import { API_URL } from '@/config';
+// import { API_URL } from '@/config';
+import { API_URL } from "@/lib/api";
 import { useAuth } from '@/contexts/AuthContext';
 import { PlusIcon } from 'lucide-react'
 import { useTheme } from "next-themes";

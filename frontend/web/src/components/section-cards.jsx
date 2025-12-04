@@ -5,7 +5,7 @@ import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, }
 import { useEffect, useState } from 'react';
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { API_URL } from "@/lib/api";
+import { API_URL } from "@/config";
 export function SectionCards() {
 
   const [saldo, setSaldo] = useState([]);
@@ -22,7 +22,6 @@ export function SectionCards() {
       try {
         const url = `${API_URL}/saldo-final`;
         const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
-        // Log non-ok responses (500, 400, etc.) for easier debugging
         if (!res.ok) {
           const text = await res.text().catch(() => null);
           console.error('[fetchSaldoDiario] server responded with error', { status: res.status, statusText: res.statusText, bodyText: text });
@@ -33,7 +32,6 @@ export function SectionCards() {
         }
 
         const body = await res.json().catch(async () => {
-          // fallback: try reading text for logging
           const t = await res.text().catch(() => null);
           console.warn('[fetchSaldoDiario] resposta não-JSON, texto:', t);
           return null;
@@ -54,7 +52,6 @@ export function SectionCards() {
 
   useEffect(() => {
     let mounted = true;
-    // const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/';
 
     async function fetchSaldoLiq() {
       try {
@@ -91,11 +88,10 @@ export function SectionCards() {
 
   useEffect(() => {
     let mounted = true;
-    // const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/';
 
     async function fetchQtdEstoque() {
       try {
-        const url = `${API_URL}estoqueSomar`;
+        const url = `${API_URL}/estoqueSomar`;
         const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
 
         if (!res.ok) {

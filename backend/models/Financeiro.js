@@ -308,11 +308,12 @@ export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA
         };
 
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao ver saldo final",
-            detalhes: error.message,
-        };
+    console.error(`Erro em mostrarSaldoF para unidade ${unidadeId}:`, error);
+    return {
+      sucesso: false,
+      erro: "Erro ao ver saldo final",
+      detalhes: error.message,
+    };
     }
 };
 
@@ -470,11 +471,12 @@ export const calcularSaldoLiquido = async (unidadeId) => {
             message: "Saldo líquido calculado com sucesso!",
         };
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao calcular saldo líquido",
-            detalhes: error.message,
-        };
+    console.error(`Erro em calcularSaldoLiquido para unidade ${unidadeId}:`, error);
+    return {
+      sucesso: false,
+      erro: "Erro ao calcular saldo líquido",
+      detalhes: error.message,
+    };
     }
 };
 

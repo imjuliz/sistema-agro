@@ -55,7 +55,7 @@ function ContribuidoresTable() {
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-semibold">Estoque</h2>
-
+{/* 
           <Select onValueChange={setCategoria}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Tipo" />
@@ -95,7 +95,7 @@ function ContribuidoresTable() {
                 <SelectItem value="tipo">Tipo</SelectItem>
               </SelectGroup>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
         <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]"/>
       </div>

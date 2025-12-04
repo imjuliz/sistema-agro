@@ -45,6 +45,7 @@ export const somarQtdTotalEstoque = async (unidadeId) => { //ok
         };
 
     } catch (error) {
+        console.error(`Erro em somarQtdTotalEstoque para unidade ${unidadeId}:`, error);
         return {
             sucesso: false,
             erro: "Erro ao calcular o total de itens no estoque",
@@ -89,6 +90,7 @@ export const getEstoque = async (unidadeId) => {
         };
 
     } catch (error) {
+        console.error(`Erro em getEstoque para unidade ${unidadeId}:`, error);
         return {
             sucesso: false,
             estoque: [],
