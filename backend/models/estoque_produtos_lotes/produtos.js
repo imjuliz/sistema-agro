@@ -1,8 +1,10 @@
 import prisma from '../../prisma/client.js';
 
-export async function getProdutos() {//tem controller
+export async function getProdutos(unidadeId) {//tem controller
     try {
-        const produtos = await prisma.produto.findMany();
+        const produtos = await prisma.produto.findMany({
+             where: { unidadeId: Number(unidadeId) }
+        });
 
         return {
             sucesso: true,
@@ -18,6 +20,26 @@ export async function getProdutos() {//tem controller
     }
 }
 
+export async function produtosDoEstoque(unidadeId) {
+  return await prisma.estoque.findUnique({
+    where: {unidadeId: Number(unidadeId) },
+    include: {
+      estoqueProdutos: {
+        select: {
+          id: true,
+          nome: true,
+          sku: true,
+          marca: true,
+          qntdAtual: true,
+          qntdMin: true,
+          precoUnitario: true,
+          validade: true,
+          unidadeBase: true,
+        },
+      },
+    },
+  });
+}
 export async function getProdutosPelaCategoria(categoria) {
   try {
     const produtosCat = await prisma.produto.findMany({

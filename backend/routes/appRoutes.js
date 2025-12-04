@@ -40,6 +40,7 @@ import {
     obterSaldoPorCategoriaController
 } from "../controllers/ContaFinanceiraController.js";
 import { getDashboardDataController } from '../controllers/dashboardController.js';
+import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -64,7 +65,11 @@ router.get("/financeiro/produto-mais-vendido/:unidadeId", buscarProdutoMaisVendi
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
-router.get("/produtos", auth, listarProdutosController);
+// router.get("/produtos/:unidadeId",  listarProdutosController);
+router.get("/listarProdutos/:unidadeId", getProdutosController);
+
+router.get('/listarProdutosEstoque/:unidadeId', produtosDoEstoqueController);
+
 router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", lotesPlantioController);

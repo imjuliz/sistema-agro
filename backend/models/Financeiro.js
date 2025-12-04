@@ -360,8 +360,8 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 //insert na tabela de venda
 export async function criarVenda(req, res) {
     try {
-        const { caixaId, usuarioId, unidadeId, pagamento, itens } = req.body;
-        if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
+  const { caixaId, usuarioId, unidadeId, pagamento, itens, nomeCliente } = req.body;
+  if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
 
         let caixaIdToUse = caixaId ? Number(caixaId) : null;
         if (!caixaIdToUse) {
@@ -418,13 +418,14 @@ export async function criarVenda(req, res) {
 
         const totalVenda = itensResolvidos.reduce((acc, it) => acc + (it.subtotal || 0), 0);
 
-        const novaVenda = await prisma.venda.create({
+    const novaVenda = await prisma.venda.create({
             data: {
                 caixaId: Number(caixaIdToUse),
                 usuarioId: Number(usuarioId),
                 unidadeId: Number(unidadeId),
                 pagamento: pagamentoFinal,
-                total: totalVenda,
+        total: totalVenda,
+        nomeCliente: nomeCliente ?? null,
                 itens: {
                     create: itensResolvidos.map((item) => ({
                         produtoId: Number(item.produtoId),
