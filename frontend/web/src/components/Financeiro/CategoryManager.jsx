@@ -25,7 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 //   onCategoriesChange: (categories: Category[]) => void;
 // }
 
-export function CategoryManager({ categories, onCategoriesChange }) {
+export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth, API_URL, onRefresh }) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryType, setNewCategoryType] = useState('entrada');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
@@ -39,62 +39,165 @@ export function CategoryManager({ categories, onCategoriesChange }) {
   const [editCategoryName, setEditCategoryName] = useState('');
   const [editSubcategoryName, setEditSubcategoryName] = useState('');
 
-  const addCategory = () => {
+  const addCategory = async () => {
     if (!newCategoryName.trim()) return;
     
-    const newCategory = {
-      id: Date.now().toString(),
-      name: newCategoryName,
-      type: newCategoryType,
-      subcategories: []
-    };
-    
-    onCategoriesChange([...categories, newCategory]);
-    setNewCategoryName('');
-    setIsAddCategoryOpen(false);
+    try {
+      const categoriaData = {
+        nome: newCategoryName,
+        tipo: newCategoryType === 'entrada' ? 'ENTRADA' : 'SAIDA',
+        descricao: ''
+      };
+
+      const url = API_URL ? `${API_URL}/api/categorias` : '/api/categorias';
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(categoriaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar categoria');
+      }
+
+      const result = await response.json();
+      if (result.sucesso) {
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          const newCategory = {
+            id: result.dados.id.toString(),
+            name: newCategoryName,
+            type: newCategoryType,
+            subcategories: []
+          };
+          
+          onCategoriesChange([...categories, newCategory]);
+        }
+        setNewCategoryName('');
+        setIsAddCategoryOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+      alert('Erro ao criar categoria. Tente novamente.');
+    }
   };
 
-  const addSubcategory = () => {
+  const addSubcategory = async () => {
     if (!newSubcategoryName.trim() || !selectedCategoryId) return;
     
-    const updatedCategories = categories.map(category => {
-      if (category.id === selectedCategoryId) {
-        return {
-          ...category,
-          subcategories: [
-            ...category.subcategories,
-            {
-              id: Date.now().toString(),
-              name: newSubcategoryName,
-              categoryId: selectedCategoryId
+    try {
+      const subcategoriaData = {
+        nome: newSubcategoryName,
+        descricao: ''
+      };
+
+      const url = API_URL ? `${API_URL}/api/categorias/${selectedCategoryId}/subcategorias` : `/api/categorias/${selectedCategoryId}/subcategorias`;
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subcategoriaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar subcategoria');
+      }
+
+      const result = await response.json();
+      if (result.sucesso) {
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          const updatedCategories = categories.map(category => {
+            if (category.id === selectedCategoryId) {
+              return {
+                ...category,
+                subcategories: [
+                  ...category.subcategories,
+                  {
+                    id: result.dados.id.toString(),
+                    name: newSubcategoryName,
+                    categoryId: selectedCategoryId
+                  }
+                ]
+              };
             }
-          ]
-        };
+            return category;
+          });
+          
+          onCategoriesChange(updatedCategories);
+        }
+        setNewSubcategoryName('');
+        setSelectedCategoryId('');
+        setIsAddSubcategoryOpen(false);
       }
-      return category;
-    });
-    
-    onCategoriesChange(updatedCategories);
-    setNewSubcategoryName('');
-    setSelectedCategoryId('');
-    setIsAddSubcategoryOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar subcategoria:', error);
+      alert('Erro ao criar subcategoria. Tente novamente.');
+    }
   };
 
-  const deleteCategory = (categoryId) => {
-    onCategoriesChange(categories.filter(cat => cat.id !== categoryId));
+  const deleteCategory = async (categoryId) => {
+    try {
+      const url = API_URL ? `${API_URL}/api/categorias/${categoryId}` : `/api/categorias/${categoryId}`;
+      const response = await fetchWithAuth(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao deletar categoria');
+      }
+
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        onCategoriesChange(categories.filter(cat => cat.id !== categoryId));
+      }
+    } catch (error) {
+      console.error('Erro ao deletar categoria:', error);
+      alert('Erro ao deletar categoria. Tente novamente.');
+    }
   };
 
-  const deleteSubcategory = (categoryId, subcategoryId) => {
-    const updatedCategories = categories.map(category => {
-      if (category.id === categoryId) {
-        return {
-          ...category,
-          subcategories: category.subcategories.filter(sub => sub.id !== subcategoryId)
-        };
+  const deleteSubcategory = async (categoryId, subcategoryId) => {
+    try {
+      const url = API_URL ? `${API_URL}/api/subcategorias/${subcategoryId}` : `/api/subcategorias/${subcategoryId}`;
+      const response = await fetchWithAuth(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao deletar subcategoria');
       }
-      return category;
-    });
-    onCategoriesChange(updatedCategories);
+
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        const updatedCategories = categories.map(category => {
+          if (category.id === categoryId) {
+            return {
+              ...category,
+              subcategories: category.subcategories.filter(sub => sub.id !== subcategoryId)
+            };
+          }
+          return category;
+        });
+        onCategoriesChange(updatedCategories);
+      }
+    } catch (error) {
+      console.error('Erro ao deletar subcategoria:', error);
+      alert('Erro ao deletar subcategoria. Tente novamente.');
+    }
   };
 
   const startEditCategory = (category) => {
@@ -107,36 +210,90 @@ export function CategoryManager({ categories, onCategoriesChange }) {
     setEditSubcategoryName(subcategory.name);
   };
 
-  const saveEditCategory = () => {
+  const saveEditCategory = async () => {
     if (!editCategoryName.trim() || !editingCategoryId) return;
     
-    const updatedCategories = categories.map(category => {
-      if (category.id === editingCategoryId) {
-        return { ...category, name: editCategoryName };
+    try {
+      const categoriaData = {
+        nome: editCategoryName,
+        descricao: ''
+      };
+
+      const url = API_URL ? `${API_URL}/api/categorias/${editingCategoryId}` : `/api/categorias/${editingCategoryId}`;
+      const response = await fetchWithAuth(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(categoriaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar categoria');
       }
-      return category;
-    });
-    
-    onCategoriesChange(updatedCategories);
-    setEditingCategoryId(null);
-    setEditCategoryName('');
+
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        const updatedCategories = categories.map(category => {
+          if (category.id === editingCategoryId) {
+            return { ...category, name: editCategoryName };
+          }
+          return category;
+        });
+        
+        onCategoriesChange(updatedCategories);
+      }
+      setEditingCategoryId(null);
+      setEditCategoryName('');
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      alert('Erro ao atualizar categoria. Tente novamente.');
+    }
   };
 
-  const saveEditSubcategory = () => {
+  const saveEditSubcategory = async () => {
     if (!editSubcategoryName.trim() || !editingSubcategoryId) return;
     
-    const updatedCategories = categories.map(category => ({
-      ...category,
-      subcategories: category.subcategories.map(sub => 
-        sub.id === editingSubcategoryId 
-          ? { ...sub, name: editSubcategoryName }
-          : sub
-      )
-    }));
-    
-    onCategoriesChange(updatedCategories);
-    setEditingSubcategoryId(null);
-    setEditSubcategoryName('');
+    try {
+      const subcategoriaData = {
+        nome: editSubcategoryName,
+        descricao: ''
+      };
+
+      const url = API_URL ? `${API_URL}/api/subcategorias/${editingSubcategoryId}` : `/api/subcategorias/${editingSubcategoryId}`;
+      const response = await fetchWithAuth(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subcategoriaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar subcategoria');
+      }
+
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        const updatedCategories = categories.map(category => ({
+          ...category,
+          subcategories: category.subcategories.map(sub => 
+            sub.id === editingSubcategoryId 
+              ? { ...sub, name: editSubcategoryName }
+              : sub
+          )
+        }));
+        
+        onCategoriesChange(updatedCategories);
+      }
+      setEditingSubcategoryId(null);
+      setEditSubcategoryName('');
+    } catch (error) {
+      console.error('Erro ao atualizar subcategoria:', error);
+      alert('Erro ao atualizar subcategoria. Tente novamente.');
+    }
   };
 
   const cancelEdit = () => {

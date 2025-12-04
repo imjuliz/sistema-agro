@@ -34,7 +34,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 //   [key: string]: string;
 // }
 
-export function AccountsReceivable({ accounts, categories, onAccountsChange }) {
+export function AccountsReceivable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -67,25 +67,75 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange }) {
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
       return;
     }
 
-    const newAccount = {
-      id: Date.now().toString(),
-      competencyDate: formData.competencyDate,
-      dueDate: formData.dueDate,
-      paymentDate: formData.paymentDate || undefined,
-      amount: parseFloat(formData.amount),
-      subcategoryId: formData.subcategoryId,
-      description: formData.description,
-      status: formData.paymentDate ? 'received' : 'pending'
-    };
+    try {
+      const subcategory = categories
+        .flatMap(cat => cat.subcategories)
+        .find(sub => sub.id === formData.subcategoryId);
+      
+      const categoria = categories.find(cat => 
+        cat.subcategories.some(sub => sub.id === formData.subcategoryId)
+      );
 
-    onAccountsChange([...accounts, newAccount]);
-    resetForm();
-    setIsAddDialogOpen(false);
+      const contaData = {
+        descricao: formData.description || '',
+        tipoMovimento: 'ENTRADA',
+        categoriaId: categoria ? parseInt(categoria.id) : null,
+        subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,
+        formaPagamento: 'DINHEIRO',
+        valor: parseFloat(formData.amount),
+        competencia: formData.competencyDate,
+        vencimento: formData.dueDate,
+        documento: '',
+        observacao: formData.description || ''
+      };
+
+      if (formData.paymentDate) {
+        contaData.dataRecebimento = formData.paymentDate;
+      }
+
+      const url = API_URL ? `${API_URL}/api/contas-financeiras` : '/api/contas-financeiras';
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar conta');
+      }
+
+      const result = await response.json();
+      if (result.sucesso) {
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          const newAccount = {
+            id: result.dados.id.toString(),
+            competencyDate: formData.competencyDate,
+            dueDate: formData.dueDate,
+            paymentDate: formData.paymentDate || undefined,
+            amount: parseFloat(formData.amount),
+            subcategoryId: formData.subcategoryId,
+            description: formData.description,
+            status: formData.paymentDate ? 'received' : 'pending'
+          };
+
+          onAccountsChange([...accounts, newAccount]);
+        }
+        resetForm();
+        setIsAddDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      alert('Erro ao criar conta. Tente novamente.');
+    }
   };
 
   const handleEdit = (account) => {
@@ -101,33 +151,100 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange }) {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editingAccount || !formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
       return;
     }
 
-    const updatedAccount = {
-      ...editingAccount,
-      competencyDate: formData.competencyDate,
-      dueDate: formData.dueDate,
-      paymentDate: formData.paymentDate || undefined,
-      amount: parseFloat(formData.amount),
-      subcategoryId: formData.subcategoryId,
-      description: formData.description,
-      status: formData.paymentDate ? 'received' : 'pending'
-    };
+    try {
+      const subcategory = categories
+        .flatMap(cat => cat.subcategories)
+        .find(sub => sub.id === formData.subcategoryId);
+      
+      const categoria = categories.find(cat => 
+        cat.subcategories.some(sub => sub.id === formData.subcategoryId)
+      );
 
-    onAccountsChange(accounts.map(acc => 
-      acc.id === editingAccount.id ? updatedAccount : acc
-    ));
-    
-    resetForm();
-    setEditingAccount(null);
-    setIsEditDialogOpen(false);
+      const contaData = {
+        descricao: formData.description || '',
+        categoriaId: categoria ? parseInt(categoria.id) : null,
+        subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,
+        formaPagamento: editingAccount.formaPagamento || 'DINHEIRO',
+        valor: parseFloat(formData.amount),
+        competencia: formData.competencyDate,
+        vencimento: formData.dueDate,
+        documento: editingAccount.documento || '',
+        observacao: formData.description || ''
+      };
+
+      if (formData.paymentDate) {
+        contaData.dataRecebimento = formData.paymentDate;
+      }
+
+      const url = API_URL ? `${API_URL}/api/contas-financeiras/${editingAccount.id}` : `/api/contas-financeiras/${editingAccount.id}`;
+      const response = await fetchWithAuth(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar conta');
+      }
+
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        const updatedAccount = {
+          ...editingAccount,
+          competencyDate: formData.competencyDate,
+          dueDate: formData.dueDate,
+          paymentDate: formData.paymentDate || undefined,
+          amount: parseFloat(formData.amount),
+          subcategoryId: formData.subcategoryId,
+          description: formData.description,
+          status: formData.paymentDate ? 'received' : 'pending'
+        };
+
+        onAccountsChange(accounts.map(acc => 
+          acc.id === editingAccount.id ? updatedAccount : acc
+        ));
+      }
+      
+      resetForm();
+      setEditingAccount(null);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Erro ao atualizar conta:', error);
+      alert('Erro ao atualizar conta. Tente novamente.');
+    }
   };
 
-  const handleDelete = (id) => {
-    onAccountsChange(accounts.filter(acc => acc.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const url = API_URL ? `${API_URL}/api/contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
+      const response = await fetchWithAuth(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao deletar conta');
+      }
+
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        onAccountsChange(accounts.filter(acc => acc.id !== id));
+      }
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      alert('Erro ao deletar conta. Tente novamente.');
+    }
   };
 
   // Função melhorada para parsing de CSV com suporte a campos entre aspas

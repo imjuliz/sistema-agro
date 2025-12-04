@@ -34,7 +34,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 //   [key: string]: string;
 // }
 
-export function AccountsPayable({ accounts, categories, onAccountsChange }) {
+export function AccountsPayable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -67,32 +67,82 @@ export function AccountsPayable({ accounts, categories, onAccountsChange }) {
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    const status = formData.paymentDate
-      ? 'paid'
-      : formData.dueDate < today
-        ? 'overdue'
-        : 'pending';
+    try {
+      const subcategory = categories
+        .flatMap(cat => cat.subcategories)
+        .find(sub => sub.id === formData.subcategoryId);
+      
+      const categoria = categories.find(cat => 
+        cat.subcategories.some(sub => sub.id === formData.subcategoryId)
+      );
 
-    const newAccount = {
-      id: Date.now().toString(),
-      competencyDate: formData.competencyDate,
-      dueDate: formData.dueDate,
-      paymentDate: formData.paymentDate || undefined,
-      amount: parseFloat(formData.amount),
-      subcategoryId: formData.subcategoryId,
-      description: formData.description,
-      status
-    };
+      const contaData = {
+        descricao: formData.description || '',
+        tipoMovimento: 'SAIDA',
+        categoriaId: categoria ? parseInt(categoria.id) : null,
+        subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,
+        formaPagamento: 'DINHEIRO',
+        valor: parseFloat(formData.amount),
+        competencia: formData.competencyDate,
+        vencimento: formData.dueDate,
+        documento: '',
+        observacao: formData.description || ''
+      };
 
-    onAccountsChange([...accounts, newAccount]);
-    resetForm();
-    setIsAddDialogOpen(false);
+      if (formData.paymentDate) {
+        contaData.dataPagamento = formData.paymentDate;
+      }
+
+      const url = API_URL ? `${API_URL}/api/contas-financeiras` : '/api/contas-financeiras';
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contaData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar conta');
+      }
+
+      const result = await response.json();
+      if (result.sucesso) {
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          const status = formData.paymentDate
+            ? 'paid'
+            : formData.dueDate < today
+              ? 'overdue'
+              : 'pending';
+
+          const newAccount = {
+            id: result.dados.id.toString(),
+            competencyDate: formData.competencyDate,
+            dueDate: formData.dueDate,
+            paymentDate: formData.paymentDate || undefined,
+            amount: parseFloat(formData.amount),
+            subcategoryId: formData.subcategoryId,
+            description: formData.description,
+            status
+          };
+
+          onAccountsChange([...accounts, newAccount]);
+        }
+        resetForm();
+        setIsAddDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      alert('Erro ao criar conta. Tente novamente.');
+    }
   };
 
   const handleEdit = (account) => {
