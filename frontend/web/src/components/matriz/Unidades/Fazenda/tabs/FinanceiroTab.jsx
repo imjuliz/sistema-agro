@@ -1,6 +1,8 @@
 "use client"
 import ReactDOM from "react-dom";
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/config';
 import { CartesianGrid, Line, LineChart, XAxis, Pie, PieChart, Sector, Label, Bar, BarChart, LabelList, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -335,10 +337,18 @@ export const columns = [
 
 
 export function FinanceiroTab() {
+  const { fetchWithAuth } = useAuth();
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
   const [columnVisibility, setColumnVisibility] = useState({})
   const [rowSelection, setRowSelection] = useState({})
+  
+  // Estados para dados do backend
+  const [categories, setCategories] = useState([]);
+  const [accountsPayable, setAccountsPayable] = useState([]);
+  const [accountsReceivable, setAccountsReceivable] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const table = useReactTable({
     data,
     columns,
@@ -464,10 +474,6 @@ export function FinanceiroTab() {
     }
   ];
 
-  // Estados persistidos com localStorage
-  const [accountsPayable, setAccountsPayable] = useLocalStorage('financial-app-accounts-payable', defaultAccountsPayable);
-  const [accountsReceivable, setAccountsReceivable] = useLocalStorage('financial-app-accounts-receivable', defaultAccountsReceivable);
-
   // Opções para os selects
   const months = [
     { value: '1', label: 'Janeiro' },
@@ -485,22 +491,183 @@ export function FinanceiroTab() {
   ];
 
   const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
 
   const years = useMemo(() => {
     const allDates = [
-      ...accountsPayable.map(acc => acc.competencyDate),
-      ...accountsReceivable.map(acc => acc.competencyDate)
+      ...accountsPayable.map(acc => acc.competencia || acc.competencyDate),
+      ...accountsReceivable.map(acc => acc.competencia || acc.competencyDate)
     ];
 
-    const yearSet = new Set(allDates.map(date => new Date(date).getFullYear()));
+    const yearSet = new Set(allDates.map(date => {
+      const d = new Date(date);
+      return d.getFullYear();
+    }));
     yearSet.add(currentDate.getFullYear());
 
     return Array.from(yearSet).sort((a, b) => b - a);
   }, [accountsPayable, accountsReceivable, currentDate]);
 
-  const [categories, setCategories] = useLocalStorage('financial-app-categories', defaultCategories);
-  const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
+  // Funções para buscar dados do backend
+  const fetchCategorias = async () => {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/api/categorias`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar categorias');
+      }
+
+      const result = await response.json();
+      if (result.sucesso && result.dados) {
+        // Buscar subcategorias para cada categoria
+        const categoriasComSubcategorias = await Promise.all(
+          result.dados.map(async (categoria) => {
+            try {
+              const subResponse = await fetchWithAuth(
+                `${API_URL}/api/categorias/${categoria.id}/subcategorias`,
+                {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+
+              if (subResponse.ok) {
+                const subResult = await subResponse.json();
+                return {
+                  id: categoria.id.toString(),
+                  name: categoria.nome,
+                  type: categoria.tipo === 'ENTRADA' ? 'entrada' : 'saida',
+                  subcategories: subResult.sucesso && subResult.dados
+                    ? subResult.dados.map(sub => ({
+                        id: sub.id.toString(),
+                        name: sub.nome,
+                        categoryId: categoria.id.toString()
+                      }))
+                    : []
+                };
+              }
+              return {
+                id: categoria.id.toString(),
+                name: categoria.nome,
+                type: categoria.tipo === 'ENTRADA' ? 'entrada' : 'saida',
+                subcategories: []
+              };
+            } catch (err) {
+              console.error('Erro ao buscar subcategorias:', err);
+              return {
+                id: categoria.id.toString(),
+                name: categoria.nome,
+                type: categoria.tipo === 'ENTRADA' ? 'entrada' : 'saida',
+                subcategories: []
+              };
+            }
+          })
+        );
+        setCategories(categoriasComSubcategorias);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar categorias:', err);
+      setError('Erro ao carregar categorias');
+    }
+  };
+
+  const fetchContas = async () => {
+    try {
+      const mes = parseInt(selectedMonth);
+      const ano = parseInt(selectedYear);
+
+      const response = await fetchWithAuth(
+        `${API_URL}/api/contas-financeiras?mes=${mes}&ano=${ano}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar contas');
+      }
+
+      const result = await response.json();
+      if (result.sucesso && result.dados) {
+        // Separar contas a pagar e a receber
+        const contasPagar = [];
+        const contasReceber = [];
+
+        result.dados.forEach(conta => {
+          const isReceita = conta.tipoMovimento === 'ENTRADA';
+          const status = conta.status === 'PAGA' || conta.status === 'RECEBIDA'
+            ? (isReceita ? 'received' : 'paid')
+            : conta.status === 'VENCIDA'
+            ? 'overdue'
+            : 'pending';
+
+          const contaFormatada = {
+            id: conta.id.toString(),
+            competencyDate: conta.competencia || conta.competenciaData,
+            dueDate: conta.vencimento || conta.vencimentoData,
+            paymentDate: conta.dataPagamento || conta.dataRecebimento || undefined,
+            amount: parseFloat(conta.valor),
+            subcategoryId: conta.subcategoriaId ? conta.subcategoriaId.toString() : conta.categoriaId?.toString() || '',
+            description: conta.descricao || '',
+            status: status,
+            categoriaId: conta.categoriaId?.toString() || '',
+            formaPagamento: conta.formaPagamento || '',
+            documento: conta.documento || '',
+            observacao: conta.observacao || ''
+          };
+
+          if (isReceita) {
+            contasReceber.push(contaFormatada);
+          } else {
+            contasPagar.push(contaFormatada);
+          }
+        });
+
+        setAccountsPayable(contasPagar);
+        setAccountsReceivable(contasReceber);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar contas:', err);
+      setError('Erro ao carregar contas');
+    }
+  };
+
+  // useEffect para carregar dados iniciais
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        await Promise.all([fetchCategorias(), fetchContas()]);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setError('Erro ao carregar dados financeiros');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []); // Carregar apenas uma vez ao montar
+
+  // Recarregar contas quando mês/ano mudar
+  useEffect(() => {
+    if (!loading) {
+      fetchContas();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, selectedYear]);
 
   const getSelectedMonthName = () => {
     const monthObj = months.find(m => m.value === selectedMonth);
@@ -509,6 +676,22 @@ export function FinanceiroTab() {
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
+  // Funções para salvar no backend
+  const handleCategoriesChange = async (newCategories) => {
+    setCategories(newCategories);
+    // As mudanças de categorias serão salvas pelos componentes filhos
+  };
+
+  const handleAccountsPayableChange = async (newAccounts) => {
+    setAccountsPayable(newAccounts);
+    // As mudanças de contas serão salvas pelos componentes filhos
+  };
+
+  const handleAccountsReceivableChange = async (newAccounts) => {
+    setAccountsReceivable(newAccounts);
+    // As mudanças de contas serão salvas pelos componentes filhos
   };
 
   // Filtrar dados baseado no período selecionado
@@ -520,12 +703,12 @@ export function FinanceiroTab() {
     const monthEnd = new Date(year, month, 0);
 
     const filteredPayable = accountsPayable.filter(acc => {
-      const competencyDate = new Date(acc.competencyDate);
+      const competencyDate = new Date(acc.competencyDate || acc.competencia);
       return competencyDate >= monthStart && competencyDate <= monthEnd;
     });
 
     const filteredReceivable = accountsReceivable.filter(acc => {
-      const competencyDate = new Date(acc.competencyDate);
+      const competencyDate = new Date(acc.competencyDate || acc.competencia);
       return competencyDate >= monthStart && competencyDate <= monthEnd;
     });
 
@@ -559,6 +742,15 @@ export function FinanceiroTab() {
 
     return { totalReceivable, totalPayable, totalReceived, totalPaid, receivablePendingCount, payablePendingCount, receivedCount, paidCount };
   }, [filteredData]);
+
+  if (loading && categories.length === 0 && accountsPayable.length === 0 && accountsReceivable.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando dados financeiros...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -836,11 +1028,43 @@ export function FinanceiroTab() {
 
         {/* Contas a Pagar */}
         <TabsContent value="payable">
-          <AccountsPayable accounts={accountsPayable} categories={categories} onAccountsChange={setAccountsPayable} />
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Carregando contas a pagar...</span>
+            </div>
+          ) : error ? (
+            <div className="p-4 text-red-500">{error}</div>
+          ) : (
+            <AccountsPayable 
+              accounts={accountsPayable} 
+              categories={categories} 
+              onAccountsChange={handleAccountsPayableChange}
+              fetchWithAuth={fetchWithAuth}
+              API_URL={API_URL}
+              onRefresh={fetchContas}
+            />
+          )}
         </TabsContent>
         {/* Contas a Receber */}
         <TabsContent value="receivable">
-          <AccountsReceivable accounts={accountsReceivable} categories={categories} onAccountsChange={setAccountsReceivable} />
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Carregando contas a receber...</span>
+            </div>
+          ) : error ? (
+            <div className="p-4 text-red-500">{error}</div>
+          ) : (
+            <AccountsReceivable 
+              accounts={accountsReceivable} 
+              categories={categories} 
+              onAccountsChange={handleAccountsReceivableChange}
+              fetchWithAuth={fetchWithAuth}
+              API_URL={API_URL}
+              onRefresh={fetchContas}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

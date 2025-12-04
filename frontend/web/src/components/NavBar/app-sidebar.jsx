@@ -66,6 +66,12 @@ function getMenuByPerfil(perfil) {
             url: "/loja/funcionarios",
             icon: UserCog,
           },
+          {
+            title: "Configurações",
+            url: "/loja/configuracoes",
+            icon: Settings2,
+            // items: [],
+          },
         ],
         projects: [
           { name: "Estoque", url: "/loja/estoque", icon: Boxes },
@@ -102,11 +108,16 @@ function getMenuByPerfil(perfil) {
             url: "/fazenda/novaAtividade",
             icon: Container,
           },
-
+          {
+            title: "Configurações",
+            url: "/fazenda/configuracoes",
+            icon: Settings2,
+            // items: [],
+          },
         ],
         projects: [
           { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },
-          { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
+          // { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
           { name: "Fornecedores", url: "/fazenda/fornecedores", icon: Container, },
           { name: "Financeiro", url: "/fazenda/vendasDespesas", icon: Frame },
           { name: "Suporte", url: "/fazenda/configuracoes", icon: Frame },
