@@ -3,23 +3,52 @@ import { Input } from "@/components/ui/input";
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectGroup,SelectLabel,SelectItem,} from "@/components/ui/select";
 import {Table,TableBody,TableCaption,TableCell,TableHead,TableHeader,TableRow,} from "@/components/ui/table";
 import { useEffect, useState } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/lib/api';
 
 function ContribuidoresTable() {
+  const { user, fetchWithAuth } = useAuth();
+  const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
   const [categoria, setCategoria] = useState("");
   const [busca, setBusca] = useState("");
   const [estoque, setEstoque] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {fetchEstoque();}, []);
+  useEffect(() => {
+    let mounted = true;
 
-  const fetchEstoque = async () => {
-    try {
-      const response = await fetch("/estoque/listar");
-      if (!response.ok) {throw new Error(`HTTP error! status: ${response.status}`);}
-      const data = await response.json();
-      setEstoque(data);
-    } catch (error) {setError(error.message);}
-  };
+    async function fetchEstoque() {
+      try {
+        if (!unidadeId) {
+          console.warn('[fetchEstoque] unidadeId não disponível no usuário da sessão.');
+          if (!mounted) return;
+          setEstoque([]);
+          return;
+        }
+
+        const url = `${API_URL}unidade/${unidadeId}/produtos`;
+        const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
+
+        if (res?.status === 401) {
+          if (!mounted) return;
+          setEstoque([]);
+          return;
+        }
+
+        const body = await res.json().catch(() => null);
+        const payload = body?.estoque ?? body?.produtos ?? body?.data ?? body ?? [];
+
+        if (!mounted) return;
+        setEstoque(Array.isArray(payload) ? payload : [payload]);
+      } catch (err) {
+        console.error('[fetchEstoque] erro:', err);
+        if (mounted) setError(String(err?.message ?? err));
+      }
+    }
+
+    if (fetchWithAuth) fetchEstoque();
+    return () => { mounted = false; };
+  }, [fetchWithAuth]);
 
   return (
     <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4 w-full">
@@ -90,17 +119,27 @@ function ContribuidoresTable() {
 
         <TableBody>
           {estoque.length > 0 &&
-            estoque.map((lote) => (
-              <TableRow key={lote.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <TableCell className="font-medium">{lote.id}</TableCell>
-                <TableCell>{lote.nome}</TableCell>
-                <TableCell>{lote.qtd}</TableCell>
-                <TableCell>{lote.unMedida}</TableCell>
-                <TableCell>R$ {lote.valorUn}</TableCell>
-                <TableCell>{lote.fornecedor}</TableCell>
-                <TableCell>{lote.situacao}</TableCell>
-              </TableRow>
-            ))}
+            estoque.map((lote, idx) => {
+              const key = lote?.id ?? lote?.sku ?? lote?.produto?.id ?? `row-${idx}`;
+              const nome = lote?.nome ?? lote?.produto?.nome ?? '';
+              const qtd = lote?.qntdAtual ?? lote?.quantidade ?? lote?.qtd ?? 0;
+              const unMedida = lote?.unidadeBase ?? lote?.unidadeMedida ?? '';
+              const valorUn = lote?.precoUnitario ?? lote?.valorUnitario ?? lote?.valorUn ?? 0;
+              const fornecedor = lote?.fornecedorUnidade?.nome ?? lote?.fornecedorExterno?.nomeEmpresa ?? lote?.pedido?.fornecedorExterno?.nomeEmpresa ?? lote?.pedido?.origemUnidade?.nome ?? '';
+              const situacao = lote?.situacao ?? lote?.status ?? '';
+
+              return (
+                <TableRow key={key} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <TableCell className="font-medium">{lote?.id ?? ''}</TableCell>
+                  <TableCell>{nome}</TableCell>
+                  <TableCell>{qtd}</TableCell>
+                  <TableCell>{unMedida}</TableCell>
+                  <TableCell>R$ {Number(valorUn || 0).toFixed(2)}</TableCell>
+                  <TableCell>{fornecedor}</TableCell>
+                  <TableCell>{situacao}</TableCell>
+                </TableRow>
+              );
+            })}
         </TableBody>
       </Table>
     </div>

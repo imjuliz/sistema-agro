@@ -64,8 +64,7 @@ export const getEstoque = async (unidadeId) => {
                     include: {
                         produto: {
                             include: {
-                                origemUnidade: true,
-                                fornecedor: true
+                                origemUnidade: true
                             }
                         },
                         fornecedorUnidade: true,

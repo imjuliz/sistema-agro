@@ -27,54 +27,52 @@ export function SectionCards() {
   const [lucro, setLucro] = useState(null);
   const [parceriasCount, setParceriasCount] = useState(null);
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      if (!unidadeId) return;
-      try {
-        const fetchFn = fetchWithAuth || fetch;
-        
-        // Busca contratos onde a unidade é FORNECEDOR (as lojas que ela fornece)
-        const cRes = await fetchFn(`${API_URL}/verContratosComLojas/${unidadeId}`);
-        const cJson = await cRes.json().catch(() => ({}));
-        
-        let totalContratos = [];
-        
-        if (cRes.ok) {
-          const arr = cJson.contratos ?? cJson ?? [];
-          totalContratos = Array.isArray(arr) ? arr : [];
-        }
-        
-        // Busca contratos onde a unidade é FORNECEDOR
-        try {
-          const fRes = await fetchFn(`${API_URL}/verContratosComFazendasAsFornecedor/${unidadeId}`);
-          const fJson = await fRes.json().catch(() => ({}));
-          if (fRes.ok) {
-            const arr = fJson.contratos ?? fJson ?? [];
-            const contratosFornecedor = Array.isArray(arr) ? arr : [];
-            totalContratos = [...totalContratos, ...contratosFornecedor];
-          }
-        } catch (e) {
-          console.warn('Erro ao buscar contratos como fornecedor:', e);
-        }
-        
-        if (mounted && totalContratos.length > 0) {
-          const active = totalContratos.filter(c => {
-            const s = (c.status || c.statusContrato || c.status_contrato || '').toString().toUpperCase();
-            return s === 'ATIVO' || s === 'ACTIVE' || s === 'EM VIGOR';
-          }).length;
-          setParceriasCount(active);
-        }
-        try {
-          const fRes = await fetchFn(`${API_URL}/financeiro/saldo/${unidadeId}`);
-          const fJson = await fRes.json().catch(() => ({}));
-          if (mounted && fRes.ok && typeof fJson.saldo !== 'undefined') { setLucro(fJson.saldo); }
-        } catch (e) { }
-      } catch (err) { console.error('Erro carregando cards:', err); }
+ useEffect(() => {
+  let mounted = true;
+
+  async function loadSaldo() {
+    if (!unidadeId) return;
+
+    try {
+      const url = `${API_URL}/somarEntradasMensais/${unidadeId}`;
+      console.debug("[loadSaldo] requesting", url);
+
+      const res = await fetchWithAuth(url, { 
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "application/json" }
+      });
+
+      console.debug("[loadSaldo] status:", res.status);
+
+      if (res.status === 404) {
+        console.warn("[loadSaldo] 404 — rota não encontrada");
+        if (mounted) setLucro(0);
+        return;
+      }
+
+      if (res.status === 401) {
+        console.warn("[loadSaldo] 401 — não autorizado");
+        if (mounted) setLucro(0);
+        return;
+      }
+
+      const body = await res.json().catch(() => null);
+      console.debug("[loadSaldo] body:", body);
+
+      const saldo = Number(body?.saldo ?? 0) || 0;
+
+      if (mounted) setLucro(saldo);
+
+    } catch (err) {
+      console.error("[loadSaldo] erro:", err);
+      if (mounted) setLucro(0);
     }
-    load();
-    return () => { mounted = false };
-  }, [unidadeId, fetchWithAuth]);
+  }
+
+  loadSaldo();
+  return () => { mounted = false };
+}, [unidadeId, fetchWithAuth]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-1 gap-8 px-8 min-w-[20%] mx-auto w-full">
@@ -104,6 +102,7 @@ export function SectionCards2() {
     let mounted = true;
     async function load() {
       if (!unidadeId) return;
+
       try {
         const fetchFn = fetchWithAuth || fetch;
         const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
@@ -121,6 +120,7 @@ export function SectionCards2() {
         }
       }
       catch (err) { console.error('Erro carregando talhões:', err); }
+
     }
     load();
     return () => { mounted = false };
@@ -242,7 +242,7 @@ export function ChartPieDonut() {
         }
 
         const fetchFn = fetchWithAuth || fetch;
-        const res = await fetchFn(`${API_URL}/dashboard/fazenda/${unidadeId}`);
+        const res = await fetchFn(`${API_URL}/lotes/${unidadeId}/status-counts`);
         const data = await res.json().catch(() => ({}));
         if (!mounted) return;
         if (res.ok && data.sucesso && Array.isArray(data.chart)) {
@@ -259,34 +259,34 @@ export function ChartPieDonut() {
     return () => { mounted = false };
   }, [unidadeId, fetchWithAuth]);
 
-  useEffect(() => {
-    let mounted = true;
-    async function loadLotesCount() {
-      if (!unidadeId) return;
-      try {
-        const fetchFn = fetchWithAuth || fetch;
-        const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
-        const data = await res.json().catch(() => ({}));
-        if (!mounted) return;
-        const arr = data?.lotes ?? data?.data ?? (Array.isArray(data) ? data : []);
-        if (!Array.isArray(arr)) {
-          setLotesCount(0);
-          return;
-        }
-        const finalized = ['PRONTO', 'FINALIZADO', 'CONCLUIDO', 'CONCLUÍDO', 'TERMINADO', 'ENCERRADO', 'CANCELADO'];
-        const activeCount = arr.filter(l => {
-          const s = (l.status || l.statusLote || l.status_lote || '').toString().toUpperCase();
-          return !finalized.includes(s);
-        }).length;
-        setLotesCount(activeCount);
-      } catch (err) {
-        console.error('Erro ao carregar lotes para contagem:', err);
-        setLotesCount(0);
-      }
-    }
-    loadLotesCount();
-    return () => { mounted = false };
-  }, [unidadeId, fetchWithAuth]);
+  // useEffect(() => {
+  //   let mounted = true;
+  //   async function loadLotesCount() {
+  //     if (!unidadeId) return;
+  //     try {
+  //       const fetchFn = fetchWithAuth || fetch;
+  //       const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
+  //       const data = await res.json().catch(() => ({}));
+  //       if (!mounted) return;
+  //       const arr = data?.lotes ?? data?.data ?? (Array.isArray(data) ? data : []);
+  //       if (!Array.isArray(arr)) {
+  //         setLotesCount(0);
+  //         return;
+  //       }
+  //       const finalized = ['PRONTO', 'FINALIZADO', 'CONCLUIDO', 'CONCLUÍDO', 'TERMINADO', 'ENCERRADO', 'CANCELADO'];
+  //       const activeCount = arr.filter(l => {
+  //         const s = (l.status || l.statusLote || l.status_lote || '').toString().toUpperCase();
+  //         return !finalized.includes(s);
+  //       }).length;
+  //       setLotesCount(activeCount);
+  // //     } catch (err) {
+  // //       console.error('Erro ao carregar lotes para contagem:', err);
+  // //       setLotesCount(0);
+  // //     }
+  // //   }
+  // //   loadLotesCount();
+  // //   return () => { mounted = false };
+  // }, [unidadeId, fetchWithAuth]);
 
   const dataToUse = Array.isArray(fetchedData) ? fetchedData : [];
   const configToUse = fetchedConfig || { visitors: { label: 'Lotes', color: '#738C16' } };

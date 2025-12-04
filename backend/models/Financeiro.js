@@ -6,9 +6,7 @@ import path from "path";
 
 export const listarSaidas = async (unidadeId) => {//tem controller
     try {
-        const saidas = await prisma.financeiro.findMany({ 
-            where: { unidadeId: Number(unidadeId)}, 
-        })
+        const saidas = await prisma.financeiro.findMany({ where: { unidadeId: Number(unidadeId)}, })
         return ({
             sucesso: true,
             saidas,
