@@ -18,9 +18,6 @@ export async function criarPlanoProducao(data) {
         etapas: data.etapas || [],
         status: "RASCUNHO",
       },
-      include: {
-        contrato: true,
-      },
     });
 
     return {
@@ -73,9 +70,6 @@ export async function criarVariosPlanosPorLote(data) {
       planosData.map((pData) =>
         prisma.planoProducao.create({
           data: pData,
-          include: {
-            contrato: true,
-          },
         })
       )
     );
@@ -101,9 +95,6 @@ export async function obterPlanoProducaoPorId(id) {
   try {
     const plano = await prisma.planoProducao.findUnique({
       where: { id },
-      include: {
-        contrato: true,
-      },
     });
 
     return plano;
@@ -122,9 +113,6 @@ export async function listarPlanosPorContrato(contratoId) {
   try {
     const planos = await prisma.planoProducao.findMany({
       where: { contratoId },
-      include: {
-        contrato: true,
-      },
       orderBy: { criadoEm: "desc" },
     });
 
@@ -144,9 +132,6 @@ export async function listarPlanosPorLote(loteId) {
   try {
     const planos = await prisma.planoProducao.findMany({
       where: { loteId },
-      include: {
-        contrato: true,
-      },
       orderBy: { criadoEm: "desc" },
     });
 
@@ -166,9 +151,6 @@ export async function listarPlanosPorItem(itemId) {
   try {
     const planos = await prisma.planoProducao.findMany({
       where: { itemId },
-      include: {
-        contrato: true,
-      },
       orderBy: { criadoEm: "desc" },
     });
 
@@ -197,9 +179,6 @@ export async function atualizarPlanoProducao(id, data) {
     const plano = await prisma.planoProducao.update({
       where: { id },
       data: updateData,
-      include: {
-        contrato: true,
-      },
     });
 
     return {
@@ -226,9 +205,6 @@ export async function atualizarEtapasPlano(id, etapas) {
       data: {
         etapas: Array.isArray(etapas) ? etapas : [],
       },
-      include: {
-        contrato: true,
-      },
     });
 
     return {
@@ -252,9 +228,6 @@ export async function confirmarPlanoProducao(id) {
     const plano = await prisma.planoProducao.update({
       where: { id },
       data: { status: "CONFIRMADO" },
-      include: {
-        contrato: true,
-      },
     });
 
     return {
@@ -306,9 +279,6 @@ export async function listarPlanos(filtros = {}) {
 
     const planos = await prisma.planoProducao.findMany({
       where,
-      include: {
-        contrato: true,
-      },
       orderBy: { criadoEm: "desc" },
     });
 

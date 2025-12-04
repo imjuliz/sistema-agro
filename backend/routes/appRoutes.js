@@ -5,7 +5,7 @@ import { auth } from "../middlewares/authMiddleware.js";
 // controllers --------------------------------------------------------------------
 import { translateText } from "../controllers/TranslateController.js";
 import {listarPedidosEntregaController, listarPedidosOrigemController, atualizarQntdMinController } from "../controllers/estoque_produtosController.js";
-import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController } from "../controllers/fazenda.js";
+import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController} from "../controllers/fazenda.js";
 import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController } from "../controllers/FornecedorController.js";
 import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController, lotesPlantioController, consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
@@ -38,6 +38,8 @@ import {
     obterSaldoPorCategoriaController
 } from "../controllers/ContaFinanceiraController.js";
 import { getDashboardDataController } from '../controllers/dashboardController.js';
+import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
+import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
 
 // tradução
 router.post("/translate", translateText);
@@ -61,13 +63,20 @@ router.get("/financeiro/produto-mais-vendido/:unidadeId", buscarProdutoMaisVendi
 // router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
+router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
+// router.get("/produtos/:unidadeId",  listarProdutosController);
+router.get("/listarProdutos/:unidadeId", getProdutosController);
+
+router.get('/listarProdutosEstoque/:unidadeId', produtosDoEstoqueController);
+
+router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/produto-mais-vendido", auth(), buscarProdutoMaisVendidoController);
 router.get("/produtos", auth(), listarProdutosController);
 router.get("/estoqueSomar", auth(), somarQtdTotalEstoqueController);
 router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
 router.get("/lote/:loteId/media-producao",calcularMediaProducaoPorLoteController);
-
+router.get('/lotes/:unidadeId/status-counts', getLotesPorStatusController);
 //relatório
 router.get("/relatorio/lote/:loteId", gerarRelatorioLoteController);
 router.get("/relatorio/producao/:loteId", gerarRelatorioProducaoController);

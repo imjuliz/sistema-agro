@@ -61,7 +61,7 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
 // LISTAR PRODUTOS DA UNIDADE -- rota feita
 export const listarProdutosController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.params.unidadeId;
 
     if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." }); }
 

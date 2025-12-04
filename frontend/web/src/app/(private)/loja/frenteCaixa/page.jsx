@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -49,8 +48,7 @@ export default function app() {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [isCustomerSelectOpen, setIsCustomerSelectOpen] = useState(false);
+  const [clienteNome, setClienteNome] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountReceived, setAmountReceived] = useState(0);
@@ -82,6 +80,7 @@ export default function app() {
   const ENDPOINTS = {
     produtosList: '/produtos/listar',
     produtosBase: '/produtos',
+    listarProdutosEstoque: (unidadeId) => `/listarProdutosEstoque/${unidadeId}`,
     saldoFinal: '/saldo-final',
     somarDiaria: (unidadeId) => `/somarDiaria/${unidadeId}`,
     vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
@@ -174,7 +173,7 @@ export default function app() {
         return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
       });
 
-      const payload = { pagamento: paymentMethod, itens };
+  const payload = { pagamento: paymentMethod, itens, nomeCliente: clienteNome || undefined };
       const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
 
       if (!resp || resp.sucesso === false) {
@@ -268,14 +267,32 @@ export default function app() {
     try {
       setProductsLoading(true); setProductsError(null);
       setCustomersLoading(true); setCustomersError(null);
+      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+      const produtosPromise = unidadeId ? safeFetchJson(ENDPOINTS.listarProdutosEstoque(unidadeId)) : safeFetchJson(ENDPOINTS.produtosList);
       const [produtosResp, usuariosResp] = await Promise.all([
-        safeFetchJson(ENDPOINTS.produtosList),
+        produtosPromise,
         safeFetchJson(ENDPOINTS.usuariosUnidadeListar)
       ]);
 
-      if (Array.isArray(produtosResp)) setProductsList(produtosResp);
-      else if (produtosResp && Array.isArray(produtosResp.produtos)) setProductsList(produtosResp.produtos);
-      else if (produtosResp && Array.isArray(produtosResp.estoques)) {
+      // produtosResp can be several shapes depending on endpoint used:
+      // - an array of products
+      // - { produtos: [...] } (our produtosDoEstoqueController returns { id, descricao, produtos })
+      // - { estoques: [...] } (older shape)
+      if (Array.isArray(produtosResp)) {
+        setProductsList(produtosResp);
+      } else if (produtosResp && Array.isArray(produtosResp.produtos)) {
+        // produtos from produtosDoEstoqueController -> map estoqueProdutos to UI product shape
+        const mapped = produtosResp.produtos.map((ep) => ({
+          id: ep.id,
+          name: ep.nome ?? ep.produto?.nome ?? `Produto ${ep.id}`,
+          price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0),
+          stock: Number(ep.qntdAtual ?? ep.quantidade ?? 0),
+          category: ep.categoria ?? ep.produto?.categoria ?? '—',
+          barcode: ep.sku ?? ep.codigo ?? '',
+          image: ep.imagem ?? '/loja/placeholder/80/80'
+        }));
+        if (mapped.length) setProductsList(mapped);
+      } else if (produtosResp && Array.isArray(produtosResp.estoques)) {
         const flattened = [];
         produtosResp.estoques.forEach(est => { (est.estoqueProdutos || []).forEach(ep => flattened.push({ id: ep.id, name: ep.nome ?? ep.produto?.nome, price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0), stock: Number(ep.quantidade ?? ep.qntdAtual ?? 0), category: ep.categoria ?? ep.produto?.categoria ?? '—', barcode: ep.sku ?? ep.codigo ?? '', image: ep.imagem ?? '/loja/placeholder/80/80' })); });
         if (flattened.length) setProductsList(flattened);
@@ -448,12 +465,7 @@ export default function app() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Cliente</Label>
-                    <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1 justify-start" onClick={() => setIsCustomerSelectOpen(true)}>
-                        <User className="size-4 mr-2" />{selectedCustomer ? (selectedCustomer.nome ?? selectedCustomer.name) : 'Cliente avulso'}
-                      </Button>
-                      {selectedCustomer && (<Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Limpar</Button>)}
-                    </div>
+                    <Input placeholder="Nome do cliente (opcional)" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
                   </div>
 
                   {/* Itens do Carrinho */}
@@ -508,37 +520,7 @@ export default function app() {
             </div>
           </div>
 
-          {/* Modal de Seleção de Cliente */}
-          <Dialog open={isCustomerSelectOpen} onOpenChange={setIsCustomerSelectOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Selecionar Cliente</DialogTitle>
-                <DialogDescription>Escolha um cliente existente ou prossiga como cliente avulso</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input placeholder="Buscar clientes..." />
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {customersLoading ? (
-                    <div className="text-sm text-muted-foreground p-4">Carregando clientes...</div>
-                  ) : customersError ? (
-                    <div className="text-sm text-red-600 p-4">{customersError} <Button variant="ghost" size="sm" onClick={() => loadFinance()}>Tentar novamente</Button></div>
-                  ) : customersList.length === 0 ? (
-                    <div className="text-sm text-muted-foreground p-4">Nenhum cliente encontrado</div>
-                  ) : (
-                    customersList.map((customer) => (
-                      <div key={customer.id || customer.email || customer.telefone} className="flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-muted" onClick={() => { setSelectedCustomer(customer); setIsCustomerSelectOpen(false); }}>
-                        <div>
-                          <div className="font-medium">{customer.nome ?? customer.name}</div>
-                          <div className="text-sm text-muted-foreground">{customer.email}</div>
-                        </div>
-                        <div className="text-sm"><Badge variant="outline">{customer.pontosFidelidade ?? customer.loyaltyPoints ?? 0} pts</Badge></div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* seleção de cliente substituída por input simples (clienteNome) */}
 
           {/* Modal de Pagamento */}
           <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>

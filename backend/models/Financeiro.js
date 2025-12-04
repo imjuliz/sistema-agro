@@ -6,9 +6,7 @@ import path from "path";
 
 export const listarSaidas = async (unidadeId) => {//tem controller
     try {
-        const saidas = await prisma.financeiro.findMany({ 
-            where: { unidadeId: Number(unidadeId)}, 
-        })
+        const saidas = await prisma.financeiro.findMany({ where: { unidadeId: Number(unidadeId)}, })
         return ({
             sucesso: true,
             saidas,
@@ -310,11 +308,12 @@ export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA
         };
 
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao ver saldo final",
-            detalhes: error.message,
-        };
+    console.error(`Erro em mostrarSaldoF para unidade ${unidadeId}:`, error);
+    return {
+      sucesso: false,
+      erro: "Erro ao ver saldo final",
+      detalhes: error.message,
+    };
     }
 };
 
@@ -360,8 +359,8 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 //insert na tabela de venda
 export async function criarVenda(req, res) {
     try {
-        const { caixaId, usuarioId, unidadeId, pagamento, itens } = req.body;
-        if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
+  const { caixaId, usuarioId, unidadeId, pagamento, itens, nomeCliente } = req.body;
+  if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
 
         let caixaIdToUse = caixaId ? Number(caixaId) : null;
         if (!caixaIdToUse) {
@@ -418,13 +417,14 @@ export async function criarVenda(req, res) {
 
         const totalVenda = itensResolvidos.reduce((acc, it) => acc + (it.subtotal || 0), 0);
 
-        const novaVenda = await prisma.venda.create({
+    const novaVenda = await prisma.venda.create({
             data: {
                 caixaId: Number(caixaIdToUse),
                 usuarioId: Number(usuarioId),
                 unidadeId: Number(unidadeId),
                 pagamento: pagamentoFinal,
-                total: totalVenda,
+        total: totalVenda,
+        nomeCliente: nomeCliente ?? null,
                 itens: {
                     create: itensResolvidos.map((item) => ({
                         produtoId: Number(item.produtoId),
@@ -472,11 +472,12 @@ export const calcularSaldoLiquido = async (unidadeId) => {
             message: "Saldo líquido calculado com sucesso!",
         };
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao calcular saldo líquido",
-            detalhes: error.message,
-        };
+    console.error(`Erro em calcularSaldoLiquido para unidade ${unidadeId}:`, error);
+    return {
+      sucesso: false,
+      erro: "Erro ao calcular saldo líquido",
+      detalhes: error.message,
+    };
     }
 };
 

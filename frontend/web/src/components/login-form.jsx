@@ -124,12 +124,7 @@ export function LoginForm({ className, ...props }) {
           Entrar com o Google
         </Button> */}
       </div>
-      <div className="text-center text-sm">
-        Ainda não tem uma conta?{" "}
-        <a href="/cadastrar" className="underline underline-offset-4">
-          Cadastre-se
-        </a>
-      </div>
+     
     </form>
   );
 }

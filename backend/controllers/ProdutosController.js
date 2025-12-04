@@ -1,9 +1,12 @@
-import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto } from "../models/estoque_produtos_lotes/produtos.js";
+import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto, produtosDoEstoque } from "../models/estoque_produtos_lotes/produtos.js";
 import { produtoSchema, IdsSchema } from "../schemas/produtoSchema.js";
 
 export async function getProdutosController(req, res) {
   try {
-    const produto = await getProdutos();
+
+    const unidadeId = req.params.unidadeId;
+
+    const produto = await getProdutos(unidadeId);
 
     return res.status(200).json(produto);
   } catch (error) {
@@ -12,6 +15,30 @@ export async function getProdutosController(req, res) {
       erro: "Erro ao listar produtos.",
       detalhes: error.message, // opcional, para debug
     }
+  }
+}
+
+export const produtosDoEstoqueController = async (req, res) =>{
+  try {
+    const unidadeId = Number(req.params.unidadeId); // pode vir da URL ou query
+    if (isNaN(unidadeId)) {
+      return res.status(400).json({ error: 'unidadeId inválido' });
+    }
+
+    const estoque = await produtosDoEstoque(unidadeId);
+
+    if (!estoque) {
+      return res.status(404).json({ error: 'Estoque não encontrado para esta unidade' });
+    }
+
+    return res.json({
+      id: estoque.id,
+      descricao: estoque.descricao,
+      produtos: estoque.estoqueProdutos,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao buscar estoque' });
   }
 }
 
