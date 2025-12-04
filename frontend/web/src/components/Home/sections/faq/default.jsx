@@ -9,41 +9,32 @@ export default function FAQ(props) {
   const {
     title = "Perguntas frequentes",
     items = [
-     {
-        question: "O que é o sistema RuralTech?",
+      {
+        question: "O que é a RuralTech?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[640px] text-balance">
-            O RuralTech é um sistema de gestão e rastreabilidade que integra as
-            operações de fazendas, lojas e matriz em uma única plataforma. Ele
-            garante o controle da produção, das vendas e da qualidade dos
-            produtos, oferecendo total transparência em toda a cadeia produtiva.
+            A RuralTech é uma empresa de tecnologia para o agronegócio, especializada em soluções de rastreabilidade, gestão e inovação. Atuamos em toda a cadeia produtiva, conectando fazendas, lojas e matriz para garantir qualidade, segurança e eficiência.
           </p>
         ),
       },
       {
-        question: "Quem pode usar o sistema?",
+        question: "Qual é o objetivo da RuralTech?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[600px]">
-            O sistema pode ser utilizado por gestores da matriz, administradores
-            de fazendas, equipes de vendas em lojas e demais colaboradores
-            cadastrados. Cada usuário tem acesso personalizado de acordo com sua
-            função e unidade.
+            Nosso objetivo é fornecer tecnologia e processos que permitam aos produtores e varejistas do agronegócio centralizar informações, monitorar a produção e garantir rastreabilidade completa, desde a fazenda até o consumidor final.
           </p>
         ),
       },
       {
-        question: "O sistema atende apenas grandes empresas?",
+        question: "Quem se beneficia dos serviços da RuralTech?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[580px]">
-            Não. O RuralTech foi projetado para atender tanto pequenas quanto
-            grandes operações. A estrutura modular permite que cada empresa
-            utilize apenas os recursos necessários, garantindo eficiência em
-            diferentes portes de negócio.
+            Produtores rurais, cooperativas, distribuidores e varejistas podem se beneficiar das soluções da RuralTech. Garantimos transparência, segurança e qualidade em todos os produtos que passam por nossas tecnologias.
           </p>
         ),
       },
       {
-        question: "Como funciona a rastreabilidade?",
+        question: "Como a RuralTech garante rastreabilidade e segurança?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[580px]">
             Cada lote de produção é registrado com informações detalhadas sobre
@@ -56,23 +47,18 @@ export default function FAQ(props) {
       },
       {
         question:
-          "O sistema se adapta a diferentes culturas agrícolas e criações?",
+          "Quais tipos de produção a RuralTech atende?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[580px]">
-            Sim. O sistema permite registrar atividades de agricultura e
-            pecuária, com flexibilidade para diferentes tipos de culturas e
-            rebanhos, respeitando as particularidades de cada produção.
+            Atuamos com diversas culturas agrícolas e criações, como verduras, legumes, laticínios e produtos pecuários. Nossas soluções se adaptam às particularidades de cada produção, garantindo eficiência e segurança.
           </p>
         ),
       },
       {
-        question: "É possível acompanhar as finanças da empresa pelo sistema?",
+        question: "Como a RuralTech agrega valor aos negócios do agronegócio?",
         answer: (
           <p className="text-muted-foreground mb-4 max-w-[580px]">
-            Sim. O RuralTech centraliza as informações financeiras de cada loja e
-            unidade de produção, gerando relatórios de despesas, receitas e
-            lucratividade. A matriz pode acompanhar os números consolidados em
-            tempo real, apoiando decisões estratégicas.
+            A RuralTech agrega valor ao integrar tecnologia, gestão e rastreabilidade, ajudando empresas a otimizar processos, aumentar a produtividade e garantir qualidade em toda a cadeia produtiva. Nossas soluções fortalecem a confiança de consumidores, parceiros e investidores.
           </p>
         ),
       },

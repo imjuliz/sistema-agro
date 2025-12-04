@@ -3,10 +3,12 @@
 import {
   AnimatePresence,
   motion,
-  useInView,
   useMotionValue,
   useSpring,
-} from "motion/react";
+} from "framer-motion";
+
+import { useInView } from "react-intersection-observer";
+
 import { useEffect, useRef, useState } from "react";
 import '@/app/globals.css'
 

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Clock, CheckCircle, XCircle, Truck, Eye, MessageSquare, Calendar, DollarSign, Search, Filter, Plus, Edit, Trash2, ShoppingCart, Package, Star, } from 'lucide-react';
 
-export function ProductCatalog({ userType }) {
+export function ProductCatalog({ contratos = [], carregando = false }) {
   /* produtos */
   const [searchProducts, setSearchProducts] = useState('');
   const [selectedProductCategory, setSelectedProductCategory] = useState('all');
@@ -141,13 +141,7 @@ export function ProductCatalog({ userType }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-0">
-        <h2 className="text-lg font-semibold mb-3">{userType === 'supplier' ? 'Product Catalog Management' : 'Produtos'}</h2>
-        {userType === 'supplier' && (
-          <Button onClick={() => setShowAddProduct(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Produto
-          </Button>
-        )}
+        <h2 className="text-lg font-semibold mb-3">Produtos</h2>
       </div>
 
       <div className="flex gap-4 items-center">
@@ -213,23 +207,7 @@ export function ProductCatalog({ userType }) {
                 </div>
 
                 <div className="flex gap-2">
-                  {userType === 'supplier' ? (
-                    <>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Editar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <></>
-                    // <Button className="flex-1" size="sm" disabled={product.stock === 0}>
-                    //   <ShoppingCart className="h-4 w-4 mr-2" />
-                    //   {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    // </Button>
-                  )}
+                  {/* Sem ações por enquanto */}
                 </div>
               </div>
             </CardContent>

@@ -13,9 +13,9 @@ import { Section } from "@/components/ui/section";
 
 export default function Hero(props) {
   const {
-    title = "Gestão e rastreabilidade inteligente para o agronegócio",
+    title = "RuralTech: Qualidade do campo à sua mesa",
     description =
-    "Centralize suas fazendas e lojas em uma única plataforma, com controle total da produção, vendas e qualidade dos produtos.",
+    "Somos uma empresa especializada em produtos agrícolas e pecuários, unindo produção própria, rastreabilidade e lojas modernas para entregar qualidade e confiança ao consumidor.",
     mockup = (
       <Screenshot
         srcLight="/img/rebanho.jpg"
@@ -32,7 +32,7 @@ export default function Hero(props) {
           {/* New version of Launch UI is out! */}
         </span>
         <p className="flex items-center gap-1">
-          Leve seu agronegócio para o próximo nível
+            Compromisso RuralTech com qualidade e rastreabilidade
           {/* <ArrowRightIcon className="size-3" /> */}
         </p>
       </Badge>

@@ -42,7 +42,7 @@ const formatarTelefoneInput = (value) => {
 
 export default function FuncionariosFazenda() {
   const { fetchWithAuth, user } = useAuth();
-  usePerfilProtegido("GERENTE_LOJA");
+  usePerfilProtegido("GERENTE_FAZENDA");
 
   // Estados principais
   const [funcionarios, setFuncionarios] = useState([]);
@@ -52,8 +52,8 @@ export default function FuncionariosFazenda() {
 
   // Estados de filtros temporários (para o popover)
   const [tempTypeFilters, setTempTypeFilters] = useState({
-    "GERENTE_LOJA": true,
-    "FUNCIONARIO_LOJA": true,
+    "GERENTE_FAZENDA": true,
+    "FUNCIONARIO_FAZENDA": true,
   });
   const [tempStatusFilters, setTempStatusFilters] = useState({
     "Ativo": true,
@@ -62,8 +62,8 @@ export default function FuncionariosFazenda() {
 
   // Estados de filtros aplicados (usados para filtrar a lista)
   const [typeFilters, setTypeFilters] = useState({
-    "GERENTE_LOJA": true,
-    "FUNCIONARIO_LOJA": true,
+    "GERENTE_FAZENDA": true,
+    "FUNCIONARIO_FAZENDA": true,
   });
   const [statusFilters, setStatusFilters] = useState({
     "Ativo": true,
@@ -84,14 +84,14 @@ export default function FuncionariosFazenda() {
     email: '',
     telefone: '',
     senha: '',
-    role: 'FUNCIONARIO_LOJA',
+    role: 'FUNCIONARIO_FAZENDA',
   });
   const [savingEdit, setSavingEdit] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
   
   // Estados para convidar novo usuário
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [inviteData, setInviteData] = useState({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
+  const [inviteData, setInviteData] = useState({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_FAZENDA' });
   const [inviteSaving, setInviteSaving] = useState(false);
   const [showInvitePassword, setShowInvitePassword] = useState(false);
 
@@ -109,7 +109,7 @@ export default function FuncionariosFazenda() {
       }
       if (jsonResponse.sucesso && jsonResponse.usuarios) {
         const filtered = jsonResponse.usuarios.filter(u =>
-          u.perfil?.funcao === "GERENTE_LOJA" || u.perfil?.funcao === "FUNCIONARIO_LOJA"
+          u.perfil?.funcao === "GERENTE_FAZENDA" || u.perfil?.funcao === "FUNCIONARIO_FAZENDA"
         );
         setFuncionarios(filtered);
       }
@@ -149,8 +149,8 @@ export default function FuncionariosFazenda() {
   // Resetar filtros
   const resetFilters = () => {
     const defaults = {
-      "GERENTE_LOJA": true,
-      "FUNCIONARIO_LOJA": true,
+      "GERENTE_FAZENDA": true,
+      "FUNCIONARIO_FAZENDA": true,
     };
     const defaultStatus = {
       "Ativo": true,
@@ -194,7 +194,7 @@ export default function FuncionariosFazenda() {
       email: user.email,
       telefone: user.telefone || '',
       senha: '',
-      role: user.perfil?.funcao || 'FUNCIONARIO_LOJA',
+      role: user.perfil?.funcao || 'FUNCIONARIO_FAZENDA',
     });
     setIsEditModalOpen(true);
   };
@@ -277,7 +277,7 @@ export default function FuncionariosFazenda() {
   };
 
   const submitInvite = async () => {
-    if (!user || user.perfil?.funcao !== 'GERENTE_LOJA') return;
+    if (!user || user.perfil?.funcao !== 'GERENTE_FAZENDA') return;
     setInviteSaving(true);
     try {
       const url = `${API_URL}/usuarios/criar`;
@@ -296,7 +296,7 @@ export default function FuncionariosFazenda() {
       }
       if (json.sucesso) {
         closeInviteModal();
-        setInviteData({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
+        setInviteData({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_FAZENDA' });
         await loadFuncionarios();
       }
     } catch (err) {
@@ -309,7 +309,7 @@ export default function FuncionariosFazenda() {
   // Verificar se é gerente da loja (tolerante a diferentes formatos)
   const _userRoleRaw = user?.perfil?.funcao ?? user?.perfil ?? user?.role ?? '';
   const _userRole = typeof _userRoleRaw === 'string' ? _userRoleRaw.toUpperCase() : '';
-  const isGerenteLoja = _userRole === 'GERENTE_LOJA' || _userRole === 'GERENTE_LOJA';
+  const isGerenteLoja = _userRole === 'GERENTE_FAZENDA' || _userRole === 'GERENTE_FAZENDA';
 
   return (
     <div className="flex gap-6">
@@ -350,11 +350,11 @@ export default function FuncionariosFazenda() {
                   <div>
                     <div className="text-xs text-muted-foreground mb-1">Função</div>
                     <div className="grid grid-cols-1 gap-1">
-                      {["GERENTE_LOJA", "FUNCIONARIO_LOJA"].map(t => (
+                      {["GERENTE_FAZENDA", "FUNCIONARIO_FAZENDA"].map(t => (
                         <label key={t} className="flex items-center justify-between px-2 py-1 rounded hover:dark:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
                           <div className="flex items-center gap-2">
                             <Checkbox checked={!!tempTypeFilters[t]} onCheckedChange={(checked) => setTempTypeFilters(prev => ({ ...prev, [t]: !!checked }))} />
-                            <div className="capitalize text-sm">{t === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}</div>
+                            <div className="capitalize text-sm">{t === "GERENTE_FAZENDA" ? "Gerente" : "Funcionário"}</div>
                           </div>
                           <div className="text-sm text-neutral-400">
                             {funcionarios.filter(f => f.perfil?.funcao === t).length}
@@ -416,8 +416,8 @@ export default function FuncionariosFazenda() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
                         <h3 className="font-medium text-lg">{func.nome}</h3>
-                        <Badge variant={func.perfil?.funcao === "GERENTE_LOJA" ? "default" : "secondary"}>
-                          {func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}
+                        <Badge variant={func.perfil?.funcao === "GERENTE_FAZENDA" ? "default" : "secondary"}>
+                          {func.perfil?.funcao === "GERENTE_FAZENDA" ? "Gerente" : "Funcionário"}
                         </Badge>
                         <Badge variant={func.status ? "outline" : "destructive"}>
                           {func.status ? "Ativo" : "Inativo"}
@@ -562,8 +562,8 @@ export default function FuncionariosFazenda() {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GERENTE_LOJA">Gerente</SelectItem>
-                  <SelectItem value="FUNCIONARIO_LOJA">Funcionário</SelectItem>
+                  <SelectItem value="GERENTE_FAZENDA">Gerente</SelectItem>
+                  <SelectItem value="FUNCIONARIO_FAZENDA">Funcionário</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -640,8 +640,8 @@ export default function FuncionariosFazenda() {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GERENTE_LOJA">Gerente</SelectItem>
-                  <SelectItem value="FUNCIONARIO_LOJA">Funcionário</SelectItem>
+                  <SelectItem value="GERENTE_FAZENDA">Gerente</SelectItem>
+                  <SelectItem value="FUNCIONARIO_FAZENDA">Funcionário</SelectItem>
                 </SelectContent>
               </Select>
             </div>

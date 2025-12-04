@@ -66,6 +66,12 @@ function getMenuByPerfil(perfil) {
             url: "/loja/funcionarios",
             icon: UserCog,
           },
+          {
+            title: "Configurações",
+            url: "/loja/configuracoes",
+            icon: Settings2,
+            // items: [],
+          },
         ],
         projects: [
           { name: "Estoque", url: "/loja/estoque", icon: Boxes },
@@ -88,28 +94,32 @@ function getMenuByPerfil(perfil) {
             icon: Rabbit,
           },
           {
-            title: "Plantação",
+            title: "Plantações",
             url: "/fazenda/plantio",
             icon: Vegan,
           },
           {
-            title: "Atividades",
-            url: "/fazenda/atividades",
+            title: "Lotes",
+            url: "/fazenda/lotes",
             icon: SquarePen,
           },
           {
-            title: "Nova Atividade",
-            url: "/fazenda/novaAtividade",
+            title: "Produções",
+            url: "/fazenda/producao",
             icon: Container,
           },
-
+          {
+            title: "Configurações",
+            url: "/fazenda/configuracoes",
+            icon: Settings2,
+            // items: [],
+          },
         ],
         projects: [
           { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },
-          { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
+          // { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
           { name: "Fornecedores", url: "/fazenda/fornecedores", icon: Container, },
           { name: "Financeiro", url: "/fazenda/vendasDespesas", icon: Frame },
-          { name: "Suporte", url: "/fazenda/configuracoes", icon: Frame },
         ],
       }
 
@@ -137,9 +147,20 @@ export function AppSidebar({ ...props }) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
+      {/* <SidebarHeader className="flex flex-row items-center justify-start p-4 gap-4">
+        <img
+          src="/img/ruraltech-logo.svg"
+          alt="RuralTech Logo"
+          className="h-8 w-auto"
+        />
+        <span className="text-lg  text-gray-900 dark:text-white">
+          RuralTech
+        </span>
+      </SidebarHeader> */}
       <SidebarHeader>
         <TeamSwitcher teams={teamsExample} />
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={navMain} />
         <NavProjects projects={projects} />

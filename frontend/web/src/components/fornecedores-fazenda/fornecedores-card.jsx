@@ -5,17 +5,23 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LayoutGrid, List, Search, Plus, ShoppingCart, Eye, Trash } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
 
     // Small local state to hide removed suppliers without forcing parent refresh
     const [removedIds, setRemovedIds] = useState(new Set());
+    const [selectedContrato, setSelectedContrato] = useState(null);
+    const [showCatalogModal, setShowCatalogModal] = useState(false);
 
     const isUserGerenteMatriz = (() => {
         if (!user) return false;
@@ -91,6 +97,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     }));
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [contractSearchTerm, setContractSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('cards');
     const [contractsViewMode, setContractsViewMode] = useState('cards');
     // viewMode: 'cards' | 'table' | 'contracts'
@@ -146,8 +153,10 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     }, [suppliers, searchTerm]);
 
     const getRelated = (supplier) => {
-        const supplierContracts = (contratos || []).filter(c => matchesSupplier(c, supplier) || (c.fornecedorExterno?.nomeEmpresa === supplier.name) || (c.fornecedorUnidade?.nome === supplier.name));
-        const supplierPedidos = (pedidos || []).filter(p => matchesSupplier(p, supplier) || (p.origemUnidade?.nome === supplier.name) || (p.destinoUnidade?.nome === supplier.name));
+        const contratosArray = Array.isArray(contratos) ? contratos : (contratos?.contratos || []);
+        const pedidosArray = Array.isArray(pedidos) ? pedidos : (pedidos?.pedidos || []);
+        const supplierContracts = (contratosArray || []).filter(c => matchesSupplier(c, supplier) || (c.fornecedorExterno?.nomeEmpresa === supplier.name) || (c.fornecedorUnidade?.nome === supplier.name));
+        const supplierPedidos = (pedidosArray || []).filter(p => matchesSupplier(p, supplier) || (p.origemUnidade?.nome === supplier.name) || (p.destinoUnidade?.nome === supplier.name));
         return { supplierContracts, supplierPedidos };
     };
 
@@ -212,7 +221,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     {/* <button onClick={() => setViewMode('contracts')} className={`p-2 ${viewMode === 'contracts' ? 'bg-muted rounded' : ''}`} title="contracts">Contratos</button> */}
                 </div>
 
-                <Button><Plus /> Novo fornecedor</Button>
+                {isUserGerenteMatriz && <Button><Plus /> Novo fornecedor</Button>}
             </div>
         </header>
     );
@@ -236,7 +245,8 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     if (removedIds.has(sid)) return null;
 
                     return (
-                        <div key={supplier.id ?? supplier.name} className="p-4 border rounded">
+                        <Card key={supplier.id ?? supplier.name}>
+                            <CardContent>
                             <div className="flex justify-between items-center mb-2">
                                 <div>
                                     <div className="font-semibold">{supplier.name}</div>
@@ -314,9 +324,11 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="text-xs text-muted-foreground">Somente GERENTE_MATRIZ pode editar/excluir</div>
+                                <></>
+                                // <div className="text-xs text-muted-foreground">Somente GERENTE_MATRIZ pode editar/excluir</div>
                             )}
-                        </div>
+                            </CardContent>
+                        </Card>
                     );
                 })
             )}
@@ -373,66 +385,95 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
             <div className="flex flex-row gap-4 items-center">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input placeholder="Buscar por nome ou CNPJ..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+                    <Input placeholder="Buscar por fornecedor ou unidade..." value={contractSearchTerm} onChange={(e) => setContractSearchTerm(e.target.value)} className="pl-10" />
                 </div>
 
                 <div className="flex items-center gap-2">
                     <button onClick={() => setContractsViewMode('cards')} className={`p-2 ${contractsViewMode === 'cards' ? 'bg-muted rounded' : ''}`} title="cards"><LayoutGrid className="h-4 w-4" /></button>
                     <button onClick={() => setContractsViewMode('table')} className={`p-2 ${contractsViewMode === 'table' ? 'bg-muted rounded' : ''}`} title="table"><List className="h-4 w-4" /></button>
-                    {/* <button onClick={() => setViewMode('contracts')} className={`p-2 ${viewMode === 'contracts' ? 'bg-muted rounded' : ''}`} title="contracts">Contratos</button> */}
                 </div>
 
-                <Button><Plus />Editar contrato</Button>
+                {isUserGerenteMatriz && <Button><Plus />Editar contrato</Button>}
             </div>
         </header>
     );
 
     const renderCardsContratos = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(contratos || []).length === 0 ? (
-                <div className="col-span-full p-8 text-center text-muted-foreground">
-                    <p className="text-lg">Nenhum contrato encontrado</p>
-                    {carregando && <p className="text-sm mt-2">Carregando contratos...</p>}
-                </div>
-            ) : (
-                (contratos || []).map((c) => (
-                    <div key={c.id} className="p-4 border rounded">
-                        <div className="flex justify-between items-center mb-2">
-                            <div>
-                                <div className="font-semibold">{c.titulo || c.numero || `Contrato ${c.id}`}</div>
-                                <div className="text-sm text-muted-foreground">Fornecedor: {c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</div>
-                            </div>
-                            <div className="text-right">
-                                <Badge variant="secondary">{String(c.status ?? '')}</Badge>
-                            </div>
-                        </div>
-
-                        <div className="text-sm space-y-1">
-                            <div><strong>Data início:</strong> {formatDate(c.dataInicio)}</div>
-                            <div><strong>Data fim:</strong> {formatDate(c.dataFim)}</div>
-                            <div><strong>Data envio:</strong> {formatDate(c.dataEnvio)}</div>
-                            <div><strong>Frequência entregas:</strong> {c.frequenciaEntregas ?? c.frequencia_entregas ?? '—'}</div>
-                            <div><strong>Dia pagamento:</strong> {c.diaPagamento ?? c.dia_pagamento ?? '—'}</div>
-                            <div><strong>Forma pagamento:</strong> {c.formaPagamento ?? c.forma_pagamento ?? '—'}</div>
-                            <div><strong>Valor total:</strong> {formatCurrency(c.valorTotal ?? c.valor_total)}</div>
-                        </div>
-
-                        <div className="mt-3">
-                            <strong>Itens:</strong>
-                            {(c.itens || []).length === 0 ? <div className="text-muted-foreground">Nenhum item.</div> : (
-                                (c.itens || []).map((it, i) => (
-                                    <div key={i} className="p-2 border rounded mt-2">
-                                        <div className="font-medium">{it.nome ?? it.raca ?? `Item ${i + 1}`}</div>
-                                        <div className="text-xs text-muted-foreground">Quantidade: {it.quantidade ?? '-'}</div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                            <Button className="w-full bg-[#99BF0F]/80 hover:bg-[#99BF0F] text-white"><ShoppingCart className="w-4 h-4 mr-2" /> Ver catálogo</Button>
-
+            {(() => {
+                const allContratos = (Array.isArray(contratos) ? contratos : contratos?.contratos) || [];
+                // FILTRO: Mostrar apenas contratos onde esta unidade é CONSUMIDORA (unidadeId = unidadeAtual)
+                const contratosConsumidor = allContratos.filter(c => c.unidadeId === Number(unidadeId));
+                const filteredContratos = contratosConsumidor.filter(c => {
+                    const q = (contractSearchTerm || '').trim().toLowerCase();
+                    if (q === '') return true;
+                    
+                    const nomeUnidade = (c?.fornecedorUnidade?.nome ?? c?.unidade?.nome ?? c?.unidadeOrigem?.nome ?? c?.origemUnidade?.nome ?? c?.fornecedorInterno?.nome ?? c?.nomeUnidade ?? '').toLowerCase();
+                    const nomeFornecedor = (c?.fornecedorExterno?.nomeEmpresa ?? c?.fornecedor?.nome ?? c?.nomeFornecedor ?? '').toLowerCase();
+                    
+                    return nomeUnidade.includes(q) || nomeFornecedor.includes(q);
+                });
+                
+                return filteredContratos.length === 0 ? (
+                    <div className="col-span-full p-8 text-center text-muted-foreground">
+                        <p className="text-lg">Nenhum contrato encontrado</p>
+                        {carregando && <p className="text-sm mt-2">Carregando contratos...</p>}
                     </div>
-                ))
-            )}
+                ) : (
+                    filteredContratos.map((c) => {
+                        const nomeUnidade =
+                            c?.fornecedorUnidade?.nome ??
+                            c?.unidade?.nome ??
+                            c?.unidadeOrigem?.nome ??
+                            c?.origemUnidade?.nome ??
+                            c?.fornecedorInterno?.nome ??
+                            c?.nomeUnidade ??
+                            '—';
+
+                        const nomeFornecedor =
+                            c?.fornecedorExterno?.nomeEmpresa ??
+                            c?.fornecedor?.nome ??
+                            c?.nomeFornecedor ??
+                            '—';
+
+                        return (
+                        <Card key={c.id}>
+                            <CardContent>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div>
+                                        <div className="font-semibold">{nomeUnidade} - {nomeFornecedor}</div>
+                                        <div className="text-sm text-muted-foreground">Fornecedor: {c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <Badge variant="secondary">{String(c.status ?? '')}</Badge>
+                                    </div>
+                                </div>
+
+                                <div className="text-sm space-y-1">
+                                    <div><strong>Data início:</strong> {formatDate(c.dataInicio)}</div>
+                                    <div><strong>Data fim:</strong> {formatDate(c.dataFim)}</div>
+                                    <div><strong>Data envio:</strong> {formatDate(c.dataEnvio)}</div>
+                                    <div><strong>Frequência entregas:</strong> {c.frequenciaEntregas ?? c.frequencia_entregas ?? '—'}</div>
+                                    <div><strong>Dia pagamento:</strong> {c.diaPagamento ?? c.dia_pagamento ?? '—'}</div>
+                                    <div><strong>Forma pagamento:</strong> {c.formaPagamento ?? c.forma_pagamento ?? '—'}</div>
+                                    <div><strong>Valor total:</strong> {formatCurrency(c.valorTotal ?? c.valor_total)}</div>
+                                </div>
+
+                                <Button
+                                    className="mt-8 w-full bg-[#99BF0F]/80 hover:bg-[#99BF0F] text-white"
+                                    onClick={() => {
+                                        setSelectedContrato(c);
+                                        setShowCatalogModal(true);
+                                    }}
+                                >
+                                    <ShoppingCart className="w-4 h-4 mr-2" /> Ver catálogo
+                                </Button>
+                            </CardContent>
+                        </Card>
+                        );
+                    })
+                );
+            })()}
         </div>
     );
 
@@ -454,7 +495,9 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                 </TableHeader>
 
                 <TableBody>
-                    {(contratos || []).map((c) => (
+                    {((Array.isArray(contratos) ? contratos : contratos?.contratos) || [])
+                        .filter(c => c.unidadeId === Number(unidadeId))
+                        .map((c) => (
                         <TableRow key={c.id}>
                             <TableCell className="font-medium">{c.titulo || c.numero || `Contrato ${c.id}`}</TableCell>
                             <TableCell>{c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</TableCell>
@@ -472,6 +515,56 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         </div>
     );
 
+    const CatalogModal = () => {
+        // Tenta extrair o nome da unidade/fazenda de várias fontes possíveis
+        const nomeUnidade =
+            selectedContrato?.fornecedorUnidade?.nome ??
+            selectedContrato?.unidade?.nome ??
+            selectedContrato?.unidadeOrigem?.nome ??
+            selectedContrato?.origemUnidade?.nome ??
+            selectedContrato?.fornecedorInterno?.nome ??
+            selectedContrato?.nomeUnidade ??
+            '—';
+
+        const nomeFornecedor =
+            selectedContrato?.fornecedorExterno?.nomeEmpresa ??
+            selectedContrato?.fornecedor?.nome ??
+            selectedContrato?.nomeFornecedor ??
+            '—';
+
+        return (
+            <Dialog open={showCatalogModal} onOpenChange={setShowCatalogModal}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {nomeUnidade} - {nomeFornecedor}
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {(!selectedContrato?.itens || selectedContrato.itens.length === 0) ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <p>Nenhum item disponível para este contrato</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {selectedContrato.itens.map((item, idx) => (
+                                    <div key={idx} className="p-4 border rounded-lg hover:bg-muted/50 transition">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-base">{item.nome || `Item ${idx + 1}`}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    };
+
 
 
 
@@ -484,6 +577,8 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                 {renderHeaderContrato()}
                 {contractsViewMode === 'table' ? renderTableContratos() : renderCardsContratos()}
             </div>
+
+            <CatalogModal />
         </div>
     );
 }

@@ -83,9 +83,10 @@ export default function app() {
     produtosList: '/produtos/listar',
     produtosBase: '/produtos',
     saldoFinal: '/saldo-final',
-    vendasMedia: '/vendas/media-por-transacao',
-    vendasPagamentos: '/vendas/divisao-pagamentos',
-    produtoMaisVendido: '/financeiro/produto-mais-vendido',
+    somarDiaria: (unidadeId) => `/somarDiaria/${unidadeId}`,
+    vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
+    vendasPagamentos: (unidadeId) => `/vendas/divisao-pagamentos/${unidadeId}`,
+    produtoMaisVendido: (unidadeId) => `/financeiro/produto-mais-vendido/${unidadeId}`,
     usuariosUnidadeListar: '/usuarios/unidade/listar',
     listarVendas: (unidadeId) => `/listarVendas/${unidadeId}`,
     vendasCriar: '/vendas/criar'
@@ -203,19 +204,26 @@ export default function app() {
     setSalesLoading(true); setSalesError(null);
 
     try {
-      const [saldoRes, mediaRes, pagamentosRes, produtoRes] = await Promise.all([
+      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+      const [saldoRes, mediaRes, pagamentosRes, produtoRes, diarioRes] = await Promise.all([
         safeFetchJson(ENDPOINTS.saldoFinal),
-        safeFetchJson(ENDPOINTS.vendasMedia),
-        safeFetchJson(ENDPOINTS.vendasPagamentos),
-        safeFetchJson(ENDPOINTS.produtoMaisVendido),
+        unidadeId ? safeFetchJson(ENDPOINTS.vendasMedia(unidadeId)) : Promise.resolve(null),
+        unidadeId ? safeFetchJson(ENDPOINTS.vendasPagamentos(unidadeId)) : Promise.resolve(null),
+        unidadeId ? safeFetchJson(ENDPOINTS.produtoMaisVendido(unidadeId)) : Promise.resolve(null),
+        unidadeId ? safeFetchJson(ENDPOINTS.somarDiaria(unidadeId)) : Promise.resolve(null),
       ]);
 
       if (!mounted) return;
       if (saldoRes && saldoRes.sucesso !== false && typeof saldoRes.saldoFinal !== 'undefined') { setSaldoFinal(Number(saldoRes.saldoFinal ?? 0)) }
       else if (saldoRes && saldoRes.text) { console.warn('/saldo-final returned non-JSON:', saldoRes.text?.slice ? saldoRes.text.slice(0, 300) : saldoRes) }
 
+      if (diarioRes && typeof diarioRes.total !== 'undefined') {
+        setTotalSales(Number(diarioRes.total ?? 0));
+      } else if (diarioRes && diarioRes.text) {
+        console.warn('/somarDiaria returned non-JSON:', diarioRes.text?.slice ? diarioRes.text.slice(0, 300) : diarioRes);
+      }
+
       if (mediaRes && mediaRes.sucesso !== false && typeof mediaRes.media !== 'undefined') {
-        setTotalSales(Number(mediaRes.total ?? 0));
         setTotalTransactions(Number(mediaRes.quantidade ?? 0));
         setAverageTransactionValue(Number(mediaRes.media ?? 0));
       }
@@ -235,7 +243,7 @@ export default function app() {
       else if (produtoRes && produtoRes.text) console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes);
 
       try {
-        const total = Number(mediaRes?.total ?? 0);
+        const total = Number(diarioRes?.total ?? 0);
         const quantidade = Number(mediaRes?.quantidade ?? 0);
         const media = Number(mediaRes?.media ?? 0);
         const det = pagamentosRes?.detalhamento ?? {};
@@ -318,8 +326,8 @@ export default function app() {
               <div className="text-sm text-muted-foreground">Carregando...</div>
             ) : financeError ? (<div className="text-sm text-red-600">{financeError}</div>) : (
               <>
-                <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <p className="text-xs text-muted-foreground">{totalTransactions} transações</p>
+                <div className="text-2xl font-bold">R$ {Number(totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground">Total de vendas do dia</p>
               </>
             )}
           </CardContent>
@@ -359,7 +367,7 @@ export default function app() {
                 <div className="flex justify-between"><span>Cartão</span><strong>R$ {Number(paymentsBreakdown.CARTAO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <hr className="my-2" />
                 <div className="text-xs text-muted-foreground">Produto mais vendido:</div>
-                <div className="font-medium">{dailyStatsState?.topProduct ? dailyStatsState.topProduct : (topProduct ? (topProduct.nome ?? String(topProduct)) : '—')}</div>
+                <div className="font-medium">{topProduct?.nome ? `${topProduct.nome} (${topProduct.quantidadeVendida}x)` : '—'}</div>
               </div>
             )}
           </CardContent>

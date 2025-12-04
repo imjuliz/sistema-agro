@@ -100,7 +100,7 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
           setUser(null);
         }
       } catch (err) {
-        console.error('[Auth] initial refresh failed', err);
+        // console.error('[Auth] initial refresh failed', err);
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -157,7 +157,7 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
 
         if (!res.ok) {
           const errMsg = data.error || data.mensagem || data.erro || 'Erro ao autenticar';
-          console.error(`[login] Resposta não-OK na tentativa ${attempt}: ${res.status} - ${errMsg}`);
+          // console.error(`[login] Resposta não-OK na tentativa ${attempt}: ${res.status} - ${errMsg}`);
           return { success: false, error: errMsg, status: res.status };
         }
 
@@ -171,7 +171,7 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
         console.log(`[login] ✅ Login bem-sucedido na tentativa ${attempt}`);
         return { success: true, payload, token, usuario };
       } catch (err) {
-        console.error(`[login] Erro na tentativa ${attempt}:`, err.message);
+        // console.error(`[login] Erro na tentativa ${attempt}:`, err.message);
         lastError = err;
         
         if (attempt < maxRetries) {
@@ -185,7 +185,7 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
     
     // Se chegou aqui, todas as tentativas falharam
     const errMsg = lastError?.message || 'Erro ao autenticar após múltiplas tentativas';
-    console.error(`[login] ❌ Login falhou após ${maxRetries} tentativas:`, errMsg);
+    // console.error(`[login] ❌ Login falhou após ${maxRetries} tentativas:`, errMsg);
     return { success: false, error: errMsg, status: 0 };
   }, []);
 
@@ -237,7 +237,7 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
         console.log('[fetchWithAuth] Retentando requisição após refresh...');
         res = await fetch(input, retryInit);
       } catch (retryErr) {
-        console.error('[fetchWithAuth] Erro mesmo após retry:', retryErr.message);
+        // console.error('[fetchWithAuth] Erro mesmo após retry:', retryErr.message);
         throw fetchErr; // lança o erro original
       }
     }

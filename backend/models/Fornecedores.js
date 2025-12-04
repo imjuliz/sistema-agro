@@ -173,9 +173,15 @@ export const verContratosComLojas = async (fornecedorUnidadeId) => { //função 
             id: true, nome: true, cidade: true, estado: true
           }
         },
-        itens :{
-          select: {nome: true}
-        }
+        itens: {
+          select: {
+            id: true,
+            nome: true,
+            quantidade: true,
+            unidadeMedida: true,
+            precoUnitario: true
+          }
+        },
       }
     });
 
@@ -273,12 +279,26 @@ try {
         fornecedorUnidadeId: { not: null }  // Tem um fornecedor interno (outro unidade/fazenda)
       },
       include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            cidade: true,
+            estado: true,
+            telefone: true,
+            email: true,
+            cnpj: true
+          }
+        },
         fornecedorInterno :{
           select : {
             id: true,
             nome: true,
             cidade: true,
-            estado: true
+            estado: true,
+            telefone: true,
+            email: true,
+            cnpj: true
           }
         },
         itens :{
@@ -290,11 +310,28 @@ try {
       }
     });
 
-    console.log('[verContratosComFazendas] Contratos internos encontrados (onde esta unidade CONSOME):', contratos.length, contratos);
+    console.log('[verContratosComFazendas] Contratos internos encontrados (onde esta unidade CONSOME):', contratos.length);
+
+    // Sanitizar campos sensíveis para JSON (Dates -> ISO strings, Decimals -> Number)
+    const contratosSanitizados = contratos.map(c => ({
+      ...c,
+      valorTotal: c.valorTotal != null ? Number(c.valorTotal) : null,
+      dataInicio: c.dataInicio ? c.dataInicio.toISOString() : null,
+      dataFim: c.dataFim ? c.dataFim.toISOString() : null,
+      dataEnvio: c.dataEnvio ? c.dataEnvio.toISOString() : null,
+      itens: Array.isArray(c.itens) ? c.itens.map(it => ({
+        ...it,
+        quantidade: it.quantidade != null ? Number(it.quantidade) : null,
+        pesoUnidade: it.pesoUnidade != null ? Number(it.pesoUnidade) : null,
+        precoUnitario: it.precoUnitario != null ? Number(it.precoUnitario) : null,
+        criadoEm: it.criadoEm ? it.criadoEm.toISOString() : null,
+        atualizadoEm: it.atualizadoEm ? it.atualizadoEm.toISOString() : null
+      })) : []
+    }));
 
     return ({
       sucesso: true,
-      contratos,
+      contratos: contratosSanitizados,
       message: "Contratos internos (onde você consome de outras unidades) listados com sucesso!"
     })
   } catch (error) {
@@ -302,6 +339,79 @@ try {
     return {
       sucesso: false,
       erro: "Erro ao listar contratos internos",
+      detalhes: error.message
+    }
+  }
+}
+
+// Nova função: contratos onde esta unidade é FORNECEDORA para outras unidades
+export const verContratosComFazendasAsFornecedor = async(unidadeId) => {
+  try {
+    console.log('[verContratosComFazendasAsFornecedor] Buscando contratos onde esta unidade é FORNECEDORA (vende para outras unidades) para unidadeId:', unidadeId);
+    
+    const contratosRaw = await prisma.contrato.findMany({
+      where: { 
+        fornecedorUnidadeId: Number(unidadeId)  // Esta unidade é o fornecedor
+      },
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            cidade: true,
+            estado: true,
+            telefone: true,
+            email: true,
+            cnpj: true
+          }
+        },
+        itens: {
+          select: {
+            id: true,
+            nome: true,
+            raca: true,
+            pesoUnidade: true,
+            quantidade: true,
+            unidadeMedida: true,
+            precoUnitario: true,
+            categoria: true,
+            ativo: true,
+            criadoEm: true,
+            atualizadoEm: true
+          }
+        }
+      }
+    });
+
+    // Sanitizar campos que podem ser Decimal para tipos primitivos (JSON-safe)
+    const contratos = contratosRaw.map(c => ({
+      ...c,
+      valorTotal: c.valorTotal != null ? Number(c.valorTotal) : null,
+      dataInicio: c.dataInicio ? c.dataInicio.toISOString() : null,
+      dataFim: c.dataFim ? c.dataFim.toISOString() : null,
+      dataEnvio: c.dataEnvio ? c.dataEnvio.toISOString() : null,
+      itens: Array.isArray(c.itens) ? c.itens.map(it => ({
+        ...it,
+        quantidade: it.quantidade != null ? Number(it.quantidade) : null,
+        pesoUnidade: it.pesoUnidade != null ? Number(it.pesoUnidade) : null,
+        precoUnitario: it.precoUnitario != null ? Number(it.precoUnitario) : null,
+        criadoEm: it.criadoEm ? it.criadoEm.toISOString() : null,
+        atualizadoEm: it.atualizadoEm ? it.atualizadoEm.toISOString() : null
+      })) : []
+    }));
+
+    console.log('[verContratosComFazendasAsFornecedor] Contratos encontrados (onde esta unidade FORNECE):', contratos.length, contratos);
+
+    return ({
+      sucesso: true,
+      contratos,
+      message: "Contratos onde você é fornecedor listados com sucesso!"
+    })
+  } catch (error) {
+    console.error('[verContratosComFazendasAsFornecedor] Erro:', error);
+    return {
+      sucesso: false,
+      erro: "Erro ao listar contratos como fornecedor",
       detalhes: error.message
     }
   }
@@ -641,4 +751,3 @@ export const buscarPedidosExternos = async (unidadeId) => {
     };
   }
 };
-

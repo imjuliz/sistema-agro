@@ -315,276 +315,569 @@ async function main() {
 
         // ===== 6. CONTRATOS =====
         console.log("6. Criando contratos...");
-        const contratosData = [
-            // ----------------------------------------------------------
-            // FAZENDAS
-            // externos -> Faz. Alpha
-            {
-                unidadeId: unidadeMap["Fazenda Alpha"],
-                fornecedorExternoId: fornecedorMap["AgroFornecimentos Ltda"],
-                dataInicio: new Date("2024-01-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-01-05T08:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "30",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Alpha"],
-                fornecedorExternoId: fornecedorMap["NutriBov Distribuidora"],
-                dataInicio: new Date("2024-02-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-02-03T07:30:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "15",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Alpha"],
-                fornecedorExternoId: fornecedorMap["BovinoPrime Reprodutores"],
-                dataInicio: new Date("2025-02-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-02-03T08:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "20",
-                formaPagamento: TPAG.PIX,
-            },
-            // externos -> Faz. Gamma
-            {
-                unidadeId: unidadeMap["Fazenda Gamma"],
-                fornecedorExternoId: fornecedorMap["Sementes Brasil"],
-                dataInicio: new Date("2024-03-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-03-05T09:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE, // fallback
-                diaPagamento: "10",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Gamma"],
-                fornecedorExternoId: fornecedorMap["AgroGrãos Comercial"],
-                dataInicio: new Date("2024-04-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-04-03T08:30:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "05",
-                formaPagamento: TPAG.PIX,
-            },
+        // const contratosData = [
+        //     // ----------------------------------------------------------
+        //     // FAZENDAS
+        //     // externos -> Faz. Alpha
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Alpha"],
+        //         fornecedorExternoId: fornecedorMap["AgroFornecimentos Ltda"],
+        //         dataInicio: new Date("2024-01-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-01-05T08:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "30",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Alpha"],
+        //         fornecedorExternoId: fornecedorMap["NutriBov Distribuidora"],
+        //         dataInicio: new Date("2024-02-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-02-03T07:30:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "15",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Alpha"],
+        //         fornecedorExternoId: fornecedorMap["BovinoPrime Reprodutores"],
+        //         dataInicio: new Date("2025-02-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-02-03T08:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "20",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     // externos -> Faz. Gamma
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Gamma"],
+        //         fornecedorExternoId: fornecedorMap["Sementes Brasil"],
+        //         dataInicio: new Date("2024-03-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-03-05T09:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE, // fallback
+        //         diaPagamento: "10",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Gamma"],
+        //         fornecedorExternoId: fornecedorMap["AgroGrãos Comercial"],
+        //         dataInicio: new Date("2024-04-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-04-03T08:30:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "05",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // externos -> Faz. Delta
-            {
-                unidadeId: unidadeMap["Fazenda Delta"],
-                fornecedorExternoId: fornecedorMap["FertSul Distribuição"],
-                dataInicio: new Date("2024-01-15T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-01-20T06:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "20",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Delta"],
-                fornecedorExternoId: fornecedorMap["BioInsumos Ltda"],
-                dataInicio: new Date("2024-02-10T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-02-12T07:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "10",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // externos -> Faz. Delta
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Delta"],
+        //         fornecedorExternoId: fornecedorMap["FertSul Distribuição"],
+        //         dataInicio: new Date("2024-01-15T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-01-20T06:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "20",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Delta"],
+        //         fornecedorExternoId: fornecedorMap["BioInsumos Ltda"],
+        //         dataInicio: new Date("2024-02-10T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-02-12T07:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "10",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // externos -> Fazenda Beta
-            {
-                unidadeId: unidadeMap["Fazenda Beta"],
-                fornecedorExternoId: fornecedorMap["AgroLácteos Suprimentos"],
-                dataInicio: new Date("2024-07-15T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-07-18T08:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "10",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Beta"],
-                fornecedorExternoId: fornecedorMap["Lácteos & Tecnologia Ltda"],
-                dataInicio: new Date("2024-07-20T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-07-22T07:30:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "15",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Beta"],
-                fornecedorExternoId: fornecedorMap["AgroBov Genetics"],
-                dataInicio: new Date("2024-09-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-09-03T06:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.TRIMESTRAL, // inseminação/troca genética não é mensal
-                diaPagamento: "30",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Beta"],
-                fornecedorExternoId: fornecedorMap["VetBov Serviços e Insumos"],
-                dataInicio: new Date("2024-08-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-08-05T07:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "15",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // externos -> Fazenda Beta
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Beta"],
+        //         fornecedorExternoId: fornecedorMap["AgroLácteos Suprimentos"],
+        //         dataInicio: new Date("2024-07-15T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-07-18T08:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "10",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Beta"],
+        //         fornecedorExternoId: fornecedorMap["Lácteos & Tecnologia Ltda"],
+        //         dataInicio: new Date("2024-07-20T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-07-22T07:30:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "15",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Beta"],
+        //         fornecedorExternoId: fornecedorMap["AgroBov Genetics"],
+        //         dataInicio: new Date("2024-09-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-09-03T06:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.TRIMESTRAL, // inseminação/troca genética não é mensal
+        //         diaPagamento: "30",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Beta"],
+        //         fornecedorExternoId: fornecedorMap["VetBov Serviços e Insumos"],
+        //         dataInicio: new Date("2024-08-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-08-05T07:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "15",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // Fazenda Teste <- PastosVerde Nutrição Animal (silagem, feno, suplementos minerais)
-            {
-                unidadeId: unidadeMap["Fazenda Teste"],
-                fornecedorExternoId: fornecedorMap["PastosVerde Nutrição Animal"],
-                dataInicio: new Date("2024-10-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-10-03T09:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "10",
-                formaPagamento: TPAG.PIX,
-            },
-            // Fazenda Teste <- GenBov Melhoramento Genético (inseminação e consultoria)
-            {
-                unidadeId: unidadeMap["Fazenda Teste"],
-                fornecedorExternoId: fornecedorMap["GenBov Melhoramento Genético"],
-                dataInicio: new Date("2024-11-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-11-04T08:30:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.TRIMESTRAL,
-                diaPagamento: "20",
-                formaPagamento: TPAG.PIX,
-            },
-            // Fazenda Teste <- AgroVet Saúde Animal (medicamentos e vacinas)
-            {
-                unidadeId: unidadeMap["Fazenda Teste"],
-                fornecedorExternoId: fornecedorMap["AgroVet Saúde Animal"],
-                dataInicio: new Date("2024-12-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2024-12-05T07:45:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "25",
-                formaPagamento: TPAG.PIX,
-            },
-            // Fazenda Teste <- CampoForte Equipamentos (balanças, troncos, bebedouros)
-            {
-                unidadeId: unidadeMap["Fazenda Teste"],
-                fornecedorExternoId: fornecedorMap["CampoForte Equipamentos"],
-                dataInicio: new Date("2025-01-10T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-01-12T10:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.SEMESTRAL,
-                diaPagamento: "05",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // Fazenda Teste <- PastosVerde Nutrição Animal (silagem, feno, suplementos minerais)
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Teste"],
+        //         fornecedorExternoId: fornecedorMap["PastosVerde Nutrição Animal"],
+        //         dataInicio: new Date("2024-10-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-10-03T09:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "10",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     // Fazenda Teste <- GenBov Melhoramento Genético (inseminação e consultoria)
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Teste"],
+        //         fornecedorExternoId: fornecedorMap["GenBov Melhoramento Genético"],
+        //         dataInicio: new Date("2024-11-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-11-04T08:30:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.TRIMESTRAL,
+        //         diaPagamento: "20",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     // Fazenda Teste <- AgroVet Saúde Animal (medicamentos e vacinas)
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Teste"],
+        //         fornecedorExternoId: fornecedorMap["AgroVet Saúde Animal"],
+        //         dataInicio: new Date("2024-12-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2024-12-05T07:45:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "25",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     // Fazenda Teste <- CampoForte Equipamentos (balanças, troncos, bebedouros)
+        //     {
+        //         unidadeId: unidadeMap["Fazenda Teste"],
+        //         fornecedorExternoId: fornecedorMap["CampoForte Equipamentos"],
+        //         dataInicio: new Date("2025-01-10T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-01-12T10:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.SEMESTRAL,
+        //         diaPagamento: "05",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // -------------------------------------------------------
-            // LOJAS
-            // VerdeFresco Hortaliças (vende hortaliças) <- fornecedor: Fazenda Delta
-            {
-                unidadeId: unidadeMap["VerdeFresco Hortaliças"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Delta"],
-                dataInicio: new Date("2025-05-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-05-02T06:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.SEMANALMENTE,
-                diaPagamento: "15",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // -------------------------------------------------------
+        //     // LOJAS
+        //     // VerdeFresco Hortaliças (vende hortaliças) <- fornecedor: Fazenda Delta
+        //     {
+        //         unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Delta"],
+        //         dataInicio: new Date("2025-05-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-05-02T06:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.SEMANALMENTE,
+        //         diaPagamento: "15",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // AgroBoi (vende gado/insumos) <- fornecedor: Fazenda Alpha
-            {
-                unidadeId: unidadeMap["AgroBoi"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
-                dataInicio: new Date("2025-05-10T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-05-12T08:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "30",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // AgroBoi (vende gado/insumos) <- fornecedor: Fazenda Alpha
+        //     {
+        //         unidadeId: unidadeMap["AgroBoi"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
+        //         dataInicio: new Date("2025-05-10T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-05-12T08:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "30",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // Casa Útil Mercado (produtos diversos) <- fornecedores variados (ex.: usa fazendas para apresentação do usuário Maria)
-            {
-                unidadeId: unidadeMap["Casa Útil Mercado"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Gamma"],
-                dataInicio: new Date("2025-04-15T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-04-18T09:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "15",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Casa Útil Mercado"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
-                dataInicio: new Date("2025-04-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-04-03T08:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "30",
-                formaPagamento: TPAG.PIX,
-            },
-            {
-                unidadeId: unidadeMap["Casa Útil Mercado"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
-                dataInicio: new Date("2025-03-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-03-02T09:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "05",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // Casa Útil Mercado (produtos diversos) <- fornecedores variados (ex.: usa fazendas para apresentação do usuário Maria)
+        //     {
+        //         unidadeId: unidadeMap["Casa Útil Mercado"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Gamma"],
+        //         dataInicio: new Date("2025-04-15T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-04-18T09:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "15",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Casa Útil Mercado"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
+        //         dataInicio: new Date("2025-04-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-04-03T08:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "30",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        //     {
+        //         unidadeId: unidadeMap["Casa Útil Mercado"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
+        //         dataInicio: new Date("2025-03-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-03-02T09:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "05",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // Sabor do Campo Laticínios (laticínios) <- fornecedor: Fazenda Beta
-            {
-                unidadeId: unidadeMap["Sabor do Campo Laticínios"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Beta"],
-                dataInicio: new Date("2025-05-05T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-05-06T07:30:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.SEMANALMENTE,
-                diaPagamento: "30",
-                formaPagamento: TPAG.PIX,
-            },
+        //     // Sabor do Campo Laticínios (laticínios) <- fornecedor: Fazenda Beta
+        //     {
+        //         unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Beta"],
+        //         dataInicio: new Date("2025-05-05T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-05-06T07:30:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.SEMANALMENTE,
+        //         diaPagamento: "30",
+        //         formaPagamento: TPAG.PIX,
+        //     },
 
-            // Loja Teste (laticínios e carne) <- fornecedor: Fazenda Teste
-            {
-                unidadeId: unidadeMap["Loja Teste"],
-                fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
-                dataInicio: new Date("2025-06-01T00:00:00.000Z"),
-                dataFim: null,
-                dataEnvio: new Date("2025-06-03T10:00:00.000Z"),
-                status: SCON.ATIVO,
-                frequenciaEntregas: FREQ.MENSALMENTE,
-                diaPagamento: "10",
-                formaPagamento: TPAG.PIX,
-            },
-        ];
-        await prisma.contrato.createMany({ data: contratosData, skipDuplicates: true });
+        //     // Loja Teste (laticínios e carne) <- fornecedor: Fazenda Teste
+        //     {
+        //         unidadeId: unidadeMap["Loja Teste"],
+        //         fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
+        //         dataInicio: new Date("2025-06-01T00:00:00.000Z"),
+        //         dataFim: null,
+        //         dataEnvio: new Date("2025-06-03T10:00:00.000Z"),
+        //         status: SCON.ATIVO,
+        //         frequenciaEntregas: FREQ.MENSALMENTE,
+        //         diaPagamento: "10",
+        //         formaPagamento: TPAG.PIX,
+        //     },
+        // ];
+        // await prisma.contrato.createMany({ data: contratosData, skipDuplicates: true });
+        const contratosData = [ 
+    // ----------------------------------------------------------
+    // FAZENDAS
+    // externos -> Faz. Alpha
+    {
+        unidadeId: unidadeMap["Fazenda Alpha"],
+        fornecedorExternoId: fornecedorMap["AgroFornecimentos Ltda"],
+        dataInicio: new Date("2024-01-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-01-05T08:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "30",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00", // Será calculado após inserção dos itens
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Alpha"],
+        fornecedorExternoId: fornecedorMap["NutriBov Distribuidora"],
+        dataInicio: new Date("2024-02-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-02-03T07:30:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "15",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Alpha"],
+        fornecedorExternoId: fornecedorMap["BovinoPrime Reprodutores"],
+        dataInicio: new Date("2025-02-01T00:00:00.000Z"),
+        dataFim: new Date("2026-01-31T23:59:59.999Z"),
+        dataEnvio: new Date("2025-02-03T08:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "20",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "24500.00", // (2 * 3200) + (6 * 2100) + (4 * 850) = 6400 + 12600 + 3400 = 22400
+    },
+    // externos -> Faz. Gamma
+    {
+        unidadeId: unidadeMap["Fazenda Gamma"],
+        fornecedorExternoId: fornecedorMap["Sementes Brasil"],
+        dataInicio: new Date("2024-03-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-03-05T09:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "10",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Gamma"],
+        fornecedorExternoId: fornecedorMap["AgroGrãos Comercial"],
+        dataInicio: new Date("2024-04-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-04-03T08:30:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "05",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+
+    // externos -> Faz. Delta
+    {
+        unidadeId: unidadeMap["Fazenda Delta"],
+        fornecedorExternoId: fornecedorMap["FertSul Distribuição"],
+        dataInicio: new Date("2024-01-15T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-01-20T06:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "20",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Delta"],
+        fornecedorExternoId: fornecedorMap["BioInsumos Ltda"],
+        dataInicio: new Date("2024-02-10T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-02-12T07:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "10",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+
+    // externos -> Fazenda Beta
+    {
+        unidadeId: unidadeMap["Fazenda Beta"],
+        fornecedorExternoId: fornecedorMap["AgroLácteos Suprimentos"],
+        dataInicio: new Date("2024-07-15T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-07-18T08:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "10",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "835.00", // (10 * 45) + (100 * 0.85) + (10 * 30) = 450 + 85 + 300 = 835
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Beta"],
+        fornecedorExternoId: fornecedorMap["Lácteos & Tecnologia Ltda"],
+        dataInicio: new Date("2024-07-20T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-07-22T07:30:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "15",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "740.00", // (1 * 420) + (20 * 6.50) + (2 * 95) = 420 + 130 + 190 = 740
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Beta"],
+        fornecedorExternoId: fornecedorMap["AgroBov Genetics"],
+        dataInicio: new Date("2024-09-01T00:00:00.000Z"),
+        dataFim: new Date("2026-08-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-09-03T06:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.TRIMESTRAL,
+        diaPagamento: "30",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "21330.00", // (6 * 85) + (1 * 420) + (2 * 4200) + (5 * 2400) = 510 + 420 + 8400 + 12000 = 21330
+    },
+    {
+        unidadeId: unidadeMap["Fazenda Beta"],
+        fornecedorExternoId: fornecedorMap["VetBov Serviços e Insumos"],
+        dataInicio: new Date("2024-08-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-08-05T07:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "15",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "414.00", // (20 * 6.50) + (8 * 28) + (5 * 12) = 130 + 224 + 60 = 414
+    },
+
+    // Fazenda Teste <- PastosVerde Nutrição Animal
+    {
+        unidadeId: unidadeMap["Fazenda Teste"],
+        fornecedorExternoId: fornecedorMap["PastosVerde Nutrição Animal"],
+        dataInicio: new Date("2024-10-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-10-03T09:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "10",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "139.20", // (400 * 0.18) + (800 * 0.08) + (1 * 3.20) = 72 + 64 + 3.20 = 139.20
+    },
+    // Fazenda Teste <- GenBov Melhoramento Genético
+    {
+        unidadeId: unidadeMap["Fazenda Teste"],
+        fornecedorExternoId: fornecedorMap["GenBov Melhoramento Genético"],
+        dataInicio: new Date("2024-11-01T00:00:00.000Z"),
+        dataFim: new Date("2026-10-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-11-04T08:30:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.TRIMESTRAL,
+        diaPagamento: "20",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "17875.00", // (1 * 75) + (1 * 5500) + (4 * 3200) = 75 + 5500 + 12800 = 18375
+    },
+    // Fazenda Teste <- AgroVet Saúde Animal
+    {
+        unidadeId: unidadeMap["Fazenda Teste"],
+        fornecedorExternoId: fornecedorMap["AgroVet Saúde Animal"],
+        dataInicio: new Date("2024-12-01T00:00:00.000Z"),
+        dataFim: new Date("2025-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2024-12-05T07:45:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "25",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "130.50", // (3 * 5.50) + (3 * 22) + (1 * 48) = 16.50 + 66 + 48 = 130.50
+    },
+    // Fazenda Teste <- CampoForte Equipamentos
+    {
+        unidadeId: unidadeMap["Fazenda Teste"],
+        fornecedorExternoId: fornecedorMap["CampoForte Equipamentos"],
+        dataInicio: new Date("2025-01-10T00:00:00.000Z"),
+        dataFim: new Date("2026-12-31T23:59:59.999Z"),
+        dataEnvio: new Date("2025-01-12T10:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.SEMESTRAL,
+        diaPagamento: "05",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "10220.00", // (1 * 7200) + (1 * 2500) + (1 * 520) = 10220
+    },
+
+    // -------------------------------------------------------
+    // LOJAS
+    // VerdeFresco Hortaliças <- Fazenda Delta
+    {
+        unidadeId: unidadeMap["VerdeFresco Hortaliças"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Delta"],
+        dataInicio: new Date("2025-05-01T00:00:00.000Z"),
+        dataFim: new Date("2026-04-30T23:59:59.999Z"),
+        dataEnvio: new Date("2025-05-02T06:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.SEMANALMENTE,
+        diaPagamento: "15",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "3147.20", // (100*2.50)+(48*3)+(24*3.50)+(32*2.80)+(28*2.20)+(24*80)+(8*65)+(36*3.80)+(16*6.50)+(28*3.20) = 250+144+84+89.60+61.60+1920+520+136.80+104+89.60 = 3399.60
+    },
+
+    // AgroBoi <- Fazenda Alpha
+    {
+        unidadeId: unidadeMap["AgroBoi"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
+        dataInicio: new Date("2025-05-10T00:00:00.000Z"),
+        dataFim: new Date("2026-05-09T23:59:59.999Z"),
+        dataEnvio: new Date("2025-05-12T08:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "30",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "19403.00", // Calculado baseado nos 22 itens do contrato
+    },
+
+    // Casa Útil Mercado <- Fazenda Gamma
+    {
+        unidadeId: unidadeMap["Casa Útil Mercado"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Gamma"],
+        dataInicio: new Date("2025-04-15T00:00:00.000Z"),
+        dataFim: new Date("2026-04-14T23:59:59.999Z"),
+        dataEnvio: new Date("2025-04-18T09:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "15",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "31898.00", // Calculado baseado nos 18 itens do contrato
+    },
+    {
+        unidadeId: unidadeMap["Casa Útil Mercado"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Alpha"],
+        dataInicio: new Date("2025-04-01T00:00:00.000Z"),
+        dataFim: new Date("2026-03-31T23:59:59.999Z"),
+        dataEnvio: new Date("2025-04-03T08:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "30",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+    {
+        unidadeId: unidadeMap["Casa Útil Mercado"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
+        dataInicio: new Date("2025-03-01T00:00:00.000Z"),
+        dataFim: new Date("2026-02-28T23:59:59.999Z"),
+        dataEnvio: new Date("2025-03-02T09:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "05",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "0.00",
+    },
+
+    // Sabor do Campo Laticínios <- Fazenda Beta
+    {
+        unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Beta"],
+        dataInicio: new Date("2025-05-05T00:00:00.000Z"),
+        dataFim: new Date("2026-05-04T23:59:59.999Z"),
+        dataEnvio: new Date("2025-05-06T07:30:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.SEMANALMENTE,
+        diaPagamento: "30",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "7863.80", // Calculado baseado nos 27 itens do contrato
+    },
+
+    // Loja Teste <- Fazenda Teste
+    {
+        unidadeId: unidadeMap["Loja Teste"],
+        fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
+        dataInicio: new Date("2025-06-01T00:00:00.000Z"),
+        dataFim: new Date("2026-05-31T23:59:59.999Z"),
+        dataEnvio: new Date("2025-06-03T10:00:00.000Z"),
+        status: SCON.ATIVO,
+        frequenciaEntregas: FREQ.MENSALMENTE,
+        diaPagamento: "10",
+        formaPagamento: TPAG.PIX,
+        valorTotal: "872.00", // (20*4)+(4*22)+(10*40)+(8*48) = 80+88+400+384 = 952
+    },
+];
+
+await prisma.contrato.createMany({ data: contratosData, skipDuplicates: true });
         console.log("Contratos criados (seed).");
         const contratosDb = await prisma.contrato.findMany({
             include: {

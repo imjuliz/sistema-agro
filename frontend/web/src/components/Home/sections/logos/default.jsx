@@ -10,25 +10,18 @@ import Logo from "@/components/ui/logo";
 import { Section } from "@/components/ui/section";
 
 export default function Logos({
-  title = "Leve seu agronegócio para o próximo nível",
+  title = "Por que escolher a RuralTech?",
   badge = (
     <Badge variant="outline" className="border-brand/30 text-brand">
-      Last updated: {siteConfig.stats.updated}
-    </Badge>
+ Compromisso RuralTech com qualidade e inovação    </Badge>
   ),
   logos = [
-    <Logo key="plataforma" image={Plataforma} name="Plataforma unificada" />,
-    <Logo key="acesso" image={Acesso} name="Acesso em qualquer dispositivo" />,
-    <Logo key="iot" image={Iot} name="Integração com IoT" badge="Novo"
+    <Logo key="plataforma" image={Plataforma} name="Produção própria de qualidade" />,
+    <Logo key="acesso" image={Acesso} name="Atendimento em todas as nossas lojas" />,
+    <Logo key="iot" image={Iot} name="Controle e rastreabilidade avançada" badge="Novo"
     />,
-    <Logo key="seguranca" image={Seguranca} name="Segurança e hierarquia de acessos"/>,
-    // <Logo
-    //   key="tailwind"
-    //   image={Tailwind}
-    //   name="Tailwind"
-    //   version="4.1"
-    //   badge="New"
-    // />,
+    <Logo key="seguranca" image={Seguranca} name="Transparência e confiança em toda a cadeia"/>,
+    
   ],
   className,
 }) {

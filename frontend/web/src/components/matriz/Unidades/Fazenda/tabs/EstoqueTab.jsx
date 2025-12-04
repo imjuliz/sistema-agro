@@ -1,7 +1,6 @@
 "use client"
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftRight } from 'lucide-react';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
@@ -9,11 +8,11 @@ import { InventoryProvider, useInventory } from '@/contexts/InventoryContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input';
-import { SelectTrigger as _SelectTrigger } from '@/components/ui/select';
+
 export function EstoqueTab({ fazenda }) {
   // Render content inside provider so hooks inside useInventory are valid
   return (

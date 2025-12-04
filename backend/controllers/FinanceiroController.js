@@ -174,24 +174,40 @@ export const somarDiariaController = async (req, res) => { //FUNCIONANDO
 // MÉDIA POR TRANSAÇÃO (vendas do dia)
 export const calcularMediaPorTransacaoController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+    const unidadeId = Number(req.params.unidadeId);
 
-    const resultado = await calcularMediaPorTransacaoDiaria(Number(unidadeId));
-    if (!resultado.sucesso) { return res.status(500).json(resultado); }
+    console.log("🔎 Recebido unidadeId:", unidadeId);
 
-    return res.status(200).json({ sucesso: true, total: resultado.total, quantidade: resultado.quantidade, media: resultado.media });
+    const resultado = await calcularMediaPorTransacaoDiaria(unidadeId);
+
+    console.log("📘 Resultado da média:", resultado);
+
+    if (!resultado.sucesso) {
+      return res.status(500).json(resultado);
+    }
+
+    return res.status(200).json({
+      sucesso: true,
+      total: resultado.total,
+      quantidade: resultado.quantidade,
+      media: resultado.media,
+    });
+
   } catch (error) {
-    console.error('Erro ao calcular média por transação:', error);
-    return res.status(500).json({ sucesso: false, erro: 'Erro ao calcular média por transação.', detalhes: error.message });
+    console.error("❌ Erro inesperado no controller:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro inesperado no controller.",
+      detalhes: error.message,
+    });
   }
 };
 
 // DIVISÃO POR FORMAS DE PAGAMENTO (vendas do dia)
 export const divisaoPagamentosController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+    const unidadeId = Number(req.params.unidadeId) || req.session?.usuario?.unidadeId;
+    if (!unidadeId || isNaN(unidadeId)) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão ou ID inválido.' }); }
 
     const resultado = await somarPorPagamentoDiario(Number(unidadeId));
     if (!resultado.sucesso) { return res.status(500).json(resultado); }
@@ -206,8 +222,8 @@ export const divisaoPagamentosController = async (req, res) => {
 // BUSCAR PRODUTO MAIS VENDIDO (usando o model já existente)
 export const buscarProdutoMaisVendidoController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão.' }); }
+    const unidadeId = Number(req.params.unidadeId) || req.session?.usuario?.unidadeId;
+    if (!unidadeId || isNaN(unidadeId)) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão ou ID inválido.' }); }
 
     const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
     if (!resultado.sucesso) { return res.status(404).json(resultado); }

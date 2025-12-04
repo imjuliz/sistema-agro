@@ -1,6 +1,22 @@
+import { Suspense } from "react";
 import { GalleryVerticalEnd } from "lucide-react"
 import { RedefinirForm } from "@/components/esqueci-form";
 import { ThemeToggle } from "@/components/toggleSwitchTema";
+
+function RedefinirFormWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col gap-6 items-center">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className="text-3xl font-bold text-black dark:text-white mb-5">Redefinição de senha</h1>
+          <p className="text-muted-foreground text-1sm text-balance mb-15">Carregando...</p>
+        </div>
+      </div>
+    }>
+      <RedefinirForm />
+    </Suspense>
+  );
+}
 
 export default function LoginPage() {
   return (
@@ -20,7 +36,7 @@ export default function LoginPage() {
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
-            <RedefinirForm />
+            <RedefinirFormWrapper />
           </div>
         </div>
       </div>
