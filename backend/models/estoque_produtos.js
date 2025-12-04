@@ -3,7 +3,7 @@ import prisma from '../prisma/client.js';
 
 export const mostrarEstoque = async (unidadeId) => { //ok
     try {
-        const estoque = await prisma.Estoque.findMany({ where: { unidadeId: Number(unidadeId) } })
+        const estoque = await prisma.estoque.findMany({ where: { unidadeId: Number(unidadeId) } })
         return ({
             sucesso: true,
             estoque,
@@ -24,11 +24,19 @@ export const mostrarEstoque = async (unidadeId) => { //ok
 //SOMA A QUANTIDADE DE ITENS NO ESTOQUE
 export const somarQtdTotalEstoque = async (unidadeId) => { //ok
     try {
-        const resultado = await prisma.estoque.aggregate({
-            _sum: { quantidade: true, },
-            where: { unidadeId: Number(unidadeId) },
+        // The schema stores current quantities on EstoqueProduto.qntdAtual.
+        // First find the estoque record for this unidade (unique by unidadeId), then sum qntdAtual from EstoqueProduto.
+        const estoque = await prisma.estoque.findUnique({ where: { unidadeId: Number(unidadeId) } });
+        if (!estoque) {
+            return { sucesso: true, totalItens: 0, message: "Nenhum estoque encontrado para a unidade." };
+        }
+
+        const resultado = await prisma.estoqueProduto.aggregate({
+            _sum: { qntdAtual: true },
+            where: { estoqueId: Number(estoque.id) }
         });
-        const total = resultado._sum.quantidade || 0;
+
+        const total = Number(resultado._sum.qntdAtual ?? 0);
 
         return {
             sucesso: true,
@@ -45,25 +53,6 @@ export const somarQtdTotalEstoque = async (unidadeId) => { //ok
     }
 };
 
-
-
-// //listagem do estoque 
-// export async function getEstoque(unidade_id) { //ok
-//     try {
-//         const estoque = await prisma.estoque_produto.findMany({ where: { unidadeId: Number(unidade_id) } });
-//         return {
-//             sucesso: true,
-//             estoque: estoque,
-//             message: "Estoque listado com sucesso."
-//         }
-//     } catch (error) {
-//         return {
-//             sucesso: false,
-//             erro: "Erro ao listar estoque.",
-//             detalhes: error.message
-//         };
-//     }
-// };
 
 export const getEstoque = async (unidadeId) => {
     try {
@@ -112,23 +101,38 @@ export const getEstoque = async (unidadeId) => {
 
 export const reporEstoque = async (dados) => {
     try {
-        const novaSaida = await prisma.saidas.create({
+        // Localiza o estoque da unidade
+        const estoque = await prisma.estoque.findUnique({ where: { unidadeId: Number(dados.unidadeId) } });
+        if (!estoque) {
+            return { sucesso: false, erro: `Estoque não encontrado para unidade ${dados.unidadeId}` };
+        }
+
+        // Cria um movimento de estoque (entrada/saida) em EstoqueMovimento
+        const movimento = await prisma.estoqueMovimento.create({
             data: {
-                unidadeId: Number(dados.unidadeId),
-                tipo: dados.tipo,
-                data: new Date(dados.data),
-                quantidade: Number(dados.quantidade)
+                estoqueId: estoque.id,
+                tipoMovimento: dados.tipo || 'ENTRADA',
+                quantidade: Number(dados.quantidade || 0),
+                producaoId: dados.producaoId ? Number(dados.producaoId) : undefined,
+                pedidoId: dados.pedidoId ? Number(dados.pedidoId) : undefined,
+                vendaId: dados.vendaId ? Number(dados.vendaId) : undefined,
+                origemUnidadeId: dados.origemUnidadeId ? Number(dados.origemUnidadeId) : undefined,
+                destinoUnidadeId: dados.destinoUnidadeId ? Number(dados.destinoUnidadeId) : undefined,
+                data: dados.data ? new Date(dados.data) : new Date()
             }
         });
-        return {sucesso: true,saida: novaSaida};
+
+        return { sucesso: true, movimento };
+
+    } catch (error) {
+        return { sucesso: false, erro: 'Erro ao repor estoque', detalhes: error.message };
     }
-    catch (error) {return {sucesso: false,erro: error.message}}
 };
 
 //PRODUTOS
 export async function getProdutos() { //ok
     try {
-        const produtos = await prisma.produtos.findMany();
+        const produtos = await prisma.produto.findMany();
         return {
             sucesso: true,
             produtos,
@@ -137,14 +141,15 @@ export async function getProdutos() { //ok
     } catch (error) {
         return {
             sucesso: false,
-            message: "Erro ao listar produtos."
+            message: "Erro ao listar produtos.",
+            detalhes: error.message
         }
     }
 };
 
 export async function getProdutoPorId(id) { // tem controller
     try {
-        const produto = await prisma.produtos.findUnique({ where: { id: id } });
+        const produto = await prisma.produto.findUnique({ where: { id: id } });
         return {
             sucesso: true,
             produto,
@@ -162,7 +167,7 @@ export async function getProdutoPorId(id) { // tem controller
 
 export async function createProduto(data) {// tem controller
     try {
-        const produto = await prisma.produtos.create({ data });
+        const produto = await prisma.produto.create({ data });
         return {
             sucesso: true,
             produto,
@@ -179,7 +184,7 @@ export async function createProduto(data) {// tem controller
 
 export async function deleteProduto(id) { //tem controller 
     try {
-        const produto = await prisma.produtos.delete({ where: { id } });
+        const produto = await prisma.produto.delete({ where: { id } });
         return {
             sucesso: true,
             produto,
@@ -212,7 +217,6 @@ export const buscarProdutoMaisVendido = async (unidadeId) => { //ok tem controll
         }
 
         const produtoMaisVendido = resultado[0];
-
         const produto = await prisma.produto.findUnique({ // Busca informações do produto
             where: { id: produtoMaisVendido.produtoId, },
             select: {
@@ -260,7 +264,7 @@ export const listarProdutos = async (unidadeId) => { //ok controller feito
 
 export const listarAtividadesLote = async (unidadeId) => {
     try {
-        const atividades = await prisma.atividadesLote.findMany({ where: { unidadeId: Number(unidadeId) }, })
+        const atividades = await prisma.atvdLote.findMany({ where: { loteId: Number(unidadeId) }, })
         return {
             sucesso: true,
             atividades,
@@ -277,11 +281,7 @@ export const listarAtividadesLote = async (unidadeId) => {
 
 export const consultarLoteAgricola = async ( loteId) => {
     try {
-        const atividadesLote = await prisma.AtvdAgricola.findMany({
-            where: {
-                loteId: Number(loteId),
-            }
-        });
+        const atividadesLote = await prisma.atvdAgricola.findMany({where: {loteId: Number(loteId),}});
 
         return {
             sucesso: true,
@@ -297,8 +297,26 @@ export const consultarLoteAgricola = async ( loteId) => {
     }
 }
 
+// Atualiza a quantidade mínima (qntdMin) de um EstoqueProduto
+export const atualizarQntdMin = async (estoqueProdutoId, qntdMin) => {
+    try {
+        if (!estoqueProdutoId || isNaN(Number(estoqueProdutoId))) {return { sucesso: false, erro: 'ID do produto em estoque inválido.' };}
 
+        const produto = await prisma.estoqueProduto.update({
+            where: { id: Number(estoqueProdutoId) },
+            data: { qntdMin: Number(qntdMin) },
+        });
 
-export const registrarAtividadePlantio = async (unidadeId, descricao, TipoLote, loteId) => {
-
-}
+        return {
+            sucesso: true,
+            produto,
+            message: 'Quantidade mínima atualizada com sucesso.'
+        };
+    } catch (error) {
+        return {
+            sucesso: false,
+            erro: 'Erro ao atualizar quantidade mínima.',
+            detalhes: error.message
+        };
+    }
+};

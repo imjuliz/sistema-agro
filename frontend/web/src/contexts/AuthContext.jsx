@@ -115,28 +115,78 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
   }, [doRefresh, skipInitialRefresh, pathname]);
 
   const login = useCallback(async ({ email, senha }) => {
-    const res = await fetch(LOGIN_ENDPOINT, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha }),
-    });
+    let lastError = null;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[login] Tentativa ${attempt}/${maxRetries}...`);
+        const res = await fetch(LOGIN_ENDPOINT, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha }),
+        });
 
-    const data = await res.json().catch(() => ({}));
+        let data;
+        let responseText = '';
+        // Ler como texto primeiro e tentar parsear como JSON; em respostas de erro o servidor
+        // pode devolver texto simples (ex: "Internal Server Error"). Evitamos explodir o app
+        // e retornamos um objeto com a mensagem de erro para a UI.
+        responseText = await res.text();
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseErr) {
+          // Não-JSON: registrar e criar fallback com o texto bruto
+          console.warn(`[login] resposta não-JSON na tentativa ${attempt}:`, parseErr);
+          console.warn(`[login] Corpo da resposta (texto):`, responseText ? responseText.substring(0, 500) : '<vazio>');
+          console.warn(`[login] Status HTTP:`, res.status, res.statusText);
+          data = { error: responseText || res.statusText || `HTTP ${res.status}` };
 
-    if (!res.ok) {
-      const errMsg = data.error || data.mensagem || data.erro || 'Erro ao autenticar';
-      return { success: false, error: errMsg, status: res.status };
+          // Se o status for 5xx ou 4xx, e ainda quiser tentar retry em caso específico,
+          // podemos continuar o loop. Atualmente, tentamos retry só quando o parse falhava
+          // por motivos transitórios — manter comportamento de retry breve.
+          if (!res.ok && attempt < maxRetries) {
+            const delay = 500 * attempt;
+            console.log(`[login] Aguardando ${delay}ms antes de retry devido a resposta não-JSON...`);
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+          }
+          if (!res.ok) return { success: false, error: data.error, status: res.status };
+        }
+
+        if (!res.ok) {
+          const errMsg = data.error || data.mensagem || data.erro || 'Erro ao autenticar';
+          console.error(`[login] Resposta não-OK na tentativa ${attempt}: ${res.status} - ${errMsg}`);
+          return { success: false, error: errMsg, status: res.status };
+        }
+
+        const payload = data.data ?? data;
+        const token = payload.accessToken ?? data.accessToken ?? null;
+        const usuario = payload.usuario ?? payload.user ?? null;
+
+        if (token) setAccessToken(token);
+        if (usuario) setUser(usuario);
+
+        console.log(`[login] ✅ Login bem-sucedido na tentativa ${attempt}`);
+        return { success: true, payload, token, usuario };
+      } catch (err) {
+        console.error(`[login] Erro na tentativa ${attempt}:`, err.message);
+        lastError = err;
+        
+        if (attempt < maxRetries) {
+          // aguarda antes de tentar novamente (delay exponencial: 500ms, 1s, 1.5s)
+          const delay = 500 * attempt;
+          console.log(`[login] Aguardando ${delay}ms antes de retry...`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
     }
-
-    const payload = data.data ?? data;
-    const token = payload.accessToken ?? data.accessToken ?? null;
-    const usuario = payload.usuario ?? payload.user ?? null;
-
-    if (token) setAccessToken(token);
-    if (usuario) setUser(usuario);
-
-    return { success: true, payload, token, usuario };
+    
+    // Se chegou aqui, todas as tentativas falharam
+    const errMsg = lastError?.message || 'Erro ao autenticar após múltiplas tentativas';
+    console.error(`[login] ❌ Login falhou após ${maxRetries} tentativas:`, errMsg);
+    return { success: false, error: errMsg, status: 0 };
   }, []);
 
   const logout = useCallback(async () => {
@@ -160,7 +210,37 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
       },
     };
 
-    let res = await fetch(input, initCopy);
+    let res;
+    try {
+      res = await fetch(input, initCopy);
+    } catch (fetchErr) {
+      // Se a fetch falhar (ex: ECONNRESET), tenta refresh e re-tenta uma vez
+      console.warn('[fetchWithAuth] Erro na requisição:', fetchErr.message);
+      try {
+        const refreshResult = await doRefresh();
+        if (!refreshResult?.success) {
+          throw new Error('Refresh falhou durante retry');
+        }
+        if (refreshResult.newAccessToken) setAccessToken(refreshResult.newAccessToken);
+        if (refreshResult.usuario) setUser(refreshResult.usuario);
+
+        // reconstrói init com novo token
+        const retryInit = {
+          ...init,
+          credentials: 'include',
+          headers: {
+            ...(init.headers || {}),
+            ...(refreshResult.newAccessToken ? { Authorization: `Bearer ${refreshResult.newAccessToken}` } : {}),
+          },
+        };
+
+        console.log('[fetchWithAuth] Retentando requisição após refresh...');
+        res = await fetch(input, retryInit);
+      } catch (retryErr) {
+        console.error('[fetchWithAuth] Erro mesmo após retry:', retryErr.message);
+        throw fetchErr; // lança o erro original
+      }
+    }
 
     if (res.status === 401) {
       try {

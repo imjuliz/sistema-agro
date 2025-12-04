@@ -18,12 +18,12 @@ export function CenterPanel({ activeTab, fazenda }) {
         return  <EstoqueTab fazenda={fazenda}/>;
       case 'equipe':
         return <EquipeTab fazendaId={fazenda?.id} />;
-      case 'atividades':
-        return <AtividadesTab />;
+      // case 'atividades':
+      //   return <AtividadesTab />;
       case 'financeiro':
         return <FinanceiroTab />;
       case 'fornecedores':
-        return <FornecedoresTab />;
+        return <FornecedoresTab fazenda={fazenda} />;
       case 'comunicados':
         return <ComunicadosTab />;
       default:

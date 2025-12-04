@@ -523,11 +523,11 @@ export default function FinancasMatriz() {
             </div>
           </TabsContent>
 
-          <TabsContent value="dre" className="-mx-4 w-screen relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
+          {/* <TabsContent value="dre" className="-mx-4 w-screen relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]">
             <div className="px-4">
               <IncomeStatement categories={categories} accountsPayable={accountsPayable} accountsReceivable={accountsReceivable} />
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>

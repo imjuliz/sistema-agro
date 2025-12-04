@@ -1,94 +1,92 @@
-'use client'
-import { useState } from 'react';
+"use client"
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, Mail, Phone, Calendar, Star, Eye, MessageSquare, MoreHorizontal, Building2, Users, DollarSign } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeftRight } from 'lucide-react';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
-import { InventoryProvider } from '@/contexts/InventoryContext';
-
-const estoque = [
-  {
-    id: 1,
-    name: 'Jennifer Martinez',
-    title: 'Senior Full Stack Developer',
-    email: 'jennifer.martinez@email.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    experience: '8 years',
-    appliedFor: 'Senior Full Stack Developer',
-    status: 'interviewing',
-    stage: 'Technical Interview',
-    rating: 4.8,
-    lastActivity: '2 hours ago',
-    avatar: '/api/placeholder/40/40',
-    skills: ['React', 'Node.js', 'TypeScript', 'AWS']
-  },
-  {
-    id: 2,
-    name: 'David Chen',
-    title: 'Product Manager',
-    email: 'david.chen@email.com',
-    phone: '+1 (555) 234-5678',
-    location: 'New York, NY',
-    experience: '6 years',
-    appliedFor: 'Product Manager',
-    status: 'shortlisted',
-    stage: 'Resume Review',
-    rating: 4.5,
-    lastActivity: '1 day ago',
-    avatar: '/api/placeholder/40/40',
-    skills: ['Product Strategy', 'Analytics', 'Agile', 'Leadership']
-  },
-  {
-    id: 3,
-    name: 'Sarah Thompson',
-    title: 'UX/UI Designer',
-    email: 'sarah.thompson@email.com',
-    phone: '+1 (555) 345-6789',
-    location: 'Austin, TX',
-    experience: '5 years',
-    appliedFor: 'UX/UI Designer',
-    status: 'offered',
-    stage: 'Offer Extended',
-    rating: 4.9,
-    lastActivity: '3 hours ago',
-    avatar: '/api/placeholder/40/40',
-    skills: ['Figma', 'Sketch', 'Prototyping', 'User Research']
-  },
-  {
-    id: 4,
-    name: 'Michael Rodriguez',
-    title: 'DevOps Engineer',
-    email: 'michael.rodriguez@email.com',
-    phone: '+1 (555) 456-7890',
-    location: 'Seattle, WA',
-    experience: '7 years',
-    appliedFor: 'DevOps Engineer',
-    status: 'new',
-    stage: 'Application Received',
-    rating: null,
-    lastActivity: '5 hours ago',
-    avatar: '/api/placeholder/40/40',
-    skills: ['Docker', 'Kubernetes', 'AWS', 'Terraform']
-  }
-];
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case 'new': return 'default';
-    case 'shortlisted': return 'secondary';
-    case 'interviewing': return 'default';
-    case 'offered': return 'default';
-    case 'rejected': return 'destructive';
-    default: return 'secondary';
-  }
-};
-
-
+import { InventoryProvider, useInventory } from '@/contexts/InventoryContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/lib/api';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input';
+import { SelectTrigger as _SelectTrigger } from '@/components/ui/select';
 export function EstoqueTab({ fazenda }) {
+  // Render content inside provider so hooks inside useInventory are valid
+  return (
+    <InventoryProvider defaultUnidadeId={fazenda?.id}>
+      <EstoqueTabContent fazenda={fazenda} />
+    </InventoryProvider>
+  );
+}
+
+function EstoqueTabContent({ fazenda }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalItem, setModalItem] = useState(null);
+  const [movimentoTipo, setMovimentoTipo] = useState('ENTRADA');
+  const [movimentoQuantidade, setMovimentoQuantidade] = useState('');
+  const [movimentoObs, setMovimentoObs] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { fetchWithAuth } = useAuth();
+  const { refresh } = useInventory();
+
+  function openMovimentoModal(item) {
+    setModalItem(item);
+    setMovimentoTipo('ENTRADA');
+    setMovimentoQuantidade('');
+    setMovimentoObs('');
+    setIsModalOpen(true);
+  }
+
+  function closeMovimentoModal() {
+    setIsModalOpen(false);
+    setModalItem(null);
+  }
+
+  async function submitMovimento() {
+    if (!modalItem) return;
+    const quantidade = Number(movimentoQuantidade);
+    if (isNaN(quantidade) || quantidade <= 0) {
+      alert('Informe uma quantidade válida maior que zero.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const body = {
+        estoqueProdutoId: modalItem.rawItemId ?? modalItem.rawItemId,
+        tipoMovimento: movimentoTipo,
+        quantidade,
+        observacoes: movimentoObs || undefined
+      };
+
+      const url = `${API_URL}estoque/movimento`;
+      let res;
+      try {
+        res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      } catch (e) {
+        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      }
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => null);
+        const msg = txt || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      // success -> refresh inventory to show updated quantities
+      await refresh();
+      closeMovimentoModal();
+    } catch (err) {
+      console.error('Erro ao registrar movimentação', err);
+      alert(String(err?.message ?? err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex gap-6">
@@ -123,13 +121,59 @@ export function EstoqueTab({ fazenda }) {
             </div>
           </CardContent>
         </Card>
+
+        <div>
+          <Button variant="" size="sm" onClick={() => openMovimentoModal(null)} className="w-full mb-2">
+            <ArrowLeftRight className="mr-2" />
+            Registrar movimentação de estoque
+          </Button>
+        </div>
       </div>
       <div className=" flex-1 min-w-0 space-y-6">
-      <InventoryProvider defaultUnidadeId={fazenda?.id}>
-          <StoreLevelView />
-        </InventoryProvider>
-
+        <StoreLevelView onOpenMovimento={openMovimentoModal} />
       </div>
+
+      {/* Movimentação Modal moved here from StoreLevelView */}
+      <AlertDialog open={isModalOpen} onOpenChange={(open) => { if (!open) { setIsModalOpen(false); setModalItem(null); } else setIsModalOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar movimentação</AlertDialogTitle>
+            <AlertDialogDescription>
+              {modalItem ? `Item: ${modalItem.name} — Estoque atual: ${modalItem.currentStock}` : 'Selecionar item e informar os dados da movimentação.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-3 py-2">
+            <div>
+              <Label>Tipo</Label>
+              <Select value={movimentoTipo} onValueChange={(v) => setMovimentoTipo(v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ENTRADA">Entrada</SelectItem>
+                  <SelectItem value="SAIDA">Saída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Quantidade</Label>
+              <Input value={movimentoQuantidade} onChange={(e) => setMovimentoQuantidade(e.target.value)} placeholder="Informe a quantidade" />
+            </div>
+
+            <div>
+              <Label>Observações (opcional)</Label>
+              <Textarea value={movimentoObs} onChange={(e) => setMovimentoObs(e.target.value)} />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null); }}>Fechar</AlertDialogCancel>
+            <AlertDialogAction onClick={submitMovimento} disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Registrar'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

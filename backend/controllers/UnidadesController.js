@@ -146,6 +146,11 @@ export async function createUnidadeController(req, res) {
   try {
     let data = req.body;
 
+    // Normalizar tipo para maiúsculas
+    if (data.tipo) {
+      data.tipo = String(data.tipo).toUpperCase();
+    }
+
     // Se imagemBase64 foi enviada, processar ela
     if (data.imagemBase64 && data.imagemBase64.startsWith('data:image')) {
       // Aqui você pode:
@@ -159,7 +164,28 @@ export async function createUnidadeController(req, res) {
       delete data.imagemBase64; // remover campo indesejado
     }
 
-    const resultado = await createUnidade(data);
+    // Validar dados com schema
+    const dataValidada = unidadeSchema.parse(data);
+
+    // Se a unidade é do tipo FAZENDA, ela só será ATIVA se tiver AMBOS os tipos de contrato:
+    // 1. Contrato como consumidora (fornecedorExternoId preenchido)
+    // 2. Contrato como fornecedora (fornecedorUnidadeId preenchido)
+    if (dataValidada.tipo === 'FAZENDA') {
+      if (dataValidada.contratos && dataValidada.contratos.length > 0) {
+        const temContratoComoConsumidora = dataValidada.contratos.some(c => c.fornecedorExternoId);
+        const temContratoComoFornecedora = dataValidada.contratos.some(c => c.fornecedorUnidadeId);
+        
+        // ATIVA apenas se tiver ambos os tipos de contrato
+        if (!(temContratoComoConsumidora && temContratoComoFornecedora)) {
+          dataValidada.status = 'INATIVA';
+        }
+      } else {
+        // Sem contratos, força status INATIVA
+        dataValidada.status = 'INATIVA';
+      }
+    }
+
+    const resultado = await createUnidade(dataValidada);
     if (!resultado.sucesso) {
       return res.status(400).json(resultado);
     }
@@ -318,6 +344,33 @@ export async function buscarCepController(req, res) {
         return res.status(404).json({ sucesso: false, erro: "CEP não encontrado." });
       }
 
+      // Tentar buscar coordenadas via OpenStreetMap Nominatim (gratuito, sem API key)
+      let latitude = null;
+      let longitude = null;
+      
+      try {
+        const endereco = `${data.logradouro || ''}, ${data.localidade || ''}, ${data.uf || ''}, Brasil`;
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}&limit=1`;
+        
+        // Nominatim requer User-Agent para evitar bloqueios
+        const geoResponse = await fetch(nominatimUrl, {
+          headers: {
+            'User-Agent': 'SistemaAgro/1.0 (node.js)'
+          }
+        });
+        
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          if (geoData && geoData.length > 0) {
+            latitude = parseFloat(geoData[0].lat);
+            longitude = parseFloat(geoData[0].lon);
+          }
+        }
+      } catch (geoErr) {
+        console.warn("[buscarCepController] Erro ao buscar coordenadas no Nominatim:", geoErr.message);
+        // Continua mesmo sem coordenadas
+      }
+
       return res.json({ 
         sucesso: true, 
         cep: cepDigits, 
@@ -325,7 +378,9 @@ export async function buscarCepController(req, res) {
         bairro: data.bairro || '',
         cidade: data.localidade || '',
         estado: data.uf || '',
-        complemento: data.complemento || ''
+        complemento: data.complemento || '',
+        latitude: latitude,
+        longitude: longitude
       });
 
     } catch (error) {

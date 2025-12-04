@@ -1,4 +1,5 @@
 import { getEstoquesController, getEstoquePorIdController, createEstoqueController, updateEstoqueController, deleteEstoqueController } from "../controllers/EstoqueController.js";
+import { createMovimentoController } from "../controllers/EstoqueController.js";
 import express from "express";
 import { auth } from "../middlewares/authMiddleware.js";
 
@@ -18,5 +19,8 @@ router.put("/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), 
 
 // DELETE deletar estoque - apenas gerentes (matriz/fazenda/loja)
 router.delete("/:id", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA"]), deleteEstoqueController);
+
+// POST registrar movimentação - gerentes e funcionários podem registrar entrada/saída
+router.post('/movimento', auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "GERENTE_LOJA", "FUNCIONARIO_FAZENDA", "FUNCIONARIO_LOJA"]), createMovimentoController);
 
 export default router;

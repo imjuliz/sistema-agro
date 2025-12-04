@@ -1,1 +1,3 @@
-export const API_URL = "http://localhost:8080/"; // Aponta direto para o backend
+// NAO MEXAM NESSE ARQUIVO
+
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/";

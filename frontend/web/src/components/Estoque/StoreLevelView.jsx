@@ -5,9 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useInventory } from '@/contexts/InventoryContext';
 import { Button } from '../ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react'
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Textarea } from '@/components/ui/textarea'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
 
 function getStockStatus(current, minimum) {
   const difference = current - minimum;
@@ -16,10 +20,15 @@ function getStockStatus(current, minimum) {
   return { status: 'critical', color: 'bg-red-500', textColor: 'text-red-700', badgeVariant: 'destructive' };
 }
 
-export function StoreLevelView() {
-  const { getStoreItems, storeMapping } = useInventory();
+export function StoreLevelView({ onOpenMovimento }) {
+  const { getStoreItems, storeMapping, refresh, atualizarMinimumStockRemote, isGerenteMatriz, isGerenteFazenda, isGerenteLoja } = useInventory();
+  const [isMinModalOpen, setIsMinModalOpen] = useState(false);
+  const [minModalItem, setMinModalItem] = useState(null);
+  const [minInputValue, setMinInputValue] = useState('');
+  const [isSavingMin, setIsSavingMin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
+
 
   // paginacao
   const [page, setPage] = useState(1);
@@ -33,6 +42,8 @@ export function StoreLevelView() {
   const resolveSupplierName = (item) => {
     // alguns formatos (estoqueProdutos): item.store foi definido como supplierName já
     if (!item) return '—';
+    // new normalized field from backend
+    if (item.fornecedorResolved && item.fornecedorResolved.nome) return item.fornecedorResolved.nome;
     if (item.fornecedorName) return item.fornecedorName;
     // estoqueProdutos novo formato: pode ter fornecedorUnidade / fornecedorExterno
     if (item.fornecedorUnidade && item.fornecedorUnidade.nome) return item.fornecedorUnidade.nome;
@@ -77,6 +88,36 @@ export function StoreLevelView() {
   useEffect(() => {
     setPage(1);
   }, [searchTerm, selectedStore, perPage]);
+
+  async function confirmUpdateMinimum() {
+    if (!minModalItem) return;
+    const epId = minModalItem.rawItemId ?? null;
+    const newVal = Number(String(minInputValue || '').trim());
+    if (!epId) return;
+    if (isNaN(newVal)) {
+      // keep it simple: don't use alert, log and keep modal open
+      console.warn('Valor inválido para mínimo:', minInputValue);
+      return;
+    }
+
+    setIsSavingMin(true);
+    try {
+      const resp = await atualizarMinimumStockRemote(epId, newVal);
+      if (!resp || resp.sucesso === false) {
+        console.error('Erro ao atualizar mínimo remoto', resp);
+        // keep modal open to allow retry
+        return;
+      }
+      // success: refresh inventory and close
+      await refresh();
+      setIsMinModalOpen(false);
+      setMinModalItem(null);
+    } catch (err) {
+      console.error('Erro confirmUpdateMinimum', err);
+    } finally {
+      setIsSavingMin(false);
+    }
+  }
 
   // items atualmente visíveis na página
   const paginatedItems = useMemo(() => {
@@ -194,7 +235,8 @@ export function StoreLevelView() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Estoque Atual</TableHead>
                 <TableHead>Min Estoque</TableHead>
-                <TableHead>Preço</TableHead>
+                <TableHead>Preço unitário</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -208,13 +250,45 @@ export function StoreLevelView() {
                     <TableCell className="max-w-xs">
                       <div className="font-medium">{item.name}</div>
                     </TableCell>
-                    <TableCell>{item.store}</TableCell>
+                    <TableCell>{resolveSupplierName(item)}</TableCell>
                     <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                     <TableCell>
                       <span className={stockStatus.textColor}>{item.currentStock}</span>
                     </TableCell>
                     <TableCell>{item.minimumStock}</TableCell>
                     <TableCell>{fmtBRL(item.price)}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                                  {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
+                                  <DropdownMenuItem>Editar</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => {
+                                    const isManager = isGerenteMatriz || isGerenteFazenda || isGerenteLoja;
+                                    if (!isManager) {
+                                      console.warn('Ação disponível apenas para gerentes.');
+                                      return;
+                                    }
+                                    const epId = item.rawItemId ?? null;
+                                    if (!epId) {
+                                      console.warn('Esse item não suporta edição remota de mínimo.');
+                                      return;
+                                    }
+                                    setMinModalItem(item);
+                                    setMinInputValue(String(item.minimumStock ?? 0));
+                                    setIsMinModalOpen(true);
+                                  }}>Editar mínimo</DropdownMenuItem>
+                                  <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                          {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -269,6 +343,31 @@ export function StoreLevelView() {
           </CardFooter>
         </CardContent>
       </Card>
+      {/* Movimentação modal is handled by parent (page) via onOpenMovimento prop */}
+
+      {/* Modal para editar quantidade mínima */}
+      <AlertDialog open={isMinModalOpen} onOpenChange={(open) => { if (!open) { setIsMinModalOpen(false); setMinModalItem(null); } else setIsMinModalOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar quantidade mínima</AlertDialogTitle>
+            <AlertDialogDescription>
+              {minModalItem ? `Item: ${minModalItem.name} — Estoque atual: ${minModalItem.currentStock}` : 'Editar quantidade mínima do item.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-3 py-2">
+            <div>
+              <Label>Quantidade mínima</Label>
+              <Input value={minInputValue} onChange={(e) => setMinInputValue(e.target.value)} placeholder="Informe a quantidade mínima" />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setIsMinModalOpen(false); setMinModalItem(null); }}>Fechar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUpdateMinimum} disabled={isSavingMin}>{isSavingMin ? 'Guardando...' : 'Salvar'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

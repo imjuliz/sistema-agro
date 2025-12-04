@@ -1,32 +1,27 @@
-import { getProdutos, getProdutosPelaCategoria, getProdutoLotePorId, getProdutoPorId, createProduto, deleteProduto } from "../models/produtos.js";
-import { produtoSchema } from "../schemas/produtoSchema.js";
+import { getProdutos, getProdutosPelaCategoria, getProdutoPorId, createProduto, deleteProduto } from "../models/estoque_produtos_lotes/produtos.js";
+import { produtoSchema, IdsSchema } from "../schemas/produtoSchema.js";
 
 export async function getProdutosController(req, res) {
   try {
     const produto = await getProdutos();
-    return {
-      sucesso: true,
-      produto,
-      message: "Produtos listados com sucesso.",
-    };
+
+    return res.status(200).json(produto);
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao listar produtos.",
       detalhes: error.message, // opcional, para debug
-    };
+    }
   }
 }
 
 export async function getProdutosPelaCategoriaController(req, res) {
   try {
-    const { categoria } = req.query;
+    const { categoria } = produtoSchema.partial().parse(req.query);
+
     const produtos = await getProdutosPelaCategoria(categoria);
-    return {
-      sucesso: true,
-      produtos,
-      message: "Produtos de animalia listados com sucesso.",
-    };
+
+    return res.status(200).json({produtos});
   } catch (error) {
     return {
       sucesso: false,
@@ -38,7 +33,7 @@ export async function getProdutosPelaCategoriaController(req, res) {
 
 export async function getProdutoLotePorIdController(req, res) {
   try {
-  const { loteId } = req.params;
+  const { loteId } = IdsSchema.partial().parse(req.params);
   
   // Validações
   if(!loteId) {
@@ -49,11 +44,7 @@ export async function getProdutoLotePorIdController(req, res) {
   }
 
   const produto = await getProdutoLotePorId(loteId);
-  return res.status(200).json({
-    sucesso: true,
-    produto,
-    message: "Produto listado com sucesso."
-  })
+  return res.status(200).json({produto});
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -65,13 +56,11 @@ export async function getProdutoLotePorIdController(req, res) {
 
 export async function getProdutoPorIdController(req, res) {
   try {
-    const { id } = req.params;
+    const { id } = IdsSchema.partial().parse(req.params);
+
     const produto = await getProdutoPorId(id);
-    return {
-      sucesso: true,
-      produto,
-      message: "Produto listado com sucesso.",
-    };
+
+    return res.status(200).json({produto});
   } catch (error) {
     return {
       sucesso: false,

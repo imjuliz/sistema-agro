@@ -3,22 +3,13 @@ import 'dotenv/config'
 import { configDotenv } from "dotenv";
 configDotenv();
 import prisma from "./client.js";
-// const { PrismaClient } = require('@prisma/client');
-// const prisma = new PrismaClient();
 import * as pkg from "./generated/client.js";
 
 // Extrai enums
-const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote } = pkg;
+const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote, ContaStatus } = pkg;
 
 // Fallbacks para enums
-const TP = TipoPerfil ?? {
-    GERENTE_MATRIZ: "GERENTE_MATRIZ",
-    GERENTE_FAZENDA: "GERENTE_FAZENDA",
-    GERENTE_LOJA: "GERENTE_LOJA",
-    FUNCIONARIO_LOJA: "FUNCIONARIO_LOJA",
-    FUNCIONARIO_FAZENDA: "FUNCIONARIO_FAZENDA"
-};
-
+const TP = TipoPerfil ?? { GERENTE_MATRIZ: "GERENTE_MATRIZ", GERENTE_FAZENDA: "GERENTE_FAZENDA", GERENTE_LOJA: "GERENTE_LOJA", FUNCIONARIO_LOJA: "FUNCIONARIO_LOJA", FUNCIONARIO_FAZENDA: "FUNCIONARIO_FAZENDA" };
 const TU = TipoUnidade ?? { MATRIZ: "MATRIZ", FAZENDA: "FAZENDA", LOJA: "LOJA" };
 const TL = TipoLote ?? { GADO: "GADO", SOJA: "SOJA", LEITE: "LEITE", OUTRO: "OUTRO", PLANTIO: "PLANTIO" };
 const TRS = TipoRegistroSanitario ?? { VACINA: "VACINA", MEDICACAO: "MEDICACAO", RACAO: "RACAO", OUTRO: "OUTRO" };
@@ -41,18 +32,9 @@ const SPLANT = StatusPlantacao ?? { EM_DESENVOLVIMENTO: "EM_DESENVOLVIMENTO", CO
 const TANIMALIA = TipoAnimalia ?? { VACINACAO: "VACINACAO", VERMIFUGACAO: "VERMIFUGACAO", ANTIBIOTICO: "ANTIBIOTICO", TESTE_TUBERCULOSE: "TESTE_TUBERCULOSE", TESTE_BRUCELOSE: "TESTE_BRUCELOSE", SANIDADE_GERAL: "SANIDADE_GERAL", NUTRICAO: "NUTRICAO", SUPLEMENTACAO: "SUPLEMENTACAO", CONSUMO_RACAO: "CONSUMO_RACAO", AJUSTE_DIETA: "AJUSTE_DIETA", INSEMINACAO: "INSEMINACAO", MONITORAMENTO_CIO: "MONITORAMENTO_CIO", MONITORAMENTO_GESTACAO: "MONITORAMENTO_GESTACAO", PARTO: "PARTO", SECAGEM: "SECAGEM", TOURO_MANEJO: "TOURO_MANEJO", MANEJO_GERAL: "MANEJO_GERAL", MANEJO_PESAGEM: "MANEJO_PESAGEM", MANEJO_CARREIRA: "MANEJO_CARREIRA", MOVIMENTACAO_INTERNA: "MOVIMENTACAO_INTERNA", SEPARACAO_LOTE: "SEPARACAO_LOTE", ORDENHA_TESTE: "ORDENHA_TESTE", ORDENHA_DIARIA: "ORDENHA_DIARIA", COLETA_LEITE_AMOSTRA: "COLETA_LEITE_AMOSTRA", AVALIACAO_MASTITE: "AVALIACAO_MASTITE", RECEBIMENTO: "RECEBIMENTO", TRANSFERENCIA: "TRANSFERENCIA", VENDA_ANIMAL: "VENDA_ANIMAL", BAIXA_ANIMAL: "BAIXA_ANIMAL", BANHO: "BANHO", HIGIENIZACAO_AMBIENTE: "HIGIENIZACAO_AMBIENTE", TRATAMENTO_PE: "TRATAMENTO_PE", CURATIVO: "CURATIVO", OCORRENCIA: "OCORRENCIA", TRATAMENTO_URGENCIA: "TRATAMENTO_URGENCIA" };
 const SPEDIDO = StatusPedido ?? { PENDENTE: "PENDENTE", ENVIADO: "ENVIADO", EM_TRANSITO: "EM_TRANSITO", ENTREGUE: "ENTREGUE", CANCELADO: "CANCELADO" };
 const SPROD = StatusProducao ?? { PLANEJADA: "PLANEJADA", EM_ANDAMENTO: "EM_ANDAMENTO", FINALIZADA: "FINALIZADA", CANCELADA: "CANCELADA", EM_ANALISE: "EM_ANALISE" };
-const CtgInsumo = CategoriaInsumo ?? {
-    SEMENTE: "SEMENTE",
-    FERTILIZANTE: "FERTILIZANTE",
-    DEFENSIVO: "DEFENSIVO",
-    RACAO: "RACAO",
-    MEDICAMENTO: "MEDICAMENTO",
-    SUPLEMENTO: "SUPLEMENTO",
-    VACINA: "VACINA",
-    OUTROS: "OUTROS",
-    LATICINIOS: "LATICINIOS"
-};
+const CtgInsumo = CategoriaInsumo ?? { SEMENTE: "SEMENTE", FERTILIZANTE: "FERTILIZANTE", DEFENSIVO: "DEFENSIVO", RACAO: "RACAO", MEDICAMENTO: "MEDICAMENTO", SUPLEMENTO: "SUPLEMENTO", VACINA: "VACINA", OUTROS: "OUTROS", LATICINIOS: "LATICINIOS" };
 const SLOTE = StatusLote ?? { PENDENTE: "PENDENTE", PRONTO: "PRONTO", ENVIADO: "ENVIADO" }
+const SCONTA = ContaStatus ?? { PENDENTE: "PENDENTE", PAGA: "PAGA", VENCIDA: "VENCIDA", CANCELADA: "CANCELADA" }
 
 async function main() {
     try {
@@ -83,16 +65,11 @@ async function main() {
             { nome: "AgroBoi", endereco: "Rua Norte, 23", tipo: TU.LOJA, cidade: "Guarulhos", estado: "SP", cep: "07010-000", latitude: -23.4628, longitude: -46.5333, cnpj: "12345678000303", email: "lojanorte@empresa.com", telefone: "1140000003", horarioAbertura: new Date('1970-01-01T09:00:00Z'), horarioFechamento: new Date('1970-01-01T18:00:00Z'), status: SUNI.ATIVA, },
             { nome: "Casa Útil Mercado", endereco: "Av. Sul, 45", tipo: TU.LOJA, cidade: "Santo André", estado: "SP", cep: "09010-000", latitude: -23.6639, longitude: -46.5361, cnpj: "12345678000404", email: "lojasul@empresa.com", telefone: "1140000004", horarioAbertura: new Date('1970-01-01T10:00:00Z'), horarioFechamento: new Date('1970-01-01T20:00:00Z'), status: SUNI.ATIVA, },
             { nome: "Sabor do Campo Laticínios", endereco: "Praça Leste, 10", tipo: TU.LOJA, cidade: "São Bernardo", estado: "SP", cep: "09810-000", latitude: -23.6916, longitude: -46.5644, cnpj: "12345678000505", email: "lojaleste@empresa.com", telefone: "1140000005", horarioAbertura: new Date('1970-01-01T09:30:00Z'), horarioFechamento: new Date('1970-01-01T19:30:00Z'), status: SUNI.ATIVA, },
-            { nome: "RuralTech", endereco: "Av. Empresarial, 1000", tipo: TU.MATRIZ, cidade: "São Paulo", estado: "SP", cep: "01000-000", latitude: -23.55052, longitude: -46.633308, cnpj: "12345678000101", email: "ruraltech91@gmail.com", telefone: "1140000001", status: SUNI.ATIVA, },
-            { nome: "VerdeFresco Hortaliças", endereco: "Av. Central, 1", tipo: TU.LOJA, cidade: "São Paulo", estado: "SP", cep: "01001-001", latitude: -23.5450, longitude: -46.6340, cnpj: "12345678000202", email: "lojacentral@empresa.com", telefone: "1140000002", horarioAbertura: new Date('1970-01-01T09:00:00Z'), horarioFechamento: new Date('1970-01-01T19:00:00Z'), status: SUNI.ATIVA, },
-            { nome: "AgroBoi", endereco: "Rua Norte, 23", tipo: TU.LOJA, cidade: "Guarulhos", estado: "SP", cep: "07010-000", latitude: -23.4628, longitude: -46.5333, cnpj: "12345678000303", email: "lojanorte@empresa.com", telefone: "1140000003", horarioAbertura: new Date('1970-01-01T09:00:00Z'), horarioFechamento: new Date('1970-01-01T18:00:00Z'), status: SUNI.ATIVA, },
-            { nome: "Casa Útil Mercado", endereco: "Av. Sul, 45", tipo: TU.LOJA, cidade: "Santo André", estado: "SP", cep: "09010-000", latitude: -23.6639, longitude: -46.5361, cnpj: "12345678000404", email: "lojasul@empresa.com", telefone: "1140000004", horarioAbertura: new Date('1970-01-01T10:00:00Z'), horarioFechamento: new Date('1970-01-01T20:00:00Z'), status: SUNI.ATIVA, },
-            { nome: "Sabor do Campo Laticínios", endereco: "Praça Leste, 10", tipo: TU.LOJA, cidade: "São Bernardo", estado: "SP", cep: "09810-000", latitude: -23.6916, longitude: -46.5644, cnpj: "12345678000505", email: "lojaleste@empresa.com", telefone: "1140000005", horarioAbertura: new Date('1970-01-01T09:30:00Z'), horarioFechamento: new Date('1970-01-01T19:30:00Z'), status: SUNI.ATIVA, },
-            { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 100", tipo: TU.FAZENDA, cidade: "Campinas", estado: "SP", cep: "13010-000", areaTotal: 1500.5, areaProdutiva: 1200.3, latitude: -22.9099, longitude: -47.0626, cnpj: "12345678100110", email: "fazendaalpha@empresa.com", telefone: "1930001001", status: SUNI.ATIVA, },
-            { nome: "Fazenda Gamma", endereco: "Rod. BR-101, km 150", tipo: TU.FAZENDA, cidade: "Ribeirão Preto", estado: "SP", cep: "14010-000", areaTotal: 980.75, areaProdutiva: 760.0, latitude: -21.1775, longitude: -47.8103, cnpj: "12345678100220", email: "fazendabeta@empresa.com", telefone: "1630001002", status: SUNI.ATIVA, },
-            { nome: "Fazenda Beta", endereco: "Estrada Rural, 77", tipo: TU.FAZENDA, cidade: "Piracicaba", estado: "SP", cep: "13400-000", areaTotal: 420.0, areaProdutiva: 365.25, latitude: -22.7127, longitude: -47.6476, cnpj: "12345678100330", email: "fazendagamma@empresa.com", telefone: "1930001003", status: SUNI.ATIVA, },
-            { nome: "Fazenda Delta", endereco: "Estrada Rural, 88", tipo: TU.FAZENDA, cidade: "Limeira", estado: "SP", cep: "13480-000", areaTotal: 600.0, areaProdutiva: 480.5, latitude: -22.5641, longitude: -47.4019, cnpj: "12345678100440", email: "fazendadelta@empresa.com", telefone: "1930001004", status: SUNI.ATIVA, },
-            { nome: "Fazenda Teste", endereco: "Rua Teste, 9", tipo: TU.FAZENDA, cidade: "Itu", estado: "SP", cep: "13300-000", areaTotal: 50.0, areaProdutiva: 40.0, latitude: -23.2646, longitude: -47.2995, cnpj: "12345678100550", email: "teste@empresa.com", telefone: "1140000099", status: SUNI.ATIVA, },
+            { nome: "Fazenda Alpha", endereco: "Rod. BR-101, km 100", tipo: TU.FAZENDA, cidade: "Campinas", estado: "SP", cep: "13010-000", areaTotal: 1500.5, areaProdutiva: 1200.3, latitude: -22.9099, longitude: -47.0626, cnpj: "12345678100110", email: "fazendaalpha@empresa.com", telefone: "1930001001", status: SUNI.ATIVA, focoProdutivo: "gado" },
+            { nome: "Fazenda Gamma", endereco: "Rod. BR-101, km 150", tipo: TU.FAZENDA, cidade: "Ribeirão Preto", estado: "SP", cep: "14010-000", areaTotal: 980.75, areaProdutiva: 760.0, latitude: -21.1775, longitude: -47.8103, cnpj: "12345678100220", email: "fazendabeta@empresa.com", telefone: "1630001002", status: SUNI.ATIVA, focoProdutivo: "grãos e cereais" },
+            { nome: "Fazenda Beta", endereco: "Estrada Rural, 77", tipo: TU.FAZENDA, cidade: "Piracicaba", estado: "SP", cep: "13400-000", areaTotal: 420.0, areaProdutiva: 365.25, latitude: -22.7127, longitude: -47.6476, cnpj: "12345678100330", email: "fazendagamma@empresa.com", telefone: "1930001003", status: SUNI.ATIVA, focoProdutivo: "laticínios e gado" },
+            { nome: "Fazenda Delta", endereco: "Estrada Rural, 88", tipo: TU.FAZENDA, cidade: "Limeira", estado: "SP", cep: "13480-000", areaTotal: 600.0, areaProdutiva: 480.5, latitude: -22.5641, longitude: -47.4019, cnpj: "12345678100440", email: "fazendadelta@empresa.com", telefone: "1930001004", status: SUNI.ATIVA, focoProdutivo: "hortaliças e vegetais" },
+            { nome: "Fazenda Teste", endereco: "Rua Teste, 9", tipo: TU.FAZENDA, cidade: "Itu", estado: "SP", cep: "13300-000", areaTotal: 50.0, areaProdutiva: 40.0, latitude: -23.2646, longitude: -47.2995, cnpj: "12345678100550", email: "teste@empresa.com", telefone: "1140000099", status: SUNI.ATIVA, focoProdutivo: "laticínios e gado" },
             { nome: "Loja Teste", endereco: "Av. Caetano Limeira, 2205", tipo: TU.LOJA, cidade: "Atibaia", estado: "SP", cep: "04610-000", latitude: -23.6639, longitude: -46.5361, cnpj: "12345678951244", email: "teste.loja@empresa.com", telefone: "1145003151", horarioAbertura: new Date('1970-01-01T10:00:00Z'), horarioFechamento: new Date('1970-01-01T20:00:00Z'), status: SUNI.ATIVA, },
         ];
         await prisma.unidade.createMany({ data: unidadesData, skipDuplicates: true });
@@ -2294,9 +2271,8 @@ async function main() {
             const sku = `${prefixo}-${pedidoItem.produtoId ?? pedidoItem.fornecedorItemId ?? pedidoItem.id}`.slice(0, 100);
             const marca = pedidoItem.produto?.marca ?? null;
 
-            const quantidadeRaw = pedidoItem.quantidade ?? 0;
-            // converte decimal-string para integer onde fizer sentido; aqui guardamos como INT truncado
-            const quantidade = Math.max(0, Math.floor(Number(quantidadeRaw)));
+            const quantidadeRaw = pedidoItem.qntdAtual ?? pedidoItem.quantidade ?? 0;
+            const qntdAtual = Math.max(0, Math.floor(Number(quantidadeRaw)));
 
             const precoUnitario = pedidoItem.precoUnitario ? Number(pedidoItem.precoUnitario) : 0;
 
@@ -2304,7 +2280,7 @@ async function main() {
                 nome,
                 sku,
                 marca,
-                quantidade,
+                qntdAtual,
                 estoqueId: Number(estoqueId),
                 produtoId: pedidoItem.produtoId ?? null,
                 loteId: pedidoItem.loteId ?? null,
@@ -2318,7 +2294,93 @@ async function main() {
             };
         }
 
+        // async function seedEstoqueProdutosFromDeliveredPedidos(prisma) {
+        //     const docRefs = [
+        //         "Romaneio-AGB-20241203",
+        //         "Nota-VET-20240905",
+        //         "Romaneio-AGL-20240818",
+        //         "Romaneio-LAT-20240822",
+        //         "Romaneio-PVS-20241103",
+        //         "Romaneio-GEN-20250204",
+        //         "Romaneio-AGV-20250105",
+        //         "Romaneio-CFE-20250712",
+        //         "Romaneio-LOJA-20250603",
+        //         "Romaneio-CU-20250418"
+        //     ];
+
+        //     // Busca os pedidos com os itens (observe include: { itens: true })
+        //     const pedidos = await prisma.pedido.findMany({
+        //         where: { documentoReferencia: { in: docRefs } },
+        //         include: {
+        //             itens: { include: { fornecedorItem: true, produto: true, lote: true } },
+        //             destinoUnidade: true,
+        //             fornecedorExterno: true
+        //         }
+        //     });
+
+        //     if (!pedidos || pedidos.length === 0) {
+        //         console.warn("Nenhum pedido encontrado para as referências informadas.");
+        //         return;
+        //     }
+
+        //     const created = [];
+        //     for (const pedido of pedidos) {
+        //         const destinoUnidadeId = pedido.destinoUnidadeId ?? pedido.destinoUnidade?.id;
+        //         if (!destinoUnidadeId) {
+        //             console.warn("Pedido sem destinoUnidadeId:", pedido.documentoReferencia);
+        //             continue;
+        //         }
+
+        //         const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(destinoUnidadeId) } });
+        //         if (!estoque) {
+        //             console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, "(pedido)", pedido.documentoReferencia);
+        //             continue;
+        //         }
+
+        //         const items = pedido.itens ?? [];
+        //         if (!items.length) {
+        //             console.warn("Pedido sem itens:", pedido.documentoReferencia);
+        //             continue;
+        //         }
+
+        //         // Inserir um a um para garantir vinculações e capturar erros
+        //         for (const pi of items) {
+        //             // valida qtd
+        //             const qtd = Number(pi.qntdAtual ?? 0);
+        //             if (!qtd || isNaN(qtd) || qtd <= 0) {
+        //                 console.warn("Quantidade inválida em pedidoItem:", pi.id, "pedido", pedido.documentoReferencia);
+        //                 continue;
+        //             }
+
+        //             const prefix = slugifyForSku(pi.fornecedorItem?.nome ?? pi.produto?.nome ?? `PED${pedido.id}-ITEM${pi.id}`);
+        //             const entrada = gerarEntradasDeEstoqueParaPedidoItem({
+        //                 pedido,
+        //                 pedidoItem: pi,
+        //                 estoqueId: estoque.id,
+        //                 prefixo: prefix,
+        //                 dataEntrada: pedido.dataRecebimento ?? new Date()
+        //             });
+
+        //             // Atenção: create pode falhar devido a unique constraint (estoqueId+produtoId). Tratamos com try/catch.
+        //             try {
+        //                 const novo = await prisma.estoqueProduto.create({ data: entrada });
+        //                 created.push(novo);
+        //             } catch (err) {
+        //                 // se houver constraint, logamos e pulamos
+        //                 console.warn("Falha ao criar EstoqueProduto para pedidoItem", pi.id, "erro:", err.message);
+        //             }
+        //         }
+        //     }
+
+        //     console.log("Finalizado seedEstoqueProdutosFromDeliveredPedidos — criados:", created.length);
+        //     return created.length;
+        // }
+
+        // await seedEstoqueProdutosFromDeliveredPedidos(prisma);
+
         async function seedEstoqueProdutosFromDeliveredPedidos(prisma) {
+            console.log("\n📦 Iniciando seed de EstoqueProduto a partir dos pedidos entregues...");
+
             const docRefs = [
                 "Romaneio-AGB-20241203",
                 "Nota-VET-20240905",
@@ -2332,72 +2394,206 @@ async function main() {
                 "Romaneio-CU-20250418"
             ];
 
-            // Busca os pedidos com os itens (observe include: { itens: true })
+            // Buscar pedidos com status ENTREGUE e incluir todos os relacionamentos necessários
             const pedidos = await prisma.pedido.findMany({
-                where: { documentoReferencia: { in: docRefs } },
+                where: {
+                    documentoReferencia: { in: docRefs },
+                    status: "ENTREGUE" // Apenas pedidos entregues
+                },
                 include: {
-                    itens: { include: { fornecedorItem: true, produto: true, lote: true } },
-                    destinoUnidade: true,
-                    fornecedorExterno: true
+                    itens: {
+                        include: {
+                            fornecedorItem: true,
+                            produto: true,
+                            lote: true
+                        }
+                    },
+                    destinoUnidade: {
+                        include: {
+                            estoques: true // Incluir o estoque da unidade destino
+                        }
+                    },
+                    fornecedorExterno: true,
+                    origemUnidade: true
                 }
             });
 
             if (!pedidos || pedidos.length === 0) {
-                console.warn("Nenhum pedido encontrado para as referências informadas.");
-                return;
+                console.warn("⚠️  Nenhum pedido ENTREGUE encontrado para processar.");
+                return 0;
             }
 
-            const created = [];
+            console.log(`✓ Encontrados ${pedidos.length} pedidos entregues para processar`);
+
+            let totalCriados = 0;
+            let totalErros = 0;
+
             for (const pedido of pedidos) {
-                const destinoUnidadeId = pedido.destinoUnidadeId ?? pedido.destinoUnidade?.id;
+                const destinoUnidadeId = pedido.destinoUnidadeId;
+
                 if (!destinoUnidadeId) {
-                    console.warn("Pedido sem destinoUnidadeId:", pedido.documentoReferencia);
+                    console.warn(`⚠️  Pedido ${pedido.documentoReferencia} sem destinoUnidadeId - pulando`);
                     continue;
                 }
 
-                const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(destinoUnidadeId) } });
+                // Buscar ou criar estoque para a unidade destino
+                let estoque = await prisma.estoque.findFirst({
+                    where: { unidadeId: destinoUnidadeId }
+                });
+
                 if (!estoque) {
-                    console.warn("Estoque não encontrado para unidadeId:", destinoUnidadeId, "(pedido)", pedido.documentoReferencia);
-                    continue;
-                }
-
-                const items = pedido.itens ?? [];
-                if (!items.length) {
-                    console.warn("Pedido sem itens:", pedido.documentoReferencia);
-                    continue;
-                }
-
-                // Inserir um a um para garantir vinculações e capturar erros
-                for (const pi of items) {
-                    // valida qtd
-                    const qtd = Number(pi.quantidade ?? 0);
-                    if (!qtd || isNaN(qtd) || qtd <= 0) {
-                        console.warn("Quantidade inválida em pedidoItem:", pi.id, "pedido", pedido.documentoReferencia);
-                        continue;
-                    }
-
-                    const prefix = slugifyForSku(pi.fornecedorItem?.nome ?? pi.produto?.nome ?? `PED${pedido.id}-ITEM${pi.id}`);
-                    const entrada = gerarEntradasDeEstoqueParaPedidoItem({
-                        pedido,
-                        pedidoItem: pi,
-                        estoqueId: estoque.id,
-                        prefixo: prefix,
-                        dataEntrada: pedido.dataRecebimento ?? new Date()
+                    // Criar estoque se não existir
+                    estoque = await prisma.estoque.create({
+                        data: {
+                            unidadeId: destinoUnidadeId,
+                            descricao: `Estoque principal - ${pedido.destinoUnidade?.nome || 'Unidade'}`,
+                            qntdItens: 0
+                        }
                     });
+                    console.log(`✓ Estoque criado para unidade ${destinoUnidadeId}`);
+                }
 
-                    // Atenção: create pode falhar devido a unique constraint (estoqueId+produtoId). Tratamos com try/catch.
+                const items = pedido.itens || [];
+
+                if (!items.length) {
+                    console.warn(`⚠️  Pedido ${pedido.documentoReferencia} sem itens - pulando`);
+                    continue;
+                }
+
+                console.log(`\n📋 Processando pedido: ${pedido.documentoReferencia} (${items.length} itens)`);
+
+                for (const pi of items) {
                     try {
-                        const novo = await prisma.estoqueProduto.create({ data: entrada });
-                        created.push(novo);
+                        // Usar pi.quantidade do PedidoItem
+                        const quantidadeStr = pi.quantidade;
+
+                        if (!quantidadeStr) {
+                            console.warn(`   ⚠️  Item ${pi.id}: quantidade null/undefined - pulando`);
+                            totalErros++;
+                            continue;
+                        }
+
+                        const quantidade = Number(quantidadeStr);
+
+                        if (isNaN(quantidade) || quantidade <= 0) {
+                            console.warn(`   ⚠️  Item ${pi.id}: quantidade inválida (${quantidadeStr}) - pulando`);
+                            totalErros++;
+                            continue;
+                        }
+
+                        const qntdInteira = Math.floor(quantidade);
+
+                        // Dentro do loop "for (const pi of items)", substituir a partir da criação de dadosEstoque:
+
+                        const nomeItem = pi.fornecedorItem?.nome ||
+                            pi.produto?.nome ||
+                            pi.observacoes ||
+                            `Item do pedido ${pi.id}`;
+
+                        const timestamp = Date.now();
+                        const random = Math.floor(Math.random() * 1000);
+                        const sku = `EST-${estoque.id}-${pi.id}-${timestamp}-${random}`;
+
+                        // ✅ Determinar qntdMin baseado no tipo de unidade
+                        let qntdMin = 0;
+                        if (pedido.destinoUnidade?.tipo === "LOJA") {
+                            // Lojas: mínimo 10% da quantidade recebida
+                            qntdMin = Math.max(1, Math.floor(qntdInteira * 0.10));
+                        } else if (pedido.destinoUnidade?.tipo === "FAZENDA") {
+                            // Fazendas: mínimo 5% da quantidade recebida
+                            qntdMin = Math.max(1, Math.floor(qntdInteira * 0.05));
+                        }
+
+                        // ✅ Determinar validade baseado no tipo de produto
+                        let validade = null;
+                        const categoria = pi.fornecedorItem?.categoria || [];
+                        if (categoria.includes("Laticínios")) {
+                            // Laticínios: 7-30 dias dependendo do tipo
+                            if (nomeItem.toLowerCase().includes("leite")) {
+                                validade = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+                            } else if (nomeItem.toLowerCase().includes("queijo") || nomeItem.toLowerCase().includes("manteiga")) {
+                                validade = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+                            } else if (nomeItem.toLowerCase().includes("iogurte")) {
+                                validade = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000); // 15 dias
+                            }
+                        } else if (categoria.includes("Carne")) {
+                            // Carnes: 5-7 dias
+                            validade = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                        } else if (categoria.includes("Hortaliças")) {
+                            // Hortaliças: 3-10 dias
+                            validade = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+                        } else if (categoria.includes("Grãos")) {
+                            // Grãos: 1 ano
+                            validade = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+                        }
+
+                        // ✅ Buscar producaoId se for estoque de LOJA
+                        let producaoId = null;
+                        if (pedido.destinoUnidade?.tipo === "LOJA") {
+                            // Buscar produção relacionada ao pedido/item
+                            const producaoRelacionada = await prisma.producao.findFirst({
+                                where: {
+                                    destinoUnidadeId: pedido.destinoUnidadeId,
+                                    status: "FINALIZADA",
+                                    tipoProduto: {
+                                        contains: nomeItem.split(' ')[0], // busca pela primeira palavra do nome
+                                        mode: 'insensitive'
+                                    }
+                                },
+                                orderBy: { dataFim: 'desc' }
+                            });
+
+                            producaoId = producaoRelacionada?.id || null;
+                        }
+
+                        const dadosEstoque = {
+                            nome: nomeItem,
+                            sku: sku,
+                            marca: pi.produto?.marca || null,
+                            qntdAtual: qntdInteira,
+                            qntdMin: qntdMin,              // ✅ Calculado dinamicamente
+                            estoqueId: estoque.id,
+                            produtoId: pi.produtoId || null,
+                            producaoId: producaoId,        // ✅ Vinculado se for loja
+                            loteId: pi.loteId || null,
+                            precoUnitario: pi.precoUnitario ? Number(pi.precoUnitario) : null,
+                            pesoUnidade: pi.fornecedorItem?.pesoUnidade || pi.produto?.pesoUnidade || null,
+                            validade: validade,            // ✅ Calculada por tipo de produto
+                            unidadeBase: pi.unidadeMedida,
+                            pedidoId: pedido.id,
+                            pedidoItemId: pi.id,
+                            fornecedorUnidadeId: pedido.origemUnidadeId || null,
+                            fornecedorExternoId: pedido.origemFornecedorExternoId || null,
+                            dataEntrada: pedido.dataRecebimento || new Date(),
+                            dataSaida: null
+                        };
+
+                        const novoEstoque = await prisma.estoqueProduto.create({
+                            data: dadosEstoque
+                        });
+
+                        totalCriados++;
+                        console.log(`   ✓ Item ${pi.id}: ${nomeItem} - ${qntdInteira} unidades (min: ${qntdMin}, validade: ${validade ? validade.toLocaleDateString('pt-BR') : 'N/A'}, producao: ${producaoId || 'N/A'})`);
+
                     } catch (err) {
-                        // se houver constraint, logamos e pulamos
-                        console.warn("Falha ao criar EstoqueProduto para pedidoItem", pi.id, "erro:", err.message);
+                        totalErros++;
+
+                        // Verificar se é erro de constraint única
+                        if (err.code === 'P2002') {
+                            console.warn(`   ⚠️  Item ${pi.id}: já existe no estoque (constraint única) - pulando`);
+                        } else {
+                            console.error(`   ❌ Item ${pi.id}: Erro ao criar - ${err.message}`);
+                        }
                     }
                 }
             }
 
-            console.log("Finalizado seedEstoqueProdutosFromDeliveredPedidos — criados:", created.length);
-            return created.length;
+            console.log(`\n📊 Resumo do seed de EstoqueProduto:`);
+            console.log(`   ✓ Registros criados: ${totalCriados}`);
+            console.log(`   ⚠️  Erros/Pulos: ${totalErros}`);
+            console.log(`   📦 Total processado: ${totalCriados + totalErros}\n`);
+
+            return totalCriados;
         }
 
         await seedEstoqueProdutosFromDeliveredPedidos(prisma);
@@ -3712,23 +3908,70 @@ async function main() {
         }
         console.log("");
 
-
         // --- Seed financeiro: criar lançamentos de exemplo para matriz, fazendas e lojas ---
         // colocar abaixo de onde unidadeMap e usuarioMap já existem (após criar unidades/usuarios)
         async function seedFinanceiro(prisma, unidadeMap, usuarioMap) {
-            // helpers de data
             const daysFromNow = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
-            const firstOfMonth = (y, m) => new Date(y, m - 1, 1); // ex: (2025,11) -> 2025-11-01
+            const firstOfMonth = (y, m) => new Date(y, m - 1, 1);
+
+            // ✅ Primeiro, criar categorias e subcategorias
+            const categorias = await Promise.all([
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["RuralTech"], nome: "Folha" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["RuralTech"], nome: "Folha", tipo: "SAIDA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["RuralTech"], nome: "Receita" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["RuralTech"], nome: "Receita", tipo: "ENTRADA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Fazenda Teste"], nome: "Sanidade" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Fazenda Teste"], nome: "Sanidade", tipo: "SAIDA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Fazenda Beta"], nome: "Venda" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Fazenda Beta"], nome: "Venda", tipo: "ENTRADA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Sabor do Campo Laticínios"], nome: "Compras" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Sabor do Campo Laticínios"], nome: "Compras", tipo: "SAIDA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Loja Teste"], nome: "Vendas" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Loja Teste"], nome: "Vendas", tipo: "ENTRADA" }
+                }),
+                prisma.categoria.upsert({
+                    where: { unidadeId_nome: { unidadeId: unidadeMap["Fazenda Alpha"], nome: "Equipamentos" } },
+                    update: {},
+                    create: { unidadeId: unidadeMap["Fazenda Alpha"], nome: "Equipamentos", tipo: "SAIDA" }
+                })
+            ]);
+
+            const categoriaMap = {
+                "Folha": categorias[0].id,
+                "Receita": categorias[1].id,
+                "Sanidade": categorias[2].id,
+                "Venda": categorias[3].id,
+                "Compras": categorias[4].id,
+                "Vendas": categorias[5].id,
+                "Equipamentos": categorias[6].id
+            };
 
             const dados = [
-                // MATRIZ (RuralTech) - despesas fixas + receita interna
                 {
-                    usuarioId: usuarioMap["Julia Alves"],
+                    criadoPorId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
+                    categoriaId: categoriaMap["Folha"],
+                    subcategoriaId: null,
                     descricao: "Folha de pagamento - Novembro/2025",
-                    tipo: TSAIDA.SALARIOS,
-                    categoria: "Folha",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 12000,
                     valorPago: null,
                     competencia: firstOfMonth(2025, 11),
@@ -3739,12 +3982,13 @@ async function main() {
                     documento: "FOLHA-202511"
                 },
                 {
-                    usuarioId: usuarioMap["Julia Alves"],
+                    criadoPorId: usuarioMap["Julia Alves"],
                     unidadeId: unidadeMap["RuralTech"],
+                    categoriaId: categoriaMap["Receita"],
+                    subcategoriaId: null,
                     descricao: "Receita venda institucional (remessa interna)",
-                    tipo: TSAIDA.ESTOQUE,
-                    categoria: "Receita",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "PIX",
                     valor: 3500,
                     valorPago: 3500,
                     competencia: firstOfMonth(2025, 11),
@@ -3753,27 +3997,27 @@ async function main() {
                     status: "PAGA",
                     documento: "REC-MATRIZ-202511"
                 },
-
-                // FAZENDAS (exemplos)
                 {
-                    usuarioId: usuarioMap["Usuario Ficticio"], // gerente fazenda teste
+                    criadoPorId: usuarioMap["Usuario Ficticio"],
                     unidadeId: unidadeMap["Fazenda Teste"],
+                    categoriaId: categoriaMap["Sanidade"],
+                    subcategoriaId: null,
                     descricao: "Compra de medicamentos veterinários",
-                    tipo: TSAIDA.ENERGIA,
-                    categoria: "Sanidade",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 1800,
                     vencimento: daysFromNow(7),
                     status: "PENDENTE",
                     documento: "NFVET-FT-202511"
                 },
                 {
-                    usuarioId: usuarioMap["Richard Souza"],
+                    criadoPorId: usuarioMap["Richard Souza"],
                     unidadeId: unidadeMap["Fazenda Beta"],
+                    categoriaId: categoriaMap["Venda"],
+                    subcategoriaId: null,
                     descricao: "Venda de leite cru - remessa para Sabor do Campo",
-                    tipo: TSAIDA.MANUTENCAO,
-                    categoria: "Venda",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "PIX",
                     valor: 4200,
                     valorPago: 4200,
                     competencia: firstOfMonth(2025, 11),
@@ -3782,27 +4026,27 @@ async function main() {
                     status: "PAGA",
                     documento: "NFV-FAZB-202511"
                 },
-
-                // LOJAS (exemplos)
                 {
-                    usuarioId: usuarioMap["Renato Martins"],
+                    criadoPorId: usuarioMap["Renato Martins"],
                     unidadeId: unidadeMap["Sabor do Campo Laticínios"],
+                    categoriaId: categoriaMap["Compras"],
+                    subcategoriaId: null,
                     descricao: "Pagamento a fornecedor (Fazenda Beta) - romaneio 202511",
-                    tipo: TSAIDA.ESTOQUE,
-                    categoria: "Compras",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 2600,
                     vencimento: daysFromNow(3),
                     status: "PENDENTE",
                     documento: "PAG-FB-202511"
                 },
                 {
-                    usuarioId: usuarioMap["Lorena Oshiro"],
+                    criadoPorId: usuarioMap["Lorena Oshiro"],
                     unidadeId: unidadeMap["Loja Teste"],
+                    categoriaId: categoriaMap["Vendas"],
+                    subcategoriaId: null,
                     descricao: "Recebimento venda - vendas em caixa (sintético)",
-                    tipo: TSAIDA.ESTOQUE,
-                    categoria: "Vendas",
-                    formaPagamento: TPAG.CARTAO,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "CARTAO",
                     valor: 1800,
                     valorPago: 1800,
                     competencia: firstOfMonth(2025, 11),
@@ -3811,15 +4055,14 @@ async function main() {
                     status: "PAGA",
                     documento: "REC-LT-202511"
                 },
-
-                // exemplo de parcela
                 {
-                    usuarioId: usuarioMap["Juliana Correia"],
+                    criadoPorId: usuarioMap["Juliana Correia"],
                     unidadeId: unidadeMap["Fazenda Alpha"],
+                    categoriaId: categoriaMap["Equipamentos"],
+                    subcategoriaId: null,
                     descricao: "Parcelamento equipamento - parcela 2/12",
-                    tipo: TSAIDA.MANUTENCAO,
-                    categoria: "Equipamentos",
-                    formaPagamento: TPAG.PIX,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
                     valor: 500,
                     parcela: 2,
                     totalParcelas: 12,
@@ -3829,15 +4072,8 @@ async function main() {
                 }
             ];
 
-            // cria registros (skipDuplicates evita duplicações se rodar o seed várias vezes)
             await prisma.financeiro.createMany({
-                data: dados.map(d => ({
-                    ...d,
-                    // garantir campos obrigatórios presenciais (nos casos omissos):
-                    competencia: d.competencia || null,
-                    dataPagamento: d.dataPagamento || null,
-                    valorPago: d.valorPago || null
-                })),
+                data: dados,
                 skipDuplicates: true
             });
 
@@ -3846,7 +4082,6 @@ async function main() {
 
         // Chame dentro do main depois que unidadeMap e usuarioMap existirem:
         await seedFinanceiro(prisma, unidadeMap, usuarioMap);
-
 
         console.log(" SEED CONCLUÍDO COM SUCESSO! Todas as etapas foram executadas na ordem correta.");
 

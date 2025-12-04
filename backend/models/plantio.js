@@ -22,6 +22,7 @@ export async function getPlantioCategoria(categoria) {
     const plantioCategoria = await prisma.plantio.findMany({
       where: { categoria: categoria },
     });
+    
     if(!plantioCategoria) {
       return res.status(400).json({erro: "Categoria de plantio nao encontrada."})
     }

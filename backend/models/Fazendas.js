@@ -102,8 +102,10 @@ export const calcularMediaProducaoPorLote = async (loteId) => {
 
 //relatório por lote
 export const buscarAtividadesLoteService = async (loteId, unidadeId) => {
-  const atividades = await prisma.atividadesLote.findMany({
-    where: { loteId: Number(loteId), Lote: { unidadeId: Number(unidadeId) } },
+  // O model gerado pelo Prisma para atividades de lote é `atvdLote`.
+  // Também corrigimos a referência à relação do lote no where (usar "lote" minúsculo).
+  const atividades = await prisma.atvdLote.findMany({
+    where: { loteId: Number(loteId), lote: { unidadeId: Number(unidadeId) } },
     select: {
       id: true,
       descricao: true,

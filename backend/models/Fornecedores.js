@@ -70,7 +70,7 @@ export const criarFornecedorExterno = async (data) => {
     }
 
     // checar duplicidade por CNPJ, email ou telefone
-    const existing = await prisma.fornecedor.findFirst({
+    const existing = await prisma.fornecedorExterno.findFirst({
       where: {
         OR: [
           { cnpj: cnpjCpf },
@@ -88,7 +88,7 @@ export const criarFornecedorExterno = async (data) => {
       return { sucesso: false, erro: "Fornecedor já cadastrado.", field: null };
     }
 
-    const f = await prisma.fornecedor.create({
+    const f = await prisma.fornecedorExterno.create({
       data: {
         nomeEmpresa,
         descricaoEmpresa,
@@ -100,18 +100,18 @@ export const criarFornecedorExterno = async (data) => {
       select: { id: true, nomeEmpresa: true, cnpj: true, email: true, telefone: true }
     });
 
-    return { sucesso: true, fornecedor: f, message: "Fornecedor criado" };
+    return { sucesso: true, fornecedorExterno: f, message: "Fornecedor criado" };
   } catch (error) {
-    console.error("Erro ao criar fornecedor:", error);
+    console.error("Erro ao criar fornecedorExterno:", error);
     if (error.code === 'P2002' && error.meta?.target?.includes('cnpj')) {
       return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
     }
-    return { sucesso: false, erro: "Erro ao criar fornecedor.", detalhes: error.message, field: null };
+    return { sucesso: false, erro: "Erro ao criar fornecedorExterno.", detalhes: error.message, field: null };
   }
 };
 
 
-//fazer uma função para buscar fornecedor interno 
+//fazer uma função para buscar fornecedorExterno interno 
 export const listarFornecedoresInternos = async (unidadeId) => { //nesse caso a função é  para as lojas consultarem as fazendas fornecedoras
   try {
     const contratos = await prisma.contrato.findMany({
@@ -146,7 +146,7 @@ export const listarFornecedoresInternos = async (unidadeId) => { //nesse caso a 
 
 export const calcularFornecedores = async (unidadeId) => { //ok
   try {
-    const totalFornecedores = await prisma.fornecedor.aggregate({ where: { unidadeId: Number(unidadeId), }, });
+    const totalFornecedores = await prisma.fornecedorExterno.aggregate({ where: { unidadeId: Number(unidadeId), }, });
     const somaFornecedores = Number(totalFornecedores || 0);
 
     return {
@@ -165,7 +165,7 @@ export const calcularFornecedores = async (unidadeId) => { //ok
 
 export const verContratosComLojas = async (fornecedorUnidadeId) => { //função para que a fazenda consulte seus contratos
   try {
-    const contratos = await prisma.Contrato.findMany({
+    const contratos = await prisma.contrato.findMany({
       where: { fornecedorUnidadeId: Number(fornecedorUnidadeId) },
       include: {
         unidade: {
@@ -195,29 +195,55 @@ export const verContratosComLojas = async (fornecedorUnidadeId) => { //função 
 
 export const verContratosExternos = async(unidadeId) =>{
   try {
-    const contratosExternos = await prisma.Contrato.findMany({
-      where: { unidadeId: Number(unidadeId) },
+    const contratosExternos = await prisma.contrato.findMany({
+      where: { 
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null }  // Filtra apenas contratos externos
+      },
       include: {
         unidade: {
           select: {
             id: true, nome: true, cidade: true, estado: true
           }
         },
-        itens :{
-          select: {nome: true}
-        }
+          itens :{
+            select: {
+              id: true,
+              nome: true
+            }
+          },
+          fornecedorExterno: {
+            select: { 
+              id: true, 
+              nomeEmpresa: true, 
+              cnpjCpf: true, 
+              email: true, 
+              telefone: true,
+              descricaoEmpresa: true
+            }
+          }
       }
     });
+
+    // TEMP LOG: help debug why frontend sometimes receives an empty array
+    try {
+      console.log('[verContratosExternos] unidadeId=', unidadeId, 'contratosExternosCount=', contratosExternos?.length);
+      // Log a small sample (up to 3) so we can inspect structure without flooding logs
+      console.log('[verContratosExternos] sample contratos:', JSON.stringify((contratosExternos || []).slice(0,3)));
+    } catch (e) {
+      // swallow logging errors to avoid breaking response
+      console.error('[verContratosExternos] erro ao logar contratos:', e?.message ?? e);
+    }
 
     return ({
       sucesso: true,
       contratosExternos,
-      message: "Contratos listados com sucesso!"
+      message: "Contratos externos listados com sucesso!"
     })
   } catch (error) {
     return {
       sucesso: false,
-      erro: "Erro ao listar fornecedores",
+      erro: "Erro ao listar contratos externos",
       detalhes: error.message
     }
   }
@@ -225,33 +251,57 @@ export const verContratosExternos = async(unidadeId) =>{
 
 export const verContratosComFazendas = async(unidadeId) =>{
 try {
-    const contratos = await prisma.Contrato.findMany({
+    console.log('[verContratosComFazendas] Buscando contratos onde esta unidade é CONSUMIDOR (compra de outras fazendas) para unidadeId:', unidadeId);
+    
+    // DEBUG: Buscar TODOS os contratos desta unidade como consumidor
+    const allContratos = await prisma.contrato.findMany({
       where: { unidadeId: Number(unidadeId) },
+      select: {
+        id: true,
+        unidadeId: true,
+        fornecedorUnidadeId: true,
+        fornecedorExternoId: true,
+        status: true
+      }
+    });
+    console.log('[verContratosComFazendas] TODOS os contratos onde unidade é consumidor:', allContratos.length, allContratos);
+    
+    // Buscar apenas contratos internos (onde esta unidade CONSOME de outras unidades)
+    const contratos = await prisma.contrato.findMany({
+      where: { 
+        unidadeId: Number(unidadeId),
+        fornecedorUnidadeId: { not: null }  // Tem um fornecedor interno (outro unidade/fazenda)
+      },
       include: {
-        // unidade: {
-        //   select: {
-        //     id: true, nome: true, cidade: true, estado: true
-        //   }
-        // },
         fornecedorInterno :{
-          select : {nome: true}
+          select : {
+            id: true,
+            nome: true,
+            cidade: true,
+            estado: true
+          }
         },
         itens :{
-          select: {nome: true}
+          select: {
+            id: true,
+            nome: true
+          }
         }
       }
-
     });
+
+    console.log('[verContratosComFazendas] Contratos internos encontrados (onde esta unidade CONSOME):', contratos.length, contratos);
 
     return ({
       sucesso: true,
       contratos,
-      message: "Contratos listados com sucesso!"
+      message: "Contratos internos (onde você consome de outras unidades) listados com sucesso!"
     })
   } catch (error) {
+    console.error('[verContratosComFazendas] Erro:', error);
     return {
       sucesso: false,
-      erro: "Erro ao listar fornecedores",
+      erro: "Erro ao listar contratos internos",
       detalhes: error.message
     }
   }
@@ -259,7 +309,7 @@ try {
 
 export async function updateFornecedor(id, data) {
   try {
-    const fornecedor = await prisma.fornecedor.update({
+    const fornecedorExterno = await prisma.fornecedorExterno.update({
       where: { id },
       data: {
         nomeEmpresa: data.nomeEmpresa,
@@ -273,17 +323,68 @@ export async function updateFornecedor(id, data) {
     })
     return {
       sucesso: true,
-      fornecedor,
+      fornecedorExterno,
       message: "Fornecedor atualizado com sucesso!!",
     }
   } catch (error) {
     return {
       sucesso: false,
-      erro: "Erro ao atualizar fornecedor",
+      erro: "Erro ao atualizar fornecedorExterno",
       detalhes: error.message,
     }
   }
 }
+
+export const getFornecedoresKpis = async (unidadeId) => {
+  try {
+    const contratosAtivos = await prisma.contrato.count({ where: { unidadeId: Number(unidadeId), status: 'ATIVO' } });
+    const contratosInativos = await prisma.contrato.count({ where: { unidadeId: Number(unidadeId), status: 'INATIVO' } });
+
+    const fornecedoresAtivos = await prisma.fornecedorExterno.count({
+      where: {
+        status: 'ATIVO',
+        contratos: { some: { unidadeId: Number(unidadeId) } }
+      }
+    });
+
+    const soma = await prisma.contrato.aggregate({
+      where: { unidadeId: Number(unidadeId), status: 'ATIVO' },
+      _sum: { valorTotal: true }
+    });
+
+    const valorTotalContratosAtivos = soma?._sum?.valorTotal ? Number(soma._sum.valorTotal) : 0;
+
+    return {
+      sucesso: true,
+      contratosAtivos,
+      contratosInativos,
+      fornecedoresAtivos,
+      valorTotalContratosAtivos,
+      message: 'KPIs calculados com sucesso.'
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: 'Erro ao calcular KPIs de fornecedores',
+      detalhes: error.message
+    };
+  }
+};
+
+export const deleteFornecedorWithContracts = async (fornecedorId) => {
+  try {
+    const idNum = Number(fornecedorId);
+    await prisma.$transaction(async (tx) => {
+      await tx.fornecedorExterno.update({ where: { id: idNum }, data: { status: 'INATIVO' } });
+      await tx.contrato.updateMany({ where: { fornecedorExternoId: idNum }, data: { status: 'INATIVO' } });
+    });
+
+    return { sucesso: true, message: 'Fornecedor e contratos marcados como inativos com sucesso.' };
+  } catch (error) {
+    console.error('[deleteFornecedorWithContracts] Erro:', error);
+    return { sucesso: false, erro: 'Erro ao deletar fornecedor', detalhes: error.message };
+  }
+};
 
 export const listarLojasAtendidas = async (unidadeId) => { //função para a fazenda ver as lojas para as quais ela fornece produtos
   try {
@@ -328,7 +429,7 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
     } = dadosContrato;
 
     if (!fazendaId) {
-      return { sucesso: false, erro: "ID da fazenda (fornecedor interno) é obrigatório." };
+      return { sucesso: false, erro: "ID da fazenda (fornecedorExterno interno) é obrigatório." };
     }
 
     if (!unidadeId) {
@@ -339,7 +440,7 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
       return { sucesso: false, erro: "Campos obrigatórios ausentes." };
     }
 
-    const contrato = await prisma.Contrato.create({
+    const contrato = await prisma.contrato.create({
       data: {
         unidadeId: Number(unidadeId),
         fornecedorUnidadeId: Number(fazendaId),
@@ -378,7 +479,7 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
     return {
       sucesso: true,
       contrato,
-      message: "Contrato interno criado com sucesso!"
+      message: "contrato interno criado com sucesso!"
     };
 
   } catch (error) {
@@ -410,14 +511,14 @@ export const criarContratoExterno = async (unidadeId, dadosContrato) => {
     }
 
     if (!fornecedorExternoId) {
-      return { sucesso: false, erro: "O fornecedor externo é obrigatório no corpo da requisição." };
+      return { sucesso: false, erro: "O fornecedorExterno externo é obrigatório no corpo da requisição." };
     }
 
     if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
       return { sucesso: false, erro: "Campos obrigatórios estão faltando." };
     }
 
-    const contrato = await prisma.Contrato.create({
+    const contrato = await prisma.contrato.create({
       data: {
         unidadeId: Number(unidadeId),            // quem está criando o contrato
         fornecedorExternoId: Number(fornecedorExternoId), // empresa externa
@@ -454,13 +555,88 @@ export const criarContratoExterno = async (unidadeId, dadosContrato) => {
     return {
       sucesso: true,
       contrato,
-      message: "Contrato externo criado com sucesso!"
+      message: "contrato externo criado com sucesso!"
     };
 
   } catch (error) {
     return {
       sucesso: false,
       erro: "Erro ao criar contrato externo",
+      detalhes: error.message
+    };
+  }
+};
+
+export const buscarPedidosExternos = async (unidadeId) => {
+  try {
+    // 1) Buscar contratos com fornecedores externos para a unidade
+    const contratos = await prisma.contrato.findMany({
+      where: {
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null }
+      },
+      select: { id: true }
+    });
+
+    const contratoIds = contratos.map(c => c.id);
+
+    // 2) Se não há contratos, retorna lista vazia
+    if (contratoIds.length === 0) {
+      return {
+        sucesso: true,
+        pedidos: [],
+        message: "Nenhum contrato com fornecedor externo encontrado para esta unidade."
+      };
+    }
+
+    // 3) Buscar pedidos relacionados aos contratos (ou com destinoUnidadeId = unidadeId)
+    const pedidos = await prisma.pedido.findMany({
+      where: {
+        OR: [
+          { contratoId: { in: contratoIds } },
+          { destinoUnidadeId: Number(unidadeId), origemFornecedorExternoId: { not: null } }
+        ]
+      },
+      include: {
+        itens: {
+          select: {
+            id: true,
+            quantidade: true,
+            unidadeMedida: true,
+            precoUnitario: true,
+            custoTotal: true,
+            observacoes: true,
+            produto: { select: { id: true, nome: true, sku: true, categoria: true } },
+            fornecedorItem: { select: { id: true, nome: true } }
+          }
+        },
+        contrato: {
+          select: {
+            id: true,
+            fornecedorExterno: { select: { id: true, nomeEmpresa: true, cnpjCpf: true, email: true, telefone: true } }
+          }
+        },
+        fornecedorExterno: {
+          select: { id: true, nomeEmpresa: true, cnpjCpf: true, email: true, telefone: true }
+        },
+        destinoUnidade: {
+          select: { id: true, nome: true, cidade: true, estado: true }
+        }
+      },
+      orderBy: { dataPedido: 'desc' }
+    });
+
+    return {
+      sucesso: true,
+      pedidos,
+      message: "Pedidos de fornecedores externos recuperados com sucesso!"
+    };
+
+  } catch (error) {
+    console.error('[buscarPedidosExternos] Erro:', error);
+    return {
+      sucesso: false,
+      erro: "Erro ao buscar pedidos de fornecedores externos",
       detalhes: error.message
     };
   }

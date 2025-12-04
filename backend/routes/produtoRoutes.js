@@ -4,11 +4,11 @@ import { auth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", auth(["gerente_matriz", "gerente_loja"]), getProdutosController);
-router.get("/", auth([ "gerente_matriz", "gerente_loja"]), getProdutosPelaCategoriaController);
-router.get("/:loteId", auth(["gerente_matriz", "gerente_loja"]), getProdutoLotePorIdController);
-router.get("/:id", auth(["gerente_matriz", "gerente_loja"]), getProdutoPorIdController);
-router.post("/", auth(["gerente_matriz"]), createProdutoController);
-router.delete("/:id", auth(["gerente_matriz"]), deleteProdutoController);
+router.get("/all", auth(["GERENTE_MATRIZ", "GERENTE_LOJA"]), getProdutosController);
+router.get("/categoria", auth([ "GERENTE_MATRIZ", "GERENTE_LOJA"]), getProdutosPelaCategoriaController);
+router.get("/lote/:id", auth(["GERENTE_MATRIZ", "GERENTE_LOJA"]), getProdutoLotePorIdController);
+router.get("/:id", auth(["GERENTE_MATRIZ", "GERENTE_LOJA"]), getProdutoPorIdController);
+router.post("/", auth(["GERENTE_MATRIZ"]), createProdutoController);
+router.delete("/:id", auth(["GERENTE_MATRIZ"]), deleteProdutoController);
 
 export default router;

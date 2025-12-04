@@ -1,4 +1,5 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno } from "../models/Fornecedores.js";
+import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts } from "../models/Fornecedores.js";
+import { fornecedorSchema } from "../schemas/fornecedorSchema.js";
 
 // Retorna metadados úteis para o frontend (enums / opções)
 export const listarMetaContratosController = async (req, res) => {
@@ -181,10 +182,16 @@ export const verContratosExternosController = async (req,res) =>{ //FUNCIONANDO 
         erro: "Usuário não possui unidade vinculada!"
       })
     }
-    const contratosExternos = await verContratosExternos(unidadeId);
+    console.log('[verContratosExternosController] recebida requisição. unidadeId=', unidadeId);
+    const result = await verContratosExternos(unidadeId);
+
+    // Normalize result: model may return { sucesso, contratosExternos, message } or an array directly
+    const contratosArray = Array.isArray(result) ? result : (Array.isArray(result?.contratosExternos) ? result.contratosExternos : []);
+    console.log('[verContratosExternosController] contratosExternos count (normalized)=', contratosArray.length);
+
     return res.status(200).json({
       sucesso: true,
-      contratosExternos,
+      contratosExternos: contratosArray,
       message: "Contratos listados com sucesso!"
     });
 
@@ -207,7 +214,11 @@ export const verContratosComFazendasController = async (req, res) =>{ //funciona
         erro: "Usuário não possui unidade vinculada!"
       })
     }
+    
+    console.log('[verContratosComFazendasController] Recebida requisição para unidadeId:', unidadeId);
     const contratos = await verContratosComFazendas(unidadeId);
+    console.log('[verContratosComFazendasController] Resposta:', contratos);
+    
     return res.status(200).json({
       sucesso: true,
       contratos,
@@ -215,6 +226,7 @@ export const verContratosComFazendasController = async (req, res) =>{ //funciona
     });
 
   } catch (error) {
+    console.error('[verContratosComFazendasController] Erro:', error);
     return res.status(500).json({
       sucesso: false,
       erro: "erro no controller ao ver contratos com lojas.",
@@ -225,22 +237,45 @@ export const verContratosComFazendasController = async (req, res) =>{ //funciona
 
 export async function updateFornecedorController(req, res) {
     const { id } = req.params;
-    const data = fornecedorSchema.parse(req.body);
     try {
-        const fornecedor = await updateFornecedor(id, data);
-        return {
-            sucesso: true,
-            fornecedor,
-            message: "Fornecedor atualizado com sucesso!!",
+        const data = fornecedorSchema.parse(req.body);
+        const resultado = await updateFornecedor(id, data);
+        if (!resultado.sucesso) {
+            return res.status(400).json(resultado);
         }
+        return res.status(200).json({ sucesso: true, fornecedor: resultado.fornecedorExterno ?? resultado.fornecedor, message: resultado.message || 'Fornecedor atualizado com sucesso.' });
     } catch (error) {
-        return {
-            sucesso: false,
-            erro: "Erro ao atualizar fornecedor",
-            detalhes: error.message
-        }
+        console.error('[updateFornecedorController] Erro:', error);
+        return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar fornecedor', detalhes: error.message });
     }
 }
+
+export const getFornecedoresKpisController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params;
+    if (!unidadeId) return res.status(400).json({ sucesso: false, erro: 'Unidade não informada.' });
+    const resultado = await getFornecedoresKpis(unidadeId);
+    if (!resultado.sucesso) return res.status(500).json(resultado);
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('[getFornecedoresKpisController] Erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao obter KPIs', detalhes: error.message });
+  }
+};
+
+export const deleteFornecedorController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ sucesso: false, erro: 'ID do fornecedor não informado.' });
+
+    const resultado = await deleteFornecedorWithContracts(id);
+    if (!resultado.sucesso) return res.status(500).json(resultado);
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('[deleteFornecedorController] Erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao deletar fornecedor', detalhes: error.message });
+  }
+};
 
 export const listarLojasAtendidasController = async (req, res) => { //FUNCIONANDO - essa função serve para a fazenda ver uma lista das lojas das quais ela é fornecedora
   try {
@@ -369,6 +404,35 @@ export const criarFornecedorExternoController = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ sucesso:false, erro: "Erro interno." });
+  }
+};
+
+export const buscarPedidosExternosController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params;
+
+    if (!unidadeId) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Unidade não informada."
+      });
+    }
+
+    const resultado = await buscarPedidosExternos(unidadeId);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+
+  } catch (error) {
+    console.error("Erro no controller ao buscar pedidos externos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno no servidor.",
+      detalhes: error.message
+    });
   }
 };
 

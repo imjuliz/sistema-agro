@@ -2,7 +2,12 @@
 
 import { colorWithOpacity, getRGBA } from "@/lib/utils";
 import NumberFlow from "@number-flow/react";
-import { motion, useInView } from "motion/react";
+import {
+  motion,
+} from "framer-motion";
+
+import { useInView } from "react-intersection-observer";
+
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 
 export function LineChart({

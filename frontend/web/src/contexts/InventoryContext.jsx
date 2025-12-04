@@ -597,6 +597,32 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
     }
   }
 
+  // Atualiza qntdMin de um EstoqueProduto via endpoint dedicado e atualiza a lista local
+  async function atualizarMinimumStockRemote(estoqueProdutoId, minimum) {
+    try {
+      const url = `${API_URL}estoque-produtos/${estoqueProdutoId}/minimum`;
+      const res = await fetchWithAuth(url, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minimumStock: Number(minimum) })
+      });
+
+      if (!res.ok) {
+        let txt = await res.text().catch(() => null);
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+
+      // força recarga dos estoques para refletir a mudança
+      await load({ unidadeId: userUnidadeId });
+      return { sucesso: true };
+    } catch (err) {
+      console.error('Erro ao atualizar minimumStock remoto', err);
+      setError(String(err?.message ?? err));
+      return { sucesso: false, erro: String(err?.message ?? err) };
+    }
+  }
+
   // transform helpers...
   // logo após const [items, setItems] = useState(initialData);
   const storeMapping = useMemo(() => {
@@ -655,13 +681,17 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       if (!Array.isArray(estoque.estoqueProdutos)) return;
 
       estoque.estoqueProdutos.forEach(ep => {
-        // currentStock from ep.quantidade (EstoqueProduto.quantidade)
-        const currentStock = Number(ep.quantidade ?? 0);
-        const minimumStock = Number(ep.minimo ?? ep.minimum ?? estoque.minimo ?? 0);
+  // currentStock / minimumStock: prefer backend-provided qntdAtual / qntdMin, fallback to quantidade/minimo
+  const currentStock = Number(ep.qntdAtual ?? ep.quantidade ?? 0);
+  const minimumStock = Number(ep.qntdMin ?? ep.minimo ?? ep.minimum ?? estoque.minimo ?? 0);
 
-        // Supplier/Fornecedor origin: prefer fornecedorUnidade (internal supplier) over current store
+        // Supplier/Fornecedor origin: prefer normalized fornecedorResolved (backend) first,
+        // then explicit fornecedorUnidade / fornecedorExterno, otherwise fallback to current store
         let supplierName = storeName; // fallback: current store
-        if (ep.fornecedorUnidade) {
+        const fornecedorResolved = ep.fornecedorResolved ?? null;
+        if (fornecedorResolved && fornecedorResolved.nome) {
+          supplierName = fornecedorResolved.nome;
+        } else if (ep.fornecedorUnidade) {
           supplierName = ep.fornecedorUnidade.nome ?? `Unidade ${ep.fornecedorUnidade.id}`;
         } else if (ep.fornecedorExterno) {
           supplierName = ep.fornecedorExterno.nomeEmpresa ?? `Fornecedor ${ep.fornecedorExterno.id}`;
@@ -674,6 +704,9 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
           sku: ep.sku ?? ep.produto?.sku ?? '—',
           storeCode: String(estoque.unidadeId ?? estoque.id),
           store: supplierName, // Show supplier/fornecedor origin
+          fornecedorResolved: fornecedorResolved,
+          fornecedorUnidade: ep.fornecedorUnidade ?? null,
+          fornecedorExterno: ep.fornecedorExterno ?? null,
           currentStock,
           minimumStock,
           displayStock: Number(ep.displayStock ?? ep.exposicao ?? 0),
@@ -770,6 +803,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       loading,
       error,
       refresh,
+      atualizarMinimumStockRemote,
       updateItemRemote,
       addItemRemote,
       deleteItemRemote,

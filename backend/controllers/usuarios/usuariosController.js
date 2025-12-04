@@ -106,9 +106,10 @@ export const listarGerentesDisponiveisController = async (req, res) => {
 
 export const criarUsuarioController = async (req, res) => {
   try {
-    const { nome, email, senha, telefone, role } = req.body;
-    // For security, do not trust client-sent unidadeId. Prefer the unidadeId from the authenticated user (req.usuario)
-    const unidadeIdFromReq = req.usuario?.unidadeId || req.session?.usuario?.unidadeId || null;
+    const { nome, email, senha, telefone, role, unidadeId: bodyUnidadeId } = req.body;
+    // Prioridade: unidadeId do body (útil ao criar usuários junto com unidade)
+    // Se não vier no body, usa do usuário autenticado
+    const unidadeIdFromReq = bodyUnidadeId || req.usuario?.unidadeId || req.session?.usuario?.unidadeId || null;
 
     if (!nome || !email || !senha || !telefone || !role) {
       return res.status(400).json({ sucesso: false, erro: "Nome, email, senha, telefone e papel são obrigatórios." });
@@ -144,14 +145,18 @@ export const updateUsuarioController = async (req, res) => {
       return res.status(400).json({ sucesso: false, erro: "ID do usuário é obrigatório." });
     }
 
-    // Autorização: gerente_matriz pode editar qualquer um, ou usuário pode editar a si mesmo
+    // Autorização: gerente_matriz ou gerente_fazenda podem editar qualquer um, ou usuário pode editar a si mesmo
     const isGerenteMatriz = Array.isArray(user?.roles) 
       ? user.roles.some(r => String(r).toLowerCase().includes("gerente_matriz"))
       : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_matriz");
 
+    const isGerenteFazenda = Array.isArray(user?.roles)
+      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_fazenda"))
+      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_fazenda");
+
     const editandoASiMesmo = Number(user?.id) === Number(id);
 
-    if (!isGerenteMatriz && !editandoASiMesmo) {
+    if (!isGerenteMatriz && !isGerenteFazenda && !editandoASiMesmo) {
       return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para editar este usuário." });
     }
 
@@ -186,9 +191,23 @@ export const updateUsuarioController = async (req, res) => {
 export const deletarUsuarioController = async (req, res) => {
   try {
     const { id } = req.params;
+    const user = req.usuario; // Do middleware auth
 
     if (!id) {
       return res.status(400).json({ sucesso: false, erro: "ID do usuário é obrigatório." });
+    }
+
+    // Autorização: gerente_matriz ou gerente_fazenda podem deletar
+    const isGerenteMatriz = Array.isArray(user?.roles) 
+      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_matriz"))
+      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_matriz");
+
+    const isGerenteFazenda = Array.isArray(user?.roles)
+      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_fazenda"))
+      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_fazenda");
+
+    if (!isGerenteMatriz && !isGerenteFazenda) {
+      return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para deletar usuários." });
     }
 
     // Verifica se o usuário existe antes de deletar

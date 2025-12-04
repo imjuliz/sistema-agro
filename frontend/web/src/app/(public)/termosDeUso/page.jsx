@@ -76,69 +76,67 @@ export default function TermosDeUso() {
             <main className='w-full open-sans text-lg flex  justify-center pt-[150px] pb-[150px] dark:bg-stone-950 bg-white'>
                 <div className="flex flex-col gap-5 w-100 lg:w-240 md:w-160">
                     <h1 className='archivo-black-regular text-5xl'>Termos de Serviço</h1>
-                    <p>Última atualização: 25 de setembro de 2025</p>
+                    <p>Última atualização: 03 de Dezembro de 2025</p>
 
                     <div className=" flex gap-10">
                         <div className="conteudo w-180 flex flex-col gap-2">
 
                             <h2 className="text-xl font-bold" id="termos">1. Aceitação dos Termos</h2>
-                            <p>Ao acessar ou utilizar o sistema de monitoramento agropecuário (“Sistema”), o usuário declara ter lido, compreendido e aceitado integralmente estes Termos de Uso. Se você não concordar com qualquer condição aqui estabelecida, não deverá utilizar o Sistema.</p> <br></br>
+<p>Ao acessar ou interagir com os serviços, conteúdos e informações da RuralTech (“Empresa”), o usuário declara ter lido, compreendido e aceitado integralmente estes Termos de Uso. Se você não concordar com qualquer condição aqui estabelecida, não deverá utilizar nossos serviços ou acessar nosso site.</p><br></br>
 
-                            <h2 className="text-xl font-bold" id="definicoes">2. Definições</h2>
-                            <p><b>Sistema:</b> Plataforma digital (web, mobile ou desktop) para monitoramento, gestão e análise de dados agropecuários. <br></br>
-                                <b>Usuário:</b> Pessoa física ou jurídica que acessa e utiliza o Sistema.<br></br>
-                                <b>Dados:</b> Informações inseridas, coletadas ou geradas pelo uso do Sistema, incluindo dados climáticos, de solo, sensores, produtividade, localização, entre outros.</p><br></br>
+<h2 className="text-xl font-bold" id="definicoes">2. Definições</h2>
+<p><b>Empresa:</b> RuralTech, fornecedora de soluções e tecnologias para o agronegócio.<br></br>
+<b>Usuário:</b> Pessoa física ou jurídica que acessa os serviços, conteúdos ou informações disponibilizadas pela Empresa.<br></br>
+<b>Serviços:</b> Todas as atividades, produtos, conteúdos, relatórios, consultorias e informações disponibilizadas pela RuralTech, seja online ou offline.</p><br></br>
 
-                            <h2 className="text-xl font-bold" id="funcionalidade">3. Funcionalidade do Sistema</h2>
-                            <p>O Sistema oferece funcionalidades como (mas não se limitando a):</p>
-                            <ul className="list-disc pl-5">
-                                <li>Monitoramento remoto de sensores em áreas agrícolas;</li>
-                                <li>Visualização de dados ambientais, climáticos e operacionais;</li>
-                                <li>Geração de relatórios e alertas;</li>
-                                <li>Armazenamento e histórico de dados de monitoramento.</li></ul>
-                            <p> O acesso a algumas funcionalidades pode depender do plano contratado ou da disponibilidade técnica em determinada região.</p><br></br>
+<h2 className="text-xl font-bold" id="funcionalidade">3. Funcionalidade do Sistema</h2>
+<p>A RuralTech oferece soluções, conteúdos e ferramentas com o objetivo de apoiar empresas do agronegócio na gestão, monitoramento e análise de suas operações, incluindo:</p>
+<ul className="list-disc pl-5">
+    <li>Consultoria e suporte para rastreabilidade de produtos;</li>
+    <li>Informações e relatórios de desempenho agropecuário;</li>
+    <li>Conteúdos educativos e de boas práticas no agronegócio;</li>
+    <li>Ferramentas de análise e visualização de dados estratégicos.</li>
+</ul>
+<p>O acesso a determinados serviços pode depender de parceria, contrato ou disponibilidade técnica.</p><br></br>
 
+<h2 className="text-xl font-bold" id="obrigacoes">4. Obrigações do Usuário</h2>
+<p>O usuário se compromete a:</p>
+<ul className="list-[lower-alpha] pl-5">
+    <li>Fornecer informações verdadeiras, precisas e atualizadas ao interagir com a Empresa;</li>
+    <li>Utilizar os serviços e conteúdos de acordo com a legislação vigente e com estes Termos de Uso;</li>
+    <li>Não utilizar os serviços, conteúdos ou informações para fins ilícitos, fraudulentos ou que infrinjam direitos de terceiros;</li>
+    <li>Manter a confidencialidade de suas credenciais de acesso, quando aplicável, sendo responsável por todas as ações realizadas por meio de sua conta ou acesso.</li>
+</ul><br></br>
 
-                            <h2 className="text-xl font-bold" id="obrigacoes">4. Obrigações do Usuário</h2>
-                            <p>O usuário, ao utilizar o sistema, se compromete a:</p>
-                            <ul className="list-[lower-alpha] pl-5">
-                                <li>Fornecer informações verdadeiras, precisas e atualizadas no momento do cadastro e durante o uso do Sistema;</li>
-                                <li>Utilizar o Sistema de acordo com a legislação vigente, com estes Termos de Uso e com os princípios da boa-fé;</li>
-                                <li>Não utilizar o Sistema para fins ilícitos, fraudulentos ou que infrinjam direitos de terceiros;</li>
-                                <li>Manter a confidencialidade de suas credenciais de acesso, sendo responsável por todas as ações realizadas por meio de sua conta.</li>
-                            </ul><br></br>
+<h2 className="text-xl font-bold" id="propriedade">5. Propriedade Intelectual</h2>
+<p>Todo o conteúdo disponibilizado pela RuralTech, incluindo textos, gráficos, logotipos, imagens, vídeos, códigos e metodologias, é de propriedade exclusiva da Empresa ou de seus licenciadores e é protegido por leis de propriedade intelectual. 
+O uso do conteúdo não concede ao Usuário qualquer direito sobre tais materiais, exceto pela licença limitada e não exclusiva para acesso e uso conforme previsto nestes Termos.</p><br></br>
 
-                            <h2 className="text-xl font-bold" id="propriedade">5. Propriedade Intelectual</h2>
-                            <p>Todo o conteúdo do Sistema, incluindo textos, gráficos, logotipos, imagens, vídeos, códigos e funcionalidades, é de propriedade exclusiva da empresa desenvolvedora ou de seus licenciadores, sendo protegido pelas leis de propriedade intelectual.
-                                O uso do Sistema não concede ao Usuário qualquer direito sobre tais conteúdos, exceto pela licença limitada, não exclusiva e intransferível para uso conforme previsto nestes Termos.</p><br></br>
+<h2 className="text-xl font-bold" id="privacidade">6. Privacidade e Proteção de Dados</h2>
+<p>Os dados coletados pela RuralTech serão tratados de acordo com a Política de Privacidade aplicável, em conformidade com a legislação vigente (como a LGPD). 
+O Usuário declara estar ciente de que suas informações poderão ser utilizadas para prestação de serviços, análises internas, melhorias na Empresa e, quando autorizado, para fins comerciais ou estatísticos.</p><br></br>
 
-                            <h2 className="text-xl font-bold" id="privacidade">6. Privacidade e Proteção de Dados</h2>
-                            <p>Os dados coletados pelo Sistema serão tratados de acordo com a Política de Privacidade aplicável, em conformidade com a legislação de proteção de dados vigente (como a LGPD - Lei Geral de Proteção de Dados).
-                                O Usuário declara estar ciente de que seus dados poderão ser utilizados para a prestação dos serviços, análises internas, melhorias do Sistema e, quando autorizado, para fins comerciais ou estatísticos.</p><br></br>
+<h2 className="text-xl font-bold" id="limitacao">7. Limitação de Responsabilidade</h2>
+<p>A RuralTech oferece seus serviços, conteúdos e informações “como estão”, sem garantias de funcionamento ininterrupto ou total precisão.</p>
+<ul className="list-[lower-alpha] pl-5">
+    <li>Não nos responsabilizamos por decisões comerciais ou operacionais tomadas com base nas informações fornecidas;</li>
+    <li>Não nos responsabilizamos por falhas de comunicação, internet, software de terceiros ou indisponibilidade de serviços;</li>
+    <li>Não nos responsabilizamos por danos indiretos, lucros cessantes ou perdas decorrentes do uso dos serviços e conteúdos.</li>
+</ul><br></br>
 
-                            <h2 className="text-xl font-bold" id="limitacao">7. Limitação de Responsabilidade</h2>
-                            <p>O Sistema é fornecido “como está”, sem garantias de funcionamento ininterrupto, livre de erros ou totalmente seguro.<br></br>
-                                A empresa não se responsabiliza por:</p>
-                            <ul className="list-[lower-alpha] pl-5">
-                                <li>Quaisquer danos diretos ou indiretos decorrentes do uso ou da impossibilidade de uso do Sistema;</li>
-                                <li>Falhas de conexão à internet, interferências externas ou indisponibilidade de serviços de terceiros;</li>
-                                <li>Decisões tomadas com base nas informações disponibilizadas pelo Sistema.</li>
-                            </ul><br></br>
+<h2 className="text-xl font-bold" id="modificacoes">8. Modificações nos Termos e nos Serviços</h2>
+<p>A RuralTech reserva-se o direito de alterar, a qualquer momento, estes Termos de Uso ou seus serviços, conteúdos e informações, mediante aviso prévio ao Usuário por meio do site ou outros canais de comunicação. O uso continuado após tais alterações constitui aceitação tácita das novas condições.</p><br></br>
 
-                            <h2 className="text-xl font-bold" id="modificacoes">8. Modificações nos Termos e no Sistema</h2>
-                            <p>A empresa reserva-se o direito de alterar, a qualquer momento, estes Termos de Uso ou as funcionalidades do Sistema, mediante aviso prévio ao Usuário, por meio da própria plataforma ou por outros canais de comunicação.
-                                A continuidade do uso após tais alterações será considerada como aceitação tácita das novas condições.</p><br></br>
+<h2 className="text-xl font-bold" id="cancelamento">9. Cancelamento e Encerramento de Conta</h2>
+<p>Quando aplicável, o Usuário pode solicitar o cancelamento de acesso ou parceria a qualquer momento, por meio dos canais de atendimento da Empresa. 
+A RuralTech também poderá encerrar ou suspender o acesso em caso de violação destes Termos ou uso indevido dos serviços.</p><br></br>
 
-                            <h2 className="text-xl font-bold" id="cancelamento">9. Cancelamento e Encerramento de Conta</h2>
-                            <p>O Usuário pode solicitar o cancelamento de sua conta a qualquer momento, por meio dos canais de atendimento disponíveis.
-                                A empresa também poderá encerrar ou suspender o acesso do Usuário em caso de violação destes Termos ou de uso indevido do Sistema.</p><br></br>
-
-                            <h2 className="text-xl font-bold" id="disposicoes">10. Disposições Gerais</h2>
-                            <ul className="list-[lower-alpha] pl-5">
-                                <li>Quaisquer danos diretos ou indiretos decorrentes do uso ou da impossibilidade de uso do Sistema;</li>
-                                <li>Falhas de conexão à internet, interferências externas ou indisponibilidade de serviços de terceiros;</li>
-                                <li>Decisões tomadas com base nas informações disponibilizadas pelo Sistema.</li>
-                            </ul>
+<h2 className="text-xl font-bold" id="disposicoes">10. Disposições Gerais</h2>
+<ul className="list-[lower-alpha] pl-5">
+    <li>Estes Termos de Uso são regidos pela legislação brasileira vigente;</li>
+    <li>Eventuais disputas serão resolvidas de forma amigável ou em foro competente, preferencialmente na comarca da sede da RuralTech;</li>
+    <li>O uso dos serviços, conteúdos e informações implica aceitação integral destes Termos.</li>
+</ul>
 
                         </div>
                         <div className="indice hidden md:block md:sticky  md:top-4 md:self-start">

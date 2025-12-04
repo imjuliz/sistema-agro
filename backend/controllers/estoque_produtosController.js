@@ -1,5 +1,5 @@
 import prisma from "../prisma/client.js";
-import { somarQtdTotalEstoque, getEstoque,  getProdutoPorId, createProduto, deleteProduto,  listarProdutos } from "../models/estoque_produtos.js";
+import { somarQtdTotalEstoque, getEstoque,  getProdutoPorId, createProduto, deleteProduto,  listarProdutos, atualizarQntdMin } from "../models/estoque_produtos.js";
 import { lotesPlantio } from "../models/Fazendas.js";
 import { verPedidos, contarSaidas, listarPedidosEntrega, listarPedidosOrigem } from "../models/unidade-de-venda/Loja.js";
 
@@ -185,32 +185,6 @@ export const somarQtdTotalEstoqueController = async (req, res) => {
   }
 };
 
-// // LISTA O ESTOQUE -- rota feita
-// export const listarEstoqueController = async (req, res) => {
-//   try {
-//     // const unidade_id = req.session?.usuario?.unidade_id;
-//      const unidade_id = req.params.unidade_id;
-
-
-//     if (!unidade_id) {
-//       return res.status(401).json({
-//         sucesso: false,
-//         erro: "Sessão inválida ou unidade não identificada.",
-//       });
-//     }
-
-//     const resultado = await getEstoque(unidade_id);
-//     return res.status(200).json(resultado);
-//   } catch (error) {
-//     console.error("Erro ao listar estoque:", error);
-//     return res.status(500).json({
-//       sucesso: false,
-//       erro: "Erro ao listar estoque.",
-//       detalhes: error.message,
-//     });
-//   }
-// };
-
 export const listarEstoqueController = async (req, res) => { //FUNCIONANDO
     const unidadeId = req.params.unidadeId;
 
@@ -221,16 +195,6 @@ export const listarEstoqueController = async (req, res) => { //FUNCIONANDO
     return res.status(200).json(resultado);
 };
 
-// export const mostrarEstoqueController = async (req, res) => {
-//   try {
-//     const unidadeId = req.user?.unidadeId;
-//     const estoque = await mostrarEstoque(unidadeId);
-//     res.status(200).json(estoque);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ erro: 'Erro ao mostrar estoque da unidade de venda.' })
-//   }
-// }
 
 export const AtividadesLoteAgricolaController = async(req, res) =>{
   try{
@@ -366,4 +330,33 @@ export const contarSaidasController = async (req, res) => {
     quantidade: resultado.quantidade,
     mensagem: "Quantidade de saídas obtida com sucesso!",
   });
+};
+
+// Atualiza a quantidade mínima (qntdMin) de um EstoqueProduto
+export const atualizarQntdMinController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { minimumStock, qntdMin } = req.body;
+
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ sucesso: false, erro: 'ID inválido.' });
+    }
+
+    const value = typeof minimumStock !== 'undefined' ? minimumStock : qntdMin;
+
+    if (typeof value === 'undefined' || value === null || isNaN(Number(value))) {
+      return res.status(400).json({ sucesso: false, erro: 'minimumStock (qntdMin) numérico obrigatório.' });
+    }
+
+    const resultado = await atualizarQntdMin(Number(id), Number(value));
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json({ sucesso: true, produto: resultado.produto, message: resultado.message });
+  } catch (error) {
+    console.error('Erro ao atualizar qntdMin:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao atualizar quantidade mínima.', detalhes: error.message });
+  }
 };

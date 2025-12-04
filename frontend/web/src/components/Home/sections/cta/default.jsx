@@ -7,11 +7,11 @@ import { Section } from "@/components/ui/section";
 
 export default function CTA(props) {
   const {
-    title = "Começar agora",
+    title = "Transformando o Campo com Inovação",
     buttons = [
       {
         href: '/login',
-        text: "Entrar",
+        text: "Veja nossas lojas",
         variant: "default",
       },
     ],
