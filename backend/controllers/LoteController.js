@@ -152,15 +152,15 @@ export async function createLoteController(req, res) {
       });
     }
 
-    // Validar dados do lote
-    const data = loteSchema.parse(req.body);
+    // Preparar dados - adicionar responsávelId e tipo se não fornecido
+    const bodyData = {
+      ...req.body,
+      responsavelId: req.body.responsavelId || usuario.id,
+      tipo: req.body.tipo || "OUTRO",
+    };
 
-    if (!data.responsavelId) {
-      return res.status(400).json({ 
-        sucesso: false,
-        erro: "Responsável inválido." 
-      });
-    }
+    // Validar dados do lote
+    const data = loteSchema.parse(bodyData);
 
     const lote = await createLote(data, parseInt(unidadeId), parseInt(contratoId));
 

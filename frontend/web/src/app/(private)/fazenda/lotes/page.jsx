@@ -21,7 +21,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { Download, Plus, Sliders, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, Tractor } from "lucide-react"
+import { Download, Plus, Sliders, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, Tractor, Search } from "lucide-react"
 // aliases used in the existing markup
 const DownloadIcon = Download
 const FileTextIcon = FileText
@@ -150,7 +150,7 @@ export default function LotesPage() {
     <div className="space-y-6">
       <Card className={"mb-8"}>
         <CardHeader>
-          <CardTitle className={"mb-4"}>Lista de Fazendas</CardTitle>
+          <CardTitle className={"mb-4"}>Lista de Lotes</CardTitle>
           <div className="flex items-center justify-between pb-3 border-b dark:border-neutral-800 border-neutral-200">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -318,24 +318,11 @@ export default function LotesPage() {
               </DropdownMenu>
 
               <div className="flex items-center gap-2 ml-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
                     <Button variant='outline' size='sm'>
-                      <DownloadIcon className='mr-2 h-4 w-4' />
-                      Exportar
+                      <Search className='mr-2 h-4 w-4' />
+                      Consultar lote
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={() => handleExportCSV(units)}>
-                      <FileTextIcon className='mr-2 h-4 w-4' />
-                      Exportar CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <FileSpreadsheetIcon className='mr-2 h-4 w-4' />
-                      Exportar PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                 
               </div>
 
               <Button
@@ -386,8 +373,10 @@ export default function LotesPage() {
                         </div>
                       </div>
                       {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {syncDate}</div> */}
-                      <div className="">
-                        <Button variant="outline" size="sm" className={"cursor-pointer"}>Acompanhar produção</Button>
+                      <div className="border-t pt-2 mt-1">
+                        <Link href={`/fazenda/lotes/${u.id}`}>
+                          <Button variant="ghost" size="sm" className={"cursor-pointer"}>Acompanhar produção</Button>
+                        </Link>
                       </div>
                     </div>
                   )

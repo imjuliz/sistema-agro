@@ -12,6 +12,7 @@ router.get("/tipo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLotePorTipoC
 // router.get("/ativo", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), getLoteAtividadeController);
 router.get("/vegetal", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA"]), geLotePorTipoVegetaisController);
 router.get("/:id", auth(["GERENTE_FAZENDA"]), getLotePorIdController);
+router.post("/", auth(["GERENTE_FAZENDA"]), createLoteController);
 router.post("/:unidadeId/:contratoId", auth(["GERENTE_FAZENDA"]), createLoteController);
 router.put("/:id/:unidadeId/:contratoId", auth(["GERENTE_FAZENDA"]), updateLoteController);
 router.delete("/:id", auth(["GERENTE_FAZENDA"]), deleteLoteController);
