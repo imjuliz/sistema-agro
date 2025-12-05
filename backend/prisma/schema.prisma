@@ -148,7 +148,7 @@ model Produto {
   origemUnidadeId Int?              @map("origem_unidade_id")
   // fornecedorId    Int?               @map("fornecedor_id")
   criadoPorId     Int?              @map("criado_por_id")
-  loteId          Int?              @map("lote_id")
+  loteId          Int?              @unique
   nome            String            @db.VarChar(150)
   sku             String            @unique @db.VarChar(50)
   categoria       String?           @db.VarChar(100)
@@ -171,7 +171,7 @@ model Produto {
   producao        Producao[]
   criadoPor       Usuario?          @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
   // fornecedor      FornecedorExterno? @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id])
-  lote            Lote?             @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  lote            Lote?             @relation(fields: [loteId], references: [id])
   origemUnidade   Unidade?          @relation("ProdutoOrigem", fields: [origemUnidadeId], references: [id])
   unidade         Unidade           @relation("ProdutoUnidade", fields: [unidadeId], references: [id])
 
@@ -227,7 +227,7 @@ model EstoqueProduto {
   pedidoItem          PedidoItem?        @relation(fields: [pedidoItemId], references: [id])
   producao            Producao?          @relation(fields: [producaoId], references: [id])
   produto             Produto?           @relation(fields: [produtoId], references: [id])
-  itensVendas ItemVenda[]
+  itensVendas         ItemVenda[]
 
   @@unique([estoqueId, produtoId])
   @@index([produtoId])
@@ -482,7 +482,8 @@ model Lote {
   responsavelId          Int                   @map("responsavel_id")
   nome                   String                @db.VarChar(255)
   tipo                   TipoLote
-  qntdItens              Int?                  @map("qntd_itens")
+  tipoProduto            TipoProduto?
+  quantidade             Int?                  @map("qntd_itens")
   preco                  Decimal               @db.Decimal(10, 2)
   unidadeMedida          UnidadesDeMedida      @map("unidade_medida")
   observacoes            String?
@@ -494,7 +495,7 @@ model Lote {
   itensEsperados         Json?                 @map("itens_esperados")
   animals                Animal[]
   atvdAnimalia           AtvdAnimalia[]
-  atividadesLote         AtvdLote[]
+  // atividadesLote         AtvdLote[]
   atvdAgricola           AtvdAgricola[]
   estoqueProdutos        EstoqueProduto[]
   contrato               Contrato?             @relation(fields: [contratoId], references: [id])
@@ -503,7 +504,7 @@ model Lote {
   pedidoItems            PedidoItem[]
   plantios               Plantio[]
   producoes              Producao[]
-  produtos               Produto[]
+  produto                Produto?
   rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
   rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
   registrosSanitarios    RegistroSanitario[]
@@ -627,8 +628,9 @@ model RegistroSanitario {
   dataAplicacao DateTime              @default(now()) @map("data_aplicacao")
   quantidade    Float?
   observacoes   String?
-  lote          Lote                  @relation(fields: [loteId], references: [id], onDelete: Cascade)
-  producao      Producao              @relation(fields: [producaoId], references: [id], onDelete: Cascade)
+  lote          Lote                  @relation(fields: [loteId], references: [id])
+
+  producao Producao @relation(fields: [producaoId], references: [id], onDelete: Cascade)
 
   @@index([loteId])
   @@index([producaoId])
@@ -643,7 +645,7 @@ model AtvdLote {
   loteId        Int
   data          DateTime
   responsavelId Int
-  lote          Lote           @relation(fields: [loteId], references: [id])
+  // lote          Lote           @relation(fields: [loteId], references: [id])
   responsavel   Usuario        @relation(fields: [responsavelId], references: [id])
 
   @@map("atvd_lote")
@@ -705,15 +707,15 @@ model Venda {
 }
 
 model ItemVenda {
-  id            Int     @id @default(autoincrement())
-  vendaId       Int     @map("venda_id")
-  produtoId     Int     @map("produto_id")
+  id            Int            @id @default(autoincrement())
+  vendaId       Int            @map("venda_id")
+  produtoId     Int            @map("produto_id")
   quantidade    Int
-  precoUnitario Decimal @map("preco_unitario") @db.Decimal(12, 2)
-  desconto      Decimal @default(0) @db.Decimal(12, 2)
-  subtotal      Decimal @db.Decimal(12, 2)
+  precoUnitario Decimal        @map("preco_unitario") @db.Decimal(12, 2)
+  desconto      Decimal        @default(0) @db.Decimal(12, 2)
+  subtotal      Decimal        @db.Decimal(12, 2)
   produto       EstoqueProduto @relation(fields: [produtoId], references: [id])
-  venda         Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  venda         Venda          @relation(fields: [vendaId], references: [id], onDelete: Cascade)
 
   @@index([vendaId])
   @@index([produtoId])
@@ -819,6 +821,11 @@ enum TipoUnidade {
   @@map("tipo_unidade")
 }
 
+enum TipoProduto {
+  PLANTIO
+  ANIMALIA
+}
+
 enum TipoLote {
   GADO
   SOJA
@@ -830,6 +837,10 @@ enum TipoLote {
   EQUINO
   CAPRINOS
   OUTRO
+  LEGUME
+  FRUTA
+  VERDURA
+  GRÃOS
   PLANTIO
 
   @@map("tipo_lote")
@@ -1034,6 +1045,7 @@ enum TipoTransporte {
 }
 
 enum StatusLote {
+  EM_PREPARO
   PENDENTE
   PRONTO
   ENVIADO
