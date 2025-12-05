@@ -53,6 +53,9 @@ export default function app() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountReceived, setAmountReceived] = useState(0);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [caixaAberto, setCaixaAberto] = useState(false);
+  const [abrindoCaixa, setAbrindoCaixa] = useState(false);
+  
   const categories = ['all', ...Array.from(new Set((productsList || []).map(p => p.category || ''))).filter(c => c)];
   const filteredProducts = (productsList || []).filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
@@ -77,6 +80,25 @@ export default function app() {
   const getTotal = () => (getSubtotal() - getDiscountAmount() + getTax());
   const getChange = () => Math.max(0, Number(amountReceived || 0) - getTotal());
   const clearCart = () => { setCart([]); setDiscountPercent(0); setAmountReceived(0); };
+  
+  const handleAbrirCaixa = async () => {
+    setAbrindoCaixa(true);
+    try {
+      const resp = await safeFetchJson('/caixa/abrir', { method: 'POST', body: JSON.stringify({ saldoInicial: 0 }) });
+      if (resp && resp.sucesso) {
+        setCaixaAberto(true);
+        alert('✓ Caixa aberto com sucesso!');
+      } else {
+        alert('Erro ao abrir caixa: ' + (resp?.erro || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error('Erro ao abrir caixa:', err);
+      alert('Erro ao abrir caixa');
+    } finally {
+      setAbrindoCaixa(false);
+    }
+  };
+  
   const ENDPOINTS = {
     produtosList: '/produtos/listar',
     produtosBase: '/produtos',
@@ -174,8 +196,12 @@ export default function app() {
         return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
       });
 
-  const payload = { pagamento: paymentMethod, itens, nomeCliente: clienteNome || undefined };
+      const payload = { pagamento: paymentMethod, itens, nomeCliente: clienteNome || undefined };
+      console.log('📤 Enviando payload para /vendas/criar:', payload);
+      console.log('👤 User info (user):', user);
+      
       const resp = await safeFetchJson(ENDPOINTS.vendasCriar, { method: 'POST', body: JSON.stringify(payload) });
+      console.log('📥 Resposta do servidor:', resp);
 
       if (!resp || resp.sucesso === false) {
         console.error('Erro ao criar venda', resp);
@@ -397,6 +423,20 @@ export default function app() {
           <TabsTrigger value="pos">Frente de Caixa</TabsTrigger>
           <TabsTrigger value="sales">Histórico de Vendas</TabsTrigger>
         </TabsList>
+
+        {!caixaAberto && (
+          <Card className="border-yellow-300 bg-yellow-50">
+            <CardHeader>
+              <CardTitle className="text-yellow-900">⚠️ Caixa não aberto</CardTitle>
+              <CardDescription className="text-yellow-700">Você precisa abrir o caixa antes de registrar vendas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleAbrirCaixa} disabled={abrindoCaixa} className="bg-yellow-600 hover:bg-yellow-700">
+                {abrindoCaixa ? 'Abrindo caixa...' : '✓ Abrir Caixa'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <TabsContent value="pos" className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-3">

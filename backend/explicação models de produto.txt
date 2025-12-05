@@ -1,0 +1,373 @@
+A seguir você terá a explicação mais completa, clara e detalhada possível sobre como funciona cada tabela, cada coluna e todos os relacionamentos entre elas — exatamente com o seu schema atual, incluindo a lógica completa do fluxo do produto → estoque → produção → pedidos → vendas.
+
+Prepare-se: vai ser grande, mas extremamente útil.
+Se quiser um diagrama visual (ERD), também posso gerar depois.
+
+🎯 VISÃO GERAL DO SISTEMA
+
+Seu sistema trabalha com cinco entidades centrais:
+
+Produto → Um item cadastrado (com SKU, descrição, validade, preço, etc.)
+
+Estoque → Um estoque pertencente a uma unidade.
+
+EstoqueProduto → A QUANTIDADE disponível de um produto em um estoque específico.
+
+Venda → A venda realizada por algum usuário em uma unidade e caixa.
+
+ItemVenda → Os produtos vendidos em cada venda (referenciam EstoqueProduto, não Produto diretamente).
+
+E ainda:
+
+EstoqueMovimento → Registra entradas e saídas em estoques (venda, pedido, produção etc.).
+
+Vários relacionamentos com Unidade, Pedido, Producao, Lote, Fornecedor etc.
+
+🟦 1. TABELA Produto
+
+Representa o produto master: o cadastro principal.
+
+🔢 Colunas importantes
+
+id → ID único do produto.
+
+unidadeId → Unidade responsável por este produto.
+
+origemUnidadeId → Caso tenha vindo de outra unidade.
+
+loteId → Lote original do produto.
+
+nome, sku, categoria, descricao
+
+preco → Preço base configurado (não é necessariamente o vendido).
+
+dataFabricacao, dataValidade
+
+tags, impostos, pesoUnidade, unidadeMedida
+
+isForSale → Produto está disponível para venda?
+
+🔗 Relacionamentos
+
+estoqueProdutos → Um produto pode existir em vários estoques, em cada um com quantidades diferentes.
+
+pedidoItems → Itens que envolvem este produto em pedidos.
+
+producao → Produções que geraram este produto.
+
+lote → Lote a que pertence.
+
+unidade → Unidade criadora/dona do produto.
+
+origemUnidade → Unid. de origem (transferência).
+
+criadoPor → Usuário que cadastrou.
+
+📌 INTERPRETAÇÃO
+
+Produto é o catálogo.
+Não representa quantidade em si.
+Quantidade fica somente na tabela EstoqueProduto.
+
+🟩 2. TABELA Estoque
+
+Cada unidade tem um único estoque:
+
+id → ID do estoque.
+
+unidadeId → FK única: uma unidade = um estoque.
+
+estoqueMovimentos → Entradas/saídas dessa unidade.
+
+estoqueProdutos → Produtos armazenados nesse estoque.
+
+📌 INTERPRETAÇÃO
+
+Um estoque pertence a apenas uma unidade.
+Mas um produto pode aparecer muitas vezes em diferentes estoques, cada um com quantidades separadas.
+
+🟫 3. TABELA EstoqueProduto
+
+Essa é a tabela MAIS IMPORTANTE do sistema.
+
+Ela liga:
+
+Estoque 1  --- N EstoqueProduto --- N Produto
+
+
+Mas ela também é usada nas vendas, pedidos e produções.
+
+🔢 Colunas
+
+estoqueId → Estoque ao qual pertence.
+
+produtoId → Produto master.
+
+nome, marca, sku → Copiados do Produto ou ajustados.
+
+qntdAtual → Quantidade atual disponível.
+
+qntdMin → Estoque mínimo.
+
+precoUnitario → Preço que entrou no estoque (pode variar por lote).
+
+pesoUnidade
+
+validade
+
+dataEntrada / dataSaida
+
+pedidoId, pedidoItemId
+
+producaoId
+
+fornecedorUnidadeId (caso tenha vindo de outra unidade)
+
+fornecedorExternoId
+
+🔗 Relacionamentos
+
+estoque → Ao estoque dono da quantidade.
+
+produto → Ao produto catálogo.
+
+producao → Caso tenha sido gerado numa produção.
+
+pedido + pedidoItem → Entrada via pedido de compra.
+
+lote → Lote associado.
+
+fornecedorUnidade ou fornecedorExterno
+
+itensVendas → ItemVenda usa EstoqueProduto como FK
+
+📌 INTERPRETAÇÃO
+
+EstoqueProduto é a união de:
+
+Produto ✔️
+
+Estoque ✔️
+
+Lote ✔️
+
+Quantidade ✔️
+
+Origem/Fornecedor ✔️
+
+Pedido/Produção ✔️
+
+É o registro que realmente representa "o produto físico dentro do estoque".
+
+🟥 4. TABELA Venda
+
+Representa uma venda completa realizada por um usuário em uma unidade e caixa.
+
+Colunas
+
+caixaId → Caixa onde ocorreu a venda.
+
+usuarioId → Usuário que vendeu.
+
+unidadeId → Unidade da venda.
+
+total → Total calculado.
+
+status → Status (provavelmente: PENDENTE, CONCLUÍDA etc.)
+
+pagamento → Cartão, PIX, etc.
+
+Relacionamentos
+
+itens → Itens vendidos (ItemVenda)
+
+estoqueMovimentos → Movimentos gerados pela venda
+
+caixa, unidade, usuario
+
+📌 INTERPRETAÇÃO
+
+Uma venda gera:
+
+Venda → muitos ItemVenda
+Venda → muitos EstoqueMovimento
+
+🟨 5. TABELA ItemVenda
+
+Tabela que representa cada produto vendido em uma venda.
+
+Colunas
+
+vendaId → Venda a que pertence.
+
+produtoId → CUIDADO: isso referencia EstoqueProduto.id e NÃO Produto.id
+
+quantidade
+
+precoUnitario
+
+desconto
+
+subtotal
+
+Relacionamentos
+
+produto → EstoqueProduto
+
+venda → Venda
+
+📌 O PONTO MAIS IMPORTANTE
+
+Você tomou uma decisão MUITO BOA:
+
+O item da venda referencia EstoqueProduto e não Produto.
+
+Por quê isso é ótimo?
+
+✔️ Mantém rastreabilidade por lote
+✔️ Mantém o preço real do estoque (não o preço do catálogo)
+✔️ Permite vender o mesmo SKU vindo de diferentes lotes com preços diferentes
+✔️ Permite auditoria fiscal perfeita
+
+Exemplo visual:
+
+Produto: "Arroz"
+   → EstoqueProduto #1 (lote A) — preço R$ 5,00
+   → EstoqueProduto #2 (lote B) — preço R$ 4,80
+
+
+Na venda:
+
+ItemVenda.produtoId = EstoqueProduto.id
+
+
+Ou seja, você sabe exatamente de qual lote saiu a venda.
+
+🟧 6. TABELA EstoqueMovimento
+
+Mantém o histórico de entradas e saídas do estoque.
+
+Campos
+
+estoqueId
+
+tipoMovimento → ENTRADA / SAÍDA / TRANSFERÊNCIA / PRODUÇÃO / VENDA / DEVOLUÇÃO
+
+vendaId → se veio de uma venda
+
+pedidoId → se veio de um pedido de compra
+
+producaoId
+
+origemUnidadeId / destinoUnidadeId
+
+Relacionamentos
+
+estoque → estoque afetado
+
+venda, pedido, producao, origemUnidade, destinoUnidade
+
+📌 INTERPRETAÇÃO
+
+Tudo que muda quantidade:
+
+venda
+
+compra
+
+transferência
+
+produção
+
+devolução
+
+Entra aqui.
+
+🔵 COMO FICA A RELAÇÃO ENTRE TODAS? (Resumo visual)
+Produto (catálogo)
+    │ 1:N
+    ▼
+EstoqueProduto (produto físico + lote + quantidade)
+    │ N:1
+    ▼
+Estoque (depósito da unidade)
+    │ 1:N
+    ▼
+EstoqueMovimento (histórico de entradas/saídas)
+
+
+Vendas:
+
+Venda 1:N ItemVenda
+ItemVenda N:1 EstoqueProduto 
+EstoqueProduto N:1 Produto
+Venda N:1 Caixa / Unidade / Usuario
+
+
+Pedidos:
+
+Pedido 1:N PedidoItem 1:N EstoqueProduto
+
+
+Produção:
+
+Producao 1:N EstoqueProduto
+
+🔥 O fluxo completo no mundo real
+1. Você cadastra um Produto
+
+→ apenas informações básicas, sem quantidade.
+
+2. O produto entra no estoque
+
+Cria um EstoqueProduto:
+
+EstoqueProduto {
+  produtoId: X,
+  estoqueId: Y,
+  qntdAtual: 50,
+  precoUnitario: 4.80,
+  loteId: 7
+}
+
+
+E gera um EstoqueMovimento de entrada.
+
+3. Uma venda é registrada
+
+Cria:
+
+Venda { id: 1, usuarioId, unidadeId... }
+ItemVenda { vendaId: 1, produtoId: EstoqueProduto.id, quantidade: 2 }
+EstoqueMovimento { tipo: SAIDA, quantidade: 2, vendaId: 1 }
+
+
+O estoque diminui:
+
+EstoqueProduto.qntdAtual -= 2
+
+4. Auditoria
+
+Você consegue ver:
+
+qual lote foi vendido
+
+a que preço entrou
+
+qual usuário vendeu
+
+qual estoque
+
+qual unidade
+
+qual caixa
+
+🎉 CONCLUSÃO — lógica do relacionamento
+✔ Produto é o catálogo
+✔ Estoque é por unidade
+✔ EstoqueProduto é o item físico com quantidade
+✔ ItemVenda referencia EstoqueProduto (correto)
+✔ Venda referencia Unidade, Usuario, Caixa
+✔ EstoqueMovimento registra cada mudança
+
+Seu modelo é forte, escalável, fiscalmente rastreável e compatível com múltiplos estoques e múltiplos lotes.

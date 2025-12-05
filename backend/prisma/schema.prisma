@@ -166,7 +166,7 @@ model Produto {
   impostos        Json?             @map("impostos")
   isForSale       Boolean           @default(false)
   estoqueProdutos EstoqueProduto[]
-  itensVendas     ItemVenda[]
+  // itensVendas     ItemVenda[]
   pedidoItems     PedidoItem[]
   producao        Producao[]
   criadoPor       Usuario?          @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
@@ -227,6 +227,7 @@ model EstoqueProduto {
   pedidoItem          PedidoItem?        @relation(fields: [pedidoItemId], references: [id])
   producao            Producao?          @relation(fields: [producaoId], references: [id])
   produto             Produto?           @relation(fields: [produtoId], references: [id])
+  itensVendas ItemVenda[]
 
   @@unique([estoqueId, produtoId])
   @@index([produtoId])
@@ -711,7 +712,7 @@ model ItemVenda {
   precoUnitario Decimal @map("preco_unitario") @db.Decimal(12, 2)
   desconto      Decimal @default(0) @db.Decimal(12, 2)
   subtotal      Decimal @db.Decimal(12, 2)
-  produto       Produto @relation(fields: [produtoId], references: [id])
+  produto       EstoqueProduto @relation(fields: [produtoId], references: [id])
   venda         Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
 
   @@index([vendaId])

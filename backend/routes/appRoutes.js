@@ -12,7 +12,7 @@ import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController,  calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController,
-    listarDespesasController
+    listarDespesasController, abrirCaixaController
 } from "../controllers/FinanceiroController.js";
 import {
     criarCategoriaController,
@@ -45,6 +45,7 @@ import { getDashboardDataController, getLotesPorStatusController } from '../cont
 router.post("/translate", translateText);
 
 // rotas usadas para loja --------------------------------------------------------------------
+router.post("/caixa/abrir", auth(), abrirCaixaController);
 router.get("/vendas/ultimos-6-meses",auth(),contarVendasPorMesUltimos6MesesController);
 router.post("/vendas/criar", auth(), criarVendaController);
 router.get("/listarVendas/:unidadeId", listarVendasController);

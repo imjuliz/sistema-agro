@@ -275,6 +275,57 @@ export const listarDespesas = async (unidadeId) => {
     }
   };
 
+// Função para abrir o caixa do dia
+export const abrirCaixa = async (usuarioId, unidadeId, saldoInicial = 0) => {
+    try {
+        const agora = new Date();
+        const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
+
+        // Verificar se já existe um caixa aberto hoje
+        const caixaExistente = await prisma.caixa.findFirst({
+            where: {
+                unidadeId: Number(unidadeId),
+                abertoEm: { gte: inicioDoDia, lte: fimDoDia },
+                status: true
+            }
+        });
+
+        if (caixaExistente) {
+            return {
+                sucesso: true,
+                caixa: caixaExistente,
+                message: 'Caixa já estava aberto para hoje.'
+            };
+        }
+
+        // Criar novo caixa
+        const novoCaixa = await prisma.caixa.create({
+            data: {
+                unidadeId: Number(unidadeId),
+                usuarioId: Number(usuarioId),
+                abertoEm: agora,
+                saldoInicial: saldoInicial,
+                status: true
+            }
+        });
+
+        console.log('✓ Caixa aberto com sucesso:', novoCaixa.id);
+        return {
+            sucesso: true,
+            caixa: novoCaixa,
+            message: 'Caixa aberto com sucesso!'
+        };
+    } catch (error) {
+        console.error('Erro ao abrir caixa:', error);
+        return {
+            sucesso: false,
+            erro: 'Erro ao abrir caixa',
+            detalhes: error.message
+        };
+    }
+};
+
 //do arquivo Loja.js
 export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA DA UNIDADE
     try {
@@ -361,7 +412,21 @@ export async function criarVenda(req, res) {
     try {
   const { caixaId, usuarioId, unidadeId, pagamento, itens, nomeCliente } = req.body;
   console.log('criarVenda payload:', { caixaId, usuarioId, unidadeId, pagamento, itensLength: Array.isArray(itens) ? itens.length : 0, nomeCliente });
-  if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
+  console.log('req.body completo:', req.body);
+  
+  // Validate required fields with detailed error messages
+  if (!usuarioId) {
+    console.error('❌ usuarioId ausente ou inválido:', usuarioId);
+    return res.status(400).json({ sucesso: false, erro: 'Campo usuarioId ausente ou inválido.' });
+  }
+  if (!unidadeId) {
+    console.error('❌ unidadeId ausente ou inválido:', unidadeId);
+    return res.status(400).json({ sucesso: false, erro: 'Campo unidadeId ausente ou inválido.' });
+  }
+  if (!itens || !Array.isArray(itens) || itens.length === 0) {
+    console.error('❌ itens ausente, não é array ou está vazio:', itens);
+    return res.status(400).json({ sucesso: false, erro: 'Campo itens ausente, deve ser um array não vazio.' });
+  }
 
         let caixaIdToUse = caixaId ? Number(caixaId) : null;
         if (!caixaIdToUse) {
