@@ -8,9 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from "@/config";
 export function SectionCards() {
 
-  const [saldo, setSaldo] = useState([]);
-  const [qtdEstoque, setQtdEstoque] = useState([]);
-  const [saldoLiq, setSaldoLiq] = useState([]);
+  const [saldo, setSaldo] = useState(0);
+  const [qtdEstoque, setQtdEstoque] = useState(0);
+  const [saldoLiq, setSaldoLiq] = useState(0);
   const [error, setError] = useState(null);
 
   const { fetchWithAuth } = useAuth();
@@ -36,10 +36,11 @@ export function SectionCards() {
           console.warn('[fetchSaldoDiario] resposta não-JSON, texto:', t);
           return null;
         });
-        const payload = body?.data ?? body ?? [];
+        const saldoValue = body?.saldoFinal ?? body?.data ?? 0;
+        const payload = typeof saldoValue === 'number' ? saldoValue : 0;
 
         if (!mounted) return;
-        setSaldo(Array.isArray(payload) ? payload : [payload]);
+        setSaldo(payload);
       } catch (err) {
         console.error('[fetchSaldoDiario] erro:', err);
         if (mounted) setError(String(err?.message ?? err));
@@ -72,10 +73,11 @@ export function SectionCards() {
           console.warn('[fetchSaldoLiq] resposta não-JSON, texto:', t);
           return null;
         });
-        const payload = body?.data ?? body ?? [];
+        const saldoLiqValue = body?.saldoLiquido ?? body?.data ?? 0;
+        const payload = typeof saldoLiqValue === 'number' ? saldoLiqValue : 0;
 
         if (!mounted) return;
-        setSaldoLiq(Array.isArray(payload) ? payload : [payload]);
+        setSaldoLiq(payload);
       } catch (err) {
         console.error('[fetchSaldoLiq] erro:', err);
         if (mounted) setError(String(err?.message ?? err));
@@ -108,10 +110,11 @@ export function SectionCards() {
           console.warn('[fetchQtdEstoque] resposta não-JSON, texto:', t);
           return null;
         });
-        const payload = body?.data ?? body ?? [];
+        const qtdValue = body?.totalItens ?? body?.data ?? 0;
+        const payload = typeof qtdValue === 'number' ? qtdValue : 0;
 
         if (!mounted) return;
-        setQtdEstoque(Array.isArray(payload) ? payload : [payload]);
+        setQtdEstoque(payload);
       } catch (err) {
         console.error('[fetchQtdEstoque] erro:', err);
         if (mounted) setError(String(err?.message ?? err));
@@ -129,15 +132,12 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Saldo diário</CardDescription>
           {error ? (<CardTitle className="text-2xl font-semibold text-red-600"> Erro ao carregar dados! </CardTitle>
-          ) : saldo.length === 0 ? (
+          ) : saldo === 0 ? (
             <CardTitle className="text-2xl font-semibold text-gray-500"> Nenhum saldo verificado! </CardTitle>
-          ) : (saldo.map((user) => (
-            <div key={user.id}>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                {user.nome ?? user}
-              </CardTitle>
-            </div>
-          ))
+          ) : (
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {saldo}
+            </CardTitle>
           )}
           <CardAction className="md:hidden"><Badge variant="outline"><IconTrendingUp />+12.5%</Badge></CardAction>
         </CardHeader>
@@ -151,10 +151,11 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Lucros</CardDescription>
           {error ? (<CardTitle className="text-2xl font-semibold text-red-600"> Erro ao carregar dados! </CardTitle>
-          ) : saldoLiq.length === 0 ? (<CardTitle className="text-2xl font-semibold text-gray-500"> Nenhum lucro verificado! </CardTitle>
-          ) : (saldoLiq.map((user) => (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl" key={user.id}>{user.nome ?? user}</CardTitle>
-          ))
+          ) : saldoLiq === 0 ? (<CardTitle className="text-2xl font-semibold text-gray-500"> Nenhum lucro verificado! </CardTitle>
+          ) : (
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {saldoLiq}
+            </CardTitle>
           )}
           <CardAction className="md:hidden"><Badge variant="outline"><IconTrendingDown />-20%</Badge></CardAction>
         </CardHeader>
@@ -168,13 +169,12 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Estoque</CardDescription>
           {error ? (<CardTitle className="text-2xl font-semibold text-red-600"> Erro ao carregar dados! </CardTitle>
-          ) : qtdEstoque.length === 0 ? (
+          ) : qtdEstoque === 0 ? (
             <CardTitle className="text-2xl font-semibold text-gray-500"> Nenhum estoque verificado! </CardTitle>
-          ) : (qtdEstoque.map((user) => (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl" key={user.id}>
-              {user.nome ?? user}
+          ) : (
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {qtdEstoque}
             </CardTitle>
-          ))
           )}
           <CardAction> </CardAction>
         </CardHeader>
