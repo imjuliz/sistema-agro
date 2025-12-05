@@ -81,6 +81,24 @@ export default function app() {
   const getChange = () => Math.max(0, Number(amountReceived || 0) - getTotal());
   const clearCart = () => { setCart([]); setDiscountPercent(0); setAmountReceived(0); };
   
+  const verificarCaixaAberto = async () => {
+    try {
+      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+      if (!unidadeId) return;
+      
+      // Tenta buscar o saldo final — se conseguir, significa que um caixa está aberto
+      const resp = await safeFetchJson('/saldo-final', { method: 'GET' });
+      if (resp && resp.sucesso) {
+        setCaixaAberto(true);
+      } else {
+        setCaixaAberto(false);
+      }
+    } catch (err) {
+      console.debug('Erro ao verificar caixa:', err);
+      setCaixaAberto(false);
+    }
+  };
+  
   const handleAbrirCaixa = async () => {
     setAbrindoCaixa(true);
     try {
@@ -356,7 +374,10 @@ export default function app() {
     finally { setSalesLoading(false); }
   };
 
-  useEffect(() => { loadFinance(); }, [fetchWithAuth, user]);
+  useEffect(() => { 
+    loadFinance();
+    verificarCaixaAberto();
+  }, [fetchWithAuth, user]);
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

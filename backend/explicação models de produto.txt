@@ -371,3 +371,100 @@ qual caixa
 ✔ EstoqueMovimento registra cada mudança
 
 Seu modelo é forte, escalável, fiscalmente rastreável e compatível com múltiplos estoques e múltiplos lotes.
+
+Perfeito, essa é uma pergunta muito importante e vai direto ao ponto do porquê ainda precisamos do Produto mesmo usando EstoqueProduto. Vou detalhar.
+
+🔹 1. Produto vs EstoqueProduto: a diferença essencial
+Aspecto	Produto	EstoqueProduto
+Representa	O catálogo mestre de produtos, sem quantidade	Um item físico em estoque, com quantidade, lote, preço de entrada, validade
+Quantidade	Não existe	Existe (qntdAtual)
+Preço	Preço base ou sugerido	Preço real de entrada/compra/lote
+Lote	Não	Sim (cada EstoqueProduto pode ter lote diferente)
+Unidade/Local	Pode ter uma unidade dona (unidadeId)	Pertence a um estoque específico
+Vendas/Pedidos	Não diretamente	Referenciado por ItemVenda ou PedidoItem
+Informação	Nome, SKU, descrição, categoria, peso, impostos, tags	Nome, SKU, preço, quantidade, validade, lote, fornecedor, produção, pedido
+
+Resumo:
+
+Produto é informação estática: nome, descrição, categoria, SKU, unidade de medida, impostos, tags, peso.
+
+EstoqueProduto é informação dinâmica: quantidade disponível, lote, validade, preço real, origem (pedido, produção ou transferência).
+
+🔹 2. Por que ainda precisamos de Produto
+
+Mesmo que você esteja usando EstoqueProduto para todas as operações de estoque e vendas, Produto ainda é útil para:
+
+Cadastro mestre
+
+Serve como referência para o catálogo da empresa.
+
+Permite listar todos os produtos disponíveis, mesmo que estejam zerados em estoque.
+
+Padronização
+
+Evita duplicação de informações: nome, SKU, categoria, peso, impostos.
+
+Se você só usar EstoqueProduto, precisaria repetir essas informações em cada entrada, gerando inconsistência.
+
+Relacionamentos futuros
+
+Relacionamentos como producao, pedidoItems ou análises de vendas por tipo de produto ficam fáceis.
+
+Exemplo: “qual categoria vendeu mais?” — você precisa de um Produto com categoria para agrupar.
+
+Gestão de dados mestre vs estoque
+
+Produto = “o que existe na loja/catálogo”
+
+EstoqueProduto = “o que está fisicamente disponível e pode ser vendido/agregado a vendas ou pedidos”
+
+🔹 3. Fluxo prático usando ambos
+
+Cadastro:
+
+Produto.create({ nome: "Arroz 1kg", sku: "ARZ-001", categoria: "Cereal" })
+
+
+Entrada no estoque (EstoqueProduto):
+
+EstoqueProduto.create({
+  produtoId: 1, 
+  estoqueId: 1,
+  qntdAtual: 50, 
+  precoUnitario: 5.00,
+  validade: "2025-01-01"
+})
+
+
+Venda:
+
+ItemVenda.create({
+  vendaId: 1,
+  produtoId: EstoqueProduto.id,  // não Produto.id
+  quantidade: 2,
+  precoUnitario: 5.00
+})
+
+
+Consulta analítica:
+
+SELECT categoria, SUM(quantidade) 
+FROM Produto
+JOIN EstoqueProduto ON Produto.id = EstoqueProduto.produtoId
+JOIN ItemVenda ON EstoqueProduto.id = ItemVenda.produtoId
+GROUP BY categoria
+
+
+Aqui vemos que Produto fornece a “categoria” e outros metadados.
+
+EstoqueProduto fornece quantidade e preço real da venda.
+
+🔹 4. Conclusão
+
+Mesmo usando EstoqueProduto:
+
+Produto é o mestre e garante consistência de informações do catálogo
+
+EstoqueProduto é a parte dinâmica, rastreando quantidade, lote e preço real
+
+Sem Produto, você teria que repetir informações estáticas em cada EstoqueProduto, tornando manutenção e análises mais difíceis.
