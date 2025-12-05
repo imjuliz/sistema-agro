@@ -33,12 +33,39 @@ function extractArrayFromResponse(data) {
 }
 
 export function SectionCards() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+    const [lotesDisponiveis, setLotesDisponiveis] = useState(null);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadCount() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/lotesDisponiveis/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                // controller returns { sucesso: true, lotesDisponiveis: { quantidade, ... } }
+                let raw = data?.lotesDisponiveis?.quantidade ?? data?.quantidade;
+                if (raw === undefined && typeof data?.lotesDisponiveis === 'number') raw = data.lotesDisponiveis;
+                const qtd = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+                setLotesDisponiveis(qtd);
+            } catch (err) {
+                console.error('Erro carregando quantidade de lotes disponíveis:', err);
+                setLotesDisponiveis(0);
+            }
+        }
+        loadCount();
+        return () => { mounted = false }
+    }, [unidadeId, fetchWithAuth]);
+
     return (
         <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Lotes disponíveis</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">275</CardTitle>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesDisponiveis ?? '-'}</CardTitle>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
                     <div className="line-clamp-1 flex gap-2 font-medium">Lotes disponiveis para produção<IconTrendingDown className="size-4" /></div>
@@ -269,13 +296,76 @@ export function TableDemo2() {
             { value: 'GRÃOS', label: 'Grãos' },
         ];
 
-        const statusOptions = [
-            { value: 'ALL', label: 'Todos' },
-      { value: 'EM_PREPARO', label: 'Em preparo' },
-      { value: 'PENDENTE', label: 'Pendente' },
-      { value: 'PRONTO', label: 'Pronto' },
-      { value: 'ENVIADO', label: 'Enviado' },
-    ];
+                // status filter: restrict to requested subset
+                const statusOptions = [
+                        { value: 'ALL', label: 'Todos' },
+                        { value: 'SEMEADO', label: 'Semeado' },
+                        { value: 'CRESCIMENTO', label: 'Crescimento' },
+                        { value: 'COLHEITA', label: 'Colheita' },
+                        { value: 'COLHIDO', label: 'Colhido' },
+                        { value: 'PRONTO', label: 'Pronto' },
+                        { value: 'BLOQUEADO', label: 'Bloqueado' },
+                        { value: 'VENDIDO', label: 'Vendido' },
+                ];
+
+                        // helper to call backend partial update endpoint
+                        const handleUpdateLote = async (id, fields) => {
+                            if (!id) return false;
+                            try {
+                                const fetchFn = fetchWithAuth || fetch;
+                                const res = await fetchFn(`${API_URL}/lotes/${id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(fields),
+                                });
+                                const data = await res.json().catch(() => ({}));
+                                if (!res.ok) {
+                                    console.error('Erro atualizar lote', data);
+                                    toast.error(data.erro || data.message || 'Erro ao atualizar lote');
+                                    return false;
+                                }
+                                // optimistic update local state
+                                setRawLotes(prev => prev.map(r => r.id === id ? { ...r, ...fields } : r));
+                                toast.success('Atualizado com sucesso');
+                                return true;
+                            } catch (err) {
+                                console.error('Erro atualizar lote', err);
+                                toast.error('Erro ao atualizar lote');
+                                return false;
+                            }
+                        };
+
+                        // edit mode state for rows
+                        const [editingId, setEditingId] = useState(null);
+                        const [editingValues, setEditingValues] = useState({ status: '', preco: '', statusQualidade: '' });
+
+                        const startEdit = (lote) => {
+                            setEditingId(lote.id);
+                            setEditingValues({
+                                status: lote.status || '',
+                                preco: lote.preco ?? '',
+                                statusQualidade: (lote.statusQualidade || '').toString().toUpperCase(),
+                            });
+                        };
+
+                        const cancelEdit = () => {
+                            setEditingId(null);
+                            setEditingValues({ status: '', preco: '', statusQualidade: '' });
+                        };
+
+                        const saveEdit = async (lote) => {
+                            const payload = {};
+                            if (editingValues.status && editingValues.status !== lote.status) payload.status = editingValues.status;
+                            if (editingValues.preco !== lote.preco) payload.preco = editingValues.preco;
+                            if (editingValues.statusQualidade && editingValues.statusQualidade !== lote.statusQualidade) payload.statusQualidade = editingValues.statusQualidade;
+                            if (Object.keys(payload).length === 0) {
+                                // nothing changed
+                                cancelEdit();
+                                return;
+                            }
+                            const ok = await handleUpdateLote(lote.id, payload);
+                            if (ok) cancelEdit();
+                        };
 
     useEffect(() => {
         let mounted = true;
@@ -420,11 +510,12 @@ export function TableDemo2() {
                         <TableHead className="font-semibold">Talhão</TableHead>
                         <TableHead className="font-semibold">Plantio</TableHead>
                         <TableHead className="font-semibold">Validade</TableHead>
-                        <TableHead className="font-semibold">Status</TableHead>
+                                                <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold">Quantidade</TableHead>
                         <TableHead className="font-semibold">Unidade de medida</TableHead>
                         <TableHead className="font-semibold">Preço</TableHead>
-                        <TableHead className="font-semibold">StatusQualidade</TableHead>
+                                                <TableHead className="font-semibold">StatusQualidade</TableHead>
+                                                <TableHead className="font-semibold">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -436,11 +527,61 @@ export function TableDemo2() {
                             <TableCell>{lote.talhao}</TableCell>
                             <TableCell>{lote.plantio}</TableCell>
                             <TableCell>{lote.validade}</TableCell>
-                            <TableCell>{lote.status}</TableCell>
+                                                        <TableCell>
+                                                                {editingId === lote.id ? (
+                                                                    <Select value={editingValues.status} onValueChange={(v) => setEditingValues(prev => ({ ...prev, status: v }))}>
+                                                                        <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                                                                        <SelectContent>
+                                                                                <SelectGroup>
+                                                                                        <SelectLabel>Status (StatusLote)</SelectLabel>
+                                                                                        {statusOptions.filter(o => o.value !== 'ALL').map(opt => (
+                                                                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                                                        ))}
+                                                                                </SelectGroup>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                ) : (
+                                                                    <div className="text-sm">{lote.status}</div>
+                                                                )}
+                                                        </TableCell>
                             <TableCell>{lote.qtd}</TableCell>
                             <TableCell>{lote.unMedida}</TableCell>
-                            <TableCell>{lote.preco}</TableCell>
-                            <TableCell>{lote.statusQualidade}</TableCell>
+                                                        <TableCell>
+                                                                {editingId === lote.id ? (
+                                                                    <Input value={editingValues.preco ?? ''} onChange={(e) => setEditingValues(prev => ({ ...prev, preco: e.target.value }))} className="w-[120px]" />
+                                                                ) : (
+                                                                    <div className="text-sm">{lote.preco}</div>
+                                                                )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                                {editingId === lote.id ? (
+                                                                    <Select value={editingValues.statusQualidade} onValueChange={(v) => setEditingValues(prev => ({ ...prev, statusQualidade: v }))}>
+                                                                        <SelectTrigger className="w-[160px]"><SelectValue placeholder="StatusQualidade" /></SelectTrigger>
+                                                                        <SelectContent>
+                                                                                <SelectGroup>
+                                                                                        <SelectLabel>Status Qualidade</SelectLabel>
+                                                                                        <SelectItem value="PROPRIO">PROPRIO</SelectItem>
+                                                                                        <SelectItem value="ALERTA">ALERTA</SelectItem>
+                                                                                        <SelectItem value="IMPROPRIO">IMPROPRIO</SelectItem>
+                                                                                </SelectGroup>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                ) : (
+                                                                    <div className="text-sm">{lote.statusQualidade}</div>
+                                                                )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                                {editingId === lote.id ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Button size="small" variant="contained" onClick={() => saveEdit(lote)}>Salvar</Button>
+                                                                        <Button size="small" variant="outlined" onClick={cancelEdit}>Cancelar</Button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex justify-end">
+                                                                        <Button size="small" variant="outlined" onClick={() => startEdit(lote)}>Editar</Button>
+                                                                    </div>
+                                                                )}
+                                                        </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
