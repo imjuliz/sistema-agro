@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { API_URL } from "@/config";
+import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -101,13 +101,13 @@ export function RedefinirForm({ className, ...props }) {
 
     return (
         <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6 items-center", className)} {...props}>
-            <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex flex-col items-center gap-2 text-center w-full">
                 <h1 className="text-3xl font-bold text-black mb-5 dark:text-white">Redefinição de senha</h1>
                 <p className="text-muted-foreground text-1sm text-balance mb-15">
                     Defina uma nova senha para sua conta. {emailQuery ? <span className="font-medium">({emailQuery})</span> : null}
                 </p>
             </div>
-            <div className="grid gap-6">
+            <div className="grid gap-6 w-full">
                 <div className="grid gap-3">
                     <Label htmlFor="Senha" className={'text-black dark:text-white'}>Senha</Label>
                     <Input id="senha" type="password" placeholder="Digite sua nova senha" className={'text-black w-[100%] dark:text-white'} value={senha} onChange={(e) => setSenha(e.target.value)} required />

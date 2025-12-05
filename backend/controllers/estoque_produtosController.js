@@ -1,7 +1,20 @@
 import prisma from "../prisma/client.js";
-import { somarQtdTotalEstoque, getEstoque,  getProdutoPorId, createProduto, deleteProduto,  listarProdutos, atualizarQntdMin } from "../models/estoque_produtos.js";
+import {
+  somarQtdTotalEstoque,
+  getEstoque,
+  getProdutoPorId,
+  createProduto,
+  deleteProduto,
+  listarProdutos,
+  atualizarQntdMin,
+} from "../models/estoque_produtos.js";
 import { lotesPlantio } from "../models/Fazendas.js";
-import { verPedidos, contarSaidas, listarPedidosEntrega, listarPedidosOrigem } from "../models/unidade-de-venda/Loja.js";
+import {
+  verPedidos,
+  contarSaidas,
+  listarPedidosEntrega,
+  listarPedidosOrigem,
+} from "../models/unidade-de-venda/Loja.js";
 
 //BUSCAR PRODUTO MAIS VENDIDO
 export const buscarProdutoMaisVendidoController = async (req, res) => {
@@ -11,7 +24,7 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
     if (!unidadeId) {
       return res.status(401).json({
         sucesso: false,
-        message: "Usuário não possui unidade vinculada à sessão."
+        message: "Usuário não possui unidade vinculada à sessão.",
       });
     }
 
@@ -26,7 +39,7 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
     if (resultado.length === 0) {
       return res.json({
         sucesso: false,
-        message: "Nenhum item encontrado para esta unidade."
+        message: "Nenhum item encontrado para esta unidade.",
       });
     }
 
@@ -34,7 +47,7 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
 
     const produto = await prisma.produto.findUnique({
       where: { id: produtoMaisVendido.produtoId },
-      select: { id: true, nome: true, descricao: true }
+      select: { id: true, nome: true, descricao: true },
     });
 
     return res.json({
@@ -43,36 +56,42 @@ export const buscarProdutoMaisVendidoController = async (req, res) => {
         id: produto.id,
         nome: produto.nome,
         descricao: produto.descricao,
-        quantidadeVendida: produtoMaisVendido._sum.quantidade
+        quantidadeVendida: produtoMaisVendido._sum.quantidade,
       },
-      message: "Produto mais vendido encontrado com sucesso!"
+      message: "Produto mais vendido encontrado com sucesso!",
     });
-
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao buscar o produto mais vendido",
-      detalhes: error.message
+      detalhes: error.message,
     });
   }
 };
 
-
 // LISTAR PRODUTOS DA UNIDADE -- rota feita
 export const listarProdutosController = async (req, res) => {
   try {
-    const unidadeId = req.params.unidadeId;
+    console.log("usuaior oaosoodsajjdsajdioa:", req.usuario);
+    const { unidadeId } = req.usuario;
+    console.log("unidadeId:", unidadeId);
 
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." }); }
-
-    const resultado = await listarProdutos(Number(unidadeId));
-
+    if (!unidadeId) {
+      return res
+        .status(401)
+        .json({
+          sucesso: false,
+          erro: "Usuário não possui unidade vinculada à sessão.",
+        });
+    }
+    console.log("unidadeId:", unidadeId);
+    const resultado = await listarProdutos(unidadeId);
+   console.log("unidadeId:", unidadeId);
     return res.status(200).json({
       sucesso: resultado.sucesso,
       message: resultado.message,
       produtos: resultado.fornecedores ?? [],
     });
-
   } catch (error) {
     console.error("Erro no controller ao listar produtos:", error);
     return res.status(500).json({
@@ -88,11 +107,19 @@ export const getProdutoPorIdController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id || isNaN(id)) { return res.status(400).json({ sucesso: false, erro: "ID do produto inválido." }) }
+    if (!id || isNaN(id)) {
+      return res
+        .status(400)
+        .json({ sucesso: false, erro: "ID do produto inválido." });
+    }
 
     const resultado = await getProdutoPorId(Number(id));
 
-    if (!resultado.sucesso || !resultado.produto) {return res.status(404).json({ sucesso: false, erro: "Produto não encontrado." });}
+    if (!resultado.sucesso || !resultado.produto) {
+      return res
+        .status(404)
+        .json({ sucesso: false, erro: "Produto não encontrado." });
+    }
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller ao buscar produto por ID:", error);
@@ -104,12 +131,19 @@ export const getProdutoPorIdController = async (req, res) => {
   }
 };
 
-//CRIAR PRODUTO 
+//CRIAR PRODUTO
 export const createProdutoController = async (req, res) => {
   try {
     const data = req.body;
 
-    if (!data || Object.keys(data).length === 0) { return res.status(400).json({ sucesso: false, erro: "Os dados do produto são obrigatórios.", }); }
+    if (!data || Object.keys(data).length === 0) {
+      return res
+        .status(400)
+        .json({
+          sucesso: false,
+          erro: "Os dados do produto são obrigatórios.",
+        });
+    }
 
     const resultado = await createProduto(data);
 
@@ -137,7 +171,11 @@ export const deleteProdutoController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id || isNaN(id)) { return res.status(400).json({ sucesso: false, erro: "ID do produto inválido.", }); }
+    if (!id || isNaN(id)) {
+      return res
+        .status(400)
+        .json({ sucesso: false, erro: "ID do produto inválido." });
+    }
 
     const resultado = await deleteProduto(Number(id));
 
@@ -166,70 +204,100 @@ export const somarQtdTotalEstoqueController = async (req, res) => {
     const unidadeId = req.session?.usuario?.unidadeId;
 
     if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou unidade não identificada.",
-      });
+      // Em vez de retornar 401 que pode causar refresh/loops no frontend,
+      // devolvemos 200 com totalItens=0 para a UI lidar graciosamente.
+      console.warn(
+        "[somarQtdTotalEstoqueController] unidadeId não encontrado na sessão. retornando totalItens:0"
+      );
+      return res
+        .status(200)
+        .json({
+          sucesso: true,
+          totalItens: 0,
+          message: "Nenhum estoque encontrado para a unidade.",
+        });
     }
 
     const resultado = await somarQtdTotalEstoque(unidadeId);
 
     return res.status(200).json(resultado);
   } catch (error) {
-    console.error("Erro no controller ao somar estoque:", error);
+    console.error(
+      "Erro no controller ao somar estoque:",
+      error && error.stack ? error.stack : error
+    );
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao somar itens no estoque.",
-      detalhes: error.message,
+      detalhes: error?.message ?? String(error),
     });
   }
 };
 
-export const listarEstoqueController = async (req, res) => { //FUNCIONANDO
-    const unidadeId = req.params.unidadeId;
+export const listarEstoqueController = async (req, res) => {
+  //FUNCIONANDO
+  const unidadeId = req.usuario.unidadeId;
 
-    const resultado = await getEstoque(unidadeId);
+  const resultado = await getEstoque(unidadeId);
+  // If model indicates no estoque found, return 200 with empty array
+  if (!resultado.sucesso) {
+    // Some model methods use sucesso=false for 'not found' cases but that's not an error for the UI.
+    // If the controller received an empty estoque array, return 200 with empty result.
+    if (Array.isArray(resultado.estoque) && resultado.estoque.length === 0) {
+      return res
+        .status(200)
+        .json({
+          sucesso: true,
+          estoque: [],
+          message: resultado.message ?? "Nenhum estoque encontrado.",
+        });
+    }
+    // Otherwise treat as a real error
+    return res.status(400).json(resultado);
+  }
 
-    if (!resultado.sucesso) {return res.status(400).json(resultado);}
-
-    return res.status(200).json(resultado);
+  return res.status(200).json(resultado);
 };
 
-
-export const AtividadesLoteAgricolaController = async(req, res) =>{
-  try{
+export const AtividadesLoteAgricolaController = async (req, res) => {
+  try {
     const loteId = req.body;
     const atividades = await listarAtividadesLote();
     return res.status(200).json(atividades);
   } catch (error) {
     console.error(error);
-    res.status(500).json({erro: "Erro ao listar atividades realizadas nos lotes."})
+    res
+      .status(500)
+      .json({ erro: "Erro ao listar atividades realizadas nos lotes." });
   }
-}
+};
 
-export const consultarLoteController = async (req, res) =>{
-  try{
+export const consultarLoteController = async (req, res) => {
+  try {
     const unidadeId = req.params.unidadeId;
     const loteId = req.body.loteId;
 
     const atividadesLote = await consultarLote(unidadeId, loteId);
     return res.status(200).json(atividadesLote);
-  }
-  catch (error) {
+  } catch (error) {
     console.error(error);
-    res.status(500).json({erro: "Erro ao consultar atividades do lote."})
+    res.status(500).json({ erro: "Erro ao consultar atividades do lote." });
   }
-}
+};
 //lotes
 export const lotesPlantioController = async (req, res) => {
   try {
     const unidadeId = req.params?.unidadeId ?? req.user?.unidadeId;
-    if (!unidadeId) {return res.status(400).json({ sucesso: false, erro: 'unidadeId não informado.' });}
+    if (!unidadeId) {
+      return res
+        .status(400)
+        .json({ sucesso: false, erro: "unidadeId não informado." });
+    }
     const lotesP = await lotesPlantio(unidadeId);
     res.status(200).json(lotesP);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ erro: 'Erro ao mostrar lotes da unidade!' })
+    res.status(500).json({ erro: "Erro ao mostrar lotes da unidade!" });
   }
 };
 
@@ -241,16 +309,22 @@ export const listarPedidosController = async (req, res) => {
   try {
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) { return res.status(401).json({ sucesso: false, erro: "Usuário não possui unidade vinculada à sessão." }); }
+    if (!unidadeId) {
+      return res
+        .status(401)
+        .json({
+          sucesso: false,
+          erro: "Usuário não possui unidade vinculada à sessão.",
+        });
+    }
 
     const resultado = await verPedidos(Number(unidadeId));
 
     return res.status(200).json({
       sucesso: resultado.sucesso,
       message: resultado.message,
-      produtos: resultado
+      produtos: resultado,
     });
-
   } catch (error) {
     console.error("Erro no controller ao listar os pedidos:", error);
     return res.status(500).json({
@@ -266,16 +340,19 @@ export const listarPedidosEntregaController = async (req, res) => {
   try {
     const { unidadeId } = req.params;
 
-    if (!unidadeId) { return res.status(400).json({ sucesso: false, erro: "Unidade não informada." }); }
+    if (!unidadeId) {
+      return res
+        .status(400)
+        .json({ sucesso: false, erro: "Unidade não informada." });
+    }
 
     const resultado = await listarPedidosEntrega(Number(unidadeId));
 
     return res.status(200).json({
       sucesso: resultado.sucesso,
       message: resultado.message,
-      pedidos: resultado.pedidos
+      pedidos: resultado.pedidos,
     });
-
   } catch (error) {
     console.error("Erro no controller ao listar os pedidos de entrega:", error);
     return res.status(500).json({
@@ -291,16 +368,19 @@ export const listarPedidosOrigemController = async (req, res) => {
   try {
     const { unidadeId } = req.params;
 
-    if (!unidadeId) { return res.status(400).json({ sucesso: false, erro: "Unidade não informada." }); }
+    if (!unidadeId) {
+      return res
+        .status(400)
+        .json({ sucesso: false, erro: "Unidade não informada." });
+    }
 
     const resultado = await listarPedidosOrigem(Number(unidadeId));
 
     return res.status(200).json({
       sucesso: resultado.sucesso,
       message: resultado.message,
-      pedidos: resultado.pedidos
+      pedidos: resultado.pedidos,
     });
-
   } catch (error) {
     console.error("Erro no controller ao listar os pedidos de origem:", error);
     return res.status(500).json({
@@ -323,7 +403,9 @@ export const contarSaidasController = async (req, res) => {
 
   const resultado = await contarSaidas(unidadeId);
 
-  if (!resultado.sucesso) {return res.status(500).json(resultado);}
+  if (!resultado.sucesso) {
+    return res.status(500).json(resultado);
+  }
 
   return res.status(200).json({
     sucesso: true,
@@ -339,13 +421,22 @@ export const atualizarQntdMinController = async (req, res) => {
     const { minimumStock, qntdMin } = req.body;
 
     if (!id || isNaN(Number(id))) {
-      return res.status(400).json({ sucesso: false, erro: 'ID inválido.' });
+      return res.status(400).json({ sucesso: false, erro: "ID inválido." });
     }
 
-    const value = typeof minimumStock !== 'undefined' ? minimumStock : qntdMin;
+    const value = typeof minimumStock !== "undefined" ? minimumStock : qntdMin;
 
-    if (typeof value === 'undefined' || value === null || isNaN(Number(value))) {
-      return res.status(400).json({ sucesso: false, erro: 'minimumStock (qntdMin) numérico obrigatório.' });
+    if (
+      typeof value === "undefined" ||
+      value === null ||
+      isNaN(Number(value))
+    ) {
+      return res
+        .status(400)
+        .json({
+          sucesso: false,
+          erro: "minimumStock (qntdMin) numérico obrigatório.",
+        });
     }
 
     const resultado = await atualizarQntdMin(Number(id), Number(value));
@@ -354,9 +445,21 @@ export const atualizarQntdMinController = async (req, res) => {
       return res.status(400).json(resultado);
     }
 
-    return res.status(200).json({ sucesso: true, produto: resultado.produto, message: resultado.message });
+    return res
+      .status(200)
+      .json({
+        sucesso: true,
+        produto: resultado.produto,
+        message: resultado.message,
+      });
   } catch (error) {
-    console.error('Erro ao atualizar qntdMin:', error);
-    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao atualizar quantidade mínima.', detalhes: error.message });
+    console.error("Erro ao atualizar qntdMin:", error);
+    return res
+      .status(500)
+      .json({
+        sucesso: false,
+        erro: "Erro interno ao atualizar quantidade mínima.",
+        detalhes: error.message,
+      });
   }
 };

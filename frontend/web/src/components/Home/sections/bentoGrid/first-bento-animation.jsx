@@ -10,10 +10,11 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import Screenshot from "@/components/ui/screenshot";
 
 
 export function ReasoningBasic() {
-  const reasoningText = `Based on your spending patterns and financial behavior, I recommend reducing dining out expenses by 30% and consolidating subscriptions. This optimization could save you $400 monthly while maintaining your current lifestyle and financial goals.`;
+  const reasoningText = `Claro, ficarei feliz em ajudar. Basta acessar o menu Lotes e selecionar “Novo Lote”; em seguida, preencha todos os campos solicitados e confirme o registro. Caso precise, também posso encaminhar um guia completo com cada etapa descrita para facilitar o seu processo.`;
 
   return (
     <Reasoning>
@@ -72,9 +73,7 @@ export function FirstBentoAnimation() {
             }}
           >
             <p className="text-sm">
-              Hey, I&apos;ve been overspending this month and need help
-              optimizing my budget. Can you analyze my spending patterns and
-              suggest improvements?
+              Olá, estou entrando em contato porque estou com dúvidas. Ao tentar cadastrar um novo lote, não tenho certeza se estou seguindo o procedimento correto. Gostaria de uma orientação mais detalhada para garantir que o processo seja realizado da forma adequada.
             </p>
           </motion.div>
           <div className="flex items-center bg-background rounded-full w-fit border border-border flex-shrink-0">
@@ -87,7 +86,7 @@ export function FirstBentoAnimation() {
         </div>
         <div className="flex items-start gap-2">
           <div className="flex items-center bg-background rounded-full size-10 flex-shrink-0 justify-center shadow-[0_0_10px_rgba(0,0,0,0.05)] border border-border">
-            <Icons.logo className="size-4" />
+            <Screenshot srcLight="/img/ruraltech-logopreto.svg" srcDark="/img/ruraltech-logobranco.svg" alt="RuralTech Logo" width={15} height={15} />
           </div>
 
           <div className="relative">

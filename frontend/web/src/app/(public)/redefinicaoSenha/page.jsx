@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { GalleryVerticalEnd } from "lucide-react"
 import { RedefinirForm } from "@/components/esqueci-form";
-import { ThemeToggle } from "@/components/toggleSwitchTema";
 
 function RedefinirFormWrapper() {
   return (
@@ -31,7 +30,6 @@ export default function LoginPage() {
               </div>
             </a>
             <div className="flex-1"></div>
-            <ThemeToggle />
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center">
