@@ -525,7 +525,7 @@ export default function FazendasPage() {
                                                         {citySuggestions.length > 0 && (
                                                             <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
                                                                 {citySuggestions.map((s, idx) => (
-                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
                                                                         <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
                                                                     </div>
                                                                 ))}
@@ -546,7 +546,7 @@ export default function FazendasPage() {
 
                                             <Separator />
                                             {/* Area */}
-                                            <div>
+                                            {/* <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Área</div>
                                                 <Input
                                                     placeholder="Filtrar por área (ha)"
@@ -558,7 +558,7 @@ export default function FazendasPage() {
                                                     }}
                                                 />
 
-                                            </div>
+                                            </div> */}
 
                                             {/* APLICAR / RESET */}
                                             <div className="flex items-center justify-between gap-2">
@@ -684,8 +684,11 @@ export default function FazendasPage() {
                                                     <div className="flex flex-row gap-3 ">
                                                         <div className="text-base font-medium">Área: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
+                                                     <div className="flex flex-row gap-3 ">
+                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.areaHa} ha</div>
+                                                    </div>
                                                 </div>
-                                                <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div>
+                                                {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
                                             </div>
                                         </Link>
                                     ))}

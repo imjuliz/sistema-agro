@@ -18,7 +18,7 @@ export default function FooterSection(props) {
       {
         title: "Contatos",
         links: [
-          { text: "Email", href: 'mailto:ruraltech91@gmail.com' },
+          { text: "Email", href: 'mailto:ruraltech052@gmail.com' },
           { text: "Telefone", href: siteConfig.url },
           { text: "Instagram", href: 'https://www.instagram.com/' },
         ],
