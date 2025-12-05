@@ -9,17 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
@@ -27,11 +24,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useRouter } from 'next/navigation'; // App Router
+import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
-// (adicione entre seus imports existentes)
 import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 // corrige o caminho dos ícones padrão em bundlers modernos
 if (typeof window !== 'undefined') {
@@ -95,27 +92,27 @@ export default function FazendasPage() {
 
         async function fetchFazendas() {
             setLoading(true);
-                try {
-                    const params = new URLSearchParams();
-                    if (query) params.set('q', query);
-                    const loc = String(appliedFilters.locationFilter || '').trim();
-                    if (loc) params.set('cidade', loc);
-                    const estadoParam = String(appliedFilters.locationEstado || '').trim();
-                    if (estadoParam) params.set('estado', estadoParam);
-                    const resp = String(appliedFilters.responsibleQuery || '').trim();
-                    if (resp) params.set('responsible', resp);
-                    const area = String(appliedFilters.areaQuery || '').trim();
-                    if (area) params.set('minArea', area);
-                    // send status filters and type filters to backend as comma-separated lists
-                    const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([,v]) => v).map(([k]) => k) : [];
-                    if (types.length > 0) params.set('tipos', types.join(','));
-                    const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([,v]) => v).map(([k]) => k.toUpperCase()) : [];
-                    if (statuses.length > 0) params.set('status', statuses.join(','));
-                    params.set('page', String(page));
-                    params.set('perPage', String(perPage));
-                    params.set('orderBy', orderBy);
+            try {
+                const params = new URLSearchParams();
+                if (query) params.set('q', query);
+                const loc = String(appliedFilters.locationFilter || '').trim();
+                if (loc) params.set('cidade', loc);
+                const estadoParam = String(appliedFilters.locationEstado || '').trim();
+                if (estadoParam) params.set('estado', estadoParam);
+                const resp = String(appliedFilters.responsibleQuery || '').trim();
+                if (resp) params.set('responsible', resp);
+                const area = String(appliedFilters.areaQuery || '').trim();
+                if (area) params.set('minArea', area);
+                // send status filters and type filters to backend as comma-separated lists
+                const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([, v]) => v).map(([k]) => k) : [];
+                if (types.length > 0) params.set('tipos', types.join(','));
+                const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([, v]) => v).map(([k]) => k.toUpperCase()) : [];
+                if (statuses.length > 0) params.set('status', statuses.join(','));
+                params.set('page', String(page));
+                params.set('perPage', String(perPage));
+                params.set('orderBy', orderBy);
 
-                    const url = `${API_URL}unidades/fazendas?${params.toString()}`;
+                const url = `${API_URL}unidades/fazendas?${params.toString()}`;
                 console.debug('[fetchFazendas] GET', url);
                 const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
                 if (!res.ok) {
@@ -424,9 +421,15 @@ export default function FazendasPage() {
         return null;
     }
 
+    const totalPages = Math.max(1, Math.ceil(units.length / perPage));
+    useEffect(() => {
+        // sempre garante que a página atual seja válida quando filtros / perPage mudarem
+        setPage(p => Math.min(Math.max(1, p), totalPages));
+    }, [totalPages]);
+
     return (
-        <div className="min-h-screen p-6 bg-surface-50">
-            <div className="max-w-screen-2xl mx-auto w-full">
+        <div className="min-h-screen px-18 py-10 bg-surface-50">
+            <div className="w-full">
                 {/* METRICS */}
                 <div className="grid grid-cols-3 gap-4 mb-8">
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
@@ -503,35 +506,35 @@ export default function FazendasPage() {
                                             {/* LOCALIZAÇÃO */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                                                    <div className="relative">
-                                                        <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
-                                                            const v = e.target.value;
-                                                            setDraftLocationFilter(v);
-                                                            setPage(1);
-                                                            // debounce suggestions
-                                                            if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
-                                                            citySuggestTimer.current = setTimeout(async () => {
-                                                                try {
-                                                                    const q = v.trim();
-                                                                    if (!q || q.length < 2) { setCitySuggestions([]); return; }
-                                                                    const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
-                                                                    const res = await fetchWithAuth(url);
-                                                                    if (!res.ok) { setCitySuggestions([]); return; }
-                                                                    const body = await res.json().catch(() => null);
-                                                                    setCitySuggestions(body?.suggestions ?? []);
-                                                                } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
-                                                            }, 300);
-                                                        }} />
-                                                        {citySuggestions.length > 0 && (
-                                                            <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
-                                                                {citySuggestions.map((s, idx) => (
-                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
-                                                                        <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                <div className="relative">
+                                                    <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setDraftLocationFilter(v);
+                                                        setPage(1);
+                                                        // debounce suggestions
+                                                        if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
+                                                        citySuggestTimer.current = setTimeout(async () => {
+                                                            try {
+                                                                const q = v.trim();
+                                                                if (!q || q.length < 2) { setCitySuggestions([]); return; }
+                                                                const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
+                                                                const res = await fetchWithAuth(url);
+                                                                if (!res.ok) { setCitySuggestions([]); return; }
+                                                                const body = await res.json().catch(() => null);
+                                                                setCitySuggestions(body?.suggestions ?? []);
+                                                            } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
+                                                        }, 300);
+                                                    }} />
+                                                    {citySuggestions.length > 0 && (
+                                                        <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
+                                                            {citySuggestions.map((s, idx) => (
+                                                                <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                    <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <Separator />
                                             {/* RESPONSAVEL - ainda nn funciona */}
@@ -669,7 +672,7 @@ export default function FazendasPage() {
                         ) : (
                             <div>
                                 {/* Grid of cards */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
                                     {units.map(u => (
                                         <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`} onMouseEnter={() => prefetchFazenda(u.id)}>
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
@@ -684,7 +687,7 @@ export default function FazendasPage() {
                                                     <div className="flex flex-row gap-3 ">
                                                         <div className="text-base font-medium">Área: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
-                                                     <div className="flex flex-row gap-3 ">
+                                                    <div className="flex flex-row gap-3 ">
                                                         <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
                                                 </div>
@@ -704,74 +707,114 @@ export default function FazendasPage() {
 
                                 {/* Pagination controls */}
                                 {units.length > 0 && (
-                                    <div className="mt-6 flex items-center justify-between">
-                                        <div className="text-sm text-muted-foreground">
-                                            Página <span className="font-semibold">{page}</span> de{' '}
-                                            <span className="font-semibold">{Math.ceil(totalResults / perPage) || 1}</span>
-                                            {' '} ({totalResults} resultado{totalResults !== 1 ? 's' : ''})
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                                disabled={page === 1}
-                                            >
-                                                <ChevronLeft className="h-4 w-4" />
-                                                Anterior
-                                            </Button>
-                                            <div className="flex items-center gap-1">
-                                                {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, i) => {
-                                                    const totalPages = Math.ceil(totalResults / perPage);
-                                                    let pageNum;
-                                                    if (totalPages <= 5) {
-                                                        pageNum = i + 1;
-                                                    } else if (page <= 3) {
-                                                        pageNum = i + 1;
-                                                    } else if (page >= totalPages - 2) {
-                                                        pageNum = totalPages - 4 + i;
-                                                    } else {
-                                                        pageNum = page - 2 + i;
-                                                    }
-                                                    return (
-                                                        <Button
-                                                            key={pageNum}
-                                                            variant={pageNum === page ? "default" : "outline"}
-                                                            size="sm"
-                                                            onClick={() => setPage(pageNum)}
-                                                        >
-                                                            {pageNum}
-                                                        </Button>
-                                                    );
-                                                })}
+                                    // <div className="mt-6 flex items-center justify-between">
+                                    //     <div className="text-sm text-muted-foreground">
+                                    //         Página <span className="font-semibold">{page}</span> de{' '}
+                                    //         <span className="font-semibold">{Math.ceil(totalResults / perPage) || 1}</span>
+                                    //         {' '} ({totalResults} resultado{totalResults !== 1 ? 's' : ''})
+                                    //     </div>
+                                    //     <div className="flex items-center gap-2">
+                                    //         <Button
+                                    //             variant="outline"
+                                    //             size="sm"
+                                    //             onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    //             disabled={page === 1}
+                                    //         >
+                                    //             <ChevronLeft className="h-4 w-4" />
+                                    //             Anterior
+                                    //         </Button>
+                                    //         <div className="flex items-center gap-1">
+                                    //             {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, i) => {
+                                    //                 const totalPages = Math.ceil(totalResults / perPage);
+                                    //                 let pageNum;
+                                    //                 if (totalPages <= 5) {
+                                    //                     pageNum = i + 1;
+                                    //                 } else if (page <= 3) {
+                                    //                     pageNum = i + 1;
+                                    //                 } else if (page >= totalPages - 2) {
+                                    //                     pageNum = totalPages - 4 + i;
+                                    //                 } else {
+                                    //                     pageNum = page - 2 + i;
+                                    //                 }
+                                    //                 return (
+                                    //                     <Button
+                                    //                         key={pageNum}
+                                    //                         variant={pageNum === page ? "default" : "outline"}
+                                    //                         size="sm"
+                                    //                         onClick={() => setPage(pageNum)}
+                                    //                     >
+                                    //                         {pageNum}
+                                    //                     </Button>
+                                    //                 );
+                                    //             })}
+                                    //         </div>
+                                    //         <Button
+                                    //             variant="outline"
+                                    //             size="sm"
+                                    //             onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))}
+                                    //             disabled={page >= Math.ceil(totalResults / perPage)}
+                                    //         >
+                                    //             Próximo
+                                    //             <ChevronRight className="h-4 w-4" />
+                                    //         </Button>
+                                    //     </div>
+                                    //     <div className="flex items-center gap-2">
+                                    //         <span className="text-sm text-muted-foreground">Por página:</span>
+                                    //         <select
+                                    //             value={perPage}
+                                    //             onChange={(e) => {
+                                    //                 setPerPage(Number(e.target.value));
+                                    //                 setPage(1);
+                                    //             }}
+                                    //             className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700"
+                                    //         >
+                                    //             <option value="8">8</option>
+                                    //             <option value="16">16</option>
+                                    //             <option value="25">25</option>
+                                    //             <option value="50">50</option>
+                                    //         </select>
+                                    //     </div>
+                                    // </div>
+                                    <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
+                                        {/* <div className="text-sm text-neutral-400">
+                                                  {selected.length} de {filtered.length} linha(s) selecionada(s).
+                                                </div> */}
+
+                                        <div className="flex items-center gap-3">
+                                            <Label className="text-sm font-medium">Linhas por pág.</Label>
+                                            <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                                                <SelectTrigger className="w-[80px]">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="4">4</SelectItem>
+                                                    <SelectItem value="8">8</SelectItem>
+                                                    <SelectItem value="12">12</SelectItem>
+                                                    <SelectItem value="20">20</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+
+                                            <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(units.length / perPage) || 1)}</div>
+
+                                            <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
+                                                <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                                                    <ChevronsLeft className="h-4 w-4" />
+                                                </Button>
+
+                                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                </Button>
+
+                                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+
+                                                <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                                                    <ChevronsRight className="h-4 w-4" />
+                                                </Button>
                                             </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))}
-                                                disabled={page >= Math.ceil(totalResults / perPage)}
-                                            >
-                                                Próximo
-                                                <ChevronRight className="h-4 w-4" />
-                                            </Button>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-muted-foreground">Por página:</span>
-                                            <select
-                                                value={perPage}
-                                                onChange={(e) => {
-                                                    setPerPage(Number(e.target.value));
-                                                    setPage(1);
-                                                }}
-                                                className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700"
-                                            >
-                                                <option value="8">8</option>
-                                                <option value="16">16</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                    </CardFooter>
                                 )}
                             </div>
                         )}

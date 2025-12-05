@@ -14,6 +14,7 @@ import { API_URL } from '@/lib/api';
 import { EditarUsuarioModal } from './modals/EditarUsuarioModal';
 import DemitirUsuarioModal from './modals/DemitirUsuarioModal';
 import TransferirUsuarioModal from './modals/TransferirUsuarioModal';
+import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuContent  } from '@/components/ui/dropdown-menu';
 
 export function EquipeTab({ fazendaId }) {
   const { fetchWithAuth, doRefresh, logout, initialized } = useAuth()
@@ -285,27 +286,27 @@ export function EquipeTab({ fazendaId }) {
                   </Button>
 
                   {/* Opções: Transferência / Demitir */}
-                  <Popover>
-                    <PopoverTrigger asChild>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" aria-label="Mais opções">
                         <MoreHorizontal className="size-4" />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent side="bottom" align="end" className="w-[220px] p-2">
-                      <button
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
                         className="w-full text-left px-3 py-2 hover:bg-neutral-900 rounded"
                         onClick={() => { setUsuarioParaAcao(eqp); setAbrirModalTransferir(true); }}
                       >
                         Transferência
-                      </button>
-                      <button
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         className="w-full text-left px-3 py-2 mt-1 text-destructive hover:bg-red-900 rounded"
                         onClick={() => { setUsuarioParaAcao(eqp); setAbrirModalDemitir(true); }}
                       >
                         Demitir
-                      </button>
-                    </PopoverContent>
-                  </Popover>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
