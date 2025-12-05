@@ -41,10 +41,54 @@ const chartConfig = { visitors: { label: "Visitors", }, desktop: { label: "Deskt
 
 export function ChartAreaInteractive() {
   const [timeRange, setTimeRange] = React.useState("90d")
+  const { fetchWithAuth, user } = useAuth();
+  const [dynamicData, setDynamicData] = React.useState(null);
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
+  React.useEffect(() => {
+    let mounted = true;
+    const loadDaily = async () => {
+      try {
+        const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+        if (!unidadeId) return;
+        const base = (API_URL || '').replace(/\/+$/, '');
+        const url = `${base}/somarDiaria/${unidadeId}`;
+        const resp = typeof fetchWithAuth === 'function'
+          ? await fetchWithAuth(url, { credentials: 'include' })
+          : await fetch(url, { credentials: 'include' });
+
+        if (!resp) return;
+        const contentType = resp.headers?.get ? resp.headers.get('content-type') || '' : '';
+        let body;
+        if (contentType.includes('application/json')) body = await resp.json();
+        else body = await resp.json().catch(() => null);
+
+        const total = body?.total ?? (typeof body === 'number' ? body : null);
+        if (!mounted) return;
+        if (total !== null) {
+          setDynamicData({ date: new Date().toISOString().slice(0,10), desktop: Number(total) });
+        }
+      } catch (err) {
+        console.debug('ChartAreaInteractive: erro ao carregar somarDiaria', err);
+      }
+    };
+
+    loadDaily();
+    return () => { mounted = false };
+  }, [fetchWithAuth, user]);
+
+  const sourceData = dynamicData ? [...chartData] : chartData;
+  // if dynamicData present, replace or append today's point
+  if (dynamicData) {
+    const today = dynamicData.date;
+    const idx = sourceData.findIndex(d => d.date === today);
+    if (idx >= 0) sourceData[idx] = dynamicData;
+    else sourceData.push(dynamicData);
+  }
+
+  const filteredData = sourceData.filter((item) => {
+  const date = new Date(item.date)
+  // use today's date as the reference so dynamic 'today' point is included
+  const referenceDate = new Date()
     let daysToSubtract = 180
 
     if (timeRange === "30d") { daysToSubtract = 30 }
