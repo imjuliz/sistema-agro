@@ -121,7 +121,8 @@ export default function app() {
     if (typeof fetchWithAuth === 'function') {
       try {
         const url = makeUrl(resolvedPath);
-        const resp = await fetchWithAuth(url, opts);
+        const merged = { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...opts };
+        const resp = await fetchWithAuth(url, merged);
         const contentType = resp.headers && resp.headers.get ? resp.headers.get('content-type') || '' : '';
         if (!resp.ok) {
           const txt = await resp.text().catch(() => null);

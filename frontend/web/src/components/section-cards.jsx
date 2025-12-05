@@ -132,12 +132,14 @@ export function SectionCards() {
           ) : saldo.length === 0 ? (
             <CardTitle className="text-2xl font-semibold text-gray-500"> Nenhum saldo verificado! </CardTitle>
           ) : (saldo.map((user) => (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl" key={user.id}>
-              {user.nome ?? user}
-            </CardTitle>
+            <div key={user.id}>
+              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                {user.nome ?? user}
+              </CardTitle>
+            </div>
           ))
           )}
-          <CardAction className="md:hidden"><Badge variant="outline"><IconTrendingUp/>+12.5%</Badge></CardAction>
+          <CardAction className="md:hidden"><Badge variant="outline"><IconTrendingUp />+12.5%</Badge></CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">Saldo aumentou em 12,5%<IconTrendingUp className="size-4 " /></div>

@@ -360,6 +360,7 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 export async function criarVenda(req, res) {
     try {
   const { caixaId, usuarioId, unidadeId, pagamento, itens, nomeCliente } = req.body;
+  console.log('criarVenda payload:', { caixaId, usuarioId, unidadeId, pagamento, itensLength: Array.isArray(itens) ? itens.length : 0, nomeCliente });
   if (!usuarioId || !unidadeId || !itens || !Array.isArray(itens) || itens.length === 0) {return res.status(400).json({ sucesso: false, erro: 'Dados incompletos. Verifique os campos enviados.' })}
 
         let caixaIdToUse = caixaId ? Number(caixaId) : null;
@@ -416,32 +417,41 @@ export async function criarVenda(req, res) {
         }));
 
         const totalVenda = itensResolvidos.reduce((acc, it) => acc + (it.subtotal || 0), 0);
-
-    const novaVenda = await prisma.venda.create({
-            data: {
-                caixaId: Number(caixaIdToUse),
-                usuarioId: Number(usuarioId),
-                unidadeId: Number(unidadeId),
-                pagamento: pagamentoFinal,
-        total: totalVenda,
-        nomeCliente: nomeCliente ?? null,
-                itens: {
-                    create: itensResolvidos.map((item) => ({
-                        produtoId: Number(item.produtoId),
-                        quantidade: Number(item.quantidade),
-                        precoUnitario: Number(item.precoUnitario),
-                        desconto: Number(item.desconto || 0),
-                        subtotal: item.subtotal,
-                    }))
-                }
-            },
-            include: { itens: { include: { produto: true } } }
-        });
+        console.log('Itens resolvidos antes de criar venda:', itensResolvidos);
+        console.log('Total calculado:', totalVenda);
+      let novaVenda;
+      try {
+      novaVenda = await prisma.venda.create({
+        data: {
+          caixaId: Number(caixaIdToUse),
+          usuarioId: Number(usuarioId),
+          unidadeId: Number(unidadeId),
+          pagamento: pagamentoFinal,
+      total: totalVenda,
+      status: 'OK',
+      nomeCliente: nomeCliente ?? null,
+          itens: {
+            create: itensResolvidos.map((item) => ({
+              produtoId: Number(item.produtoId),
+              quantidade: Number(item.quantidade),
+              precoUnitario: Number(item.precoUnitario),
+              desconto: Number(item.desconto || 0),
+              subtotal: item.subtotal,
+            }))
+          }
+        },
+        include: { itens: { include: { produto: true } } }
+      });
+    } catch (prismaError) {
+      console.error('Prisma error creating venda:', prismaError && prismaError.code ? prismaError.code : prismaError);
+      console.error(prismaError && prismaError.meta ? prismaError.meta : prismaError.stack || prismaError);
+      throw prismaError;
+    }
 
         return res.status(201).json({ sucesso: true, message: 'Venda criada com sucesso!', venda: novaVenda });
     } catch (error) {
-        console.error('Erro ao criar venda:', error);
-        return res.status(500).json({ sucesso: false, erro: 'Erro ao criar venda.', detalhes: error.message });
+      console.error('Erro ao criar venda:', error);
+      return res.status(500).json({ sucesso: false, erro: 'Erro ao criar venda.', detalhes: error.message });
     }
 }
 
@@ -525,7 +535,16 @@ export const criarNotaFiscal = async (data) => {
     if (!caixa || caixa.unidadeId !== Number(unidadeId)) {return {sucesso: false,erro: "Caixa não pertence à unidade especificada"};}
 
     // 3 — Criar venda
-    const venda = await prisma.venda.create({data: {caixaId,usuarioId,unidadeId,pagamento,total: 0 }});
+    const venda = await prisma.venda.create({
+      data: {
+        caixaId: Number(caixaId),
+        usuarioId: Number(usuarioId),
+        unidadeId: Number(unidadeId),
+        pagamento,
+        total: 0,
+        status: 'OK'
+      }
+    });
 
     let totalVenda = 0;
     const itensCriados = [];
@@ -549,32 +568,32 @@ export const criarNotaFiscal = async (data) => {
 
       itensCriados.push(novoItem);
 
-      // Buscar estoque da unidade
-      const estoque = await prisma.estoque.findFirst({
-        where: {unidadeId: Number(unidadeId),produtoId: item.produtoId}
-      });
-
+      // Buscar o estoque (depósito) da unidade
+      const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(unidadeId) } });
       if (!estoque) {
-        return {
-          sucesso: false,
-          erro: `Produto ${item.produtoId} não está no estoque desta unidade`
-        };
+        return { sucesso: false, erro: `Estoque/depósito não encontrado para unidade ${unidadeId}` };
       }
 
-      // Atualizar estoque
-      await prisma.estoque.update({
-        where: { id: estoque.id },
-        data: {quantidade: estoque.quantidade - item.quantidade}
+      // Buscar o produto dentro do estoque (estoque_produto)
+      const estoqueProduto = await prisma.estoqueProduto.findFirst({ where: { estoqueId: estoque.id, produtoId: item.produtoId } });
+      if (!estoqueProduto) {
+        return { sucesso: false, erro: `Produto ${item.produtoId} não está no estoque desta unidade` };
+      }
+
+      // Atualizar quantidade atual do produto (campo: qntdAtual)
+      await prisma.estoqueProduto.update({
+        where: { id: estoqueProduto.id },
+        data: { qntdAtual: Math.max(0, Number(estoqueProduto.qntdAtual || 0) - Number(item.quantidade || 0)) }
       });
 
-      // Registrar movimento
+      // Registrar movimento no estoque (apontando para o depósito/estoque)
       await prisma.estoqueMovimento.create({
         data: {
           estoqueId: estoque.id,
           tipoMovimento: "SAIDA",
-          quantidade: item.quantidade,
+          quantidade: Number(item.quantidade || 0),
           vendaId: venda.id,
-          origemUnidadeId: unidadeId
+          origemUnidadeId: Number(unidadeId)
         }
       });
     }

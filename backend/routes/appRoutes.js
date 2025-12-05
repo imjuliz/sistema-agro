@@ -37,7 +37,7 @@ import {
     obterResumoController,
     obterSaldoPorCategoriaController
 } from "../controllers/ContaFinanceiraController.js";
-import { getDashboardDataController } from '../controllers/dashboardController.js';
+// import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
 
