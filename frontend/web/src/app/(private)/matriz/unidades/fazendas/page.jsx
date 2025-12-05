@@ -12,7 +12,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
@@ -23,9 +23,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useRouter } from 'next/navigation'; // App Router
+import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
-// (adicione entre seus imports existentes)
 import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
 
 // corrige o caminho dos ícones padrão em bundlers modernos
@@ -90,27 +89,27 @@ export default function FazendasPage() {
 
         async function fetchFazendas() {
             setLoading(true);
-                try {
-                    const params = new URLSearchParams();
-                    if (query) params.set('q', query);
-                    const loc = String(appliedFilters.locationFilter || '').trim();
-                    if (loc) params.set('cidade', loc);
-                    const estadoParam = String(appliedFilters.locationEstado || '').trim();
-                    if (estadoParam) params.set('estado', estadoParam);
-                    const resp = String(appliedFilters.responsibleQuery || '').trim();
-                    if (resp) params.set('responsible', resp);
-                    const area = String(appliedFilters.areaQuery || '').trim();
-                    if (area) params.set('minArea', area);
-                    // send status filters and type filters to backend as comma-separated lists
-                    const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([,v]) => v).map(([k]) => k) : [];
-                    if (types.length > 0) params.set('tipos', types.join(','));
-                    const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([,v]) => v).map(([k]) => k.toUpperCase()) : [];
-                    if (statuses.length > 0) params.set('status', statuses.join(','));
-                    params.set('page', String(page));
-                    params.set('perPage', String(perPage));
-                    params.set('orderBy', orderBy);
+            try {
+                const params = new URLSearchParams();
+                if (query) params.set('q', query);
+                const loc = String(appliedFilters.locationFilter || '').trim();
+                if (loc) params.set('cidade', loc);
+                const estadoParam = String(appliedFilters.locationEstado || '').trim();
+                if (estadoParam) params.set('estado', estadoParam);
+                const resp = String(appliedFilters.responsibleQuery || '').trim();
+                if (resp) params.set('responsible', resp);
+                const area = String(appliedFilters.areaQuery || '').trim();
+                if (area) params.set('minArea', area);
+                // send status filters and type filters to backend as comma-separated lists
+                const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([, v]) => v).map(([k]) => k) : [];
+                if (types.length > 0) params.set('tipos', types.join(','));
+                const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([, v]) => v).map(([k]) => k.toUpperCase()) : [];
+                if (statuses.length > 0) params.set('status', statuses.join(','));
+                params.set('page', String(page));
+                params.set('perPage', String(perPage));
+                params.set('orderBy', orderBy);
 
-                    const url = `${API_URL}unidades/fazendas?${params.toString()}`;
+                const url = `${API_URL}unidades/fazendas?${params.toString()}`;
                 console.debug('[fetchFazendas] GET', url);
                 const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
                 if (!res.ok) {
@@ -412,9 +411,15 @@ export default function FazendasPage() {
         return null;
     }
 
+    const totalPages = Math.max(1, Math.ceil(units.length / perPage));
+    useEffect(() => {
+        // sempre garante que a página atual seja válida quando filtros / perPage mudarem
+        setPage(p => Math.min(Math.max(1, p), totalPages));
+    }, [totalPages]);
+
     return (
-        <div className="min-h-screen p-6 bg-surface-50">
-            <div className="max-w-screen-2xl mx-auto w-full">
+        <div className="min-h-screen px-18 py-10 bg-surface-50">
+            <div className="w-full">
                 {/* METRICS */}
                 <div className="grid grid-cols-3 gap-4 mb-8">
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
@@ -483,35 +488,35 @@ export default function FazendasPage() {
                                             {/* LOCALIZAÇÃO */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                                                    <div className="relative">
-                                                        <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
-                                                            const v = e.target.value;
-                                                            setDraftLocationFilter(v);
-                                                            setPage(1);
-                                                            // debounce suggestions
-                                                            if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
-                                                            citySuggestTimer.current = setTimeout(async () => {
-                                                                try {
-                                                                    const q = v.trim();
-                                                                    if (!q || q.length < 2) { setCitySuggestions([]); return; }
-                                                                    const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
-                                                                    const res = await fetchWithAuth(url);
-                                                                    if (!res.ok) { setCitySuggestions([]); return; }
-                                                                    const body = await res.json().catch(() => null);
-                                                                    setCitySuggestions(body?.suggestions ?? []);
-                                                                } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
-                                                            }, 300);
-                                                        }} />
-                                                        {citySuggestions.length > 0 && (
-                                                            <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
-                                                                {citySuggestions.map((s, idx) => (
-                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
-                                                                        <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                <div className="relative">
+                                                    <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setDraftLocationFilter(v);
+                                                        setPage(1);
+                                                        // debounce suggestions
+                                                        if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
+                                                        citySuggestTimer.current = setTimeout(async () => {
+                                                            try {
+                                                                const q = v.trim();
+                                                                if (!q || q.length < 2) { setCitySuggestions([]); return; }
+                                                                const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
+                                                                const res = await fetchWithAuth(url);
+                                                                if (!res.ok) { setCitySuggestions([]); return; }
+                                                                const body = await res.json().catch(() => null);
+                                                                setCitySuggestions(body?.suggestions ?? []);
+                                                            } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
+                                                        }, 300);
+                                                    }} />
+                                                    {citySuggestions.length > 0 && (
+                                                        <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
+                                                            {citySuggestions.map((s, idx) => (
+                                                                <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                    <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <Separator />
                                             {/* RESPONSAVEL - ainda nn funciona */}
@@ -624,7 +629,7 @@ export default function FazendasPage() {
                             </div>
                         ) : ( <div>
                                 {/* Grid of cards */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
                                     {units.map(u => (
                                         <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`} onMouseEnter={() => prefetchFazenda(u.id)}>
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
@@ -639,8 +644,11 @@ export default function FazendasPage() {
                                                     <div className="flex flex-row gap-3 ">
                                                         <div className="text-base font-medium">Área: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
+                                                    <div className="flex flex-row gap-3 ">
+                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.areaHa} ha</div>
+                                                    </div>
                                                 </div>
-                                                <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div>
+                                                {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
                                             </div>
                                         </Link>
                                     ))}

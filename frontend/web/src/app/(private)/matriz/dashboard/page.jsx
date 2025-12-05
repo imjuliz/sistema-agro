@@ -22,7 +22,7 @@ export default function Page() {
   usePerfilProtegido("GERENTE_MATRIZ");
 
   return (
-    <div className="flex flex-col p-10 gap-10">
+    <div className="min-h-screen px-18 py-10 bg-surface-50">
       <div className="@container/main flex flex-2 flex-col gap-1">
         <div className="flex flex-col gap-1 py-1 md:gap-6 md:py-6">
 

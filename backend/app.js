@@ -19,6 +19,7 @@ import loteRoutes from './routes/loteRoutes.js';
 import plantioRoutes from './routes/plantioRoutes.js';
 import produtoRoutes from './routes/produtoRoutes.js';
 import planoProducaoRoutes from './routes/planoProducaoRoutes.js';
+import contatoRoutes from './routes/contatoRoutes.js';
 
 dotenv.config({ path: ".env", quiet: true });
 
@@ -90,9 +91,13 @@ app.use('/lotes', loteRoutes);
 app.use('/plantio', plantioRoutes);
 app.use('/produtos', produtoRoutes);
 app.use('/plano-producao', planoProducaoRoutes);
+app.use('/contato', contatoRoutes);
 
 app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
-app.get('/financeiro/categorias')
+// Rota temporária para categorias do financeiro — evita crash por declaração incompleta
+app.get('/financeiro/categorias', (req, res) => {
+  return res.status(200).json({ categorias: [] });
+});
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 

@@ -121,12 +121,12 @@ function EstoqueTabContent({ fazenda }) {
           </CardContent>
         </Card>
 
-        <div>
+        {/* <div>
           <Button variant="" size="sm" onClick={() => openMovimentoModal(null)} className="w-full mb-2">
             <ArrowLeftRight className="mr-2" />
             Registrar movimentação de estoque
           </Button>
-        </div>
+        </div> */}
       </div>
       <div className=" flex-1 min-w-0 space-y-6">
         <StoreLevelView onOpenMovimento={openMovimentoModal} />
