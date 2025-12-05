@@ -263,10 +263,18 @@ export const divisaoPagamentosController = async (req, res) => {
 export const buscarProdutoMaisVendidoController = async (req, res) => {
   try {
     const unidadeId = Number(req.params.unidadeId) || req.session?.usuario?.unidadeId;
-    if (!unidadeId || isNaN(unidadeId)) { return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão ou ID inválido.' }); }
+    console.log('🔍 buscarProdutoMaisVendidoController - unidadeId:', unidadeId);
+    
+    if (!unidadeId || isNaN(unidadeId)) { 
+      return res.status(401).json({ sucesso: false, erro: 'Usuário sem unidade na sessão ou ID inválido.' }); 
+    }
 
     const resultado = await buscarProdutoMaisVendido(Number(unidadeId));
-    if (!resultado.sucesso) { return res.status(404).json(resultado); }
+    console.log('📦 Resultado da busca:', resultado);
+    
+    if (!resultado.sucesso) { 
+      return res.status(404).json(resultado); 
+    }
 
     return res.status(200).json(resultado);
   } catch (error) {

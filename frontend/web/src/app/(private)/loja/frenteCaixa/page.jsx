@@ -283,8 +283,13 @@ export default function app() {
       }
       else if (pagamentosRes && pagamentosRes.text) { console.warn('/vendas/divisao-pagamentos returned non-JSON:', pagamentosRes.text?.slice ? pagamentosRes.text.slice(0, 300) : pagamentosRes) }
 
-      if (produtoRes && produtoRes.sucesso) setTopProduct(produtoRes.produto || null);
-      else if (produtoRes && produtoRes.text) console.warn('/financeiro/produto-mais-vendido returned non-JSON:', produtoRes.text?.slice ? produtoRes.text.slice(0, 300) : produtoRes);
+      console.log('📦 Resposta de produto mais vendido:', produtoRes);
+      if (produtoRes && produtoRes.sucesso) {
+        console.log('✅ Produto carregado:', produtoRes.estoqueProduto);
+        setTopProduct(produtoRes.estoqueProduto || null);
+      } else {
+        console.warn('❌ Erro ao buscar produto mais vendido:', produtoRes);
+      }
 
       try {
         const total = Number(diarioRes?.total ?? 0);
@@ -297,7 +302,7 @@ export default function app() {
           averageTransaction: media,
           cashSales: Number(det.DINHEIRO ?? det.Dinheiro ?? det.dinheiro ?? 0),
           cardSales: Number(det.CARTAO ?? det.Cartao ?? det.cartao ?? 0),
-          topProduct: produtoRes?.produto?.nome ?? produtoRes?.produto ?? null,
+          topProduct: produtoRes?.estoqueProduto?.nome ?? produtoRes?.estoqueProduto ?? null,
           peakHour: '—'
         });
       } catch (err) { console.debug('Erro ao montar dailyStatsState:', err) }
@@ -432,7 +437,31 @@ export default function app() {
                 <div className="flex justify-between"><span>Cartão</span><strong>R$ {Number(paymentsBreakdown.CARTAO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                 <hr className="my-2" />
                 <div className="text-xs text-muted-foreground">Produto mais vendido:</div>
-                <div className="font-medium">{topProduct?.nome ? `${topProduct.nome} (${topProduct.quantidadeVendida}x)` : '—'}</div>
+                <div className="font-medium">{topProduct?.nome ? `${topProduct.nome}` : '—'}</div>
+                {topProduct && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    <div className="flex justify-between">
+                      <span>SKU:</span>
+                      <span>{topProduct.sku || '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Marca:</span>
+                      <span>{topProduct.marca || '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Vendido:</span>
+                      <span>{topProduct.quantidadeVendida}x</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Preço:</span>
+                      <span>R$ {Number(topProduct.precoUnitario ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Estoque:</span>
+                      <span>{topProduct.qntdAtual} un</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

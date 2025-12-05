@@ -32,32 +32,82 @@ export const buscarProdutoMaisVendido = async (unidadeId) => {
             take: 1, // pega apenas o produto mais vendido
         });
 
+        console.log('🔍 Resultado do groupBy:', resultado);
+
         if (resultado.length === 0) {
+            console.log('⚠️ Nenhum item vendido para unidade:', unidadeId);
             return {
                 sucesso: false,
                 message: "Nenhum item encontrado para esta unidade.",
             };
         }
         const produtoMaisVendido = resultado[0];
-        const produto = await prisma.produto.findUnique({ // Busca informações do produto
-            where: { id: produtoMaisVendido.produtoId, },
+        console.log('📊 Produto mais vendido (agrupado):', produtoMaisVendido);
+        
+        // Nota: ItemVenda.produtoId aponta para EstoqueProduto.id (não Produto.id)
+        // Então podemos buscar diretamente pelo ID do EstoqueProduto
+        console.log('🔎 Buscando EstoqueProduto com ID:', produtoMaisVendido.produtoId, 'para unidadeId:', unidadeId);
+        
+        // Busca informações do EstoqueProduto (não do Produto)
+        // O produtoId em ItemVenda é na verdade o ID do EstoqueProduto
+        const estoqueProduto = await prisma.estoqueProduto.findUnique({
+            where: { 
+                id: produtoMaisVendido.produtoId,
+            },
             select: {
                 id: true,
                 nome: true,
-                descricao: true,
+                sku: true,
+                marca: true,
+                qntdAtual: true,
+                qntdMin: true,
+                precoUnitario: true,
+                estoqueId: true,
             },
         });
+
+        console.log('📦 EstoqueProduto encontrado:', estoqueProduto);
+
+        if (!estoqueProduto) {
+            console.log('⚠️ EstoqueProduto não encontrado para ID:', produtoMaisVendido.produtoId);
+            return {
+                sucesso: false,
+                message: "EstoqueProduto não encontrado.",
+            };
+        }
+
+        // Verifica se o estoque pertence à unidade correta
+        if (estoqueProduto.estoqueId) {
+            const estoque = await prisma.estoque.findUnique({
+                where: { id: estoqueProduto.estoqueId },
+                select: { unidadeId: true }
+            });
+
+            if (!estoque || estoque.unidadeId !== Number(unidadeId)) {
+                console.log('⚠️ EstoqueProduto não pertence a esta unidade');
+                return {
+                    sucesso: false,
+                    message: "EstoqueProduto não pertence a esta unidade.",
+                };
+            }
+        }
+
         return {
             sucesso: true,
-            produto: {
-                id: produto.id,
-                nome: produto.nome,
-                descricao: produto.descricao,
+            estoqueProduto: {
+                id: estoqueProduto.id,
+                nome: estoqueProduto.nome,
+                sku: estoqueProduto.sku,
+                marca: estoqueProduto.marca,
+                qntdAtual: estoqueProduto.qntdAtual,
+                qntdMin: estoqueProduto.qntdMin,
+                precoUnitario: estoqueProduto.precoUnitario,
                 quantidadeVendida: produtoMaisVendido._sum.quantidade,
             },
             message: "Produto mais vendido encontrado com sucesso!",
         };
     } catch (error) {
+        console.error('❌ Erro ao buscar o produto mais vendido:', error);
         return {
             sucesso: false,
             erro: "Erro ao buscar o produto mais vendido",
