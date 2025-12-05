@@ -92,7 +92,10 @@ app.use('/produtos', produtoRoutes);
 app.use('/plano-producao', planoProducaoRoutes);
 
 app.get('/', (req, res) => {res.json({ message: 'Backend online!' });});
-app.get('/financeiro/categorias')
+// Rota temporária para categorias do financeiro — evita crash por declaração incompleta
+app.get('/financeiro/categorias', (req, res) => {
+  return res.status(200).json({ categorias: [] });
+});
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'online' }));
 

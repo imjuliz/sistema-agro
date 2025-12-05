@@ -247,7 +247,9 @@ export const buscarProdutoMaisVendido = async (unidadeId) => { //ok tem controll
 
 export const listarProdutos = async (unidadeId) => { //ok controller feito
     try {
-        const fornecedores = await prisma.venda.findMany({ where: { unidadeId: Number(unidadeId) }, })
+        console.log("unidadeId no model:", unidadeId);
+        const fornecedores = await prisma.estoque.findMany({ where: {unidadeId} })
+        console.log("fornecedores encontrados:", fornecedores);
         return ({
             sucesso: true,
             fornecedores,
