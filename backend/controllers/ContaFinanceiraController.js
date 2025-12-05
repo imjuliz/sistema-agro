@@ -1,14 +1,4 @@
-import {
-  criarContaFinanceira,
-  listarContasFinanceirasComFiltros,
-  obterContaFinanceiraPorId,
-  atualizarContaFinanceira,
-  marcarComoPaga,
-  marcarComoRecebida,
-  deletarContaFinanceira,
-  obterResumoFinanceiroPorPeriodo,
-  obterSaldoPorCategoria
-} from '../models/contaFinanceira.js';
+import {criarContaFinanceira,listarContasFinanceirasComFiltros,obterContaFinanceiraPorId,atualizarContaFinanceira,marcarComoPaga,marcarComoRecebida,deletarContaFinanceira,obterResumoFinanceiroPorPeriodo,obterSaldoPorCategoria} from '../models/contaFinanceira.js';
 
 // ============ CONTAS FINANCEIRAS ============
 
@@ -17,60 +7,20 @@ export const criarContaController = async (req, res) => {
     const criadoPorId = req.session?.usuario?.id;
     const unidadeId = req.session?.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: 'Sessão inválida'
-      });
-    }
+    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: 'Sessão inválida'});}
 
-    const {
-      descricao,
-      tipoMovimento,
-      categoriaId,
-      subcategoriaId,
-      formaPagamento,
-      valor,
-      competencia,
-      vencimento,
-      documento,
-      observacao
-    } = req.body;
+    const {descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,documento,observacao  } = req.body;
 
     if (!descricao || !tipoMovimento || !valor || !vencimento) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: 'Campos obrigatórios faltando: descricao, tipoMovimento, valor, vencimento'
-      });
+      return res.status(400).json({sucesso: false,erro: 'Campos obrigatórios faltando: descricao, tipoMovimento, valor, vencimento'});
     }
 
-    const conta = await criarContaFinanceira({
-      unidadeId,
-      criadoPorId,
-      descricao,
-      tipoMovimento,
-      categoriaId,
-      subcategoriaId,
-      formaPagamento,
-      valor,
-      competencia,
-      vencimento,
-      documento,
-      observacao
-    });
+    const conta = await criarContaFinanceira({unidadeId,criadoPorId,descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,documento,observacao});
 
-    return res.status(201).json({
-      sucesso: true,
-      mensagem: 'Conta criada com sucesso',
-      dados: conta
-    });
+    return res.status(201).json({sucesso: true,mensagem: 'Conta criada com sucesso',dados: conta});
   } catch (error) {
     console.error('Erro ao criar conta:', error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: 'Erro ao criar conta',
-      detalhes: error.message
-    });
+    return res.status(500).json({sucesso: false,erro: 'Erro ao criar conta',detalhes: error.message});
   }
 };
 
@@ -78,21 +28,9 @@ export const listarContasController = async (req, res) => {
   try {
     const unidadeId = req.usuario?.unidadeId;
 
-    if (!unidadeId) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: 'Unidade não identificada'
-      });
-    }
+    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: 'Unidade não identificada'});}
 
-    const {
-      mes,
-      ano,
-      tipoMovimento,
-      status,
-      categoriaId,
-      subcategoriaId
-    } = req.query;
+    const {mes,ano,tipoMovimento,status,categoriaId,subcategoriaId} = req.query;
 
     const filtros = {};
     if (mes) filtros.mes = parseInt(mes);
@@ -103,18 +41,10 @@ export const listarContasController = async (req, res) => {
     if (subcategoriaId) filtros.subcategoriaId = subcategoriaId;
 
     const contas = await listarContasFinanceirasComFiltros(unidadeId, filtros);
-
-    return res.status(200).json({
-      sucesso: true,
-      dados: contas
-    });
+    return res.status(200).json({sucesso: true,dados: contas});
   } catch (error) {
     console.error('Erro ao listar contas:', error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: 'Erro ao listar contas',
-      detalhes: error.message
-    });
+    return res.status(500).json({sucesso: false,erro: 'Erro ao listar contas',detalhes: error.message});
   }
 };
 

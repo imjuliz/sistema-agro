@@ -12,7 +12,7 @@ import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController,  calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController,
-    listarDespesasController, abrirCaixaController
+    listarDespesasController, abrirCaixaController,getDashboardFinanceiroController
 } from "../controllers/FinanceiroController.js";
 import {
     criarCategoriaController,
@@ -145,6 +145,7 @@ router.delete("/contas-financeiras/:contaId", auth(), deletarContaController);
 // resumos e relatórios financeiros
 router.get("/financeiro/resumo", auth(), obterResumoController);
 router.get("/financeiro/saldo-por-categoria", auth(), obterSaldoPorCategoriaController);
+router.get("/financeiro/dashboard", auth(), getDashboardFinanceiroController);
 // compatibilidade: rota usada pelo frontend moderno
 router.get("/financeiro/dashboard", auth(), obterResumoController);
 // compatibilidade: rota para listar contas usada pelo frontend

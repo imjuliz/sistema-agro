@@ -7,20 +7,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Tractor, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +27,6 @@ import { useRouter } from 'next/navigation'; // App Router
 import { useRef } from 'react';
 // (adicione entre seus imports existentes)
 import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
-
 
 // corrige o caminho dos ícones padrão em bundlers modernos
 if (typeof window !== 'undefined') {
@@ -145,9 +140,7 @@ export default function FazendasPage() {
                     setUnits([]);
                     setTotalResults(0);
                 }
-            } finally {
-                if (mounted) setLoading(false);
-            }
+            } finally {if (mounted) setLoading(false);}
         }
 
         fetchFazendas();
@@ -165,7 +158,8 @@ export default function FazendasPage() {
                 console.debug("[fetchMetrics] requesting", url);
 
                 // usando seu fetchWithAuth (faz refresh se necessário)
-                const res = await fetchWithAuth(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } });
+                const res = await fetchWithAuth(url, { method: "GET", credentials: "include",
+                    headers: { Accept: "application/json" } });
 
                 console.debug("[fetchMetrics] status:", res.status);
 
@@ -266,9 +260,7 @@ export default function FazendasPage() {
         return filtered.slice(start, start + perPage);
     }, [filtered, page, perPage]);
 
-    function toggleSelect(id) {
-        setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
-    }
+    function toggleSelect(id) {setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);}
 
     function toggleStatus(status) {
         setStatusFilters(prev => ({
@@ -362,9 +354,7 @@ export default function FazendasPage() {
             });
             // opcional: ir para primeira página para ver novo item
             setPage(1);
-        } catch (err) {
-            console.error('handleCreated error', err);
-        }
+        } catch (err) {console.error('handleCreated error', err);}
     }
 
 
@@ -388,9 +378,7 @@ export default function FazendasPage() {
             label: "Mobile",
             color: "var(--chart-2)",
         },
-        label: {
-            color: "var(--background)",
-        },
+        label: {color: "var(--background)",},
     }
 
     // ---------------------------------------------------------------------
@@ -436,7 +424,6 @@ export default function FazendasPage() {
                             <div className="text-sm text-muted-foreground mt-1">Total de unidades do tipo Fazenda</div>
                         </CardContent>
                     </Card>
-
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
                         <CardHeader><CardTitle>Ativas</CardTitle></CardHeader>
                         <CardContent>
@@ -444,7 +431,6 @@ export default function FazendasPage() {
                             <div className="text-sm text-muted-foreground mt-1">Fazendas com status Ativa</div>
                         </CardContent>
                     </Card>
-
                     <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
                         <CardHeader><CardTitle>Inativas</CardTitle></CardHeader>
                         <CardContent>
@@ -452,7 +438,6 @@ export default function FazendasPage() {
                             <div className="text-sm text-muted-foreground mt-1">Fazendas com status Inativa</div>
                         </CardContent>
                     </Card>
-
                 </div>
 
                 {/* Filters + cards */}
@@ -487,12 +472,7 @@ export default function FazendasPage() {
                                                 <div className="flex gap-2">
                                                     {["Ativa", "Inativa"].map(s => (
                                                         <label key={s} className="flex items-center gap-2 px-2 py-1 rounded dark:hover:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
-                                                            <Checkbox
-                                                                checked={!!draftStatusFilters[s]}
-                                                                onCheckedChange={() => {
-                                                                    setDraftStatusFilters(prev => ({ ...prev, [s]: !prev[s] }));
-                                                                }}
-                                                            />
+                                                            <Checkbox checked={!!draftStatusFilters[s]} onCheckedChange={() => { setDraftStatusFilters(prev => ({ ...prev, [s]: !prev[s] }));}}/>
                                                             <div className="text-sm">{s}</div>
                                                         </label>
                                                     ))}
@@ -537,29 +517,19 @@ export default function FazendasPage() {
                                             {/* RESPONSAVEL - ainda nn funciona */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Responsável</div>
-                                                <Input
-                                                    placeholder="Filtrar por responsável"
-                                                    value={draftResponsibleQuery}
-                                                    onChange={(e) => { setDraftResponsibleQuery(e.target.value); }}
-                                                />
+                                                <Input placeholder="Filtrar por responsável" value={draftResponsibleQuery} onChange={(e) => { setDraftResponsibleQuery(e.target.value); }}/>
                                             </div>
-
                                             <Separator />
-                                            {/* Area */}
-                                            <div>
+                                            <div>  {/* Area */}
                                                 <div className="text-xs text-muted-foreground mb-1">Área</div>
-                                                <Input
-                                                    placeholder="Filtrar por área (ha)"
-                                                    value={draftAreaQuery}
+                                                <Input placeholder="Filtrar por área (ha)" value={draftAreaQuery}
                                                     onChange={(e) => { 
                                                         // aceita apenas números (garantia do usuário)
                                                         const digits = String(e.target.value || '').replace(/\D/g, '');
                                                         setDraftAreaQuery(digits);
-                                                    }}
-                                                />
+                                                    }}/>
 
                                             </div>
-
                                             {/* APLICAR / RESET */}
                                             <div className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
@@ -568,7 +538,6 @@ export default function FazendasPage() {
                                                         const parts = String(draftLocationFilter || '').split(',').map(s => s.trim()).filter(Boolean);
                                                         const cidade = parts[0] || '';
                                                         const estado = parts[1] || '';
-
                                                         setAppliedFilters({
                                                             typeFilters: draftTypeFilters,
                                                             statusFilters: draftStatusFilters,
@@ -576,13 +545,9 @@ export default function FazendasPage() {
                                                             locationEstado: estado,
                                                             responsibleQuery: draftResponsibleQuery,
                                                             areaQuery: draftAreaQuery
-                                                        });
-                                                        setPage(1);
-                                                    }}
-                                                    >
+                                                        }); setPage(1); }}>
                                                         Aplicar
                                                     </Button>
-
                                                     <Button size="sm" variant="ghost" onClick={() => {
                                                         resetFilters();
                                                         setDraftAreaQuery('');
@@ -592,7 +557,6 @@ export default function FazendasPage() {
                                                     }}>Limpar</Button>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </PopoverContent>
                                 </Popover>
@@ -624,7 +588,6 @@ export default function FazendasPage() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-
                                 <div className="flex items-center gap-2 ml-3">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -645,16 +608,9 @@ export default function FazendasPage() {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-
-                                <Button
-                                    variant=""
-                                    size="sm"
-                                    className="flex items-center gap-1"
-                                    onClick={() => setOpenAddFazenda(true)}
-                                >
+                                <Button variant="" size="sm" className="flex items-center gap-1" onClick={() => setOpenAddFazenda(true)}>
                                     <span className="flex flex-row gap-3 items-center text-sm"><Plus />Adicionar fazenda</span>
                                 </Button>
-
                             </div>
                         </div>
                     </CardHeader>
@@ -666,8 +622,7 @@ export default function FazendasPage() {
                                 <Skeleton className="h-8 w-full" />
                                 <Skeleton className="h-8 w-full" />
                             </div>
-                        ) : (
-                            <div>
+                        ) : ( <div>
                                 {/* Grid of cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {units.map(u => (
@@ -708,12 +663,7 @@ export default function FazendasPage() {
                                             {' '} ({totalResults} resultado{totalResults !== 1 ? 's' : ''})
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                                disabled={page === 1}
-                                            >
+                                            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
                                                 <ChevronLeft className="h-4 w-4" />
                                                 Anterior
                                             </Button>
@@ -721,47 +671,27 @@ export default function FazendasPage() {
                                                 {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, i) => {
                                                     const totalPages = Math.ceil(totalResults / perPage);
                                                     let pageNum;
-                                                    if (totalPages <= 5) {
-                                                        pageNum = i + 1;
-                                                    } else if (page <= 3) {
-                                                        pageNum = i + 1;
-                                                    } else if (page >= totalPages - 2) {
-                                                        pageNum = totalPages - 4 + i;
-                                                    } else {
-                                                        pageNum = page - 2 + i;
-                                                    }
+                                                    if (totalPages <= 5) {pageNum = i + 1;}
+                                                    else if (page <= 3) {pageNum = i + 1;}
+                                                    else if (page >= totalPages - 2) {pageNum = totalPages - 4 + i;}
+                                                    else {pageNum = page - 2 + i;}
                                                     return (
-                                                        <Button
-                                                            key={pageNum}
-                                                            variant={pageNum === page ? "default" : "outline"}
-                                                            size="sm"
-                                                            onClick={() => setPage(pageNum)}
-                                                        >
+                                                        <Button key={pageNum} variant={pageNum === page ? "default" : "outline"} size="sm" onClick={() => setPage(pageNum)}>
                                                             {pageNum}
                                                         </Button>
                                                     );
                                                 })}
                                             </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))}
-                                                disabled={page >= Math.ceil(totalResults / perPage)}
-                                            >
+                                            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))} disabled={page >= Math.ceil(totalResults / perPage)}>
                                                 Próximo
                                                 <ChevronRight className="h-4 w-4" />
                                             </Button>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-muted-foreground">Por página:</span>
-                                            <select
-                                                value={perPage}
-                                                onChange={(e) => {
-                                                    setPerPage(Number(e.target.value));
-                                                    setPage(1);
-                                                }}
-                                                className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700"
-                                            >
+                                            <select value={perPage}
+                                                onChange={(e) => {setPerPage(Number(e.target.value));setPage(1);}}
+                                                className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700">
                                                 <option value="8">8</option>
                                                 <option value="16">16</option>
                                                 <option value="25">25</option>
@@ -773,24 +703,15 @@ export default function FazendasPage() {
                             </div>
                         )}
                     </CardContent>
-
                 </Card>
-
                 <div className='mb-8'>
                     <Card>
                         <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
                         <CardContent>
                             <div className='h-100 rounded-md overflow-hidden z-0 relative'>
-                                <MapContainer
-                                    style={{ height: "100%", width: "100%" }}
-                                    center={[-14.235004, -51.92528]} // fallback (centro do Brasil)
-                                    zoom={4}
-                                    scrollWheelZoom={false}
-                                >
-                                    <TileLayer
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                    />
+                                <MapContainer style={{ height: "100%", width: "100%" }} center={[-14.235004, -51.92528]} // fallback (centro do Brasil)
+                                    zoom={4} scrollWheelZoom={false}>
+                                    <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
 
                                     { /* marcadores para unidades que possuam coordenadas válidas */}
                                     {units.filter(u => u.latitude != null && u.longitude != null).map(u => (
@@ -875,13 +796,7 @@ export default function FazendasPage() {
             </div>
 
             {/* Add Fazenda Modal */}
-            <AddFazendaModal
-                open={openAddFazenda}
-                onOpenChange={(v) => setOpenAddFazenda(v)}
-                onCreated={handleCreated}
-                className="z-[999]"
-            />
-
+            <AddFazendaModal open={openAddFazenda} onOpenChange={(v) => setOpenAddFazenda(v)} onCreated={handleCreated} className="z-[999]"/>
         </div>
     );
 }

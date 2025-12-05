@@ -1,17 +1,5 @@
 import express from 'express';
-import {
-  criarPlanoProducaoController,
-  criarPlanoProducaoParaLoteController,
-  obterPlanoProducaoController,
-  listarPlanosPorContratoController,
-  listarPlanosPorLoteController,
-  listarPlanosPorItemController,
-  atualizarPlanoProducaoController,
-  atualizarEtapasPlanoController,
-  confirmarPlanoProducaoController,
-  deletarPlanoProducaoController,
-  listarPlanosController,
-} from '../controllers/PlanoProducaoController.js';
+import {criarPlanoProducaoController,criarPlanoProducaoParaLoteController,obterPlanoProducaoController,listarPlanosPorContratoController,listarPlanosPorLoteController,listarPlanosPorItemController,atualizarPlanoProducaoController,atualizarEtapasPlanoController,confirmarPlanoProducaoController,deletarPlanoProducaoController,listarPlanosController,} from '../controllers/PlanoProducaoController.js';
 import { auth } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
