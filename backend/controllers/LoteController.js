@@ -1,4 +1,4 @@
-import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia } from "../models/lote.js";
+import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesDisponiveis, updateLoteCampos } from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -119,21 +119,55 @@ export const contarLotesDisponiveisController = async (req, res) => {
   try {
     const unidadeId = req.params.unidadeId;
 
-    const lotesDisponiveis = await contarLotesProntos(unidadeId);
+    const lotesDisponiveis = await contarLotesDisponiveis(unidadeId);
 
-    return {
+    return res.status(200).json({
       sucesso: true,
       lotesDisponiveis,
-      message: "Lotes disponíveis contados com sucesso!!"
-    };
+      message: "Lotes disponíveis contados com sucesso!"
+    });
   } catch (error) {
-    return {
+    return res.status(500).json({
       sucesso: false,
-      message: "Erro ao contar lotes disponíveis!!",
+      message: "Erro ao contar lotes disponíveis!",
       error: error.message
-    }
+    });
   }
-  
+};
+
+export const atualizarCamposLoteController = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id) || !id) {
+      return res.status(400).json({ sucesso: false, erro: 'id informado incorretamente.' });
+    }
+
+    const { status, preco, statusQualidade } = req.body;
+
+    // Monta objeto com os campos permitidos
+    const campos = {};
+    if (status !== undefined) campos.status = status;
+    if (preco !== undefined) {
+      // tenta converter para number, mas aceita string caso o front envie formato com simbolos
+      const n = Number(preco);
+      campos.preco = Number.isFinite(n) ? n : preco;
+    }
+    if (statusQualidade !== undefined) campos.statusQualidade = statusQualidade;
+
+    if (Object.keys(campos).length === 0) {
+      return res.status(400).json({ sucesso: false, erro: 'Nenhum campo para atualizar.' });
+    }
+
+    const resultado = await updateLoteCampos(id, campos);
+
+    if (!resultado || !resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json({ sucesso: true, lote: resultado.loteAtualizado, message: 'Lote atualizado com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar lote.', detalhes: error.message });
+  }
 };
 
 export async function getLotePorIdController(req, res) {

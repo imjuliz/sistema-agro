@@ -1045,10 +1045,23 @@ enum TipoTransporte {
 }
 
 enum StatusLote {
-  EM_PREPARO
+  //STATUS CASO FOR PLANTA
+    SEMEADO       // Plantio feito, início do ciclo
+  CRESCIMENTO   // Plantas em desenvolvimento
+  COLHEITA      // Lote em processo de colheita
+  COLHIDO       // Colheita finalizada
+  //STATUS CASO FOR ANIMAL
+    RECEBIDO       // Animais chegaram no lote
+  EM_CRESCIMENTO // Animais em crescimento ou engorda
+  ABATE          // Lote em processo de abate ou envio
+  //GERAL (serve pros dois)
+  PRONTO        // Produção pronta para colheita
+  BLOQUEADO     // Lote indisponível, bloqueado para operação ou venda
+  VENDIDO        // Animais vendidos ou enviados
+  //vou apagar depois
   PENDENTE
-  PRONTO
   ENVIADO
+  EM_PREPARO
 }
 
 enum StatusEtapa {

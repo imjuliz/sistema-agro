@@ -148,6 +148,31 @@ export const contarLotesDisponiveis = async (unidadeId) => {
   }
 };
 
+export const contarLotesColheita = async (unidadeId) => {
+  try{
+    const lotesColheita = await prisma.lote.count({
+      where: {
+        status: "COLHEITA",
+        unidadeId: Number(unidadeId),
+      }
+    });
+
+    return {
+      sucesso: true,
+      lotesColheita,
+      message: "Lotes em colheita contados com sucesso!"
+    };
+  }
+  catch (error){
+    return {
+      sucesso: false,
+      message: "Erro ao contar lotes em colheita!",
+      error: error.message
+    
+  }
+}
+};
+
 export async function getLotePorId(id) {
   try {
     const lote = await prisma.lote.findUnique({ where: { id } });
@@ -253,6 +278,39 @@ export async function updateLote(id, data, unidadeId, contratoId) {
       message: "Erro ao atualizar lote!!",
       error: error.message,
     }
+  }
+}
+
+// Atualiza campos específicos de um lote (parcial)
+export async function updateLoteCampos(id, fields) {
+  try {
+    // Permitir apenas campos controlados
+    const allowed = ["status", "preco", "statusQualidade"];
+    const data = {};
+    Object.keys(fields || {}).forEach((k) => {
+      if (allowed.includes(k)) data[k] = fields[k];
+    });
+
+    if (Object.keys(data).length === 0) {
+      return { sucesso: false, message: "Nenhum campo válido para atualizar." };
+    }
+
+    const loteAtualizado = await prisma.lote.update({
+      where: { id: Number(id) },
+      data,
+    });
+
+    return {
+      sucesso: true,
+      loteAtualizado,
+      message: "Lote atualizado com sucesso!!",
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao atualizar lote (parcial)!!",
+      error: error.message,
+    };
   }
 }
 

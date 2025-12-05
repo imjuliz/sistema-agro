@@ -40,7 +40,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { contarLotesDisponiveisController, listarLotesAnimaliaController, listarLotesPlantioController } from "../controllers/LoteController.js";
+import { contarLotesDisponiveisController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController } from "../controllers/LoteController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -93,6 +93,8 @@ router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", listarLotesPlantioController);
 router.get("/loteAnimalia/:unidadeId", listarLotesAnimaliaController);
 router.get("/lotesDisponiveis/:unidadeId", contarLotesDisponiveisController);
+// rota para atualização parcial de lote (status / preco / statusQualidade)
+router.patch("/lotes/:id", auth(), atualizarCamposLoteController);
 router.get("/lote/:loteId/media-producao",calcularMediaProducaoPorLoteController);
 router.get('/lotes/:unidadeId/status-counts', getLotesPorStatusController);
 //relatório
