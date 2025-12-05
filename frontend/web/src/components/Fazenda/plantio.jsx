@@ -6,17 +6,31 @@ import { API_URL } from '@/config';
 import { toast } from 'sonner';
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import { IconTrendingDown } from "@tabler/icons-react"
-//ui
+
+// ui
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
+import { Item, ItemContent, ItemDescription, ItemTitle, ItemActions } from "@/components/ui/item"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
-//mui
+
+// mui
 import Button from '@mui/material/Button';
 import { BarChart } from '@mui/x-charts/BarChart';
 
+// Small helper to robustly extract array from various backend shapes
+function extractArrayFromResponse(data) {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.loteVegetais)) return data.loteVegetais;
+    if (Array.isArray(data.lotesVegetais)) return data.lotesVegetais;
+    if (Array.isArray(data.lotes)) return data.lotes;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.lotesVegetais?.loteVegetais)) return data.lotesVegetais.loteVegetais;
+    if (Array.isArray(data.loteVegetais?.loteVegetais)) return data.loteVegetais.loteVegetais;
+    return [];
+}
 
 export function SectionCards() {
     return (
@@ -229,50 +243,66 @@ export function ChartLineMultiple() {
     )
 }
 
-//tabela de lotes(vegetais)
-const lotes = [
-    { id: 1, nome: "Beterraba", tipo: "Legume", talhao: "16", plantio: '16/10', validade: '15/12', status: 'Em desenvolvimento', qtd: '600', unMedida: 'un', preco: '1,20' },
-    { id: 2, nome: "Maçã", tipo: "Fruta", talhao: "05", plantio: '10/01', validade: '10/06', status: 'Em desenvolvimento', qtd: '1200', unMedida: 'kg', preco: '4,50' },
-    { id: 3, nome: "Cenoura", tipo: "Raiz", talhao: "12", plantio: '05/09', validade: '05/12', status: 'Pronto para colheita', qtd: '850', unMedida: 'kg', preco: '3,80' },
-    { id: 4, nome: "Alface", tipo: "Hortaliça", talhao: "03", plantio: '01/10', validade: '20/11', status: 'Pronto para colheita', qtd: '3000', unMedida: 'un', preco: '2,50' },
-    { id: 5, nome: "Milho", tipo: "Grão", talhao: "20", plantio: '15/05', validade: '15/09', status: 'Colhido', qtd: '5000', unMedida: 'kg', preco: '2,00' },
-    { id: 6, nome: "Abóbrinha", tipo: "Legume", talhao: "07", plantio: '20/08', validade: '10/11', status: 'Em desenvolvimento', qtd: '400', unMedida: 'kg', preco: '3,20' },
-    { id: 7, nome: "Acelga", tipo: "Hortaliça", talhao: "04", plantio: '03/10', validade: '30/11', status: 'Pronto para colheita', qtd: '1500', unMedida: 'un', preco: '3,00' },
-    { id: 8, nome: "Tomate", tipo: "Fruta", talhao: "11", plantio: '10/07', validade: '10/10', status: 'Colhido', qtd: '2500', unMedida: 'kg', preco: '5,50' },
-];
+// tabela de lotes (vegetais) será carregada pela API
 
 export function TableDemo2() {
     const { user, fetchWithAuth } = useAuth();
     const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-    const [categoria, setCategoria] = useState("");
+
+    // filters & ui state
     const [busca, setBusca] = useState("");
-    const [lotesState, setLotesState] = useState(lotes);
+    const [tipoFilter, setTipoFilter] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
+    const [priceSort, setPriceSort] = useState(""); // 'maior' | 'menor' | ''
+
+    // data
+    const [rawLotes, setRawLotes] = useState([]);
+    const [lotesState, setLotesState] = useState([]);
+
+        // Enum options (restricted to the requested subset)
+        const tipoOptions = [
+            { value: 'ALL', label: 'Todos' },
+            { value: 'OUTRO', label: 'Outro' },
+            { value: 'LEGUME', label: 'Legume' },
+            { value: 'FRUTA', label: 'Fruta' },
+            { value: 'VERDURA', label: 'Verdura' },
+            { value: 'GRÃOS', label: 'Grãos' },
+        ];
+
+        const statusOptions = [
+            { value: 'ALL', label: 'Todos' },
+      { value: 'EM_PREPARO', label: 'Em preparo' },
+      { value: 'PENDENTE', label: 'Pendente' },
+      { value: 'PRONTO', label: 'Pronto' },
+      { value: 'ENVIADO', label: 'Enviado' },
+    ];
 
     useEffect(() => {
         let mounted = true;
         async function loadLotes() {
-            if (!unidadeId) return; 
+            if (!unidadeId) return;
             try {
                 const fetchFn = fetchWithAuth || fetch;
                 const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
                 const data = await res.json().catch(() => ({}));
                 if (!mounted) return;
-                const arr = data?.lotes ?? data?.data ?? (Array.isArray(data) ? data : []);
-                if (Array.isArray(arr) && arr.length > 0) {
-                    const mapped = arr.map((l) => ({
-                        id: l.id,
-                        nome: l.nome || l.produto || `Lote ${l.id}`,
-                        tipo: l.tipo || l.categoria || '-',
-                        talhao: l.talhao || l.local || '-',
-                        plantio: l.plantio || l.dataPlantio || '-',
-                        validade: l.validade || l.colheitaPrevista || '-',
-                        status: l.status || '-',
-                        qtd: l.quantidade ?? l.qtd ?? 0,
-                        unMedida: l.unidade || 'un',
-                        preco: l.preco || l.precoUnitario || '-' 
-                    }));
-                    setLotesState(mapped);
-                }
+
+                const arr = extractArrayFromResponse(data);
+                const mapped = arr.map((l) => ({
+                    id: l.id,
+                    nome: l.nome || l.produto || l.produtoNome || `Lote ${l.id}`,
+                    // tipo: multiple possible keys in backend
+                    tipo: (l.tipo || l.tipo_lote || l.tipoLote || l.tipoLoteValue || l.tipo_lote_value || '').toString().toUpperCase(),
+                    talhao: l.talhao || l.local || l.localidade || '-',
+                    plantio: l.plantio || l.dataPlantio || l.criadoEm || '-',
+                    validade: l.validade || l.colheitaPrevista || l.validade || '-',
+                    status: (l.status || l.statusLote || l.status_lote || '').toString().toUpperCase(),
+                    qtd: l.quantidade ?? l.qtd ?? l.qntdItens ?? l.qntd ?? 0,
+                    unMedida: l.unidade || l.unidadeMedida || l.unidade_medida || l.unMedida || 'un',
+                    preco: l.preco ?? l.precoUnitario ?? l.preco_unitario ?? l.price ?? '-',
+                    statusQualidade: l.statusQualidade || l.status_qualidade || l.qualidade || l.statusQual || '-'
+                }));
+                setRawLotes(mapped);
             } catch (err) {
                 console.error('Erro carregando lotesPlantio:', err);
                 toast.error('Erro ao carregar lotes da fazenda');
@@ -281,51 +311,105 @@ export function TableDemo2() {
         loadLotes();
         return () => { mounted = false }
     }, [unidadeId, fetchWithAuth]);
+
+    // price parsing helper
+    const parsePriceVal = (v) => {
+      if (v === null || v === undefined) return NaN;
+      if (typeof v === 'number') return v;
+      let s = String(v).trim();
+      if (s === '' || s === '-') return NaN;
+      // remove currency symbols and spaces
+      s = s.replace(/[^0-9.,-]/g, '');
+      // heuristics: if both '.' and ',' present, assume '.' thousands and ',' decimal
+      if (s.indexOf('.') > -1 && s.indexOf(',') > -1) {
+        s = s.replace(/\./g, '').replace(/,/g, '.');
+      } else if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
+        s = s.replace(/,/g, '.');
+      }
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : NaN;
+    };
+
+    // derive filtered + sorted data
+    useEffect(() => {
+      let items = rawLotes.slice();
+
+            if (tipoFilter && tipoFilter !== 'ALL') {
+                items = items.filter(i => (i.tipo || '').toString().toUpperCase() === tipoFilter.toString().toUpperCase());
+            }
+            if (statusFilter && statusFilter !== 'ALL') {
+                items = items.filter(i => (i.status || '').toString().toUpperCase() === statusFilter.toString().toUpperCase());
+            }
+      if (busca) {
+        const q = busca.toLowerCase();
+        items = items.filter(i => (
+          (i.nome || '').toString().toLowerCase().includes(q) ||
+          (i.talhao || '').toString().toLowerCase().includes(q) ||
+          (i.statusQualidade || '').toString().toLowerCase().includes(q)
+        ));
+      }
+
+      if (priceSort === 'maior' || priceSort === 'menor') {
+        items.sort((a, b) => {
+          const pa = parsePriceVal(a.preco);
+          const pb = parsePriceVal(b.preco);
+          // if both numbers, compare
+          if (!Number.isNaN(pa) && !Number.isNaN(pb)) {
+            return priceSort === 'maior' ? pb - pa : pa - pb;
+          }
+          // otherwise fallback to locale string compare
+          return priceSort === 'maior' ? String(b.preco).localeCompare(String(a.preco)) : String(a.preco).localeCompare(String(b.preco));
+        });
+      }
+
+      setLotesState(items);
+    }, [rawLotes, busca, tipoFilter, statusFilter, priceSort]);
+
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-xl font-semibold">Lotes de Vegetais</h2>
-                    <Select onValueChange={setCategoria}>
-                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+
+                    <Select onValueChange={(v) => setTipoFilter(v)} value={tipoFilter}>
+                        <SelectTrigger className="w-[170px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Tipo</SelectLabel>
-                                <SelectItem value="legume">Legume</SelectItem>
-                                <SelectItem value="fruta">Fruta</SelectItem>
-                                <SelectItem value="raiz">Raiz</SelectItem>
-                                <SelectItem value="hortalica">Hortaliça</SelectItem>
-                                <SelectItem value="grao">Grão</SelectItem>
+                                <SelectLabel>Tipo (TipoLote)</SelectLabel>
+                                {tipoOptions.map(opt => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                    <Select onValueChange={setCategoria}>
-                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+
+                    <Select onValueChange={(v) => setStatusFilter(v)} value={statusFilter}>
+                        <SelectTrigger className="w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Status</SelectLabel>
-                                <SelectItem value="emPreparo">Em preparo</SelectItem>
-                                <SelectItem value="semeado">Semeado</SelectItem>
-                                <SelectItem value="desenvolvimento">Em Desenvolvimento</SelectItem>
-                                <SelectItem value="colhido">Colhido</SelectItem>
-                                <SelectItem value="vendido">Vendido</SelectItem>
-                                <SelectItem value="descartado">Descartado</SelectItem>
+                                <SelectLabel>Status (StatusLote)</SelectLabel>
+                                {statusOptions.map(opt => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                    <Select onValueChange={setCategoria}>
-                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Preço" /></SelectTrigger>
+
+                    <Select onValueChange={(v) => setPriceSort(v)} value={priceSort}>
+                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Ordenar preço" /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
                                 <SelectLabel>Preço</SelectLabel>
-                                <SelectItem value="maior">Maior preço</SelectItem>
-                                <SelectItem value="menor">Menor preço</SelectItem>
+                                <SelectItem value="NONE">Sem ordenação</SelectItem>
+                                <SelectItem value="menor">Menor primeiro</SelectItem>
+                                <SelectItem value="maior">Maior primeiro</SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>
                 </div>
                 <Input type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-[250px]" />
             </div>
+
             <Table>
                 <TableCaption>Lotes Vegetais</TableCaption>
                 <TableHeader>
@@ -338,7 +422,9 @@ export function TableDemo2() {
                         <TableHead className="font-semibold">Validade</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold">Quantidade</TableHead>
-                        <TableHead className="font-semibold">Preço por unidade</TableHead>
+                        <TableHead className="font-semibold">Unidade de medida</TableHead>
+                        <TableHead className="font-semibold">Preço</TableHead>
+                        <TableHead className="font-semibold">StatusQualidade</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -351,8 +437,10 @@ export function TableDemo2() {
                             <TableCell>{lote.plantio}</TableCell>
                             <TableCell>{lote.validade}</TableCell>
                             <TableCell>{lote.status}</TableCell>
-                            <TableCell>{lote.qtd}{lote.unMedida}</TableCell>
+                            <TableCell>{lote.qtd}</TableCell>
+                            <TableCell>{lote.unMedida}</TableCell>
                             <TableCell>{lote.preco}</TableCell>
+                            <TableCell>{lote.statusQualidade}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

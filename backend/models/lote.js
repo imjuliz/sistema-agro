@@ -80,25 +80,73 @@ export async function getLotePorTipo(tipo) {
 //   }
 // }
 
-export async function getLotePorTipoVegetais(tipo) {
+export const listarLotesPlantio = async (unidadeId) => {
   try {
     const loteVegetais = await prisma.lote.findMany({
-      where: { tipo: tipo }
-    })
+      where: {
+        tipoProduto: "PLANTIO",
+        unidadeId: Number(unidadeId),
+      }
+    });
 
     return {
       sucesso: true,
       loteVegetais,
       message: "Lotes de vegetais listados com sucesso!!"
-    }
+    };
   } catch (error) {
     return {
       sucesso: false,
       message: "Erro ao listar lotes de vegetais!!",
       error: error.message
+    };
+  }
+};
+
+export const listarLotesAnimalia = async(unidadeId) =>{
+  try{
+    const lotesAnimalia = await prisma.lote.findMany({
+      where : {
+        tipoProduto: "ANIMALIA",
+        unidadeId: Number (unidadeId),}
+    })
+
+    return {
+      sucesso: true,
+      lotesAnimalia,
+      message: "Lotes de animalia listados com sucesso!!"
+    };
+  } catch (error){
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes de animalia!!",
+      error: error.message
     }
   }
 }
+
+export const contarLotesDisponiveis = async (unidadeId) => {
+  try {
+    const quantidade = await prisma.lote.count({
+      where: {
+        status: "PRONTO",
+        unidadeId: Number(unidadeId),
+      }
+    });
+
+    return {
+      sucesso: true,
+      quantidade,
+      message: "Quantidade de lotes disponíveis obtida com sucesso!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao contar lotes disponíveis!",
+      error: error.message
+    };
+  }
+};
 
 export async function getLotePorId(id) {
   try {
@@ -119,19 +167,19 @@ export async function getLotePorId(id) {
 
 export async function createLote(data, unidadeId, contratoId) {
   try {
-    const unidade = await prisma.unidade.findUnique({where: { id: unidadeId }});
+    const unidade = await prisma.unidade.findUnique({ where: { id: unidadeId } });
     if (!unidade) {
       return { sucesso: false, message: "Unidade não encontrada!" };
     }
 
-    const contrato = await prisma.contrato.findUnique({where: { id: contratoId }});
+    const contrato = await prisma.contrato.findUnique({ where: { id: contratoId } });
     if (!contrato) {
       return { sucesso: false, message: "Contrato não encontrado!" };
     }
 
     const responsavel = await prisma.usuario.findUnique({ where: { id: data.responsavelId } });
     if (!responsavel) {
-      return {sucesso: false, message: "Responsavel nao encontrado!!"}
+      return { sucesso: false, message: "Responsavel nao encontrado!!" }
     }
 
     if (responsavel.unidadeId !== unidadeId) {
@@ -167,19 +215,19 @@ export async function createLote(data, unidadeId, contratoId) {
 
 export async function updateLote(id, data, unidadeId, contratoId) {
   try {
-    const unidade = await prisma.unidade.findUnique({where: { id: unidadeId }});
+    const unidade = await prisma.unidade.findUnique({ where: { id: unidadeId } });
     if (!unidade) {
       return { sucesso: false, message: "Unidade não encontrada!" };
     }
 
-    const contrato = await prisma.contrato.findUnique({where: { id: contratoId }});
+    const contrato = await prisma.contrato.findUnique({ where: { id: contratoId } });
     if (!contrato) {
       return { sucesso: false, message: "Contrato não encontrado!" };
     }
 
     const responsavel = await prisma.usuario.findUnique({ where: { id: data.responsavelId } });
     if (!responsavel) {
-      return {sucesso: false, message: "Responsavel nao encontrado!!"}
+      return { sucesso: false, message: "Responsavel nao encontrado!!" }
     }
 
     if (responsavel.unidadeId !== unidadeId) {
@@ -218,7 +266,7 @@ export async function deleteLote(id) {
     const loteDeletado = await prisma.lote.delete({
       where: { id },
     })
-    
+
     return {
       sucesso: true,
       loteDeletado,

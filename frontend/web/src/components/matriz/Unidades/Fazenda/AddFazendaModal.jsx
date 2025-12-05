@@ -1102,7 +1102,7 @@ function updateContractField(contractIndex, field, value) {
                         id="imagemInput"
                       />
                       <label htmlFor="imagemInput" className="cursor-pointer">
-                        <div className="w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 transition">
+                        <div className="w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition">
                           {imagemPreview ? (
                             <img src={imagemPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
                           ) : (
@@ -1110,9 +1110,9 @@ function updateContractField(contractIndex, field, value) {
                           )}
                         </div>
                       </label>
-                      {imagemFile && (
+                      {/* {imagemFile && (
                         <p className="text-xs text-gray-600 mt-2 text-center">{imagemFile.name}</p>
-                      )}
+                      )} */}
                     </div>
                   </div>
 
@@ -1257,15 +1257,13 @@ function updateContractField(contractIndex, field, value) {
                   )}
                 </div>
 
-
-
                 {errors.contracts && <p className="text-sm text-red-600">{errors.contracts}</p>}
 
                 <div>
                   <h4 className="font-medium">Lista de fornecedores</h4>
                   <ul className="mt-2 space-y-2">
                     {fornecedores.map((f, i) => (
-                      <li key={i} className="p-2 border rounded">
+                      <li key={i} className="py-2 px-4 border rounded-sm">
                         <div className="flex justify-between">
                           <div>
                             <div className="font-semibold">{f.nome}</div>
@@ -1291,9 +1289,9 @@ function updateContractField(contractIndex, field, value) {
         <div className="flex justify-between items-center">
           <div>
             <div className="font-semibold text-lg">{c.nomeContrato}</div>
-            <div className="text-sm text-muted-foreground">
+            {/* <div className="text-sm text-muted-foreground">
               Fornecedor: {fornecedores[c.fornecedorIndex]?.nomeEmpresa || '—'}
-            </div>
+            </div> */}
           </div>
 
           <Button

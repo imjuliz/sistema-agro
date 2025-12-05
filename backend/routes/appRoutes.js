@@ -4,43 +4,10 @@ const router = express.Router();
 import { auth } from "../middlewares/authMiddleware.js";
 // controllers --------------------------------------------------------------------
 import { translateText } from "../controllers/TranslateController.js";
-import {
-  verificarProducaoLoteController,
-  calcularMediaProducaoPorLoteController,
-  gerarRelatorioLoteController,
-  gerarRelatorioProducaoController,
-} from "../controllers/fazenda.js";
-import {
-  calcularFornecedoresController,
-  criarContratoExternoController,
-  criarContratoInternoController,
-  listarFornecedoresExternosController,
-  listarFornecedoresInternosController,
-  listarLojasAtendidasController,
-  verContratosComFazendasController,
-  verContratosComFazendasAsFornecedorController,
-  verContratosComLojasController,
-  verContratosExternosController,
-  listarMetaContratosController,
-  buscarPedidosExternosController,
-  getFornecedoresKpisController,
-  updateFornecedorController,
-  deleteFornecedorController,
-} from "../controllers/FornecedorController.js";
-
-// estoque_produtosController.js
-import {
-  buscarProdutoMaisVendidoController,
-  listarProdutosController,
-  somarQtdTotalEstoqueController,
-  listarEstoqueController,
-  consultarLoteController,
-  lotesPlantioController,
-  listarPedidosEntregaController,
-  listarPedidosOrigemController,
-  atualizarQntdMinController,
-} from "../controllers/estoque_produtosController.js";
-
+import {listarPedidosEntregaController, listarPedidosOrigemController, atualizarQntdMinController } from "../controllers/estoque_produtosController.js";
+import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController} from "../controllers/fazenda.js";
+import { calcularFornecedoresController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController } from "../controllers/FornecedorController.js";
+import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController,  consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
   mostrarSaldoFController,
   contarVendasPorMesUltimos6MesesController,
@@ -81,14 +48,9 @@ import {
   obterSaldoPorCategoriaController,
 } from "../controllers/ContaFinanceiraController.js";
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
-import {
-  getProdutosController,
-  produtosDoEstoqueController,
-} from "../controllers/ProdutosController.js";
-import {
-  getDashboardDataController,
-  getLotesPorStatusController,
-} from "../controllers/dashboardController.js";
+import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
+import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
+import { contarLotesDisponiveisController, listarLotesAnimaliaController, listarLotesPlantioController } from "../controllers/LoteController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -136,13 +98,13 @@ router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/produto-mais-vendido", auth(), buscarProdutoMaisVendidoController);
 router.get("/produtos", auth(), listarProdutosController);
 router.get("/estoqueSomar", auth(), somarQtdTotalEstoqueController);
-router.get("/unidade/produtos", listarEstoqueController);
-router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
-router.get(
-  "/lote/:loteId/media-producao",
-  calcularMediaProducaoPorLoteController
-);
-router.get("/lotes/:unidadeId/status-counts", getLotesPorStatusController);
+router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
+// router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
+router.get("/lotesPlantio/:unidadeId", listarLotesPlantioController);
+router.get("/loteAnimalia/:unidadeId", listarLotesAnimaliaController);
+router.get("/lotesDisponiveis/:unidadeId", contarLotesDisponiveisController);
+router.get("/lote/:loteId/media-producao",calcularMediaProducaoPorLoteController);
+router.get('/lotes/:unidadeId/status-counts', getLotesPorStatusController);
 //relatório
 router.get("/relatorio/lote/:loteId", gerarRelatorioLoteController);
 router.get("/relatorio/producao/:loteId", gerarRelatorioProducaoController);

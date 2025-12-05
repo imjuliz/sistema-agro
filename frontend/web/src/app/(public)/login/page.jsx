@@ -1,7 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react"
 import { LoginForm } from "@/components/login-form"
-import { ThemeToggle } from "@/components/toggleSwitchTema";
-// import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 
 export default function LoginPage() {
   return (
@@ -14,7 +12,6 @@ export default function LoginPage() {
                 <img src="/img/ruraltech-logo.svg" className='w-80 h-20 dark:brightness-[0.9]' alt="RuralTech Logo" />
               </div>
             </a>
-            {/* <div className="flex-1"></div><ThemeToggle /> */}
             </div>
         </div>
         <div className="flex flex-1 items-center justify-center">

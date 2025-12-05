@@ -9,10 +9,11 @@ import Navbar from "@/components/Home/sections/navbar/default";
 import * as React from 'react';
 import { toast } from 'sonner';
 //icons-----
-import { Mail, Phone, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, User, Send } from "lucide-react";
+import { Mail, Phone, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, User, Send, Instagram } from "lucide-react";
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 
 const defaultFeatures = [
     {
@@ -25,11 +26,11 @@ const defaultFeatures = [
         title: "Gestão Integrada de Unidades",
         description: "A matriz acompanha em tempo real o desempenho de todas as fazendas e lojas, com relatórios consolidados de produção, estoque e finanças.",
     },
-    {
-        icon: Users,
-        title: "Inovação com IoT",
-        description: "Integramos sensores e dispositivos físicos para monitorar colheitas e insumos, transformando dados agrícolas em decisões inteligentes.",
-    },
+    // {
+    //     icon: Users,
+    //     title: "Inovação com IoT",
+    //     description: "Integramos sensores e dispositivos físicos para monitorar colheitas e insumos, transformando dados agrícolas em decisões inteligentes.",
+    // },
 ];
 
 export default function sobreNos({
@@ -62,7 +63,7 @@ export default function sobreNos({
     ctaTitle = "Alimentos que nascem no campo e chegam com qualidade à sua mesa",
     ctaDescription = "Na RuralTech, unimos tradição e inovação na produção de alimentos agrícolas e pecuários, garantindo frescor, qualidade e responsabilidade ambiental em toda a cadeia.",
     ctaButton1Text = "Conheça nossos produtos",
-    ctaButton2Text = "Fale com um representante",
+    // ctaButton2Text = "Fale com um representante",
     ctaImageSrc = "/img/mulher-tablet.jpg",
     ctaImageAlt = "Agricultor utilizando tablet no campo",
     ctaImageOverlayText = "RuralTech — Produção Agropecuária",
@@ -80,10 +81,10 @@ export default function sobreNos({
     const cards = [
         {
             icon: <Mail className="w-4 h-4 text-neutral-500" />,
-            title: "ruraltech91@gmail.com",
+            title: "ruraltech052@gmail.com",
             description: "Estamos aqui para ajudar com qualquer dúvida ou código.",
             linkText: "Contatar suporte",
-            linkHref: "mailto:ruraltech91@gmail.com",
+            linkHref: "mailto:ruraltech052@gmail.com",
             highlight: false,
         },
         {
@@ -91,12 +92,12 @@ export default function sobreNos({
             title: "(11) 98765-4321",
             description: "Pesquise em nosso FAQ respostas para qualquer dúvida que você possa ter.",
             linkText: "Visitar FAQ",
-            linkHref: "#",
+            linkHref: "https://wa.me/5511987654321",
             highlight: false,
         },
         {
-            icon: <Wrench className="w-4 h-4 text-neutral-500" />,
-            title: "Email",
+            icon: <Instagram className="w-4 h-4 text-neutral-500" />,
+            title: "@ruraltech.52",
             description: "Confira nosso guia de início rápido para desenvolvedores.",
             linkText: "Contatar vendas",
             linkHref: "#",
@@ -113,20 +114,56 @@ export default function sobreNos({
         agreedToPrivacy: false
     });
 
-    const handleSubmit = (e) => {
+    // Formatar telefone
+    const formatPhoneNumber = (value) => {
+        const cleaned = value.replace(/\D/g, '');
+        if (cleaned.length <= 2) return cleaned;
+        if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+        return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Reset form
-        setFormData({
-            firstName: "",
-            lastName: "",
-            phone: "",
-            email: "",
-            message: "",
-            agreedToPrivacy: false
-        });
+        
+        try {
+            const apiUrl = `${API_URL}/contato`;
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                toast.error(data.erro || "Erro ao enviar mensagem");
+                return;
+            }
+
+            toast.success(data.mensagem || "Mensagem enviada com sucesso!");
+            
+            // Reset form
+            setFormData({
+                firstName: "",
+                lastName: "",
+                phone: "",
+                email: "",
+                message: "",
+                agreedToPrivacy: false
+            });
+        } catch (error) {
+            console.error("Erro ao enviar contato:", error);
+            toast.error("Erro ao enviar mensagem. Tente novamente.");
+        }
     };
 
     const handleChange = (field, value) => {
+        // Aplicar formatação de telefone se for o campo phone
+        if (field === "phone") {
+            value = formatPhoneNumber(value);
+        }
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -178,7 +215,7 @@ export default function sobreNos({
                         </h2>
                         <p className="text-muted-foreground">{approachDescription}</p>
                     </div>
-                    <div className="grid gap-8 md:grid-cols-3 md:gap-10">
+                    <div className="grid gap-8 md:grid-cols-2 md:gap-10">
                         {features.map((item, index) => (
                             <div key={index} className="group flex flex-col rounded-lg border border-border p-6 transition-all duration-300 hover:border-[#99BF0F] hover:shadow-sm">
                                 <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 group-hover:bg-[#99BF0F]/10 dark:group-hover:bg-[#99BF0F]/30 transition-all group-hover:border-[#99BF0F]">
@@ -202,9 +239,7 @@ export default function sobreNos({
                                 <Button size="lg" className="w-full sm:w-max">
                                     {ctaButton1Text}
                                 </Button>
-                                <Button size="lg" className="w-full sm:w-max" variant="outline">
-                                    {ctaButton2Text}
-                                </Button>
+                                 
                             </div>
                         </div>
                         <div className="relative">
@@ -257,7 +292,7 @@ export default function sobreNos({
                                         <Textarea placeholder="Sua mensagem" value={formData.message} onChange={(e) => handleChange("message", e.target.value)} className="border-border bg-card min-h-32 resize-none" required />
                                     </div>
 
-                                    <div className="flex items-center space-x-3">
+                                    {/* <div className="flex items-center space-x-3">
                                         <Checkbox id="privacy" checked={formData.agreedToPrivacy} onCheckedChange={(checked) => handleChange("agreedToPrivacy", checked)} />
                                         <label htmlFor="privacy" className="text-muted-foreground text-sm leading-relaxed">
                                             Eu li e concordo com a{" "}
@@ -265,7 +300,7 @@ export default function sobreNos({
                                                 política de privacidade
                                             </Link>
                                         </label>
-                                    </div>
+                                    </div> */}
                                     <Button type="submit" size="lg">
                                         Enviar<Send />
                                     </Button>

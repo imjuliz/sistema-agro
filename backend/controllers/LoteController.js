@@ -1,11 +1,11 @@
-import { getLote, getLotePorId, getLotePorTipoVegetais, createLote, updateLote, deleteLote, getLotePorTipo } from "../models/lote.js";
+import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia } from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
   try {
     const lotes = await getLote();
 
-    return res.status(200).json({lotes})
+    return res.status(200).json({ lotes })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -21,14 +21,15 @@ export async function getLotePorTipoController(req, res) {
 
     //Validações 
     if (!tipo) {
-    return res.status(400).json({
-      sucesso: false,
-      erro: "Tipo precisa ser informado."
-    })}
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Tipo precisa ser informado."
+      })
+    }
 
     const lotesAnimalia = await getLotePorTipo(tipo);
 
-    return res.status(200).json({lotesAnimalia})
+    return res.status(200).json({ lotesAnimalia })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -73,26 +74,67 @@ export async function getLotePorTipoController(req, res) {
 //   }
 // }
 
-export async function geLotePorTipoVegetaisController(req, res) {
+export const listarLotesPlantioController = async (req, res) => {
   try {
-    const { tipo } = loteTipoVegetaisSchema.parse(req.query);
 
-    //Validações
-    if(!tipo) {
-      return res.status(400).json({ sucesso: false, erro: "Tipo precisa ser informado." })
-    }
+    const unidadeId = req.params.unidadeId
 
-    const lotesVegetais = await getLotePorTipoVegetais(tipo);
+    const lotesVegetais = await listarLotesPlantio(unidadeId);
 
-    return res.status(200).json({lotesVegetais})
+    return res.status(200).json({
+      sucesso: true,
+      lotesVegetais,
+      message: "Lotes de vegetais listados com sucesso.",
+    });
+
   } catch (error) {
+
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao listar lotes de vegetais.",
-      detalhes: error.message, // opcional, para debug
+      detalhes: error.message,
     })
   }
 }
+
+export const listarLotesAnimaliaController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const lotesAnimalia = await listarLotesAnimalia(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      lotesAnimalia,
+      message: "Lotes de animalia listados com sucesso.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao listar lotes de animalia.",
+      detalhes: error.message,
+    });
+  }
+}
+
+export const contarLotesDisponiveisController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+
+    const lotesDisponiveis = await contarLotesProntos(unidadeId);
+
+    return {
+      sucesso: true,
+      lotesDisponiveis,
+      message: "Lotes disponíveis contados com sucesso!!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao contar lotes disponíveis!!",
+      error: error.message
+    }
+  }
+  
+};
 
 export async function getLotePorIdController(req, res) {
   try {
@@ -108,7 +150,7 @@ export async function getLotePorIdController(req, res) {
 
     const lote = await getLotePorId(id);
 
-    return res.status(200).json({lote})
+    return res.status(200).json({ lote })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -121,23 +163,23 @@ export async function getLotePorIdController(req, res) {
 export async function createLoteController(req, res) {
   try {
     const usuario = req.usuario;
-    
+
     // Pega unidadeId e contratoId do body ou params
     const unidadeId = req.body.unidadeId || req.params.unidadeId;
     const contratoId = req.body.contratoId || req.params.contratoId;
-    
+
     // Validações de IDs
     if (!unidadeId || isNaN(unidadeId)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         sucesso: false,
-        erro: "Unidade não informada." 
+        erro: "Unidade não informada."
       });
     }
 
     if (!contratoId || isNaN(contratoId)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         sucesso: false,
-        erro: "Contrato não informado." 
+        erro: "Contrato não informado."
       });
     }
 
@@ -206,18 +248,18 @@ export async function updateLoteController(req, res) {
       });
     }
 
-    if(!unidadeId || isNaN(unidadeId)) {
-      return res.status(400).json({erro: "Unidade nao encontrada."})
+    if (!unidadeId || isNaN(unidadeId)) {
+      return res.status(400).json({ erro: "Unidade nao encontrada." })
     }
 
-    if(!contratoId || isNaN(contratoId)) {
-      return res.status(400).json({erro: "Contrato nao encontrado."})
+    if (!contratoId || isNaN(contratoId)) {
+      return res.status(400).json({ erro: "Contrato nao encontrado." })
     }
 
-    
+
     const loteAtualizado = await updateLote(id, data, unidadeId, contratoId);
 
-    return res.status(200).json({loteAtualizado})
+    return res.status(200).json({ loteAtualizado })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,
@@ -241,7 +283,7 @@ export async function deleteLoteController(req, res) {
 
     const loteDeletado = await deleteLote(id);
 
-    return res.status(200).json({loteDeletado})
+    return res.status(200).json({ loteDeletado })
   } catch (error) {
     return res.status(500).json({
       sucesso: false,

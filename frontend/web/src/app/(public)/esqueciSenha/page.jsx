@@ -1,6 +1,6 @@
 import { GalleryVerticalEnd } from "lucide-react"
 import { EsqueciForm } from "@/components/esqueci-form";
-import { ThemeToggle } from "@/components/toggleSwitchTema";
+// import { ThemeToggle } from "@/components/toggleSwitchTema";
 
 export default function EsqueciSenha() {
   return (
@@ -13,7 +13,7 @@ export default function EsqueciSenha() {
             </div>
           </a>
           <div className="flex-1"></div>
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
         </div>
         <div className="flex flex-1 items-center justify-center w-full relative z-10">
           <div className="w-3/5">
