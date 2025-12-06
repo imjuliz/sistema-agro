@@ -35,17 +35,22 @@ export async function getDashboardFinanceiroController(req, res) {
   try {
     console.log("📌 Dashboard financeiro sem filtros de mês/ano");
 
-    const unidadeId = req.user?.unidadeId || null;
-    if (!unidadeId) {return res.status(400).json({ sucesso: false, erro: "Unidade não encontrada" });}
+    const unidadeId = req.usuario?.unidadeId || null;
+    if (!unidadeId) {
+      return res.status(400).json({ sucesso: false, erro: "Unidade não encontrada" });
+    }
 
     const dados = await getDashboardStats(unidadeId);
 
-    return res.json({sucesso: true,dados,});
+    return res.json({sucesso: true, dados});
 
   } catch (error) {
     console.error("❌ Erro ao gerar dashboard financeiro:", error);
     return res.status(500).json({
-      sucesso: false,erro: "Erro ao carregar dashboard financeiro",});
+      sucesso: false,
+      erro: "Erro ao carregar dashboard financeiro",
+      detalhes: error.message
+    });
   }
 };
 

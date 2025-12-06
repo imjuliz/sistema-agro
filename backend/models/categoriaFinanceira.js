@@ -4,10 +4,23 @@ import prisma from '../prisma/client.js';
 
 export const criarCategoria = async (unidadeId, nome, tipo, descricao = null) => {
   try {
+    // Verificar se já existe uma categoria com o mesmo nome para a mesma unidade
+    const categoriaExistente = await prisma.categoria.findFirst({
+      where: {
+        unidadeId: Number(unidadeId),
+        nome: nome.trim(),
+        ativa: true
+      }
+    });
+
+    if (categoriaExistente) {
+      throw new Error(`Já existe uma categoria com o nome "${nome}" para esta unidade.`);
+    }
+
     const categoria = await prisma.categoria.create({
       data: {
         unidadeId: Number(unidadeId),
-        nome,
+        nome: nome.trim(),
         tipo, // ENTRADA ou SAIDA (TipoMovimento)
         descricao,
         ativa: true
@@ -18,6 +31,14 @@ export const criarCategoria = async (unidadeId, nome, tipo, descricao = null) =>
     });
     return categoria;
   } catch (error) {
+    // Se já é um erro customizado, apenas relança
+    if (error.message.includes('Já existe uma categoria')) {
+      throw error;
+    }
+    // Verifica se é erro de constraint única do Prisma
+    if (error.code === 'P2002' || error.message.includes('Unique constraint')) {
+      throw new Error(`Já existe uma categoria com o nome "${nome}" para esta unidade.`);
+    }
     throw new Error(`Erro ao criar categoria: ${error.message}`);
   }
 };
@@ -34,12 +55,29 @@ export const listarCategoriasPorUnidade = async (unidadeId) => {
           where: { ativa: true }
         },
         financeiros: {
+          where: {
+            status: 'PENDENTE',
+            deletadoEm: null
+          },
           select: {
+            id: true,
+            descricao: true,
+            valor: true,
+            vencimento: true,
+            status: true,
+            tipoMovimento: true,
             parcela: true,
             totalParcelas: true,
-            valor: true,
-             valorPago: true,
-             vencimento: true
+            subcategoriaId: true,
+            subcategoria: {
+              select: {
+                id: true,
+                nome: true
+              }
+            }
+          },
+          orderBy: {
+            vencimento: 'asc'
           }
         }
       },

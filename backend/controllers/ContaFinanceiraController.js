@@ -4,10 +4,15 @@ import {criarContaFinanceira,listarContasFinanceirasComFiltros,obterContaFinance
 
 export const criarContaController = async (req, res) => {
   try {
-    const criadoPorId = req.session?.usuario?.id;
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const criadoPorId = req.usuario?.id;
+    const unidadeId = req.usuario?.unidadeId;
 
-    if (!unidadeId) {return res.status(401).json({sucesso: false,erro: 'Sessão inválida'});}
+    if (!unidadeId) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: 'Sessão inválida ou unidade não identificada'
+      });
+    }
 
     const {descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,documento,observacao  } = req.body;
 
@@ -165,7 +170,7 @@ export const deletarContaController = async (req, res) => {
 
 export const obterResumoController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId;
     const { mes, ano } = req.query;
 
     if (!unidadeId) {
@@ -200,7 +205,7 @@ export const obterResumoController = async (req, res) => {
 
 export const obterSaldoPorCategoriaController = async (req, res) => {
   try {
-    const unidadeId = req.session?.usuario?.unidadeId;
+    const unidadeId = req.usuario?.unidadeId;
     const { mes, ano, tipoMovimento } = req.query;
 
     if (!unidadeId) {

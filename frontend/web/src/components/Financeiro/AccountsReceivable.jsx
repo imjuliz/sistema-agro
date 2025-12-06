@@ -11,8 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/components/ui/use-toast';
 
 export function AccountsReceivable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
+  const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -24,7 +26,6 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
   const [formData, setFormData] = useState({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});
-  const [successMessage, setSuccessMessage] = useState(''); // mensagens de UI
   const [loading, setLoading] = useState(false); // estado de carregamento local
   const [localAccounts, setLocalAccounts] = useState(accounts ?? []);  // lista local de contas — se `accounts` for passado como prop, usamos ele como fallback
 
@@ -42,7 +43,6 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         if (selectedMonth) params.set('mes', String(selectedMonth));// filtro por mês/ano (usa selectedMonth/selectedYear do componente)
         if (selectedYear) params.set('ano', String(selectedYear));        
         params.set('tipoMovimento', 'ENTRADA');// apenas contas de entrada para este componente (contas a receber)
-        params.set('tipo', 'receber'); // suporte legado / compatibilidade: alguns endpoints usam `tipo=receber|pagar`
 
         const url = `${API_URL}contas-financeiras?${params.toString()}`;
         console.debug('[AccountsReceivable] GET', url);
@@ -56,7 +56,25 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         const dados = body?.dados ?? body?.contas ?? body ?? [];
         // normaliza para array
         const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.dados) ? dados.dados : []);
-        if (mounted) setLocalAccounts(lista.map(c => ({ id: String(c.id), competencyDate: c.competencia ?? c.competencyDate ?? '', dueDate: c.vencimento ?? c.dueDate ?? '',paymentDate: c.dataRecebimento ?? c.paymentDate ?? null,amount: Number(c.valor ?? c.amount ?? 0),subcategoryId: c.subcategoriaId ?? c.subcategoryId ?? null,description: c.descricao ?? c.description ?? '',status: c.status ?? (c.dataRecebimento ? 'received' : 'pending')})));}
+        if (mounted) {
+          setLocalAccounts(lista.map(c => {
+            let status = 'pending';
+            if (c.status === 'PAGA' || c.status === 'RECEBIDA' || c.dataRecebimento) {
+              status = 'received';
+            }
+            
+            return {
+              id: String(c.id),
+              competencyDate: c.competencia ?? c.competencyDate ?? '',
+              dueDate: c.vencimento ?? c.dueDate ?? '',
+              paymentDate: c.dataRecebimento ?? c.paymentDate ?? null,
+              amount: Number(c.valor ?? c.amount ?? 0),
+              subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
+              description: c.descricao ?? c.description ?? '',
+              status
+            };
+          }));
+        }}
       catch (err) {
         console.error('[AccountsReceivable] erro ao carregar contas:', err);
         if (mounted) setLocalAccounts([]);
@@ -102,23 +120,27 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         throw e;
       }
       if (result.sucesso) {
-        // mensagem de sucesso e integrar na lista
-        setSuccessMessage('Sucesso ao enviar conta de entrada!');
-        setTimeout(() => setSuccessMessage(''), 3500);
+        toast({
+          title: "Sucesso!",
+          description: "Conta a receber criada com sucesso.",
+          variant: "default",
+        });
 
-        if (onRefresh) { await onRefresh(); }
-        else {
-          // preferir a resposta do servidor (conta criada) quando disponível
+        if (onRefresh) {
+          await onRefresh('receivable');
+        } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          await fetchWithAuth.__loadContas();
+        } else {
           const created = result.dados || null;
           const newAccount = created ? {
             id: String(created.id),
             competencyDate: created.competencia || formData.competencyDate,
             dueDate: created.vencimento || formData.dueDate,
-            paymentDate: created.dataPagamento || formData.paymentDate || undefined,
+            paymentDate: created.dataRecebimento || formData.paymentDate || undefined,
             amount: created && created.valor !== undefined ? Number(created.valor) : parseAmount(formData.amount),
             subcategoryId: String(created.subcategoriaId ?? formData.subcategoryId),
             description: created.descricao ?? formData.description,
-            status: created.status === 'PAGA' || created.status === 'PAGO' ? 'received' : 'pending'
+            status: created.status === 'PAGA' || created.status === 'RECEBIDA' || created.dataRecebimento ? 'received' : 'pending'
           } : {
             id: `local-${Date.now()}`,
             competencyDate: formData.competencyDate,
@@ -130,20 +152,24 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             status: formData.paymentDate ? 'received' : 'pending'
           };
 
-          // atualiza lista local e notifica pai usando valor atualizado corretamente
           setLocalAccounts(prev => {
             const updated = [newAccount, ...prev];
             if (onAccountsChange) onAccountsChange(updated);
             return updated;
           });
-          // garantir recarregamento consistente da lista do backend (ex: se filtro atual não contém o item)
-          try {if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') { await fetchWithAuth.__loadContas(); }}
-          catch (e) { console.warn('[AccountsReceivable] falha ao recarregar contas após criar:', e); }
         }
         resetForm();
         setIsAddDialogOpen(false);
       }
-    } catch (error) {console.error('Erro ao criar conta:', error);alert('Erro ao criar conta. Tente novamente.');}
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      const errorMessage = error.message || 'Erro ao criar conta. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEdit = (account) => {
@@ -171,21 +197,55 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         body: JSON.stringify(contaData),
       });
 
-      if (!response.ok) { throw new Error('Erro ao atualizar conta'); }
-      if (onRefresh) { await onRefresh(); }
-      else {const updatedAccount = {...editingAccount,competencyDate: formData.competencyDate,dueDate: formData.dueDate,paymentDate: formData.paymentDate || undefined,amount: parseFloat(formData.amount),subcategoryId: formData.subcategoryId,description: formData.description,status: formData.paymentDate ? 'received' : 'pending'};
+      const result = await response.json();
 
-        // atualiza lista local e notifica pai
-        setLocalAccounts(prev => {
-          const updated = prev.map(acc => acc.id === editingAccount.id ? updatedAccount : acc);
-          if (onAccountsChange) onAccountsChange(updated);
-          return updated;
-        });
+      if (!response.ok) {
+        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar conta';
+        throw new Error(errorMessage);
       }
-      resetForm();
-      setEditingAccount(null);
-      setIsEditDialogOpen(false);
-    } catch (error) {console.error('Erro ao atualizar conta:', error);alert('Erro ao atualizar conta. Tente novamente.');}
+
+      if (result.sucesso) {
+        toast({
+          title: "Sucesso!",
+          description: "Conta a receber atualizada com sucesso.",
+          variant: "default",
+        });
+
+        if (onRefresh) {
+          await onRefresh('receivable');
+        } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          await fetchWithAuth.__loadContas();
+        } else {
+          const updatedAccount = {
+            ...editingAccount,
+            competencyDate: formData.competencyDate,
+            dueDate: formData.dueDate,
+            paymentDate: formData.paymentDate || undefined,
+            amount: parseFloat(formData.amount),
+            subcategoryId: formData.subcategoryId,
+            description: formData.description,
+            status: formData.paymentDate ? 'received' : 'pending'
+          };
+
+          setLocalAccounts(prev => {
+            const updated = prev.map(acc => acc.id === editingAccount.id ? updatedAccount : acc);
+            if (onAccountsChange) onAccountsChange(updated);
+            return updated;
+          });
+        }
+        resetForm();
+        setEditingAccount(null);
+        setIsEditDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar conta:', error);
+      const errorMessage = error.message || 'Erro ao atualizar conta. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (id) => {
@@ -193,24 +253,41 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       const url = API_URL ? `${API_URL}contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
       const response = await fetchWithAuth(url, {method: 'DELETE',credentials: 'include',headers: { 'Content-Type': 'application/json', },});
 
-      if (!response.ok) { throw new Error('Erro ao deletar conta'); }
-      if (onRefresh) { await onRefresh(); }
-      else {
-        // atualiza lista local e notifica pai
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const errorMessage = result.erro || result.detalhes || 'Erro ao deletar conta';
+        throw new Error(errorMessage);
+      }
+
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber deletada com sucesso.",
+        variant: "default",
+      });
+
+      if (onRefresh) {
+        await onRefresh('receivable');
+      } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+        await fetchWithAuth.__loadContas();
+      } else {
         setLocalAccounts(prev => {
           const updated = prev.filter(acc => acc.id !== id);
           if (onAccountsChange) onAccountsChange(updated);
           return updated;
         });
       }
-    } catch (error) {console.error('Erro ao deletar conta:', error);alert('Erro ao deletar conta. Tente novamente.');}
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      const errorMessage = error.message || 'Erro ao deletar conta. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
-  // helpers para exibir mensagens UI
-  const renderSuccessAlert = () => {
-    if (!successMessage) return null;
-    return (<div className="mb-3"><Alert variant="success"><AlertDescription>{successMessage}</AlertDescription></Alert></div>);
-  };
 
   // Função melhorada para parsing de CSV com suporte a campos entre aspas
   const parseCSV = (csvText) => {
@@ -376,21 +453,44 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   const months = [{ value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' }, { value: '3', label: 'Março' }, { value: '4', label: 'Abril' }, { value: '5', label: 'Maio' }, { value: '6', label: 'Junho' }, { value: '7', label: 'Julho' }, { value: '8', label: 'Agosto' }, { value: '9', label: 'Setembro' }, { value: '10', label: 'Outubro' }, { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' }];
 
   const filteredAccounts = useMemo(() => {
+    if (!localAccounts || localAccounts.length === 0) return [];
     const month = parseInt(selectedMonth);
     const year = parseInt(selectedYear);
     const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59);
+    
     return localAccounts.filter(acc => {
-      const competencyDate = new Date(acc.competencyDate);
-      return competencyDate >= monthStart && competencyDate <= monthEnd;
+      if (!acc.competencyDate) return false;
+      try {
+        const competencyDate = new Date(acc.competencyDate);
+        if (isNaN(competencyDate.getTime())) return false;
+        return competencyDate >= monthStart && competencyDate <= monthEnd;
+      } catch {
+        return false;
+      }
     });
   }, [localAccounts, selectedMonth, selectedYear]);
 
   // Calcular anos disponíveis baseado nas datas de competência
   const availableYears = useMemo(() => {
-    const years = new Set(localAccounts.map(acc => new Date(acc.competencyDate).getFullYear()));
+    const years = new Set();
     years.add(currentDate.getFullYear());
-    return Array.from(years).sort((a, b) => b - a);
+    localAccounts.forEach(acc => {
+      if (acc && acc.competencyDate) {
+        try {
+          const date = new Date(acc.competencyDate);
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            if (year && !isNaN(year) && isFinite(year)) {
+              years.add(year);
+            }
+          }
+        } catch {
+          // Ignora datas inválidas
+        }
+      }
+    });
+    return Array.from(years).filter(y => !isNaN(y) && isFinite(y)).sort((a, b) => b - a);
   }, [localAccounts, currentDate]);
 
   const entryCategories = categories.filter(cat => cat.type === 'entrada');
@@ -440,7 +540,6 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           </div>
         </CardContent>
       </Card>
-      {renderSuccessAlert()}
       <div className="flex justify-between items-center">
         <div>
           <h2>Contas a Receber - {getSelectedMonthName()}/{selectedYear}</h2>
@@ -548,7 +647,15 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                     <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
                       <SelectTrigger id="subcategory"><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
                       <SelectContent>
-                        {entryCategories.map(category => (<React.Fragment key={category.id}>{category.subcategories.map(subcategory => (<SelectItem key={subcategory.id} value={subcategory.id}>{category.name} &gt; {subcategory.name}</SelectItem>))}</React.Fragment>))}
+                        {entryCategories.map(category => (
+                          <React.Fragment key={category.id}>
+                            {category.subcategories.filter(sub => sub && sub.id).map(subcategory => (
+                              <SelectItem key={subcategory.id} value={String(subcategory.id)}>
+                                {category.name || 'Sem nome'} &gt; {subcategory.name || 'Sem nome'}
+                              </SelectItem>
+                            ))}
+                          </React.Fragment>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -653,7 +760,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                 ))}
                 {filteredAccounts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">{accounts.length === 0 ? 'Nenhuma conta cadastrada' : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`}</TableCell>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">{localAccounts.length === 0 ? 'Nenhuma conta cadastrada' : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`}</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -695,7 +802,15 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                     <SelectValue placeholder="Selecione uma subcategoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {entryCategories.map(category => (<React.Fragment key={category.id}>{category.subcategories.map(subcategory => (<SelectItem key={subcategory.id} value={subcategory.id}>{category.name} &gt; {subcategory.name}</SelectItem>))}</React.Fragment>))}
+                    {entryCategories.map(category => (
+                      <React.Fragment key={category.id}>
+                        {category.subcategories.filter(sub => sub && sub.id).map(subcategory => (
+                          <SelectItem key={subcategory.id} value={String(subcategory.id)}>
+                            {category.name || 'Sem nome'} &gt; {subcategory.name || 'Sem nome'}
+                          </SelectItem>
+                        ))}
+                      </React.Fragment>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

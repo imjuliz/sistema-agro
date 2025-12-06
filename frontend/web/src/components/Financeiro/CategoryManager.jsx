@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Plus, Edit, Check, X } from 'lucide-react';
+import { Trash2, Plus, Edit, Check, X, AlertCircle, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // export interface Category {
 //   id: string;
@@ -26,12 +29,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 // }
 
 export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth, API_URL, onRefresh }) {
+  const { toast } = useToast();
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryType, setNewCategoryType] = useState('entrada');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddSubcategoryOpen, setIsAddSubcategoryOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
   
   // Estados para edição
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -49,7 +54,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/categorias` : '/api/categorias';
+      const url = API_URL ? `${API_URL}categorias` : '/api/categorias';
       const response = await fetchWithAuth(url, {
         method: 'POST',
         headers: {
@@ -58,12 +63,21 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(categoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao criar categoria');
+        // Tenta obter a mensagem de erro específica do backend
+        const errorMessage = result.erro || result.detalhes || 'Erro ao criar categoria';
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
       if (result.sucesso) {
+        toast({
+          title: "Sucesso!",
+          description: "Categoria criada com sucesso.",
+          variant: "default",
+        });
+        
         if (onRefresh) {
           await onRefresh();
         } else {
@@ -71,7 +85,8 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
             id: result.dados.id.toString(),
             name: newCategoryName,
             type: newCategoryType,
-            subcategories: []
+            subcategories: [],
+            pendingAccounts: []
           };
           
           onCategoriesChange([...categories, newCategory]);
@@ -81,7 +96,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
-      alert('Erro ao criar categoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao criar categoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -94,7 +114,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/categorias/${selectedCategoryId}/subcategorias` : `/api/categorias/${selectedCategoryId}/subcategorias`;
+      const url = API_URL ? `${API_URL}categorias/${selectedCategoryId}/subcategorias` : `/api/categorias/${selectedCategoryId}/subcategorias`;
       const response = await fetchWithAuth(url, {
         method: 'POST',
         headers: {
@@ -103,12 +123,21 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(subcategoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao criar subcategoria');
+        // Tenta obter a mensagem de erro específica do backend
+        const errorMessage = result.erro || result.detalhes || 'Erro ao criar subcategoria';
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
       if (result.sucesso) {
+        toast({
+          title: "Sucesso!",
+          description: "Subcategoria criada com sucesso.",
+          variant: "default",
+        });
+        
         if (onRefresh) {
           await onRefresh();
         } else {
@@ -137,13 +166,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao criar subcategoria:', error);
-      alert('Erro ao criar subcategoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao criar subcategoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
   const deleteCategory = async (categoryId) => {
     try {
-      const url = API_URL ? `${API_URL}/api/categorias/${categoryId}` : `/api/categorias/${categoryId}`;
+      const url = API_URL ? `${API_URL}categorias/${categoryId}` : `/api/categorias/${categoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
         headers: {
@@ -152,8 +186,16 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar categoria');
+        const result = await response.json().catch(() => ({}));
+        const errorMessage = result.erro || result.detalhes || 'Erro ao deletar categoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Categoria deletada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -162,13 +204,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao deletar categoria:', error);
-      alert('Erro ao deletar categoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao deletar categoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
   const deleteSubcategory = async (categoryId, subcategoryId) => {
     try {
-      const url = API_URL ? `${API_URL}/api/subcategorias/${subcategoryId}` : `/api/subcategorias/${subcategoryId}`;
+      const url = API_URL ? `${API_URL}subcategorias/${subcategoryId}` : `/api/subcategorias/${subcategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
         headers: {
@@ -177,8 +224,16 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar subcategoria');
+        const result = await response.json().catch(() => ({}));
+        const errorMessage = result.erro || result.detalhes || 'Erro ao deletar subcategoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Subcategoria deletada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -196,7 +251,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao deletar subcategoria:', error);
-      alert('Erro ao deletar subcategoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao deletar subcategoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -219,7 +279,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/categorias/${editingCategoryId}` : `/api/categorias/${editingCategoryId}`;
+      const url = API_URL ? `${API_URL}categorias/${editingCategoryId}` : `/api/categorias/${editingCategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'PUT',
         headers: {
@@ -228,9 +288,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(categoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao atualizar categoria');
+        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar categoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Categoria atualizada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -248,7 +317,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       setEditCategoryName('');
     } catch (error) {
       console.error('Erro ao atualizar categoria:', error);
-      alert('Erro ao atualizar categoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao atualizar categoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -261,7 +335,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/subcategorias/${editingSubcategoryId}` : `/api/subcategorias/${editingSubcategoryId}`;
+      const url = API_URL ? `${API_URL}subcategorias/${editingSubcategoryId}` : `/api/subcategorias/${editingSubcategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'PUT',
         headers: {
@@ -270,9 +344,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(subcategoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao atualizar subcategoria');
+        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar subcategoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Subcategoria atualizada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -292,7 +375,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       setEditSubcategoryName('');
     } catch (error) {
       console.error('Erro ao atualizar subcategoria:', error);
-      alert('Erro ao atualizar subcategoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao atualizar subcategoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -301,6 +389,49 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
     setEditingSubcategoryId(null);
     setEditCategoryName('');
     setEditSubcategoryName('');
+  };
+
+  // Funções auxiliares
+  const formatCurrency = (value) => {
+    const num = Number(value ?? 0);
+    if (isNaN(num) || !isFinite(num)) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(num);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    } catch {
+      return '-';
+    }
+  };
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  // Função para obter contas pendentes de uma categoria
+  const getPendingAccounts = (category) => {
+    if (!category.financeiros || !Array.isArray(category.financeiros)) {
+      return [];
+    }
+    return category.financeiros.filter(conta => conta.status === 'PENDENTE');
+  };
+
+  // Função para calcular total pendente de uma categoria
+  const getTotalPending = (category) => {
+    const pending = getPendingAccounts(category);
+    return pending.reduce((sum, conta) => {
+      const valor = Number(conta.valor) || 0;
+      return sum + (isNaN(valor) ? 0 : valor);
+    }, 0);
   };
 
   const entradas = categories.filter(cat => cat.type === 'entrada');
@@ -375,8 +506,8 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name} ({category.type})
+                      <SelectItem key={category.id} value={String(category.id || '')}>
+                        {category.name || 'Sem nome'} ({category.type || 'sem tipo'})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -440,7 +571,14 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </div>
                     ) : (
                       <>
-                        <h4 className="text-green-700">{category.name}</h4>
+                        <div className="flex items-center gap-2 flex-1">
+                          <h4 className="text-green-700">{category.name}</h4>
+                          {getPendingAccounts(category).length > 0 && (
+                            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                              {getPendingAccounts(category).length} pendente{getPendingAccounts(category).length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
@@ -462,6 +600,59 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </>
                     )}
                   </div>
+                  
+                  {/* Exibir contas pendentes */}
+                  {getPendingAccounts(category).length > 0 && (
+                    <Collapsible 
+                      open={expandedCategories[category.id]} 
+                      onOpenChange={() => toggleCategory(category.id)}
+                      className="mt-2"
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
+                          <span className="flex items-center gap-2">
+                            <AlertCircle className="h-3 w-3 text-orange-600" />
+                            {getPendingAccounts(category).length} conta{getPendingAccounts(category).length > 1 ? 's' : ''} pendente{getPendingAccounts(category).length > 1 ? 's' : ''} 
+                            ({formatCurrency(getTotalPending(category))})
+                          </span>
+                          <span className="text-muted-foreground">
+                            {expandedCategories[category.id] ? 'Ocultar' : 'Ver'}
+                          </span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2 space-y-2">
+                        <div className="ml-4 border-l-2 border-orange-200 pl-3 space-y-2">
+                          {getPendingAccounts(category).map((conta) => (
+                            <div key={conta.id} className="bg-orange-50 rounded p-2 text-xs">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="font-medium text-orange-900">
+                                    {conta.descricao || 'Sem descrição'}
+                                  </div>
+                                  {conta.subcategoria && (
+                                    <div className="text-orange-700 text-xs mt-1">
+                                      Subcategoria: {conta.subcategoria.nome}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-3 mt-1 text-orange-600">
+                                    <span className="flex items-center gap-1">
+                                      <DollarSign className="h-3 w-3" />
+                                      {formatCurrency(conta.valor)}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Vence: {formatDate(conta.vencimento)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                  
                   <div className="space-y-1 ml-4">
                     {category.subcategories.map(subcategory => (
                       <div key={subcategory.id} className="flex items-center justify-between text-sm">
@@ -566,7 +757,14 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </div>
                     ) : (
                       <>
-                        <h4 className="text-red-700">{category.name}</h4>
+                        <div className="flex items-center gap-2 flex-1">
+                          <h4 className="text-red-700">{category.name}</h4>
+                          {getPendingAccounts(category).length > 0 && (
+                            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                              {getPendingAccounts(category).length} pendente{getPendingAccounts(category).length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
@@ -588,6 +786,59 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </>
                     )}
                   </div>
+                  
+                  {/* Exibir contas pendentes */}
+                  {getPendingAccounts(category).length > 0 && (
+                    <Collapsible 
+                      open={expandedCategories[category.id]} 
+                      onOpenChange={() => toggleCategory(category.id)}
+                      className="mt-2"
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
+                          <span className="flex items-center gap-2">
+                            <AlertCircle className="h-3 w-3 text-orange-600" />
+                            {getPendingAccounts(category).length} conta{getPendingAccounts(category).length > 1 ? 's' : ''} pendente{getPendingAccounts(category).length > 1 ? 's' : ''} 
+                            ({formatCurrency(getTotalPending(category))})
+                          </span>
+                          <span className="text-muted-foreground">
+                            {expandedCategories[category.id] ? 'Ocultar' : 'Ver'}
+                          </span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2 space-y-2">
+                        <div className="ml-4 border-l-2 border-orange-200 pl-3 space-y-2">
+                          {getPendingAccounts(category).map((conta) => (
+                            <div key={conta.id} className="bg-orange-50 rounded p-2 text-xs">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="font-medium text-orange-900">
+                                    {conta.descricao || 'Sem descrição'}
+                                  </div>
+                                  {conta.subcategoria && (
+                                    <div className="text-orange-700 text-xs mt-1">
+                                      Subcategoria: {conta.subcategoria.nome}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-3 mt-1 text-orange-600">
+                                    <span className="flex items-center gap-1">
+                                      <DollarSign className="h-3 w-3" />
+                                      {formatCurrency(conta.valor)}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Vence: {formatDate(conta.vencimento)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                  
                   <div className="space-y-1 ml-4">
                     {category.subcategories.map(subcategory => (
                       <div key={subcategory.id} className="flex items-center justify-between text-sm">

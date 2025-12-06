@@ -69,6 +69,16 @@ export default function FinancasMatriz() {
               name: categoria.nome || categoria.title || "",
               type: categoria.tipo === "ENTRADA" ? "entrada" : "saida",
               subcategories: Array.isArray(subs) ? subs.map((s) => ({id: String(s.id),name: s.nome || s.title || "",categoryId: String(categoria.id),})) : [],
+              financeiros: Array.isArray(categoria.financeiros) ? categoria.financeiros.map((f) => ({
+                id: String(f.id),
+                descricao: f.descricao || '',
+                valor: Number(f.valor) || 0,
+                vencimento: f.vencimento ? new Date(f.vencimento).toISOString() : null,
+                status: f.status || 'PENDENTE',
+                tipoMovimento: f.tipoMovimento || categoria.tipo,
+                subcategoriaId: f.subcategoriaId ? String(f.subcategoriaId) : null,
+                subcategoria: f.subcategoria ? { id: String(f.subcategoria.id), nome: f.subcategoria.nome } : null
+              })) : [],
             };
           } catch (err) {
             console.warn("[fetchCategorias] falha ao buscar subcategorias",err);
@@ -177,7 +187,11 @@ export default function FinancasMatriz() {
 
   const years = useMemo(() => {const y = new Date().getFullYear();return [y - 1, y, y + 1];}, []);
   const getSelectedMonthName = () => {const found = months.find((m) => m.value === String(selectedMonth));return found ? found.label : String(selectedMonth);};
-  const formatCurrency = (v) => {const n = Number(v ?? 0);return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });};
+  const formatCurrency = (v) => {
+    const n = Number(v ?? 0);
+    if (isNaN(n) || !isFinite(n)) return 'R$ 0,00';
+    return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
 
   // Handlers placeholders (podem ser substituídos por implementações reais)
   const handleCategoriesChange = (next) => setCategories(next);
@@ -215,8 +229,8 @@ export default function FinancasMatriz() {
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Dashboard</TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2"><Calculator className="h-4 w-4" />Categorias</TabsTrigger>
-            <TabsTrigger value="payable" className="flex items-center gap-2"><CreditCard className="h-4 w-4" />Contas a Pagar</TabsTrigger>
-            <TabsTrigger value="receivable" className="flex items-center gap-2"><Wallet className="h-4 w-4" />Contas a Receber</TabsTrigger>
+            <TabsTrigger value="payable" className="flex items-center gap-2"><CreditCard className="h-4 w-4" />Despesas</TabsTrigger>
+            <TabsTrigger value="receivable" className="flex items-center gap-2"><Wallet className="h-4 w-4" />Receitas</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard" className="space-y-6"> {/* Filtro de Período */}
             <Card>

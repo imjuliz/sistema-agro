@@ -41,9 +41,14 @@ export const criarCategoriaController = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao criar categoria:', error);
-    return res.status(500).json({
+    
+    // Verifica se é erro de categoria duplicada
+    const isDuplicateError = error.message.includes('Já existe uma categoria') || 
+                             error.message.includes('Unique constraint');
+    
+    return res.status(isDuplicateError ? 409 : 500).json({
       sucesso: false,
-      erro: 'Erro ao criar categoria',
+      erro: isDuplicateError ? error.message : 'Erro ao criar categoria',
       detalhes: error.message
     });
   }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/components/ui/use-toast';
 
 export function AccountsPayable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
+  const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -24,6 +26,83 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
   const [formData, setFormData] = useState({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});
+  const [loading, setLoading] = useState(false);
+  const [localAccounts, setLocalAccounts] = useState(accounts ?? []);
+
+  // Sincroniza prop accounts caso mude externamente
+  useEffect(() => {
+    if (Array.isArray(accounts) && accounts.length >= 0) {
+      setLocalAccounts(accounts);
+    }
+  }, [accounts]);
+
+  // Carregar contas do backend quando houver fetchWithAuth/API_URL
+  useEffect(() => {
+    if (!fetchWithAuth || !API_URL) return;
+    let mounted = true;
+
+    async function loadContas() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (selectedMonth) params.set('mes', String(selectedMonth));
+        if (selectedYear) params.set('ano', String(selectedYear));
+        params.set('tipoMovimento', 'SAIDA');
+
+        const url = `${API_URL}contas-financeiras?${params.toString()}`;
+        console.debug('[AccountsPayable] GET', url);
+        const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
+        
+        if (!res.ok) {
+          console.warn('[AccountsPayable] resposta não OK', res.status);
+          if (mounted) setLocalAccounts([]);
+          return;
+        }
+
+        const body = await res.json().catch(() => null);
+        const dados = body?.dados ?? body?.contas ?? body ?? [];
+        const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.dados) ? dados.dados : []);
+        
+        if (mounted) {
+          setLocalAccounts(lista.map(c => {
+            const today = new Date().toISOString().split('T')[0];
+            const vencimento = c.vencimento ? new Date(c.vencimento).toISOString().split('T')[0] : '';
+            let status = 'pending';
+            
+            if (c.status === 'PAGA' || c.dataPagamento) {
+              status = 'paid';
+            } else if (vencimento && vencimento < today) {
+              status = 'overdue';
+            }
+            
+            return {
+              id: String(c.id),
+              competencyDate: c.competencia ?? c.competencyDate ?? '',
+              dueDate: c.vencimento ?? c.dueDate ?? '',
+              paymentDate: c.dataPagamento ?? c.paymentDate ?? null,
+              amount: Number(c.valor ?? c.amount ?? 0),
+              subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
+              description: c.descricao ?? c.description ?? '',
+              status
+            };
+          }));
+        }
+      } catch (err) {
+        console.error('[AccountsPayable] erro ao carregar contas:', err);
+        if (mounted) setLocalAccounts([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    try {
+      fetchWithAuth.__loadContas = loadContas;
+    } catch (e) { /* ignore */ }
+    
+    loadContas();
+    return () => { mounted = false; };
+  }, [fetchWithAuth, API_URL, selectedMonth, selectedYear]);
+
   const resetForm = () => {setFormData({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});};
   const handleAdd = async () => {if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {return;}
     try {
@@ -45,18 +124,45 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         observacao: formData.description || ''
       };
 
-      if (formData.paymentDate) {contaData.dataPagamento = formData.paymentDate;}
-      const url = API_URL ? `${API_URL}/api/contas-financeiras` : '/api/contas-financeiras';
-      const response = await fetchWithAuth(url, {method: 'POST',headers: {'Content-Type': 'application/json',},body: JSON.stringify(contaData),});
-      if (!response.ok) {throw new Error('Erro ao criar conta');}
+      if (formData.paymentDate) {
+        contaData.dataPagamento = formData.paymentDate;
+        contaData.status = 'PAGA';
+      }
+      
+      // Corrigir URL para usar o padrão correto (sem /api/ duplicado)
+      const url = API_URL ? `${API_URL}contas-financeiras` : '/api/contas-financeiras';
+      console.debug('[AccountsPayable] POST', url, contaData);
+      
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(contaData),
+      });
+
       const result = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = result.erro || result.detalhes || 'Erro ao criar conta';
+        throw new Error(errorMessage);
+      }
+
       if (result.sucesso) {
-        if (onRefresh) {await onRefresh();}
-        else {
+        toast({
+          title: "Sucesso!",
+          description: "Conta a pagar criada com sucesso.",
+          variant: "default",
+        });
+
+        // Recarregar dados do backend
+        if (onRefresh) {
+          await onRefresh('payable');
+        } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          await fetchWithAuth.__loadContas();
+        } else {
           const today = new Date().toISOString().split('T')[0];
           const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
           const newAccount = {
-            id: result.dados.id.toString(),
+            id: result.dados?.id?.toString() || `temp-${Date.now()}`,
             competencyDate: formData.competencyDate,
             dueDate: formData.dueDate,
             paymentDate: formData.paymentDate || undefined,
@@ -65,11 +171,24 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
             description: formData.description,
             status
           };
-          onAccountsChange([...accounts, newAccount]);}
+          setLocalAccounts(prev => {
+            const updated = [newAccount, ...prev];
+            if (onAccountsChange) onAccountsChange(updated);
+            return updated;
+          });
+        }
         resetForm();
-        setIsAddDialogOpen(false);}
+        setIsAddDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      const errorMessage = error.message || 'Erro ao criar conta. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
-    catch (error) {console.error('Erro ao criar conta:', error);alert('Erro ao criar conta. Tente novamente.');}
   };
 
   const handleEdit = (account) => {
@@ -78,18 +197,139 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = () => {if (!editingAccount || !formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {return;}
-    const today = new Date().toISOString().split('T')[0];
-    const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
+  const handleUpdate = async () => {
+    if (!editingAccount || !formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
+      return;
+    }
 
-    const updatedAccount = {...editingAccount,competencyDate: formData.competencyDate,dueDate: formData.dueDate,paymentDate: formData.paymentDate || undefined,amount: parseFloat(formData.amount),subcategoryId: formData.subcategoryId,description: formData.description,status};
-    onAccountsChange(accounts.map(acc =>acc.id === editingAccount.id ? updatedAccount : acc));
-    resetForm();
-    setEditingAccount(null);
-    setIsEditDialogOpen(false);
+    try {
+      const subcategory = categories
+        .flatMap(cat => cat.subcategories)
+        .find(sub => sub.id === formData.subcategoryId);
+      
+      const categoria = categories.find(cat => cat.subcategories.some(sub => sub.id === formData.subcategoryId));
+      
+      const contaData = {
+        descricao: formData.description || '',
+        categoriaId: categoria ? parseInt(categoria.id) : null,
+        subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,
+        formaPagamento: 'DINHEIRO',
+        valor: parseFloat(formData.amount),
+        competencia: formData.competencyDate,
+        vencimento: formData.dueDate,
+        documento: '',
+        observacao: formData.description || ''
+      };
+
+      if (formData.paymentDate) {
+        contaData.dataPagamento = formData.paymentDate;
+        contaData.status = 'PAGA';
+      }
+
+      const url = API_URL ? `${API_URL}contas-financeiras/${editingAccount.id}` : `/api/contas-financeiras/${editingAccount.id}`;
+      console.debug('[AccountsPayable] PUT', url, contaData);
+      
+      const response = await fetchWithAuth(url, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(contaData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar conta';
+        throw new Error(errorMessage);
+      }
+
+      if (result.sucesso) {
+        toast({
+          title: "Sucesso!",
+          description: "Conta a pagar atualizada com sucesso.",
+          variant: "default",
+        });
+
+        if (onRefresh) {
+          await onRefresh('payable');
+        } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          await fetchWithAuth.__loadContas();
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
+          const updatedAccount = {
+            ...editingAccount,
+            competencyDate: formData.competencyDate,
+            dueDate: formData.dueDate,
+            paymentDate: formData.paymentDate || undefined,
+            amount: parseFloat(formData.amount),
+            subcategoryId: formData.subcategoryId,
+            description: formData.description,
+            status
+          };
+          setLocalAccounts(prev => {
+            const updated = prev.map(acc => acc.id === editingAccount.id ? updatedAccount : acc);
+            if (onAccountsChange) onAccountsChange(updated);
+            return updated;
+          });
+        }
+        resetForm();
+        setEditingAccount(null);
+        setIsEditDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar conta:', error);
+      const errorMessage = error.message || 'Erro ao atualizar conta. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDelete = (id) => {onAccountsChange(accounts.filter(acc => acc.id !== id));};
+  const handleDelete = async (id) => {
+    try {
+      const url = API_URL ? `${API_URL}contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
+      console.debug('[AccountsPayable] DELETE', url);
+      
+      const response = await fetchWithAuth(url, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        const errorMessage = result.erro || result.detalhes || 'Erro ao deletar conta';
+        throw new Error(errorMessage);
+      }
+
+      toast({
+        title: "Sucesso!",
+        description: "Conta a pagar deletada com sucesso.",
+        variant: "default",
+      });
+
+      if (onRefresh) {
+        await onRefresh('payable');
+      } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+        await fetchWithAuth.__loadContas();
+      } else {
+        setLocalAccounts(prev => {
+          const updated = prev.filter(acc => acc.id !== id);
+          if (onAccountsChange) onAccountsChange(updated);
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      const errorMessage = error.message || 'Erro ao deletar conta. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
 
   // Função melhorada para parsing de CSV com suporte a campos entre aspas
   const parseCSV = (csvText) => {
@@ -255,10 +495,12 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     }
   };
   const formatCurrency = (value) => {
+    const num = Number(value ?? 0);
+    if (isNaN(num) || !isFinite(num)) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value);
+    }).format(num);
   };
   const formatDate = (dateString) => {return new Date(dateString).toLocaleDateString('pt-BR');};
   const getSubcategoryName = (subcategoryId) => {
@@ -283,27 +525,59 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
 
   // Filtrar contas baseado no período selecionado
   const filteredAccounts = useMemo(() => {
+    if (!localAccounts || localAccounts.length === 0) return [];
     const month = parseInt(selectedMonth);
     const year = parseInt(selectedYear);
     const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0);
-    return accounts.filter(acc => {
-      const competencyDate = new Date(acc.competencyDate);
-      return competencyDate >= monthStart && competencyDate <= monthEnd;
+    const monthEnd = new Date(year, month, 0, 23, 59, 59);
+    
+    return localAccounts.filter(acc => {
+      if (!acc.competencyDate) return false;
+      try {
+        const competencyDate = new Date(acc.competencyDate);
+        if (isNaN(competencyDate.getTime())) return false;
+        return competencyDate >= monthStart && competencyDate <= monthEnd;
+      } catch {
+        return false;
+      }
     });
-  }, [accounts, selectedMonth, selectedYear]);
+  }, [localAccounts, selectedMonth, selectedYear]);
 
   // Calcular anos disponíveis baseado nas datas de competência
   const availableYears = useMemo(() => {
-    const years = new Set(accounts.map(acc => new Date(acc.competencyDate).getFullYear()));
+    const years = new Set();
     years.add(currentDate.getFullYear());
-    return Array.from(years).sort((a, b) => b - a);
-  }, [accounts, currentDate]);
+    localAccounts.forEach(acc => {
+      if (acc && acc.competencyDate) {
+        try {
+          const date = new Date(acc.competencyDate);
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            if (year && !isNaN(year) && isFinite(year)) {
+              years.add(year);
+            }
+          }
+        } catch {
+          // Ignora datas inválidas
+        }
+      }
+    });
+    return Array.from(years).filter(y => !isNaN(y) && isFinite(y)).sort((a, b) => b - a);
+  }, [localAccounts, currentDate]);
 
   const exitCategories = categories.filter(cat => cat.type === 'saida');
-  const totalPending = filteredAccounts.filter(acc => acc.status === 'pending').reduce((sum, acc) => sum + acc.amount, 0);
-  const totalOverdue = filteredAccounts.filter(acc => acc.status === 'overdue').reduce((sum, acc) => sum + acc.amount, 0);
-  const totalPaid = filteredAccounts.filter(acc => acc.status === 'paid').reduce((sum, acc) => sum + acc.amount, 0);
+  const totalPending = filteredAccounts.filter(acc => acc.status === 'pending').reduce((sum, acc) => {
+    const amount = Number(acc.amount) || 0;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+  const totalOverdue = filteredAccounts.filter(acc => acc.status === 'overdue').reduce((sum, acc) => {
+    const amount = Number(acc.amount) || 0;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+  const totalPaid = filteredAccounts.filter(acc => acc.status === 'paid').reduce((sum, acc) => {
+    const amount = Number(acc.amount) || 0;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
   const resetImport = () => {setImportFile(null);setImportProgress({ show: false, processed: 0, total: 0, errors: [], imported: 0 });};
   const getSelectedMonthName = () => {const monthObj = months.find(m => m.value === selectedMonth);return monthObj ? monthObj.label : '';};
 
@@ -375,7 +649,13 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                 <Label>Ano</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger id="year-filter"><SelectValue /></SelectTrigger>
-                  <SelectContent>{availableYears.map(year => (<SelectItem key={year} value={year.toString()}>{year}</SelectItem>))}</SelectContent>
+                  <SelectContent>
+                    {availableYears.filter(y => !isNaN(y) && isFinite(y)).map(year => (
+                      <SelectItem key={year} value={String(year)}>
+                        {String(year)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-2">
@@ -479,7 +759,11 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                             <SelectContent>
                               {exitCategories.map(category => (
                                 <React.Fragment key={category.id}>
-                                  {category.subcategories.map(subcategory => (<SelectItem key={subcategory.id} value={subcategory.id}>{category.name} &gt; {subcategory.name}</SelectItem>))}
+                                  {category.subcategories.filter(sub => sub && sub.id).map(subcategory => (
+                                    <SelectItem key={subcategory.id} value={String(subcategory.id)}>
+                                      {category.name || 'Sem nome'} &gt; {subcategory.name || 'Sem nome'}
+                                    </SelectItem>
+                                  ))}
                                 </React.Fragment>
                               ))}
                             </SelectContent>
@@ -560,7 +844,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                   {filteredAccounts.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        {accounts.length === 0 ? 'Nenhuma conta cadastrada' : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`}
+                        {localAccounts.length === 0 ? 'Nenhuma conta cadastrada' : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`}
                       </TableCell>
                     </TableRow>)}
                 </TableBody>
@@ -604,7 +888,11 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                   <SelectContent>
                     {exitCategories.map(category => (
                       <React.Fragment key={category.id}>
-                        {category.subcategories.map(subcategory => (<SelectItem key={subcategory.id} value={subcategory.id}>{category.name} &gt; {subcategory.name}</SelectItem>))}
+                        {category.subcategories.filter(sub => sub && sub.id).map(subcategory => (
+                          <SelectItem key={subcategory.id} value={String(subcategory.id)}>
+                            {category.name || 'Sem nome'} &gt; {subcategory.name || 'Sem nome'}
+                          </SelectItem>
+                        ))}
                       </React.Fragment>
                     ))}
                   </SelectContent>
