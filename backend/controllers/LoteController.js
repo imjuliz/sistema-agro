@@ -1,4 +1,4 @@
-import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesDisponiveis, updateLoteCampos } from "../models/lote.js";
+import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesDisponiveis, updateLoteCampos, listarAtividadesPlantio } from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -134,6 +134,28 @@ export const contarLotesDisponiveisController = async (req, res) => {
     });
   }
 };
+
+
+export async function listarAtividadesPlantioController(req, res) {
+  try {
+    const unidadeId = Number(req.params.unidadeId);
+
+    if (isNaN(unidadeId)) {
+      return res.status(400).json({ error: "unidadeId inválido" });
+    }
+
+    const atividades = await listarAtividadesPlantio(unidadeId);
+
+    return res.status(200).json({
+      sucesso: true,
+      atividades,
+      message: "Atividades de plantio listadas com sucesso!",
+    });
+  } catch (error) {
+    console.error("Erro ao buscar atividades de plantio:", error);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
+}
 
 export const atualizarCamposLoteController = async (req, res) => {
   try {

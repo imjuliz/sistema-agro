@@ -40,7 +40,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { contarLotesDisponiveisController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController } from "../controllers/LoteController.js";
+import { contarLotesDisponiveisController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController} from "../controllers/LoteController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -76,6 +76,7 @@ router.get(
 
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
 // router.get("/atividadesLote", listarAtividadesLoteController);
+router.get("/atividadesPlantio/:unidadeId", listarAtividadesPlantioController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);

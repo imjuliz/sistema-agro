@@ -158,18 +158,65 @@ export function ItemVariant() {
     )
 }
 
-const atividades = [
-    { id: 1, descricao: "Plantio de soja", tipo: "Plantio", lote: "Lote A", talhao: "Talhão 1", data: "2025-10-01", responsavel: "Carlos Silva" },
-    { id: 2, descricao: "Colheita de milho", tipo: "Colheita", lote: "Lote B", talhao: "Talhão 3", data: "2025-10-05", responsavel: "Ana Souza" },
-    { id: 3, descricao: "Aplicação de fertilizante NPK", tipo: "Fertilização", lote: "Lote C", talhao: "Talhão 2", data: "2025-10-08", responsavel: "João Lima" },
-    { id: 4, descricao: "Controle de pragas com inseticida", tipo: "Defensivo", lote: "Lote A", talhao: "Talhão 1", data: "2025-10-10", responsavel: "Marcos Rocha" },
-    { id: 5, descricao: "Irrigação por aspersão", tipo: "Irrigação", lote: "Lote D", talhao: "Talhão 4", data: "2025-10-12", responsavel: "Fernanda Costa" },
-    { id: 6, descricao: "Plantio de feijão", tipo: "Plantio", lote: "Lote E", talhao: "Talhão 5", data: "2025-10-15", responsavel: "Ricardo Alves" },
-    { id: 7, descricao: "Colheita de trigo", tipo: "Colheita", lote: "Lote F", talhao: "Talhão 6", data: "2025-10-18", responsavel: "Luciana Martins" },
-    { id: 8, descricao: "Aplicação de herbicida", tipo: "Defensivo", lote: "Lote B", talhao: "Talhão 3", data: "2025-10-20", responsavel: "Paulo Mendes" }
-];
-
 export function TableDemo() {
+    const { user, fetchWithAuth } = useAuth();
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+    const [atividades, setAtividades] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (!unidadeId) {
+            setLoading(false);
+            return;
+        }
+
+        const carregarAtividades = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                const response = await fetchWithAuth(
+                    `http://localhost:3000/api/atividadesPlantio/${unidadeId}`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📋 Dados de atividades recebidos:', data);
+                
+                // O controlador retorna { sucesso: true, atividades: { atividadesPlantio: [...] }, message: ... }
+                if (data.sucesso && data.atividades) {
+                    const atividadesList = data.atividades.atividadesPlantio || data.atividades.atividades || [];
+                    setAtividades(Array.isArray(atividadesList) ? atividadesList : []);
+                } else {
+                    setAtividades([]);
+                }
+            } catch (err) {
+                console.error('❌ Erro ao carregar atividades de plantio:', err);
+                setError(err.message || 'Erro ao carregar dados');
+                setAtividades([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        carregarAtividades();
+    }, [unidadeId, fetchWithAuth]);
+
+    const formatarData = (data) => {
+        if (!data) return '-';
+        const date = new Date(data);
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
     return (
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
@@ -177,33 +224,41 @@ export function TableDemo() {
                     <h2 className="text-xl font-semibold">Atividades Agrícolas</h2>
                 </div>
             </div>
-            <Table>
-                <TableCaption>Atividades Agrícolas</TableCaption>
-                <TableHeader>
-                    <TableRow className="bg-gray-100 dark:bg-gray-800">
-                        <TableHead className="w-[80px] font-semibold">ID</TableHead>
-                        <TableHead className="font-semibold">Descrição</TableHead>
-                        <TableHead className="font-semibold">Tipo</TableHead>
-                        <TableHead className="font-semibold">Lote</TableHead>
-                        <TableHead className="font-semibold">Talhão</TableHead>
-                        <TableHead className="font-semibold">Data</TableHead>
-                        <TableHead className="font-semibold">Responsavel</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {atividades.map((atvd) => (
-                        <TableRow key={atvd.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <TableCell className="font-medium">{atvd.id}</TableCell>
-                            <TableCell>{atvd.descricao}</TableCell>
-                            <TableCell>{atvd.tipo}</TableCell>
-                            <TableCell>{atvd.lote}</TableCell>
-                            <TableCell>{atvd.talhao}</TableCell>
-                            <TableCell>{atvd.data}</TableCell>
-                            <TableCell>{atvd.responsavel}</TableCell>
+            
+            {loading && <p className="text-muted-foreground">Carregando atividades...</p>}
+            {error && <p className="text-red-600">Erro: {error}</p>}
+            
+            {!loading && (
+                <Table>
+                    <TableCaption>
+                        {atividades.length === 0 ? 'Nenhuma atividade encontrada' : `Total de ${atividades.length} atividade(s)`}
+                    </TableCaption>
+                    <TableHeader>
+                        <TableRow className="bg-gray-100 dark:bg-gray-800">
+                            <TableHead className="w-[80px] font-semibold">ID</TableHead>
+                            <TableHead className="font-semibold">Descrição</TableHead>
+                            <TableHead className="font-semibold">Tipo</TableHead>
+                            <TableHead className="font-semibold">Lote</TableHead>
+                            <TableHead className="font-semibold">Data Início</TableHead>
+                            <TableHead className="font-semibold">Data Fim</TableHead>
+                            <TableHead className="font-semibold">Responsável</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {atividades.map((atvd) => (
+                            <TableRow key={atvd.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <TableCell className="font-medium">{atvd.id}</TableCell>
+                                <TableCell>{atvd.descricao}</TableCell>
+                                <TableCell>{atvd.tipo || '-'}</TableCell>
+                                <TableCell>{atvd.lote?.nome || '-'}</TableCell>
+                                <TableCell>{formatarData(atvd.dataInicio)}</TableCell>
+                                <TableCell>{formatarData(atvd.dataFim)}</TableCell>
+                                <TableCell>{atvd.responsavel?.nome || '-'}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
         </div>
     )
 }

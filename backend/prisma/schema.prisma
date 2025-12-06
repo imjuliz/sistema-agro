@@ -442,7 +442,7 @@ model AtvdAgricola {
   dataInicio    DateTime        @map("data_inicio")
   dataFim       DateTime?       @map("data_fim")
   responsavelId Int
-  status        StatusPlantacao
+  // status        StatusPlantacao
   lote          Lote            @relation(fields: [loteId], references: [id])
   responsavel   Usuario         @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id])
 

@@ -173,6 +173,53 @@ export const contarLotesColheita = async (unidadeId) => {
 }
 };
 
+// export async function listarAtividadesPlantio(unidadeId) {
+//   return prisma.atvdAgricola.findMany({
+//     where: {
+//       lote: {
+//         unidadeId: unidadeId,
+//       },
+//     },
+//     include: {
+//       lote: true,
+//       responsavel: true,
+//     },
+//     orderBy: {
+//       dataInicio: "desc",
+//     },
+//   });
+// }
+
+export async function listarAtividadesPlantio(unidadeId) {
+  try {
+    const atividadesPlantio = await prisma.atvdAgricola.findMany({
+    where: {
+      lote: {
+        unidadeId: unidadeId,
+      },
+    },
+    include: {
+      lote: true,
+      responsavel: true,
+    },
+    orderBy: {
+      dataInicio: "desc",
+    },
+  });
+    return {
+      sucesso: true,
+      atividadesPlantio,
+      message: "Atividades de plantio listadas com sucesso!!",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar atividades de plantio!!",
+      error: error.message,
+    }
+  }
+}
+
 export async function getLotePorId(id) {
   try {
     const lote = await prisma.lote.findUnique({ where: { id } });
