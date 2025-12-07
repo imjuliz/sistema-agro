@@ -86,7 +86,10 @@ export const listarLotesPlantio = async (unidadeId) => {
       where: {
         tipoProduto: "PLANTIO",
         unidadeId: Number(unidadeId),
-      }
+      },
+      orderBy: {
+        dataCriacao: "desc",
+      },
     });
 
     return {
@@ -173,6 +176,39 @@ export const contarLotesColheita = async (unidadeId) => {
 }
 };
 
+export const contarQtdColheitasPorMes = async (unidadeId, mes, ano) => {
+  try {
+    const inicioMes = new Date(ano, mes - 1, 1);
+    const fimMes = new Date(ano, mes, 1);
+
+    const quantidade = await prisma.atvdAgricola.count({
+      where: {
+        tipo: "COLHEITA",
+        dataInicio: {
+          gte: inicioMes,
+          lt: fimMes,
+        },
+        lote: {
+          unidadeId: Number(unidadeId),
+        },
+      },
+    });
+
+    return {
+      sucesso: true,
+      quantidade,
+      message: "Quantidade de colheitas do mês obtida com sucesso!"
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao contar quantidade de colheitas por mês!",
+      error: error.message
+    };
+  }
+}
+
 // export async function listarAtividadesPlantio(unidadeId) {
 //   return prisma.atvdAgricola.findMany({
 //     where: {
@@ -220,6 +256,70 @@ export async function listarAtividadesPlantio(unidadeId) {
   }
 }
 
+export const criarAtividadeAgricola = async ({
+  descricao,
+  tipo,
+  loteId,
+  dataInicio,
+  dataFim,
+  responsavelId,
+  status
+}) => {
+  try {
+    // Verificar se o lote existe
+    const lote = await prisma.lote.findUnique({
+      where: { id: Number(loteId) }
+    });
+
+    if (!lote) {
+      return {
+        sucesso: false,
+        message: "Lote não encontrado."
+      };
+    }
+
+    // Verificar se o responsável existe
+    const responsavel = await prisma.usuario.findUnique({
+      where: { id: Number(responsavelId) }
+    });
+
+    if (!responsavel) {
+      return {
+        sucesso: false,
+        message: "Responsável não encontrado."
+      };
+    }
+
+    // Criar a atividade
+    const novaAtividade = await prisma.atvdAgricola.create({
+      data: {
+        descricao,
+        tipo,          // Enum TipoAtvd
+        loteId: Number(loteId),
+        dataInicio: new Date(dataInicio),
+        dataFim: dataFim ? new Date(dataFim) : null,
+        responsavelId: Number(responsavelId),
+        status         // Enum StatusAtvdPlantio
+      }
+    });
+
+    return {
+      sucesso: true,
+      message: "Atividade criada com sucesso!",
+      atividade: novaAtividade
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao criar atividade agrícola.",
+      error: error.message
+    };
+  }
+};
+
+
+
 export async function getLotePorId(id) {
   try {
     const lote = await prisma.lote.findUnique({ where: { id } });
@@ -236,6 +336,58 @@ export async function getLotePorId(id) {
     }
   }
 }
+
+export const criarLote = async (dados) => {
+  try {
+    const {
+      unidadeId,
+      responsavelId,
+      nome,
+      tipo,
+      tipoProduto,
+      quantidade,
+      preco,
+      unidadeMedida,
+      observacoes
+    } = dados;
+
+    // validações básicas
+    if (!unidadeId || !responsavelId || !nome || !tipo || !preco || !unidadeMedida) {
+      return {
+        sucesso: false,
+        message: "Campos obrigatórios ausentes."
+      };
+    }
+
+    // criar lote
+    const novoLote = await prisma.lote.create({
+      data: {
+        unidadeId: Number(unidadeId),
+        responsavelId: Number(responsavelId),
+        nome,
+        tipo,            // enum TipoLote
+        tipoProduto,     // enum TipoProduto (PLANTIO ou ANIMALIA)
+        quantidade,
+        preco,
+        unidadeMedida,   // enum UnidadesDeMedida
+        observacoes: observacoes ?? null
+      }
+    });
+
+    return {
+      sucesso: true,
+      message: "Lote criado com sucesso!",
+      lote: novoLote
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao criar lote.",
+      error: error.message
+    };
+  }
+};
 
 export async function createLote(data, unidadeId, contratoId) {
   try {

@@ -1,4 +1,4 @@
-import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesDisponiveis, updateLoteCampos, listarAtividadesPlantio } from "../models/lote.js";
+import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesDisponiveis, contarLotesColheita, updateLoteCampos, listarAtividadesPlantio, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote} from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -135,7 +135,47 @@ export const contarLotesDisponiveisController = async (req, res) => {
   }
 };
 
+export const contarLotesColheitaController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const lotesColheita = await contarLotesColheita(unidadeId);
 
+    return res.status(200).json({
+      sucesso: true,
+      lotesColheita,
+      message: "Lotes em colheita contados com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao contar lotes em colheita.",
+      detalhes: error.message
+    });
+  }
+};
+
+export const qtdColheitasPorMesController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const mes = parseInt(req.params.mes);
+    const ano = parseInt(req.params.ano);
+
+    if (isNaN(mes) || isNaN(ano)) {
+      return res.status(400).json({ erro: "Mês ou ano inválido." });
+    }
+
+    const resultado = await contarQtdColheitasPorMes(unidadeId, mes, ano);
+
+    return res.status(200).json(resultado);
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao contar quantidade de colheitas por mês.",
+      detalhes: error.message
+    });
+  }
+};
 export async function listarAtividadesPlantioController(req, res) {
   try {
     const unidadeId = Number(req.params.unidadeId);
@@ -156,6 +196,51 @@ export async function listarAtividadesPlantioController(req, res) {
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
+
+export const criarAtividadeAgricolaController = async (req, res) => {
+  try {
+    const {
+      descricao,
+      tipo,
+      loteId,
+      dataInicio,
+      dataFim,
+      responsavelId,
+      status
+    } = req.body;
+
+    // Validação simples
+    if (!descricao || !tipo || !loteId || !dataInicio || !responsavelId) {
+      return res.status(400).json({
+        sucesso: false,
+        message: "Campos obrigatórios não foram enviados."
+      });
+    }
+
+    const resultado = await criarAtividadeAgricola({
+      descricao,
+      tipo,
+      loteId,
+      dataInicio,
+      dataFim,
+      responsavelId,
+      status
+    });
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json(resultado);
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro interno ao criar atividade agrícola.",
+      error: error.message
+    });
+  }
+};
 
 export const atualizarCamposLoteController = async (req, res) => {
   try {
@@ -192,6 +277,25 @@ export const atualizarCamposLoteController = async (req, res) => {
   }
 };
 
+export const criarLoteController = async (req, res) => {
+  try {
+    const resultado = await criarLote(req.body);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json(resultado);
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro interno ao criar lote.",
+      error: error.message
+    });
+  }
+};
+
 export async function getLotePorIdController(req, res) {
   try {
     const id = Number(req.params.id);
@@ -215,6 +319,8 @@ export async function getLotePorIdController(req, res) {
     })
   }
 }
+
+
 
 export async function createLoteController(req, res) {
   try {

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TruckIcon, DocumentTextIcon, BanknotesIcon, CubeIcon } from "@heroicons/react/24/outline"
@@ -12,17 +13,140 @@ import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 
 export default function Page() {
-      const { fetchWithAuth } = useAuth();
-  usePerfilProtegido("GERENTE_FAZENDA");
+    const { fetchWithAuth, user } = useAuth();
+    usePerfilProtegido("GERENTE_FAZENDA");
 
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [atividadeSelecionada, setAtividadeSelecionada] = useState(null)
     const [produtos, setProdutos] = useState([])
     const [carregandoProdutos, setCarregandoProdutos] = useState(false)
+    const [showAgricolaModal, setShowAgricolaModal] = useState(false)
+    const [showLoteModal, setShowLoteModal] = useState(false)
+    const [lotes, setLotes] = useState([])
+    const [usuarios, setUsuarios] = useState([])
+    const [carregandoLotes, setCarregandoLotes] = useState(false)
+    const [carregandoUsuarios, setCarregandoUsuarios] = useState(false)
+
+    // form state for criar lote
+    const [loteNome, setLoteNome] = useState("")
+    const [tipoProdutoLote, setTipoProdutoLote] = useState("PLANTIO")
+    const [tipoLote, setTipoLote] = useState("OUTRO")
+    const [quantidadeLote, setQuantidadeLote] = useState("")
+    const [precoLote, setPrecoLote] = useState("")
+    const [unidadeMedidaLote, setUnidadeMedidaLote] = useState("")
+    const [observacoesLote, setObservacoesLote] = useState("")
+    const [statusLote, setStatusLote] = useState("PRONTO")
+    const [responsavelLote, setResponsavelLote] = useState("")
+
+    // form state for atividade agrícola
+    const [descricao, setDescricao] = useState("")
+    const [tipoAtvd, setTipoAtvd] = useState("PLANTIO")
+    const [loteId, setLoteId] = useState("")
+    const [dataInicioDate, setDataInicioDate] = useState("")
+    const [dataInicioTime, setDataInicioTime] = useState("")
+    const [dataFimDate, setDataFimDate] = useState("")
+    const [dataFimTime, setDataFimTime] = useState("")
+    const [responsavelId, setResponsavelId] = useState("")
+    const [statusAtvd, setStatusAtvd] = useState("PENDENTE")
 
     const selecionarAtividade = async (atividade) => {
         setAtividadeSelecionada(atividade)
+
+        const tituloLower = String(atividade.titulo || "").toLowerCase();
+        if (tituloLower.includes("agrícola") || tituloLower.includes("agricola") || tituloLower.includes("atividade agrícola")) {
+            // open centered modal and preload lotes + usuarios
+            setShowAgricolaModal(true)
+            const fetchFn = fetchWithAuth || fetch
+            setCarregandoLotes(true)
+            setCarregandoUsuarios(true)
+            try {
+                const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null
+                if (unidadeId) {
+                    // normalize API_URL to avoid double slashes
+                    const base = String(API_URL || '/api').replace(/\/$/, '')
+                    const r1 = await fetchFn(`${base}/lotesPlantio/${unidadeId}`)
+                    const d1 = await r1.json().catch(() => ({}))
+
+                    // robust extractor: backend sometimes nests the array under different keys and even wraps the result object
+                    const extractArray = (obj) => {
+                        if (!obj) return []
+                        if (Array.isArray(obj)) return obj
+                        // common direct keys
+                        const directKeys = ['lotesPlantio', 'lotesVegetais', 'loteVegetais', 'lotes', 'data', 'lotesP', 'lotesPlantios'];
+                        for (const k of directKeys) if (Array.isArray(obj[k])) return obj[k]
+                        // sometimes controller returns { lotesVegetais: { loteVegetais: [...] } }
+                        if (obj.lotesVegetais && Array.isArray(obj.lotesVegetais.loteVegetais)) return obj.lotesVegetais.loteVegetais
+                        if (obj.lotesVegetais && Array.isArray(obj.lotesVegetais)) return obj.lotesVegetais
+                        if (obj.loteVegetais && Array.isArray(obj.loteVegetais)) return obj.loteVegetais
+                        if (obj.lotes && Array.isArray(obj.lotes)) return obj.lotes
+                        // sometimes wrapped like { sucesso: true, loteVegetais: [...] }
+                        if (Array.isArray(obj.loteVegetais)) return obj.loteVegetais
+                        // last resort: scan object values for first array
+                        const vals = Object.values(obj)
+                        for (const v of vals) if (Array.isArray(v)) return v
+                        return []
+                    }
+
+                    const rawLotes = extractArray(d1)
+                    // filter out sold lotes
+                    const filtered = (rawLotes || []).filter(l => String(l?.status || '').toUpperCase() !== 'VENDIDO')
+                    setLotes(filtered)
+                } else {
+                    setLotes([])
+                }
+            } catch (err) {
+                console.error('Erro carregando lotes:', err)
+                setLotes([])
+            } finally {
+                setCarregandoLotes(false)
+            }
+
+            try {
+                const base = String(API_URL || '/api').replace(/\/$/, '')
+                const r2 = await fetchFn(`${base}/usuarios/unidade/listar`)
+                const d2 = await r2.json().catch(() => ({}))
+                const maybeUsers = d2?.usuarios || d2?.funcionarios || d2?.data || d2?.usuariosUnidade || (Array.isArray(d2) ? d2 : [])
+                const usersArr = Array.isArray(maybeUsers) ? maybeUsers : (Array.isArray(d2?.usuarios) ? d2.usuarios : [])
+                setUsuarios(usersArr)
+                // if current user is in list, preselect as responsável
+                if (user && usersArr.some(u => Number(u.id) === Number(user.id))) {
+                    setResponsavelId(String(user.id))
+                }
+            } catch (err) {
+                console.error('Erro carregando usuários:', err)
+                setUsuarios([])
+            } finally {
+                setCarregandoUsuarios(false)
+            }
+
+            return
+        }
+
+        // abrir modal para criar lote
+        if (tituloLower.includes("lote") || tituloLower.includes("criar lote") || tituloLower.includes("novo lote")) {
+            setShowLoteModal(true)
+            const fetchFn = fetchWithAuth || fetch
+            setCarregandoUsuarios(true)
+            try {
+                const base = String(API_URL || '/api').replace(/\/$/, '')
+                const r2 = await fetchFn(`${base}/usuarios/unidade/listar`)
+                const d2 = await r2.json().catch(() => ({}))
+                const maybeUsers = d2?.usuarios || d2?.funcionarios || d2?.data || d2?.usuariosUnidade || (Array.isArray(d2) ? d2 : [])
+                const usersArr = Array.isArray(maybeUsers) ? maybeUsers : (Array.isArray(d2?.usuarios) ? d2.usuarios : [])
+                setUsuarios(usersArr)
+                if (user && usersArr.some(u => Number(u.id) === Number(user.id))) {
+                    setResponsavelLote(String(user.id))
+                }
+            } catch (err) {
+                console.error('Erro carregando usuários para lote:', err)
+                setUsuarios([])
+            } finally {
+                setCarregandoUsuarios(false)
+            }
+            return
+        }
+
         setOpen(true)
 
         if (atividade.necessitaProdutos) {
@@ -42,13 +166,109 @@ export default function Page() {
         const response = await fetch(atividadeSelecionada.rotaApi, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({...data,tipo: atividadeSelecionada.titulo,}),
+            body: JSON.stringify({ ...data, tipo: atividadeSelecionada.titulo, }),
         })
 
         if (response.ok) {
             setOpen(false)
             setAtividadeSelecionada(null)
             router.refresh()
+        }
+    }
+
+    const enviarAtividadeAgricola = async (e) => {
+        e?.preventDefault?.()
+        try {
+            const fetchFn = fetchWithAuth || fetch
+            const makeISO = (date, time) => {
+                if (!date) return null
+                if (!time) return new Date(date).toISOString()
+                const combined = `${date}T${time}`
+                const d = new Date(combined)
+                return isNaN(d.getTime()) ? new Date(date).toISOString() : d.toISOString()
+            }
+
+            const payload = {
+                descricao: descricao || null,
+                tipo: tipoAtvd || null,
+                loteId: loteId ? Number(loteId) : null,
+                dataInicio: makeISO(dataInicioDate, dataInicioTime),
+                dataFim: dataFimDate ? makeISO(dataFimDate, dataFimTime) : null,
+                responsavelId: responsavelId ? Number(responsavelId) : null,
+                status: statusAtvd || null,
+            }
+
+            const res = await fetchFn(`${API_URL}/criarAtividadePlantio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+            const body = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setShowAgricolaModal(false)
+                setDescricao("")
+                setTipoAtvd("PLANTIO")
+                setLoteId("")
+                setDataInicioDate("")
+                setDataInicioTime("")
+                setDataFimDate("")
+                setDataFimTime("")
+                setResponsavelId("")
+                setStatusAtvd("PENDENTE")
+                router.refresh()
+            } else {
+                console.error('Erro criando atividade:', body)
+                alert(body?.erro || body?.message || 'Erro ao criar atividade')
+            }
+        } catch (err) {
+            console.error('Erro enviando atividade agrícola:', err)
+            alert('Erro ao enviar atividade')
+        }
+    }
+
+    const enviarCriarLote = async (e) => {
+        e?.preventDefault?.()
+        try {
+            const fetchFn = fetchWithAuth || fetch
+            const base = String(API_URL || '/api').replace(/\/$/, '')
+            const payload = {
+                unidadeId: user?.unidadeId ?? user?.unidade?.id,
+                responsavelId: responsavelLote ? Number(responsavelLote) : user?.id,
+                nome: loteNome || null,
+                tipo: tipoLote || null,
+                tipoProduto: tipoProdutoLote || null,
+                quantidade: quantidadeLote ? Number(quantidadeLote) : null,
+                preco: precoLote ? Number(precoLote) : null,
+                unidadeMedida: unidadeMedidaLote || null,
+                observacoes: observacoesLote || null,
+                status: statusLote || null,
+            }
+
+            const res = await fetchFn(`${base}/criarLote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+            const body = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setShowLoteModal(false)
+                setLoteNome("")
+                setTipoProdutoLote("PLANTIO")
+                setTipoLote("OUTRO")
+                setQuantidadeLote("")
+                setPrecoLote("")
+                setUnidadeMedidaLote("")
+                setObservacoesLote("")
+                setStatusLote("PRONTO")
+                setResponsavelLote("")
+                router.refresh()
+            } else {
+                console.error('Erro criando lote:', body)
+                alert(body?.erro || body?.message || 'Erro ao criar lote')
+            }
+        } catch (err) {
+            console.error('Erro enviando criar lote:', err)
+            alert('Erro ao criar lote')
         }
     }
 
@@ -88,6 +308,14 @@ export default function Page() {
                 { name: "anexos", label: "Anexos", type: "file" },
             ],
             icone: <TruckIcon className="w-12 h-12 text-amber-600 -ml-5" />,
+        },
+        {
+            titulo: "criar lote",
+            rotaApi: "/criarLote",
+            campos: [
+                { name: "nome", label: "Nome do lote", type: "text" },
+            ],
+            icone: <CubeIcon className="w-12 h-12 text-sky-600 -ml-5" />,
         },
         {
             titulo: "contrato",
@@ -130,6 +358,181 @@ export default function Page() {
             </div>
 
             <div className="mt-10"><Button onClick={() => router.push("/fazenda/dashboard")}>Voltar</Button></div>
+            <Dialog open={showAgricolaModal} onOpenChange={setShowAgricolaModal}>
+                <DialogContent className="max-w-lg w-full">
+                    <DialogHeader>
+                        <DialogTitle>Nova atividade agrícola</DialogTitle>
+                        <DialogDescription>Preencha os dados abaixo</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={enviarAtividadeAgricola} className="space-y-4 mt-4">
+                        <div>
+                            <Label>Descrição</Label>
+                            <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label>Tipo</Label>
+                            <select value={tipoAtvd} onChange={(e) => setTipoAtvd(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="PLANTIO">PLANTIO</option>
+                                <option value="COLHEITA">COLHEITA</option>
+                                <option value="IRRIGACAO">IRRIGACAO</option>
+                                <option value="ADUBACAO">ADUBACAO</option>
+                                <option value="USO_AGROTOXICO">USO_AGROTOXICO</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Lote</Label>
+                            {carregandoLotes ? (<p>Carregando lotes...</p>) : (
+                                <select value={loteId} onChange={(e) => setLoteId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um lote</option>
+                                    {lotes.map((l) => (<option key={l.id} value={l.id}>{l?.nome ?? `Lote ${l.id}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label>Data Início</Label>
+                                <Input type="date" value={dataInicioDate} onChange={(e) => setDataInicioDate(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label>Hora Início (opcional)</Label>
+                                <Input type="time" value={dataInicioTime} onChange={(e) => setDataInicioTime(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label>Data Fim (opcional)</Label>
+                                <Input type="date" value={dataFimDate} onChange={(e) => setDataFimDate(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label>Hora Fim (opcional)</Label>
+                                <Input type="time" value={dataFimTime} onChange={(e) => setDataFimTime(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label>Responsável</Label>
+                            {carregandoUsuarios ? (<p>Carregando usuários...</p>) : (
+                                <select value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um responsável</option>
+                                    {usuarios.map((u) => (<option key={u.id} value={u.id}>{`${u.id} - ${u.nome || u.nomeCompleto || u.nome_usuario || u.nomeUsuario || u.nome}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div>
+                            <Label>Status</Label>
+                            <select value={statusAtvd} onChange={(e) => setStatusAtvd(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="PENDENTE">PENDENTE</option>
+                                <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
+                                <option value="CONCLUIDA">CONCLUIDA</option>
+                                <option value="CANCELADA">CANCELADA</option>
+                            </select>
+                        </div>
+
+                        <DialogFooter>
+                            <div className="flex gap-2 w-full">
+                                <Button type="button" variant="secondary" onClick={() => setShowAgricolaModal(false)}>Cancelar</Button>
+                                <Button type="submit" className="ml-auto">Salvar</Button>
+                            </div>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={showLoteModal} onOpenChange={setShowLoteModal}>
+                <DialogContent className="max-w-lg w-full">
+                    <DialogHeader>
+                        <DialogTitle>Novo lote</DialogTitle>
+                        <DialogDescription>Preencha os dados do lote</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={enviarCriarLote} className="space-y-4 mt-4">
+                        <div>
+                            <Label>Nome</Label>
+                            <Input value={loteNome} onChange={(e) => setLoteNome(e.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label>Tipo Produto</Label>
+                            <select value={tipoProdutoLote} onChange={(e) => { setTipoProdutoLote(e.target.value); setTipoLote('OUTRO') }} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="PLANTIO">PLANTIO</option>
+                                <option value="ANIMALIA">ANIMALIA</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Tipo</Label>
+                            <select value={tipoLote} onChange={(e) => setTipoLote(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                {tipoProdutoLote === 'PLANTIO' ? (
+                                    ["LEGUME", "FRUTA", "VERDURA", "GRAOS", "SOJA", "OUTRO"].map(t => (<option key={t} value={t}>{t}</option>))
+                                ) : (
+                                    ["GADO", "BOVINOS", "SUINOS", "LEITE", "OVINOS", "AVES", "EQUINO", "CAPRINOS", "OUTRO"].map(t => (<option key={t} value={t}>{t}</option>))
+                                )}
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label>Quantidade</Label>
+                                <Input type="number" value={quantidadeLote} onChange={(e) => setQuantidadeLote(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label>Preço</Label>
+                                <Input type="number" step="0.01" value={precoLote} onChange={(e) => setPrecoLote(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label>Unidade de medida</Label>
+                            <select value={unidadeMedidaLote} onChange={(e) => setUnidadeMedidaLote(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="">Selecione</option>
+                                <option value="UN">UN</option>
+                                <option value="KG">KG</option>
+                                <option value="L">L</option>
+                                <option value="M2">M2</option>
+                                <option value="HA">HA</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Observações</Label>
+                            <Input value={observacoesLote} onChange={(e) => setObservacoesLote(e.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label>Responsável</Label>
+                            {carregandoUsuarios ? (<p>Carregando usuários...</p>) : (
+                                <select value={responsavelLote} onChange={(e) => setResponsavelLote(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um responsável</option>
+                                    {usuarios.map((u) => (<option key={u.id} value={u.id}>{`${u.id} - ${u.nome || u.nomeCompleto || u.nome_usuario || u.nomeUsuario || u.nome}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div>
+                            <Label>Status</Label>
+                            <select value={statusLote} onChange={(e) => setStatusLote(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="">Selecione</option>
+                                {(tipoProdutoLote === 'PLANTIO'
+                                    ? ["PENDENTE", "SEMEADO", "CRESCIMENTO", "COLHEITA", "COLHIDO", "BLOQUEADO", "VENDIDO", "OUTRO"]
+                                    : ["PENDENTE", "RECEBIDO", "EM_QUARENTENA", "AVALIACAO_SANITARIA", "EM_CRESCIMENTO", "EM_ENGORDA", "EM_REPRODUCAO", "LACTAÇÃO", "ABATE", "PRONTO", "BLOQUEADO", "VENDIDO"]
+                                ).map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </select>
+                        </div>
+
+                        <DialogFooter>
+                            <div className="flex gap-2 w-full">
+                                <Button type="button" variant="secondary" onClick={() => setShowLoteModal(false)}>Cancelar</Button>
+                                <Button type="submit" className="ml-auto">Salvar</Button>
+                            </div>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
             <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerContent className="p-6 w-[450px] ml-auto">
                     <DrawerHeader>

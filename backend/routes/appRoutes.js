@@ -12,7 +12,7 @@ import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController,  calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController,
-    listarDespesasController, abrirCaixaController,getDashboardFinanceiroController
+    listarDespesasController, abrirCaixaController
 } from "../controllers/FinanceiroController.js";
 import {
   criarCategoriaController,
@@ -40,7 +40,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { contarLotesDisponiveisController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController} from "../controllers/LoteController.js";
+import { contarLotesDisponiveisController, contarLotesColheitaController,criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, qtdColheitasPorMesController, criarLoteController} from "../controllers/LoteController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -77,6 +77,8 @@ router.get(
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
 // router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/atividadesPlantio/:unidadeId", listarAtividadesPlantioController);
+router.post("/criarAtividadePlantio", criarAtividadeAgricolaController);
+router.post("/criarLote", criarLoteController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
@@ -94,6 +96,10 @@ router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
 router.get("/lotesPlantio/:unidadeId", listarLotesPlantioController);
 router.get("/loteAnimalia/:unidadeId", listarLotesAnimaliaController);
 router.get("/lotesDisponiveis/:unidadeId", contarLotesDisponiveisController);
+router.get("/lotesColheita/:unidadeId", contarLotesColheitaController);
+
+router.get("/qtdColheitasMes/:unidadeId/:mes/:ano", qtdColheitasPorMesController);
+
 // rota para atualização parcial de lote (status / preco / statusQualidade)
 router.patch("/lotes/:id", auth(), atualizarCamposLoteController);
 router.get("/lote/:loteId/media-producao",calcularMediaProducaoPorLoteController);
@@ -241,7 +247,7 @@ router.delete("/contas-financeiras/:contaId", auth(), deletarContaController);
 // resumos e relatórios financeiros
 router.get("/financeiro/resumo", auth(), obterResumoController);
 router.get("/financeiro/saldo-por-categoria", auth(), obterSaldoPorCategoriaController);
-router.get("/financeiro/dashboard", auth(), getDashboardFinanceiroController);
+// router.get("/financeiro/dashboard", auth(), getDashboardFinanceiroController);
 // compatibilidade: rota usada pelo frontend moderno
 router.get("/financeiro/dashboard", auth(), obterResumoController);
 // compatibilidade: rota para listar contas usada pelo frontend

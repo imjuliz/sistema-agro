@@ -435,16 +435,17 @@ model Plantio {
 }
 
 model AtvdAgricola {
-  id            Int             @id @default(autoincrement())
+  id            Int                @id @default(autoincrement())
   descricao     String
   tipo          TipoAtvd
   loteId        Int
-  dataInicio    DateTime        @map("data_inicio")
-  dataFim       DateTime?       @map("data_fim")
+  dataInicio    DateTime           @map("data_inicio")
+  dataFim       DateTime?          @map("data_fim")
   responsavelId Int
   // status        StatusPlantacao
-  lote          Lote            @relation(fields: [loteId], references: [id])
-  responsavel   Usuario         @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id])
+  status        StatusAtvd?
+  lote          Lote               @relation(fields: [loteId], references: [id])
+  responsavel   Usuario            @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id])
 
   @@index([loteId])
   @@index([responsavelId])
@@ -490,6 +491,7 @@ model Lote {
   statusQualidade        StatusQualidade       @default(PROPRIO) @map("status_qualidade")
   bloqueadoParaVenda     Boolean               @default(false) @map("bloqueado_para_venda")
   status                 StatusLote?           @map("status_lote")
+  dataCriacao           DateTime              @default(now()) @map("data_criacao")
   contratoId             Int?
   dataEnvioReferencia    DateTime?
   itensEsperados         Json?                 @map("itens_esperados")
@@ -956,14 +958,6 @@ enum TipoAnimalia {
   TRATAMENTO_URGENCIA
 }
 
-enum TipoAtvd {
-  IRRIGACAO
-  ADUBACAO
-  USO_AGROTOXICO
-  PLANTIO
-  COLHEITA
-}
-
 enum TipoAnimais {
   ABATE
   VENDA
@@ -987,12 +981,12 @@ enum StatusVenda {
   CANCELADO
 }
 
-enum StatusPlantacao {
-  EM_DESENVOLVIMENTO
-  COLHIDO
-  EM_PREPARO
-  SEMEADO
-}
+// enum StatusPlantacao {
+//   EM_DESENVOLVIMENTO
+//   COLHIDO
+//   EM_PREPARO
+//   SEMEADO
+// }
 
 enum StatusAtvdAnimalia {
   ATIVA
@@ -1044,22 +1038,43 @@ enum TipoTransporte {
   OUTRO
 }
 
+enum TipoAtvd {
+  IRRIGACAO
+  ADUBACAO
+  USO_AGROTOXICO
+  PLANTIO
+  COLHEITA
+}
+
+enum StatusAtvd {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
 enum StatusLote {
   //STATUS CASO FOR PLANTA
-    SEMEADO       // Plantio feito, início do ciclo
-  CRESCIMENTO   // Plantas em desenvolvimento
-  COLHEITA      // Lote em processo de colheita
-  COLHIDO       // Colheita finalizada
+  SEMEADO // Plantio feito, início do ciclo
+  CRESCIMENTO // Plantas em desenvolvimento
+  COLHEITA // Lote em processo de colheita
+  COLHIDO // Colheita finalizada
   //STATUS CASO FOR ANIMAL
-    RECEBIDO       // Animais chegaram no lote
-  EM_CRESCIMENTO // Animais em crescimento ou engorda
-  ABATE          // Lote em processo de abate ou envio
+  RECEBIDO // Animais chegaram no lote
+  EM_QUARENTENA //Período inicial para avaliação sanitária.
+  AVALIACAO_SANITARIA //Veterinário analisando condições gerais, peso, saúde etc.
+  EM_CRESCIMENTO // Animais em crescimento 
+  EM_ENGORDA // Animais em fase de engorda
+  EM_REPRODUCAO // Lote destinado para produção de novos animais.
+  LACTAÇÃO // Lote em fase de produção de leite
+  ABATE // Lote em processo de abate ou envio
   //GERAL (serve pros dois)
-  PRONTO        // Produção pronta para colheita
-  BLOQUEADO     // Lote indisponível, bloqueado para operação ou venda
-  VENDIDO        // Animais vendidos ou enviados
+  PENDENTE // Lote criado, aguardando início das operações
+  PRONTO // Lote pronto para venda ou envio
+  BLOQUEADO // Lote indisponível, bloqueado para operação ou venda
+  VENDIDO // Animais vendidos ou enviados
   //vou apagar depois
-  PENDENTE
+  
   ENVIADO
   EM_PREPARO
 }
