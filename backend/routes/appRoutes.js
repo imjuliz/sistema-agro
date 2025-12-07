@@ -40,7 +40,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { contarLotesDisponiveisController, contarLotesColheitaController,criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, qtdColheitasPorMesController, criarLoteController} from "../controllers/LoteController.js";
+import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController} from "../controllers/LoteController.js";
 
 // tradução
 router.post("/translate", translateText);
@@ -77,6 +77,7 @@ router.get(
 //estoques, lotes, produtos, etc --------------------------------------------------------------------
 // router.get("/atividadesLote", listarAtividadesLoteController);
 router.get("/atividadesPlantio/:unidadeId", listarAtividadesPlantioController);
+router.get("/atividadesAnimalia/:unidadeId", listarAtividadesAnimaliaController);
 router.post("/criarAtividadePlantio", criarAtividadeAgricolaController);
 router.post("/criarLote", criarLoteController);
 router.get("/consultarLote", consultarLoteController);
@@ -95,9 +96,14 @@ router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
 // router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
 router.get("/lotesPlantio/:unidadeId", listarLotesPlantioController);
 router.get("/loteAnimalia/:unidadeId", listarLotesAnimaliaController);
-router.get("/lotesDisponiveis/:unidadeId", contarLotesDisponiveisController);
+router.get("/totalLotesPlantio/:unidadeId", totalLotesPlantioController); //colocar na pag plantio
+router.get("/totalLotesAnimalia/:unidadeId", totalLotesAnimaliaController); //colocar na pag animalia
+router.get("/lotesDisponiveis/:unidadeId", contarLotesPlantioDisponiveisController);
+router.get("/lotesAnimaliaDisponiveis/:unidadeId", contarLotesAnimaliaDisponiveisController); //colocar na pag animalia
 router.get("/lotesColheita/:unidadeId", contarLotesColheitaController);
-
+router.get("/lotesImproprios/:unidadeId", contarLotesImpropriosController);
+router.get("/lotesPlantioImproprios/:unidadeId", lotesPlantioImproprioController); //colocar na pag plantio
+router.get("/lotesAnimaliaImproprios/:unidadeId", lotesAnimaliaImproprioController); //colocar na pag animalia
 router.get("/qtdColheitasMes/:unidadeId/:mes/:ano", qtdColheitasPorMesController);
 
 // rota para atualização parcial de lote (status / preco / statusQualidade)

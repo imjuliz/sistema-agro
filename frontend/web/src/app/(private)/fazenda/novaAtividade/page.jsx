@@ -490,7 +490,10 @@ export default function Page() {
                             <Label>Unidade de medida</Label>
                             <select value={unidadeMedidaLote} onChange={(e) => setUnidadeMedidaLote(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
                                 <option value="">Selecione</option>
-                                <option value="UN">UN</option>
+                                <option value="UNIDADE">UN</option>
+                                <option value="T">TONELADA</option>
+                                <option value="CABECA">CABEÇA</option>
+                                <option value="ARROBA">ARROBA</option>
                                 <option value="KG">KG</option>
                                 <option value="L">L</option>
                                 <option value="M2">M2</option>

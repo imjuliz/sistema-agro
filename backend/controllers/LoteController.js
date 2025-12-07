@@ -1,4 +1,4 @@
-import { getLote, getLotePorId, createLote, updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesDisponiveis, contarLotesColheita, updateLoteCampos, listarAtividadesPlantio, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote} from "../models/lote.js";
+import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia} from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -115,12 +115,47 @@ export const listarLotesAnimaliaController = async (req, res) => {
   }
 }
 
-export const contarLotesDisponiveisController = async (req, res) => {
+export const totalLotesPlantioController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const quantidade = await totalLotesPlantio(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      quantidade,
+      message: "Total de lotes de plantio obtido com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao obter total de lotes de plantio!",
+      error: error.message
+    });
+  }
+};
+
+export const totalLotesAnimaliaController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const quantidade = await totalLotesAnimalia(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      quantidade,
+      message: "Total de lotes de animalia obtido com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao obter total de lotes de animalia!",
+      error: error.message
+    });
+  }
+};
+
+export const contarLotesPlantioDisponiveisController = async (req, res) => {
   try {
     const unidadeId = req.params.unidadeId;
 
-    const lotesDisponiveis = await contarLotesDisponiveis(unidadeId);
-
+    const lotesDisponiveis = await contarLotesPlantioDisponiveis(unidadeId);
     return res.status(200).json({
       sucesso: true,
       lotesDisponiveis,
@@ -130,6 +165,24 @@ export const contarLotesDisponiveisController = async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       message: "Erro ao contar lotes disponíveis!",
+      error: error.message
+    });
+  }
+};
+
+export const contarLotesAnimaliaDisponiveisController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const lotesDisponiveis = await contarLotesAnimaliaDisponiveis(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      lotesDisponiveis,
+      message: "Lotes disponíveis de animalia contados com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao contar lotes disponíveis de animalia!",
       error: error.message
     });
   }
@@ -176,6 +229,61 @@ export const qtdColheitasPorMesController = async (req, res) => {
     });
   }
 };
+
+export const contarLotesImpropriosController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const quantidade = await contarLotesImproprios(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      quantidade,
+      message: "Quantidade de lotes impróprios obtida com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao contar lotes impróprios!",
+      error: error.message
+    });
+  }
+};
+
+export const lotesPlantioImproprioController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const lotesImproprios = await contarLotesPlantioImproprios(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      lotesImproprios,
+      message: "Lotes de plantio impróprios listados com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao listar lotes de plantio impróprios!",
+      error: error.message
+    });
+  }
+};
+
+export const lotesAnimaliaImproprioController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const lotesImproprios = await contarLotesAnimaliaImproprios(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      lotesImproprios,
+      message: "Lotes de animalia impróprios listados com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao listar lotes de animalia impróprios!",
+      error: error.message
+    });
+  }
+};
+
 export async function listarAtividadesPlantioController(req, res) {
   try {
     const unidadeId = Number(req.params.unidadeId);
@@ -193,6 +301,27 @@ export async function listarAtividadesPlantioController(req, res) {
     });
   } catch (error) {
     console.error("Erro ao buscar atividades de plantio:", error);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
+}
+
+export async function listarAtividadesAnimaliaController(req, res) {
+  try {
+    const unidadeId = Number(req.params.unidadeId);
+
+    if (isNaN(unidadeId)) {
+      return res.status(400).json({ error: "unidadeId inválido" });
+    }
+
+    const atividades = await listarAtividadesAnimalia(unidadeId);
+
+    return res.status(200).json({
+      sucesso: true,
+      atividades,
+      message: "Atividades de animalia listadas com sucesso!",
+    });
+  } catch (error) {
+    console.error("Erro ao buscar atividades de animalia:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
@@ -322,63 +451,63 @@ export async function getLotePorIdController(req, res) {
 
 
 
-export async function createLoteController(req, res) {
-  try {
-    const usuario = req.usuario;
+// export async function createLoteController(req, res) {
+//   try {
+//     const usuario = req.usuario;
 
-    // Pega unidadeId e contratoId do body ou params
-    const unidadeId = req.body.unidadeId || req.params.unidadeId;
-    const contratoId = req.body.contratoId || req.params.contratoId;
+//     // Pega unidadeId e contratoId do body ou params
+//     const unidadeId = req.body.unidadeId || req.params.unidadeId;
+//     const contratoId = req.body.contratoId || req.params.contratoId;
 
-    // Validações de IDs
-    if (!unidadeId || isNaN(unidadeId)) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Unidade não informada."
-      });
-    }
+//     // Validações de IDs
+//     if (!unidadeId || isNaN(unidadeId)) {
+//       return res.status(400).json({
+//         sucesso: false,
+//         erro: "Unidade não informada."
+//       });
+//     }
 
-    if (!contratoId || isNaN(contratoId)) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Contrato não informado."
-      });
-    }
+//     if (!contratoId || isNaN(contratoId)) {
+//       return res.status(400).json({
+//         sucesso: false,
+//         erro: "Contrato não informado."
+//       });
+//     }
 
-    // Validação de permissão
-    if (
-      usuario.perfil.nome !== "GERENTE_FAZENDA" &&
-      usuario.unidadeId !== parseInt(unidadeId)
-    ) {
-      return res.status(403).json({
-        sucesso: false,
-        erro: "Você não tem permissão para criar lotes nesta unidade."
-      });
-    }
+//     // Validação de permissão
+//     if (
+//       usuario.perfil.nome !== "GERENTE_FAZENDA" &&
+//       usuario.unidadeId !== parseInt(unidadeId)
+//     ) {
+//       return res.status(403).json({
+//         sucesso: false,
+//         erro: "Você não tem permissão para criar lotes nesta unidade."
+//       });
+//     }
 
-    // Preparar dados - adicionar responsávelId e tipo se não fornecido
-    const bodyData = {
-      ...req.body,
-      responsavelId: req.body.responsavelId || usuario.id,
-      tipo: req.body.tipo || "OUTRO",
-    };
+//     // Preparar dados - adicionar responsávelId e tipo se não fornecido
+//     const bodyData = {
+//       ...req.body,
+//       responsavelId: req.body.responsavelId || usuario.id,
+//       tipo: req.body.tipo || "OUTRO",
+//     };
 
-    // Validar dados do lote
-    const data = loteSchema.parse(bodyData);
+//     // Validar dados do lote
+//     const data = loteSchema.parse(bodyData);
 
-    const lote = await createLote(data, parseInt(unidadeId), parseInt(contratoId));
+//     const lote = await createLote(data, parseInt(unidadeId), parseInt(contratoId));
 
-    return res.status(201).json(lote);
+//     return res.status(201).json(lote);
 
-  } catch (error) {
-    console.error("Erro ao criar lote:", error);
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao criar lote.",
-      detalhes: error.message,
-    });
-  }
-}
+//   } catch (error) {
+//     console.error("Erro ao criar lote:", error);
+//     return res.status(500).json({
+//       sucesso: false,
+//       erro: "Erro ao criar lote.",
+//       detalhes: error.message,
+//     });
+//   }
+// }
 
 
 export async function updateLoteController(req, res) {

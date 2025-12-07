@@ -456,22 +456,21 @@ model AtvdAgricola {
 model AtvdAnimalia {
   id            Int                @id @default(autoincrement())
   animalId      Int                @map("animal_id")
-  insumoId      Int?               @map("insumo_id")
+  // insumoId      Int?               @map("insumo_id")
   descricao     String
-  tipo          TipoAnimalia
+  tipo          TipoAtividadeAnimalia
   loteId        Int?               @map("lote_id")
   dataInicio    DateTime           @map("data_inicio")
   dataFim       DateTime?          @map("data_fim")
   responsavelId Int                @map("responsavel_id")
-  anexos        Json?
-  status        StatusAtvdAnimalia
+  status        StatusAtvd?
   animal        Animal             @relation(fields: [animalId], references: [id])
   lote          Lote?              @relation(fields: [loteId], references: [id])
   responsavel   Usuario            @relation("UsuarioAtvdAnimalia", fields: [responsavelId], references: [id])
 
   @@index([loteId])
   @@index([animalId])
-  @@index([insumoId])
+  // @@index([insumoId])
   @@index([responsavelId])
   @@index([dataInicio])
   @@map("atvd_animalia")
@@ -920,43 +919,48 @@ enum StatusQualidade {
   @@map("status_qualidade")
 }
 
-enum TipoAnimalia {
+enum TipoAtividadeAnimalia {
+  // --- Sanidade ---
   VACINACAO
   VERMIFUGACAO
-  ANTIBIOTICO
-  TESTE_TUBERCULOSE
-  TESTE_BRUCELOSE
+  TRATAMENTO
   SANIDADE_GERAL
+
+  // --- Nutrição ---
   NUTRICAO
   SUPLEMENTACAO
-  CONSUMO_RACAO
   AJUSTE_DIETA
-  INSEMINACAO
+
+  // --- Reprodução ---
   MONITORAMENTO_CIO
+  INSEMINACAO
   MONITORAMENTO_GESTACAO
   PARTO
   SECAGEM
-  TOURO_MANEJO
+
+  // --- Manejo geral ---
   MANEJO_GERAL
   MANEJO_PESAGEM
-  MANEJO_CARREIRA
   MOVIMENTACAO_INTERNA
   SEPARACAO_LOTE
-  ORDENHA_TESTE
+
+  // --- Ordenha (para gado leiteiro) ---
   ORDENHA_DIARIA
-  COLETA_LEITE_AMOSTRA
-  AVALIACAO_MASTITE
+  ORDENHA_TESTE
+
+  // --- Higiene e ambiente ---
+  HIGIENIZACAO_AMBIENTE
+  BANHO
+
+  // --- Gestão de animais ---
   RECEBIMENTO
   TRANSFERENCIA
   VENDA_ANIMAL
   BAIXA_ANIMAL
-  BANHO
-  HIGIENIZACAO_AMBIENTE
-  TRATAMENTO_PE
-  CURATIVO
+  ABATE
   OCORRENCIA
-  TRATAMENTO_URGENCIA
 }
+
 
 enum TipoAnimais {
   ABATE
