@@ -143,19 +143,19 @@ model ResetSenha {
   @@map("reset_senhas")
 }
 
-// model DadoGeralUnidade {
-//   id           Int      @id @default(autoincrement())
-//   unidadeId    Int      @map("unidade_id")
-//   dado         String   @db.VarChar(255)
-//   valor        String   @db.VarChar(1000)
-//   descricao    String?  @db.VarChar(2000)
-//   criadoEm     DateTime @default(now()) @map("criado_em")
-//   atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
-//   unidade      Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+model DadoGeralUnidade {
+  id           Int      @id @default(autoincrement())
+  unidadeId    Int      @map("unidade_id")
+  dado         String   @db.VarChar(255)
+  valor        String   @db.VarChar(1000)
+  descricao    String?  @db.VarChar(2000)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
+  unidade      Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
 
-//   @@index([unidadeId])
-//   @@map("dado_geral_unidade")
-// }
+  @@index([unidadeId])
+  @@map("dado_geral_unidade")
+}
 
 model Produto {
   id              Int               @id @default(autoincrement())
