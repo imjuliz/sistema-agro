@@ -384,7 +384,7 @@ export default function app() {
     verificarCaixaAberto();
   }, [fetchWithAuth, user]);
   return (
-    <div>
+    <div className="min-h-screen px-18 py-10 bg-surface-50">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

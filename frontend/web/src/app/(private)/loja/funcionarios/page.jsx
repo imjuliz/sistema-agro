@@ -312,7 +312,7 @@ export default function FuncionariosFazenda() {
   const isGerenteLoja = _userRole === 'GERENTE_LOJA' || _userRole === 'GERENTE_LOJA';
 
   return (
-    <div className="flex gap-6">
+    <div className="min-h-screen px-18 py-10 bg-surface-50">
       <div className="flex-1 min-w-0 space-y-4">
         {/* Header com busca e filtros */}
         <div className="space-y-4">
