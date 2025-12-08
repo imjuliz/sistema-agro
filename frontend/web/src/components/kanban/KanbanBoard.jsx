@@ -143,8 +143,8 @@ export function KanbanBoard() {
         <div className="bg-white border-b border-gray-200 px-6 py-4 dark:bg-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-sm whitespace-nowrap md:text-2xl font-semibold text-gray-900 dark:text-gray-200">Quadro de Projetos</h1>
-              <p className="text-sm text-gray-600 mt-1 dark:text-gray-500">Organize seus afazeres</p>
+              <Transl className="text-sm whitespace-nowrap md:text-2xl font-semibold text-gray-900 dark:text-gray-200">Quadro de Projetos</Transl>
+              <Transl className="text-sm text-gray-600 mt-1 dark:text-gray-500">Organize seus afazeres</Transl>
             </div>
 
             <div className="columns md:flex items-center space-x-4">
@@ -154,13 +154,13 @@ export function KanbanBoard() {
               </div>
 
               <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />Filtro
+                <Filter className="w-4 h-4 mr-2" /><Transl>Filtro</Transl>
               </Button>
               <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />Configurações
+                <Settings className="w-4 h-4 mr-2" /><Transl>Configurações</Transl>
               </Button>
               <Button size="sm">
-                <Plus className="w-4 h-4 mr-2" />Adicionar tarefa
+                <Plus className="w-4 h-4 mr-2" /><Transl>Adicionar tarefa</Transl>
               </Button>
             </div>
           </div>
