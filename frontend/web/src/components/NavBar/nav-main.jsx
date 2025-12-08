@@ -18,10 +18,10 @@ import {
   SidebarMenuSubItem,
 } from "@/components/NavBar/sidebar"
 
-export function NavMain({ items }) {
+export function NavMain({ items, label = 'Geral' }) {
   return (
    <SidebarGroup>
-      <SidebarGroupLabel>Geral</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const Icon = item.icon;

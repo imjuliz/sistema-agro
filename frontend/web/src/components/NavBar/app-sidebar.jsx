@@ -41,6 +41,8 @@ function getMenuByPerfil(perfil) {
             // items: [],
           },
         ],
+        navMainLabel: 'Geral',
+        projectsLabel: 'Unidades',
         projects: [
           { name: "Fazendas", url: "/matriz/unidades/fazendas", icon: Tractor },
           { name: "Lojas", url: "/matriz/unidades/lojas", icon: Store },
@@ -51,32 +53,17 @@ function getMenuByPerfil(perfil) {
     case "GERENTE_LOJA":
       return {
         navMain: [
-          {
-            title: "Dashboard",
-            url: "/loja/dashboard",
-            icon: PieChart,
-          },
-          {
-            title: "Frente de Caixa",
-            url: "/loja/frenteCaixa",
-            icon: ShoppingCart,
-          },
-          {
-            title: "Funcionários",
-            url: "/loja/funcionarios",
-            icon: UserCog,
-          },
-          {
-            title: "Configurações",
-            url: "/loja/configuracoes",
-            icon: Settings2,
-            // items: [],
-          },
+          { title: "Dashboard", url: "/loja/dashboard", icon: PieChart, },
+          { title: "Financeiro", url: "/loja/vendasDespesas", icon: WalletCards },
+          { title: "Funcionários", url: "/loja/funcionarios", icon: UserCog, },
+          { title: "Fornecedores", url: "/loja/fornecedores", icon: Container },
+          { title: "Configurações", url: "/loja/configuracoes", icon: Settings2, },
         ],
+        navMainLabel: 'Geral',
+        projectsLabel: 'Links rápidos',
         projects: [
+          { name: "Frente de Caixa", url: "/loja/frenteCaixa", icon: ShoppingCart, },
           { name: "Estoque", url: "/loja/estoque", icon: Boxes },
-          { name: "Financeiro", url: "/loja/vendasDespesas", icon: WalletCards },
-          { name: "Fornecedores", url: "/loja/fornecedores", icon: Container },
         ],
       }
 
@@ -115,6 +102,8 @@ function getMenuByPerfil(perfil) {
             // items: [],
           },
         ],
+        navMainLabel: 'Geral',
+        projectsLabel: 'Fazendas',
         projects: [
           { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },
           // { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
@@ -133,6 +122,8 @@ function getMenuByPerfil(perfil) {
             items: [{ title: "Meu perfil", url: "/perfil" }],
           },
         ],
+        navMainLabel: 'Geral',
+        projectsLabel: 'Unidades',
         projects: [],
       }
   }
@@ -143,7 +134,7 @@ export function AppSidebar({ ...props }) {
   // console.log("USER NA SIDEBAR →", user);
 
   const perfil = user?.perfil
-  const { navMain, projects } = getMenuByPerfil(perfil)
+  const { navMain, projects, projectsLabel, navMainLabel } = getMenuByPerfil(perfil)
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -162,8 +153,8 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavProjects projects={projects} />
+        <NavMain items={navMain} label={navMainLabel} />
+        <NavProjects projects={projects} label={projectsLabel} />
         {/* <ThemeToggle /> */}
       </SidebarContent>
       <SidebarFooter>
