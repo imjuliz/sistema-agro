@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,10 +24,15 @@ export default function Page() {
     const [showAgricolaModal, setShowAgricolaModal] = useState(false)
     const [showAnimaliaModal, setShowAnimaliaModal] = useState(false)
     const [showLoteModal, setShowLoteModal] = useState(false)
+    const [showContratoModal, setShowContratoModal] = useState(false)
     const [lotes, setLotes] = useState([])
     const [usuarios, setUsuarios] = useState([])
     const [carregandoLotes, setCarregandoLotes] = useState(false)
     const [carregandoUsuarios, setCarregandoUsuarios] = useState(false)
+    const [lojas, setLojas] = useState([])
+    const [fornecedoresExternos, setFornecedoresExternos] = useState([])
+    const [carregandoLojas, setCarregandoLojas] = useState(false)
+    const [carregandoFornecedores, setCarregandoFornecedores] = useState(false)
 
     // form state for criar lote
     const [loteNome, setLoteNome] = useState("")
@@ -61,6 +66,60 @@ export default function Page() {
     const [dataFimTimeAnimalia, setDataFimTimeAnimalia] = useState("")
     const [responsavelIdAnimalia, setResponsavelIdAnimalia] = useState("")
     const [statusAnimaliaAtvd, setStatusAnimaliaAtvd] = useState("PENDENTE")
+
+    // form state for contrato
+    const [tipoContrato, setTipoContrato] = useState("INTERNO")
+    const [lojaOuFornecedorId, setLojaOuFornecedorId] = useState("")
+    const [dataInicioContrato, setDataInicioContrato] = useState("")
+    const [dataFimContrato, setDataFimContrato] = useState("")
+    const [dataEnvioContrato, setDataEnvioContrato] = useState("")
+    const [frequenciaEntregasContrato, setFrequenciaEntregasContrato] = useState("MENSALMENTE")
+    const [diaPagamentoContrato, setDiaPagamentoContrato] = useState("")
+    const [formaPagamentoContrato, setFormaPagamentoContrato] = useState("PIX")
+    const [valorTotalContrato, setValorTotalContrato] = useState("")
+    const [statusContrato, setStatusContrato] = useState("ATIVO")
+    const [descricaoContrato, setDescricaoContrato] = useState("")
+
+    // Effect para carregar lojas/fornecedores quando o tipo de contrato muda
+    useEffect(() => {
+        if (!showContratoModal) return
+        
+        const loadData = async () => {
+            const fetchFn = fetchWithAuth || fetch
+            const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null
+            const base = String(API_URL || '/api').replace(/\/$/, '')
+            
+            if (tipoContrato === "INTERNO") {
+                setCarregandoLojas(true)
+                try {
+                    const r1 = await fetchFn(`${base}/listarLojasParceiras/${unidadeId}`)
+                    const d1 = await r1.json().catch(() => ({}))
+                    const lojasArray = d1?.lojas || d1?.data || (Array.isArray(d1) ? d1 : [])
+                    setLojas(Array.isArray(lojasArray) ? lojasArray : [])
+                } catch (err) {
+                    console.error('Erro carregando lojas atendidas:', err)
+                    setLojas([])
+                } finally {
+                    setCarregandoLojas(false)
+                }
+            } else {
+                setCarregandoFornecedores(true)
+                try {
+                    const r2 = await fetchFn(`${base}/listarFornecedoresExternos/${unidadeId}`)
+                    const d2 = await r2.json().catch(() => ({}))
+                    const fornecedoresArray = d2?.fornecedores || d2?.data || (Array.isArray(d2) ? d2 : [])
+                    setFornecedoresExternos(Array.isArray(fornecedoresArray) ? fornecedoresArray : [])
+                } catch (err) {
+                    console.error('Erro carregando fornecedores externos:', err)
+                    setFornecedoresExternos([])
+                } finally {
+                    setCarregandoFornecedores(false)
+                }
+            }
+        }
+        
+        loadData()
+    }, [tipoContrato, showContratoModal, user, fetchWithAuth])
 
     const selecionarAtividade = async (atividade) => {
         setAtividadeSelecionada(atividade)
@@ -241,6 +300,30 @@ export default function Page() {
             return
         }
 
+        // Contrato
+        if (tituloLower.includes("contrato")) {
+            setShowContratoModal(true)
+            const fetchFn = fetchWithAuth || fetch
+            const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null
+            
+            // Carregar lojas atendidas (fornecedor interno) por padrão
+            setCarregandoLojas(true)
+            try {
+                const base = String(API_URL || '/api').replace(/\/$/, '')
+                const r1 = await fetchFn(`${base}/listarLojasAtendidas/${unidadeId}`)
+                const d1 = await r1.json().catch(() => ({}))
+                const lojasArray = d1?.lojas || d1?.data || (Array.isArray(d1) ? d1 : [])
+                setLojas(Array.isArray(lojasArray) ? lojasArray : [])
+            } catch (err) {
+                console.error('Erro carregando lojas atendidas:', err)
+                setLojas([])
+            } finally {
+                setCarregandoLojas(false)
+            }
+            
+            return
+        }
+
         setOpen(true)
 
         if (atividade.necessitaProdutos) {
@@ -416,6 +499,79 @@ export default function Page() {
         }
     }
 
+    const enviarContrato = async (e) => {
+        e?.preventDefault?.()
+        try {
+            if (!tipoContrato) {
+                alert('Selecione o tipo de contrato (Interno ou Externo)')
+                return
+            }
+            if (!lojaOuFornecedorId) {
+                alert(`Selecione ${tipoContrato === 'INTERNO' ? 'a loja' : 'o fornecedor'}`)
+                return
+            }
+            if (!dataInicioContrato || !dataEnvioContrato || !frequenciaEntregasContrato || !diaPagamentoContrato || !formaPagamentoContrato) {
+                alert('Preencha todos os campos obrigatórios')
+                return
+            }
+
+            const fetchFn = fetchWithAuth || fetch
+            const base = String(API_URL || '/api').replace(/\/$/, '')
+            const unidadeId = user?.unidadeId ?? user?.unidade?.id
+
+            const payload = {
+                dataInicio: dataInicioContrato,
+                dataFim: dataFimContrato || null,
+                dataEnvio: dataEnvioContrato,
+                descricao: descricaoContrato || null,
+                status: statusContrato,
+                frequenciaEntregas: frequenciaEntregasContrato,
+                diaPagamento: diaPagamentoContrato,
+                formaPagamento: formaPagamentoContrato,
+                valorTotal: valorTotalContrato ? Number(valorTotalContrato) : null,
+                itens: []
+            }
+
+            let url = ""
+            if (tipoContrato === "INTERNO") {
+                payload.unidadeId = Number(lojaOuFornecedorId)
+                url = `${base}/criarContratoInterno/${unidadeId}`
+            } else {
+                payload.fornecedorExternoId = Number(lojaOuFornecedorId)
+                url = `${base}/criarContratoExterno/${unidadeId}`
+            }
+
+            const res = await fetchFn(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+            const body = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setShowContratoModal(false)
+                setTipoContrato("INTERNO")
+                setLojaOuFornecedorId("")
+                setDataInicioContrato("")
+                setDataFimContrato("")
+                setDataEnvioContrato("")
+                    setDescricaoContrato("")
+                setFrequenciaEntregasContrato("MENSALMENTE")
+                setDiaPagamentoContrato("")
+                setFormaPagamentoContrato("PIX")
+                setValorTotalContrato("")
+                setStatusContrato("ATIVO")
+                alert('Contrato criado com sucesso!')
+                router.refresh()
+            } else {
+                console.error('Erro criando contrato:', body)
+                alert(body?.erro || body?.message || 'Erro ao criar contrato')
+            }
+        } catch (err) {
+            console.error('Erro enviando contrato:', err)
+            alert('Erro ao criar contrato')
+        }
+    }
+
     const atividades = [
         {
             titulo: "atividade agrícola",
@@ -463,18 +619,8 @@ export default function Page() {
         },
         {
             titulo: "contrato",
-            rotaApi: "/api/atividades/contrato/criar",
-            campos: [
-                { name: "fornecedor", label: "Fornecedor", type: "text" },
-                { name: "arquivo", label: "Upload do contrato", type: "file" },
-                { name: "dataInicio", label: "Data de inicio", type: "date" },
-                { name: "dataFim", label: "Data de fim", type: "date" },
-                { name: "dataEnvio", label: "Data de envio", type: "date" },
-                { name: "frequenciaEntregas", label: "Frequência de entregas", type: "text" },
-                { name: "diaPagamento", label: "Dia de pagamento", type: "date" },
-                { name: "formaPagamento", label: "Tipo de pagamento(dinheiro, cartão ou pix)", type: "text" },
-                { name: "valorTotal", label: "Valor total", type: "number" },
-                { name: "itens", label: "Itens", type: "select-multiple" },],
+            rotaApi: "/criarContrato",
+            campos: [],
             icone: <DocumentTextIcon className="w-12 h-12 text-pink-600 -ml-5" />,
         },
         {
@@ -812,6 +958,113 @@ export default function Page() {
                     )}
                 </DrawerContent>
             </Drawer>
+
+            <Dialog open={showContratoModal} onOpenChange={setShowContratoModal}>
+                <DialogContent className="max-w-lg w-full">
+                    <DialogHeader>
+                        <DialogTitle>Novo contrato</DialogTitle>
+                        <DialogDescription>Preencha os dados do contrato</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={enviarContrato} className="space-y-4 mt-4">
+                        <div>
+                            <Label>Tipo de Contrato</Label>
+                            <select value={tipoContrato} onChange={(e) => {
+                                setTipoContrato(e.target.value)
+                                setLojaOuFornecedorId("")
+                            }} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="INTERNO">Interno (Loja)</option>
+                                <option value="EXTERNO">Externo (Fornecedor)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>{tipoContrato === 'INTERNO' ? 'Loja' : 'Fornecedor Externo'}</Label>
+                            {tipoContrato === 'INTERNO' ? (
+                                carregandoLojas ? (<p>Carregando lojas...</p>) : (
+                                    <select value={lojaOuFornecedorId} onChange={(e) => setLojaOuFornecedorId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                        <option value="">Selecione uma loja</option>
+                                        {lojas.map((l) => (<option key={l.id} value={l.id}>{l?.nome ?? `Loja ${l.id}`}</option>))}
+                                    </select>
+                                )
+                            ) : (
+                                carregandoFornecedores ? (<p>Carregando fornecedores...</p>) : (
+                                    <select value={lojaOuFornecedorId} onChange={(e) => setLojaOuFornecedorId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                        <option value="">Selecione um fornecedor</option>
+                                        {fornecedoresExternos.map((f) => (<option key={f.id} value={f.id}>{f?.nomeEmpresa ?? `Fornecedor ${f.id}`}</option>))}
+                                    </select>
+                                )
+                            )}
+                        </div>
+
+                        <div>
+                            <Label>Descrição do Contrato</Label>
+                            <textarea value={descricaoContrato} onChange={(e) => setDescricaoContrato(e.target.value)} rows={4} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label>Data Início</Label>
+                                <Input type="date" value={dataInicioContrato} onChange={(e) => setDataInicioContrato(e.target.value)} required />
+                            </div>
+                            <div>
+                                <Label>Data Fim (opcional)</Label>
+                                <Input type="date" value={dataFimContrato} onChange={(e) => setDataFimContrato(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label>Data de Envio</Label>
+                            <Input type="date" value={dataEnvioContrato} onChange={(e) => setDataEnvioContrato(e.target.value)} required />
+                        </div>
+
+                        <div>
+                            <Label>Frequência de Entregas</Label>
+                            <select value={frequenciaEntregasContrato} onChange={(e) => setFrequenciaEntregasContrato(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="SEMANALMENTE">SEMANALMENTE</option>
+                                <option value="QUINZENAL">QUINZENAL</option>
+                                <option value="MENSALMENTE">MENSALMENTE</option>
+                                <option value="TRIMESTRAL">TRIMESTRAL</option>
+                                <option value="SEMESTRAL">SEMESTRAL</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Dia de Pagamento</Label>
+                            <Input type="number" min="1" max="31" value={diaPagamentoContrato} onChange={(e) => setDiaPagamentoContrato(e.target.value)} required />
+                        </div>
+
+                        <div>
+                            <Label>Forma de Pagamento</Label>
+                            <select value={formaPagamentoContrato} onChange={(e) => setFormaPagamentoContrato(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="DINHEIRO">DINHEIRO</option>
+                                <option value="CARTAO">CARTÃO</option>
+                                <option value="PIX">PIX</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Valor Total (opcional)</Label>
+                            <Input type="number" step="0.01" value={valorTotalContrato} onChange={(e) => setValorTotalContrato(e.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label>Status</Label>
+                            <select value={statusContrato} onChange={(e) => setStatusContrato(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="ATIVO">ATIVO</option>
+                                <option value="INATIVO">INATIVO</option>
+                            </select>
+                        </div>
+
+                        <DialogFooter>
+                            <div className="flex gap-2 w-full">
+                                <Button type="button" variant="secondary" onClick={() => setShowContratoModal(false)}>Cancelar</Button>
+                                <Button type="submit" className="ml-auto">Salvar</Button>
+                            </div>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
