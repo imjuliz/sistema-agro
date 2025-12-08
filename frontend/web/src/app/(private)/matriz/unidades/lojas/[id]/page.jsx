@@ -42,53 +42,9 @@
 //   );
 // }
 
-"use client"
-import React, { useState } from 'react';
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { CompanyHeader } from '@/components/matriz/Unidades/Fazenda/CompanyHeader';
-import { ActionBar } from '@/components/matriz/Unidades/Fazenda/ActionBar';
-import { TabNavigation } from '@/components/matriz/Unidades/Fazenda/TabNavigation';
-import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
-import { CenterPanel } from '@/components/matriz/Unidades/Fazenda/CenterPanel';
-import { RightPanel } from '@/components/matriz/Unidades/Fazenda/RightPanel';
-import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
-import { LogActivityModal } from '@/components/matriz/Unidades/Fazenda/LogActivityModal';
-import { AddContactModal } from '@/components/matriz/Unidades/Fazenda/AddContactModal';
-import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+import LojaDetalheClient from "./LojaDetalheClient";
 
-export default function FazendaDetalhe(props) {
-      usePerfilProtegido("GERENTE_MATRIZ");
-
-  // garantir que params seja resolvido (evita o erro)
-   const params = useParams();
-  const { id } = params;
-
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showAddJob, setShowAddJob] = useState(false);
-  const [showLogActivity, setShowLogActivity] = useState(false);
-  const [showAddContact, setShowAddContact] = useState(false);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <CompanyHeader onLogActivity={() => setShowLogActivity(true)}/>
-      <ActionBar 
-        onAddJob={() => setShowAddJob(true)}
-        onLogActivity={() => setShowLogActivity(true)}
-        onAddContact={() => setShowAddContact(true)}
-      />
-      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      <div className="flex mt-10 gap-6 px-6 pb-6">
-        {/* <LeftPanel /> */}
-        <CenterPanel activeTab={activeTab} />
-        {/* <RightPanel onLogActivity={() => setShowLogActivity(true)} /> */}
-      </div>
-
-      {/* Modals */}
-      <AddFazendaModal open={showAddJob} onOpenChange={setShowAddJob} />
-      <LogActivityModal open={showLogActivity} onOpenChange={setShowLogActivity} />
-      <AddContactModal open={showAddContact} onOpenChange={setShowAddContact} />
-    </div>
-  );
+export default async function LojaDetalhePage({ params }) {
+  const { id } = await params;
+  return <LojaDetalheClient id={id} />;
 }

@@ -1,4 +1,4 @@
-import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getFazendasFiltered, getCityStateSuggestions, getLoja, getMatriz, FazendaService, LojaService, updateUnidade, getUsuariosPorUnidade, getUsuarioPorId, countUsuariosPorUnidade, atualizarFotoUnidade, removerFotoUnidade } from "../models/Unidades.js";
+import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getFazendasFiltered, getCityStateSuggestions, getLoja, getLojasFiltered, getMatriz, FazendaService, LojaService, updateUnidade, getUsuariosPorUnidade, getUsuarioPorId, countUsuariosPorUnidade, atualizarFotoUnidade, removerFotoUnidade } from "../models/Unidades.js";
 import { unidadeSchema } from "../schemas/unidadeSchema.js";
 
 // BUSCA ---------------------------------------------------------------------------
@@ -82,10 +82,18 @@ export async function getCitySuggestionsController(req, res) {
 
 export async function getLojaController(req, res) {
   try {
-    const resultado = await getLoja();
-    if (!resultado.sucesso) {
-      return res.status(500).json(resultado);
-    }
+    const q = req.query?.q ?? null;
+    const cidade = req.query?.cidade ?? req.query?.localidade ?? null;
+    const estado = req.query?.estado ?? null;
+    const tipos = req.query?.tipos ?? req.query?.types ?? req.query?.type ?? null;
+    const status = req.query?.status ?? null;
+    const responsible = req.query?.responsible ?? req.query?.responsavel ?? null;
+    const page = req.query?.page ?? 1;
+    const perPage = req.query?.perPage ?? 25;
+    const orderBy = req.query?.orderBy ?? 'nome_asc';
+
+    const resultado = await getLojasFiltered({ q, cidade, estado, tipos, status, responsible, page, perPage, orderBy });
+    if (!resultado.sucesso) return res.status(500).json(resultado);
     return res.json(resultado);
   } catch (error) {
     return res.status(500).json({

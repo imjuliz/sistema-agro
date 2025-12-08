@@ -103,6 +103,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [errors, setErrors] = useState({});
   // mensagem de erro geral por step (ex: "adicione pelo menos um contrato")
   const [formError, setFormError] = useState("");
+  // erros específicos para itens do contrato: { contractIndex: { field: 'mensagem' } }
+  const [itemErrors, setItemErrors] = useState({});
 
   // CEP specific
   const [cepLoading, setCepLoading] = useState(false);
@@ -178,8 +180,41 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     return out.toISOString().slice(0,10);
   }
 
+  // --- Função para comprimir imagem ---
+  function compressImage(file, maxWidth = 800, quality = 0.7) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Redimensionar se necessário
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Converter para base64 com qualidade reduzida
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   // --- Handle upload de imagem ---
-  function handleImageUpload(e) {
+  async function handleImageUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -196,12 +231,19 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
     setImagemFile(file);
 
-    // Criar preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImagemPreview(event.target?.result);
-    };
-    reader.readAsDataURL(file);
+    // Comprimir imagem antes de criar preview
+    try {
+      const compressedBase64 = await compressImage(file);
+      setImagemPreview(compressedBase64);
+    } catch (err) {
+      console.error('Erro ao comprimir imagem:', err);
+      // Fallback: usar imagem original se compressão falhar
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagemPreview(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   // --- CEP lookup using fetchWithAuth ---
@@ -266,7 +308,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (!email.trim()) e.email = "Email é obrigatório.";
     if (!cnpj.trim()) e.cnpj = "CNPJ é obrigatório.";
     if (!focoProdutivo.trim()) e.focoProdutivo = "Foco produtivo é obrigatório.";
-    // validação do número do endereço (opcional, mas se preenchido validar comprimento)
+    // validação do número do endereço (obrigatório)
+    if (!enderecoNumero || !enderecoNumero.trim()) e.enderecoNumero = "Número do endereço é obrigatório.";
     if (enderecoNumero && enderecoNumero.trim().length > 20) e.enderecoNumero = "Número do endereço inválido.";
     // validação simples de e-mail (se preenchido)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Email inválido.";
@@ -280,8 +323,50 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   }
 
   function validateStep1Fields() {
-    // Fornecedores/contratos não são mais obrigatórios
-    return {};
+    const e = {};
+    // Validar mínimo 1 fornecedor
+    if (fornecedores.length === 0) {
+      e.fornecedores = "É obrigatório adicionar pelo menos 1 fornecedor.";
+    }
+    // Validar mínimo 1 contrato
+    if (contracts.length === 0) {
+      e.contracts = "É obrigatório adicionar pelo menos 1 contrato.";
+    }
+    // Validar cada contrato tem pelo menos 1 item
+    contracts.forEach((c, idx) => {
+      if (!c.itens || c.itens.length === 0) {
+        e[`contract_${idx}_items`] = `O contrato "${c.nomeContrato}" deve ter pelo menos 1 item.`;
+      }
+      // Validar campos obrigatórios do contrato
+      if (!c.dataInicio) e[`contract_${idx}_dataInicio`] = "Data de início é obrigatória.";
+      if (!c.dataEnvio) e[`contract_${idx}_dataEnvio`] = "Dia de envio é obrigatório.";
+      if (!c.duration) e[`contract_${idx}_duration`] = "Duração do contrato é obrigatória.";
+      if (!c.dataFim) e[`contract_${idx}_dataFim`] = "Data de fim é obrigatória.";
+      if (!c.diaPagamento) e[`contract_${idx}_diaPagamento`] = "Dia de pagamento é obrigatório.";
+      if (!c.formaPagamento) e[`contract_${idx}_formaPagamento`] = "Forma de pagamento é obrigatória.";
+      if (!c.frequenciaEntregas) e[`contract_${idx}_frequenciaEntregas`] = "Frequência de entregas é obrigatória.";
+      // Validar itens do contrato
+      if (c.itens && c.itens.length > 0) {
+        c.itens.forEach((item, itemIdx) => {
+          if (!item.nome || !item.nome.trim()) {
+            e[`contract_${idx}_item_${itemIdx}_nome`] = "Nome do item é obrigatório.";
+          }
+          if (!item.quantidade || Number(item.quantidade) <= 0) {
+            e[`contract_${idx}_item_${itemIdx}_quantidade`] = "Quantidade é obrigatória.";
+          }
+          if (!item.unidadeMedida) {
+            e[`contract_${idx}_item_${itemIdx}_unidadeMedida`] = "Unidade de medida é obrigatória.";
+          }
+          if (!item.precoUnitario || Number(item.precoUnitario) <= 0) {
+            e[`contract_${idx}_item_${itemIdx}_precoUnitario`] = "Preço unitário é obrigatório.";
+          }
+          if (!item.pesoUnidade || Number(item.pesoUnidade) <= 0) {
+            e[`contract_${idx}_item_${itemIdx}_pesoUnidade`] = "Peso por unidade (em KG) é obrigatório.";
+          }
+        });
+      }
+    });
+    return e;
   }
 
   // --- Handlers de navegação com validação inline ---
@@ -321,9 +406,9 @@ async function addFornecedor() {
 
   const errors = {};
   if (!newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
-  if (!newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição é obrigatória.";
+  // Descrição é opcional agora
   const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf || "");
-  if (newFornecedorData.cnpjCpf && cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido.";
+  if (!newFornecedorData.cnpjCpf || !cnpjDigits || cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ é obrigatório e deve conter 14 dígitos.";
   if (!onlyDigits(newFornecedorData.telefone || "")) errors.telefone = "Telefone é obrigatório.";
   if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
 
@@ -339,14 +424,33 @@ async function addFornecedor() {
     isNew: true,
     nome: newFornecedorData.nomeEmpresa.trim(),
     nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
-    descricaoEmpresa: newFornecedorData.descricaoEmpresa.trim(),
-    cnpjCpf: newFornecedorData.cnpjCpf ? onlyDigits(newFornecedorData.cnpjCpf) : null,
+    descricaoEmpresa: newFornecedorData.descricaoEmpresa?.trim() || null,
+    cnpjCpf: onlyDigits(newFornecedorData.cnpjCpf),
     email: newFornecedorData.email || null,
     telefone: onlyDigits(newFornecedorData.telefone),
     endereco: newFornecedorData.endereco || null
   };
 
+  // Criar contrato automaticamente para o novo fornecedor ANTES de atualizar o estado
+  const fornecedorIndex = fornecedores.length; // índice será após adicionar
+  const novoContrato = {
+    fornecedorIndex,
+    fornecedorId: tempId,
+    nomeContrato: `Contrato com ${localFornecedor.nomeEmpresa}`,
+    descricao: '',
+    itens: [],
+    dataInicio: new Date().toISOString().slice(0,10),
+    dataEnvio: '',
+    dataFim: null,
+    frequenciaEntregas: null,
+    diaPagamento: '',
+    formaPagamento: null,
+    status: 'ATIVO',
+    duration: ''
+  };
+
   setFornecedores(prev => ([...prev, localFornecedor]));
+  setContracts(prev => ([...prev, novoContrato]));
   setSelectedFornecedorId(String(tempId));
   setIsCreatingNewFornecedor(false);
   setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
@@ -440,17 +544,15 @@ function addContract() {
         errors.confirmaSenha = "As senhas não correspondem.";
       }
 
-      // Validar se email já existe em teamInvites ou em gerentes existentes
-      const emailJaExiste = teamInvites.some(u => u.email.toLowerCase() === newGerenteData.email.toLowerCase()) ||
-                           existingGerentes.some(g => g.email && g.email.toLowerCase() === newGerenteData.email.toLowerCase());
+      // Validar se email já existe em teamInvites
+      const emailJaExiste = teamInvites.some(u => u.email.toLowerCase() === newGerenteData.email.toLowerCase());
       if (emailJaExiste) {
         errors.email = "Este email já está cadastrado.";
       }
 
-      // Validar se telefone já existe em teamInvites ou em gerentes existentes
+      // Validar se telefone já existe em teamInvites
       const telefoneDigitos = onlyDigits(newGerenteData.telefone);
-      const telefoneJaExiste = teamInvites.some(u => onlyDigits(u.telefone) === telefoneDigitos) ||
-                              existingGerentes.some(g => g.telefone && onlyDigits(g.telefone) === telefoneDigitos);
+      const telefoneJaExiste = teamInvites.some(u => onlyDigits(u.telefone) === telefoneDigitos);
       if (telefoneJaExiste) {
         errors.telefone = "Este telefone já está cadastrado.";
       }
@@ -596,40 +698,7 @@ function addContract() {
     fetchContratoMeta();
   }, [open, accessToken, fetchWithAuth]);
 
-  // Novo useEffect para buscar gerentes disponíveis
-  useEffect(() => {
-    if (!(open && step === 2 && accessToken)) {
-      if (!open) {
-        setExistingGerentes([]);
-        setSelectedGerenteId("");
-        setIsCreatingNewGerente(false);
-        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "" });
-        setNewGerenteErrors({});
-      }
-      return;
-    }
-
-    async function fetchExistingGerentes() {
-      try {
-        // monta base sem barra final para evitar // na URL
-        const base = String(API_URL || '').replace(/\/$/, '');
-        const url = `${base}/usuarios/gerentes-disponiveis`;
-
-        const res = await fetchWithAuth(url, { method: "GET" });
-        if (res.ok) {
-          const json = await res.json();
-          // o controller retorna { sucesso: true, gerentes }
-          setExistingGerentes(json.gerentes || []);
-        } else {
-          console.error("Falha ao carregar gerentes disponíveis:", res.status);
-        }
-      } catch (err) {
-        console.error("Erro ao buscar gerentes disponíveis:", err);
-      }
-    }
-
-    fetchExistingGerentes();
-  }, [open, step, accessToken, fetchWithAuth, API_URL]);
+  // Removido: não buscamos mais gerentes existentes, apenas criamos novos
 
   async function handleSubmitAll() {
     setErrors({});
@@ -667,7 +736,15 @@ function addContract() {
       if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim();
       if (email && email.trim()) payload.email = email.trim();
       if (telefone && onlyDigits(telefone).trim()) payload.telefone = onlyDigits(telefone).trim();
-      if (imagemPreview) payload.imagemBase64 = imagemPreview;
+      // Adicionar imagem apenas se não for muito grande (limite de ~500KB em base64)
+      if (imagemPreview) {
+        const base64Size = (imagemPreview.length * 3) / 4; // Aproximação do tamanho em bytes
+        if (base64Size < 500 * 1024) { // 500KB
+          payload.imagemBase64 = imagemPreview;
+        } else {
+          console.warn('Imagem muito grande, removendo do payload. Tamanho:', base64Size, 'bytes');
+        }
+      }
       if (areaTotal !== '' && !Number.isNaN(Number(areaTotal))) payload.areaTotal = Number(areaTotal);
       if (areaProdutiva !== '' && !Number.isNaN(Number(areaProdutiva))) payload.areaProdutiva = Number(areaProdutiva);
       if (latitude !== null && latitude !== undefined) payload.latitude = latitude;
@@ -750,7 +827,7 @@ function addContract() {
           fornecedorExternoId: fornecedorExternoId || null,
           dataInicio: c.dataInicio || new Date().toISOString().slice(0,10),
           dataFim: c.dataFim || null,
-          dataEnvio: c.dataEnvio || c.dataInicio || new Date().toISOString().slice(0,10),
+          diaEnvio: c.dataEnvio || null, // Agora é um número (dia de 1 a 31)
           status: c.status || 'ATIVO',
           frequenciaEntregas: c.frequenciaEntregas || null,
           diaPagamento: c.diaPagamento || '',
@@ -879,26 +956,40 @@ function updateNewItem(contractIndex, field, value) {
   function addItemToContract(contractIndex) {
     const item = newItems[contractIndex];
     
-    // Validar que temos um nome de item
-    if (!item || !item.nome || !item.nome.trim()) {
-      setFormError('Nome do item é obrigatório.');
-      return;
-    }
-
-    // Verificar se o item já existe NA LISTA ATUAL DE CONTRACTS (state atual)
-    const nomeItemNorm = item.nome.trim().toLowerCase();
-    const itensAtuais = contracts[contractIndex]?.itens || [];
+    // Limpar erros anteriores deste contrato
+    setItemErrors(prev => {
+      const copy = { ...prev };
+      delete copy[contractIndex];
+      return copy;
+    });
     
-    const jaExiste = itensAtuais.some(i => 
-      (i.nome || '').trim().toLowerCase() === nomeItemNorm
-    );
+    // Validar campos obrigatórios e criar objeto de erros específicos
+    const fieldErrors = {};
+    if (!item || !item.nome || !item.nome.trim()) {
+      fieldErrors.nome = 'Nome do item é obrigatório.';
+    }
+    if (!item || !item.quantidade || Number(item.quantidade) <= 0) {
+      fieldErrors.quantidade = 'Quantidade é obrigatória.';
+    }
+    if (!item || !item.unidadeMedida) {
+      fieldErrors.unidadeMedida = 'Unidade de medida é obrigatória.';
+    }
+    if (!item || !item.precoUnitario || Number(item.precoUnitario) <= 0) {
+      fieldErrors.precoUnitario = 'Preço unitário é obrigatório.';
+    }
+    if (!item || !item.pesoUnidade || Number(item.pesoUnidade) <= 0) {
+      fieldErrors.pesoUnidade = 'Peso por unidade (em KG) é obrigatório.';
+    }
 
-    if (jaExiste) {
-      setFormError('Este item já foi adicionado ao contrato.');
+    if (Object.keys(fieldErrors).length > 0) {
+      setItemErrors(prev => ({
+        ...prev,
+        [contractIndex]: fieldErrors
+      }));
       return;
     }
 
-    // Se passou nas validações, adicionar o item
+    // Usar função de callback para garantir que estamos usando o estado mais recente
     setContracts(prev => {
       const copy = [...prev];
       
@@ -907,25 +998,45 @@ function updateNewItem(contractIndex, field, value) {
         copy[contractIndex].itens = [];
       }
 
+      // Verificar se o item já existe usando o estado atualizado
+      const nomeItemNorm = item.nome.trim().toLowerCase();
+      const jaExiste = copy[contractIndex].itens.some(i => 
+        (i.nome || '').trim().toLowerCase() === nomeItemNorm
+      );
+
+      if (jaExiste) {
+        setItemErrors(prev => ({
+          ...prev,
+          [contractIndex]: { nome: 'Este item já foi adicionado ao contrato.' }
+        }));
+        return copy; // Retorna sem modificar
+      }
+
+      // Adicionar o item
       copy[contractIndex].itens.push({
         nome: item.nome.trim(),
-        quantidade: item.quantidade ? Number(item.quantidade) : undefined,
-        unidadeMedida: item.unidadeMedida || undefined,
-        precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : undefined,
-        pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : undefined,
+        quantidade: Number(item.quantidade),
+        unidadeMedida: item.unidadeMedida,
+        precoUnitario: Number(item.precoUnitario),
+        pesoUnidade: Number(item.pesoUnidade),
         raca: item.raca || undefined
       });
       
       return copy;
     });
 
-    // Limpar o formulário do novo item
+    // Limpar o formulário do novo item APENAS se não houver erro
     setNewItems(prev => ({
       ...prev,
       [contractIndex]: {}
     }));
     
-    setFormError('');
+    // Limpar erros deste contrato após adicionar com sucesso
+    setItemErrors(prev => {
+      const copy = { ...prev };
+      delete copy[contractIndex];
+      return copy;
+    });
   }function removeItem(contractIndex, itemIndex) {
   setContracts(prev => {
     const copy = [...prev];
@@ -971,12 +1082,6 @@ function updateContractField(contractIndex, field, value) {
               <h2 className="text-2xl font-semibold">Criar Nova Fazenda</h2>
               <div className="flex gap-2" />
             </header>
-            {/* mensagem de erro geral do step */}
-            {formError && (
-              <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700">
-                {formError}
-              </div>
-            )}
 
             {/* Steps content */}
             {step === 0 && (
@@ -1070,8 +1175,8 @@ function updateContractField(contractIndex, field, value) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="enderecoNumero">Número</Label>
-                    <Input id="enderecoNumero" value={enderecoNumero} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, ''); setEnderecoNumero(cleaned); setErrors(prev => { const c = { ...prev }; delete c.enderecoNumero; return c; }); }} placeholder="Nº" />
+                    <Label htmlFor="enderecoNumero">Número *</Label>
+                    <Input id="enderecoNumero" value={enderecoNumero} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, ''); setEnderecoNumero(cleaned); setErrors(prev => { const c = { ...prev }; delete c.enderecoNumero; return c; }); }} placeholder="Nº" className={cn(errors.enderecoNumero && "border-red-500 ring-1 ring-red-500")} />
                     {errors.enderecoNumero && <p id="error-enderecoNumero" className="text-sm text-red-600 mt-1">{errors.enderecoNumero}</p>}
                   </div>
                 </div>
@@ -1173,7 +1278,7 @@ function updateContractField(contractIndex, field, value) {
                           {/* <SelectItem value="new">Criar Novo Fornecedor</SelectItem> */}
                           {existingFornecedores.map((f) => (
                             <SelectItem key={f.id} value={String(f.id)}>
-                              {f.nomeEmpresa} {f.cnpjCpf ? `(${f.cnpjCpf})` : ""}
+                              {f.nomeEmpresa}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1182,7 +1287,7 @@ function updateContractField(contractIndex, field, value) {
                     </div>
                     <div className="flex items-end gap-6">
                       <Button onClick={addContract}><Plus /></Button>
-                      <Button variant="outline" onClick={addFornecedor}>Criar fornecedor</Button>
+                      <Button variant="outline" onClick={() => setIsCreatingNewFornecedor(true)}>Criar fornecedor</Button>
                     </div>
                   </div>
                   {isCreatingNewFornecedor && (
@@ -1200,18 +1305,19 @@ function updateContractField(contractIndex, field, value) {
                           {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="novo-cnpjCpf">CNPJ</Label>
+                          <Label htmlFor="novo-cnpjCpf">CNPJ *</Label>
                           <Input
                             id="novo-cnpjCpf"
-                            value={newFornecedorData.cnpjCpf}
+                            value={formatCNPJ(newFornecedorData.cnpjCpf)}
                             onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
+                            placeholder="00.000.000/0000-00"
                             className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
                           />
                           {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="novo-descricaoEmpresa">Descrição da Empresa *</Label>
+                        <Label htmlFor="novo-descricaoEmpresa">Descrição da Empresa</Label>
                         <Textarea
                           id="novo-descricaoEmpresa"
                           value={newFornecedorData.descricaoEmpresa}
@@ -1222,7 +1328,7 @@ function updateContractField(contractIndex, field, value) {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="novo-email">Email *</Label>
+                          <Label htmlFor="novo-email">Email</Label>
                           <Input
                             id="novo-email"
                             type="email"
@@ -1253,6 +1359,14 @@ function updateContractField(contractIndex, field, value) {
                         />
                         {newFornecedorErrors.endereco && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.endereco}</p>}
                       </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button onClick={addFornecedor}>Adicionar Fornecedor</Button>
+                        <Button variant="outline" onClick={() => {
+                          setIsCreatingNewFornecedor(false);
+                          setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+                          setNewFornecedorErrors({});
+                        }}>Cancelar</Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1262,19 +1376,28 @@ function updateContractField(contractIndex, field, value) {
                 <div>
                   <h4 className="font-medium">Lista de fornecedores</h4>
                   <ul className="mt-2 space-y-2">
-                    {fornecedores.map((f, i) => (
-                      <li key={i} className="py-2 px-4 border rounded-sm">
-                        <div className="flex justify-between">
-                          <div>
-                            <div className="font-semibold">{f.nome}</div>
-                            <div className="text-sm text-muted-foreground">{f.documento || '-'} • {f.contato || '-'}</div>
+                    {fornecedores.map((f, i) => {
+                      const documentoFormatado = f.documento || f.cnpjCpf ? formatCNPJ(String(f.documento || f.cnpjCpf || '')) : '-';
+                      const telefoneFormatado = f.contato || f.telefone ? formatTelefone(String(f.contato || f.telefone || '')) : '-';
+                      return (
+                        <li key={i} className="py-2 px-4 border rounded-sm">
+                          <div className="flex justify-between">
+                            <div>
+                              <div className="font-semibold">{f.nome || f.nomeEmpresa}</div>
+                              <div className="text-sm text-muted-foreground">{documentoFormatado} • {telefoneFormatado}</div>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                              <Button variant="ghost" onClick={() => {
+                                // Remover fornecedor e contratos relacionados
+                                const fornecedorId = String(f.id);
+                                setFornecedores(prev => prev.filter((_, idx) => idx !== i));
+                                setContracts(prev => prev.filter(c => String(c.fornecedorId) !== fornecedorId));
+                              }}>Remover</Button>
+                            </div>
                           </div>
-                          <div className="flex gap-2 items-center">
-                            <Button variant="ghost" onClick={() => setFornecedores(prev => prev.filter((_, idx) => idx !== i))}>Remover</Button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 
@@ -1296,9 +1419,12 @@ function updateContractField(contractIndex, field, value) {
 
           <Button
             variant="ghost"
-            onClick={() =>
-              setContracts(prev => prev.filter((_, idx) => idx !== i))
-            }
+            onClick={() => {
+              // Remover contrato e fornecedor relacionado
+              const fornecedorId = String(c.fornecedorId);
+              setContracts(prev => prev.filter((_, idx) => idx !== i));
+              setFornecedores(prev => prev.filter(f => String(f.id) !== fornecedorId));
+            }}
           >
             Remover
           </Button>
@@ -1306,29 +1432,47 @@ function updateContractField(contractIndex, field, value) {
 
         {/* CAMPOS OBRIGATÓRIOS DO SCHEMA */}
         <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="text-sm">Data de Início</label>
+          <div className="space-y-2">
+            <Label className="text-sm">Data de Início *</Label>
             <Input
               type="date"
               value={c.dataInicio || ""}
-              disabled
-              readOnly
+              max={new Date().toISOString().split('T')[0]}
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (selectedDate <= today) {
+                  updateContractField(i, "dataInicio", selectedDate);
+                }
+              }}
+              className={cn(errors[`contract_${i}_dataInicio`] && "border-red-500 ring-1 ring-red-500")}
             />
+            {errors[`contract_${i}_dataInicio`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataInicio`]}</p>}
           </div>
 
-          <div>
-            <label className="text-sm">Data de Envio</label>
+          <div className="space-y-2">
+            <Label className="text-sm">Dia de Envio *</Label>
             <Input
-              type="date"
+              type="number"
+              min={1}
+              max={31}
+              placeholder="1 a 31"
               value={c.dataEnvio || ""}
-              onChange={(e) =>
-                updateContractField(i, "dataEnvio", e.target.value)
-              }
+              onChange={(e) => {
+                const val = e.target.value;
+                const cleaned = val.replace(/\D/g, '');
+                const num = cleaned ? parseInt(cleaned, 10) : '';
+                if (num === '' || (num >= 1 && num <= 31)) {
+                  updateContractField(i, "dataEnvio", String(num));
+                }
+              }}
+              className={cn(errors[`contract_${i}_dataEnvio`] && "border-red-500 ring-1 ring-red-500")}
             />
+            {errors[`contract_${i}_dataEnvio`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataEnvio`]}</p>}
           </div>
 
-          <div>
-            <label className="text-sm">Duração do Contrato</label>
+          <div className="space-y-2">
+            <Label className="text-sm">Duração do Contrato *</Label>
             <Select
               value={c.duration || ""}
               onValueChange={(v) => {
@@ -1338,7 +1482,7 @@ function updateContractField(contractIndex, field, value) {
                 updateContractField(i, 'dataFim', end);
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className={cn("w-full", errors[`contract_${i}_duration`] && "border-red-500 ring-1 ring-red-500")}>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
                 <SelectContent className="z-[1001]">
@@ -1349,20 +1493,22 @@ function updateContractField(contractIndex, field, value) {
                 <SelectItem value="5y">5 anos</SelectItem>
               </SelectContent>
             </Select>
+            {errors[`contract_${i}_duration`] && <p className="text-sm text-red-600">{errors[`contract_${i}_duration`]}</p>}
 
-            <div className="mt-2">
-              <label className="text-sm">Data de Fim</label>
-              <Input className="w-full " type="date" value={c.dataFim || ""} disabled readOnly />
+            <div className="mt-2 space-y-2">
+              <Label className="text-sm">Data de Fim *</Label>
+              <Input className={cn("w-full", errors[`contract_${i}_dataFim`] && "border-red-500 ring-1 ring-red-500")} type="date" value={c.dataFim || ""} disabled readOnly />
+              {errors[`contract_${i}_dataFim`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataFim`]}</p>}
             </div>
           </div>
 
-          <div>
-            <label className="text-sm">Frequência de Entregas</label>
+          <div className="space-y-2">
+            <Label className="text-sm">Frequência de Entregas *</Label>
             <Select
               value={c.frequenciaEntregas || ""}
               onValueChange={(v) => updateContractField(i, 'frequenciaEntregas', v)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className={cn("w-full", errors[`contract_${i}_frequenciaEntregas`] && "border-red-500 ring-1 ring-red-500")}>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent className="z-[1001]">
@@ -1382,12 +1528,13 @@ function updateContractField(contractIndex, field, value) {
                 )}
               </SelectContent>
             </Select>
+            {errors[`contract_${i}_frequenciaEntregas`] && <p className="text-sm text-red-600">{errors[`contract_${i}_frequenciaEntregas`]}</p>}
           </div>
 
-          <div>
-            <label className="text-sm">Dia do Pagamento</label>
+          <div className="space-y-2">
+            <Label className="text-sm">Dia do Pagamento *</Label>
             <Input
-              className="w-full"
+              className={cn("w-full", errors[`contract_${i}_diaPagamento`] && "border-red-500 ring-1 ring-red-500")}
               type="number"
               min={1}
               max={31}
@@ -1402,15 +1549,16 @@ function updateContractField(contractIndex, field, value) {
                 }
               }}
             />
+            {errors[`contract_${i}_diaPagamento`] && <p className="text-sm text-red-600">{errors[`contract_${i}_diaPagamento`]}</p>}
           </div>
 
-          <div>
-            <label className="text-sm">Forma de Pagamento</label>
+          <div className="space-y-2">
+            <Label className="text-sm">Forma de Pagamento *</Label>
             <Select
               value={c.formaPagamento || ""}
               onValueChange={(v) => updateContractField(i, 'formaPagamento', v)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className={cn("w-full", errors[`contract_${i}_formaPagamento`] && "border-red-500 ring-1 ring-red-500")}>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent className="z-[1001] ">
@@ -1428,6 +1576,7 @@ function updateContractField(contractIndex, field, value) {
                 )}
               </SelectContent>
             </Select>
+            {errors[`contract_${i}_formaPagamento`] && <p className="text-sm text-red-600">{errors[`contract_${i}_formaPagamento`]}</p>}
           </div>
         </div>
 
@@ -1462,63 +1611,156 @@ function updateContractField(contractIndex, field, value) {
 
           {/* FORM PARA NOVO ITEM */}
           <div className="grid grid-cols-3 gap-3 mt-3 p-3 rounded border">
-            <Input
-              placeholder="Nome do item"
-              value={getNewItem(i).nome || ""}
-              onChange={(e) => updateNewItem(i, "nome", e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label htmlFor={`item-nome-${i}`}>Nome do Item *</Label>
+              <Input
+                id={`item-nome-${i}`}
+                placeholder="Nome do item"
+                value={getNewItem(i).nome || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "nome", e.target.value);
+                  // Limpar erro ao digitar
+                  if (itemErrors[i]?.nome) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].nome;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.nome && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.nome && <p className="text-sm text-red-600">{itemErrors[i].nome}</p>}
+            </div>
 
-            <Input
-              placeholder="Qtd"
-              value={getNewItem(i).quantidade || ""}
-              onChange={(e) => updateNewItem(i, "quantidade", e.target.value.replace(/\D/g, ''))}
-            />
+            <div className="space-y-2">
+              <Label htmlFor={`item-quantidade-${i}`}>Quantidade *</Label>
+              <Input
+                id={`item-quantidade-${i}`}
+                placeholder="Qtd"
+                value={getNewItem(i).quantidade || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "quantidade", e.target.value.replace(/\D/g, ''));
+                  if (itemErrors[i]?.quantidade) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].quantidade;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.quantidade && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.quantidade && <p className="text-sm text-red-600">{itemErrors[i].quantidade}</p>}
+            </div>
 
-            <Select
-              value={getNewItem(i).unidadeMedida || ""}
-              onValueChange={(v) => updateNewItem(i, "unidadeMedida", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Unid" />
-              </SelectTrigger>
-              <SelectContent className="z-[1002]">
-                {unidadesMedidaOptions && unidadesMedidaOptions.length > 0 ? (
-                  unidadesMedidaOptions.map((opcao) => (
-                    <SelectItem key={opcao.valor || opcao.label} value={opcao.valor}>
-                      {opcao.label}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <>
-                    <SelectItem value="KG">KG</SelectItem>
-                    <SelectItem value="G">G</SelectItem>
-                    <SelectItem value="UNIDADE">UNIDADE</SelectItem>
-                    <SelectItem value="LITRO">LITRO</SelectItem>
-                    <SelectItem value="TONELADA">TONELADA</SelectItem>
-                    <SelectItem value="METRO">METRO</SelectItem>
-                    <SelectItem value="METRO_QUADRADO">METRO²</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor={`item-unidade-${i}`}>Unidade de Medida *</Label>
+              <Select
+                value={getNewItem(i).unidadeMedida || ""}
+                onValueChange={(v) => {
+                  updateNewItem(i, "unidadeMedida", v);
+                  if (itemErrors[i]?.unidadeMedida) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].unidadeMedida;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className={cn("w-full", itemErrors[i]?.unidadeMedida && "border-red-500 ring-1 ring-red-500")} id={`item-unidade-${i}`}>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent className="z-[1002]">
+                  {unidadesMedidaOptions && unidadesMedidaOptions.length > 0 ? (
+                    unidadesMedidaOptions.map((opcao) => (
+                      <SelectItem key={opcao.valor || opcao.label} value={opcao.valor}>
+                        {opcao.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="KG">KG</SelectItem>
+                      <SelectItem value="G">G</SelectItem>
+                      <SelectItem value="UNIDADE">UNIDADE</SelectItem>
+                      <SelectItem value="LITRO">LITRO</SelectItem>
+                      <SelectItem value="TONELADA">TONELADA</SelectItem>
+                      <SelectItem value="METRO">METRO</SelectItem>
+                      <SelectItem value="METRO_QUADRADO">METRO²</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+              {itemErrors[i]?.unidadeMedida && <p className="text-sm text-red-600">{itemErrors[i].unidadeMedida}</p>}
+            </div>
 
-            <Input
-              placeholder="Preço Unitário"
-              value={getNewItem(i).precoUnitario || ""}
-              onChange={(e) => updateNewItem(i, "precoUnitario", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'))}
-            />
+            <div className="space-y-2">
+              <Label htmlFor={`item-preco-${i}`}>Preço Unitário *</Label>
+              <Input
+                id={`item-preco-${i}`}
+                placeholder="R$ 0,00"
+                value={getNewItem(i).precoUnitario || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "precoUnitario", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'));
+                  if (itemErrors[i]?.precoUnitario) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].precoUnitario;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.precoUnitario && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.precoUnitario && <p className="text-sm text-red-600">{itemErrors[i].precoUnitario}</p>}
+            </div>
 
-            <Input
-              placeholder="Peso por unidade"
-              value={getNewItem(i).pesoUnidade || ""}
-              onChange={(e) => updateNewItem(i, "pesoUnidade", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'))}
-            />
+            <div className="space-y-2">
+              <Label htmlFor={`item-peso-${i}`}>Peso por Unidade (KG) *</Label>
+              <Input
+                id={`item-peso-${i}`}
+                placeholder="Peso em KG"
+                value={getNewItem(i).pesoUnidade || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "pesoUnidade", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'));
+                  if (itemErrors[i]?.pesoUnidade) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].pesoUnidade;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.pesoUnidade && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.pesoUnidade && <p className="text-sm text-red-600">{itemErrors[i].pesoUnidade}</p>}
+            </div>
 
-            <Input
-              placeholder="Raça (opcional)"
-              value={getNewItem(i).raca || ""}
-              onChange={(e) => updateNewItem(i, "raca", e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label htmlFor={`item-raca-${i}`}>Raça (opcional)</Label>
+              <Input
+                id={`item-raca-${i}`}
+                placeholder="Raça"
+                value={getNewItem(i).raca || ""}
+                onChange={(e) => updateNewItem(i, "raca", e.target.value)}
+              />
+            </div>
 
             <Button
               className="col-span-3"
