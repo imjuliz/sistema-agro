@@ -1,5 +1,74 @@
 import prisma from '../prisma/client.js';
 
+// ============ FUNÇÃO AUXILIAR PARA VALIDAR E CONVERTER DATAS ============
+
+/**
+ * Valida e converte uma string de data para um objeto Date válido
+ * @param {string|Date|null|undefined} dateValue - Valor da data a ser validado
+ * @param {boolean} required - Se true, lança erro se a data for inválida
+ * @returns {Date|null} - Objeto Date válido ou null
+ */
+const validarEConverterData = (dateValue, required = false) => {
+  // Se for null ou undefined e não for obrigatório, retorna null
+  if (!dateValue && !required) {
+    return null;
+  }
+
+  // Se já for um objeto Date válido, retorna ele mesmo
+  if (dateValue instanceof Date) {
+    if (isNaN(dateValue.getTime())) {
+      if (required) {
+        throw new Error('Data inválida: objeto Date com valor inválido');
+      }
+      return null;
+    }
+    return dateValue;
+  }
+
+  // Se for string, valida e converte
+  if (typeof dateValue === 'string') {
+    // Remove espaços e caracteres estranhos
+    const cleanDate = dateValue.trim();
+    
+    // Verifica se está vazio
+    if (!cleanDate) {
+      if (required) {
+        throw new Error('Data é obrigatória');
+      }
+      return null;
+    }
+
+    // Tenta criar a data
+    const date = new Date(cleanDate);
+    
+    // Verifica se a data é válida
+    if (isNaN(date.getTime())) {
+      if (required) {
+        throw new Error(`Data inválida: "${cleanDate}"`);
+      }
+      return null;
+    }
+
+    // Verifica se a data não está em um range absurdo (anos muito grandes)
+    const year = date.getFullYear();
+    if (year < 1900 || year > 2100) {
+      if (required) {
+        throw new Error(`Data fora do range válido (1900-2100): "${cleanDate}"`);
+      }
+      return null;
+    }
+
+    return date;
+  }
+
+  // Se chegou aqui e é obrigatório, lança erro
+  if (required) {
+    throw new Error(`Tipo de data inválido: ${typeof dateValue}`);
+  }
+
+  return null;
+};
+
 // ============ CONTAS FINANCEIRAS (Genérico - Entradas e Saídas) ============
 
 export const criarContaFinanceira = async (dados) => {
@@ -21,6 +90,27 @@ export const criarContaFinanceira = async (dados) => {
       observacao = null
     } = dados;
 
+    // Validar e converter datas
+    const competenciaDate = validarEConverterData(competencia, false);
+    
+    // Para ENTRADA, vencimento é opcional (usa competência se não informado)
+    // Para SAIDA, vencimento é obrigatório
+    let vencimentoDate = null;
+    if (tipoMovimento === 'ENTRADA') {
+      // Se não houver vencimento, usa a competência
+      vencimentoDate = validarEConverterData(vencimento, true) || competenciaDate;
+    } else {
+      // Para SAIDA, vencimento é obrigatório
+      vencimentoDate = validarEConverterData(vencimento, true);
+      if (!vencimentoDate) {
+        throw new Error('Data de vencimento é obrigatória e deve ser válida para despesas');
+      }
+    }
+
+    // Para ENTRADA, status é sempre RECEBIDA (não há pendência)
+    // Para SAIDA, status é PENDENTE
+    const statusInicial = tipoMovimento === 'ENTRADA' ? 'PAGA' : 'PENDENTE';
+
     const conta = await prisma.financeiro.create({
       data: {
         unidadeId: Number(unidadeId),
@@ -31,13 +121,13 @@ export const criarContaFinanceira = async (dados) => {
         tipoMovimento,
         formaPagamento,
         valor: parseFloat(valor),
-        competencia: competencia ? new Date(competencia) : null,
-        vencimento: new Date(vencimento),
+        competencia: competenciaDate,
+        vencimento: vencimentoDate,
         parcela,
         totalParcelas,
         documento,
         observacao,
-        status: 'PENDENTE'
+        status: statusInicial
       },
       include: {
         categoria: true,
@@ -70,13 +160,30 @@ export const listarContasFinanceirasComFiltros = async (unidadeId, filtros = {})
     };
 
     // Filtrar por mês e ano
+    // Filtrar por competencia OU vencimento no período (qualquer um que estiver no período)
     if (mes && ano) {
       const dataInicio = new Date(ano, mes - 1, 1);
       const dataFim = new Date(ano, mes, 0, 23, 59, 59);
-      where.competencia = {
-        gte: dataInicio,
-        lte: dataFim
-      };
+      
+      // Usar OR para pegar contas onde:
+      // 1. A competencia está no período, OU
+      // 2. O vencimento está no período (independente de ter competencia ou não)
+      where.OR = [
+        // Contas com competencia no período
+        {
+          competencia: {
+            gte: dataInicio,
+            lte: dataFim
+          }
+        },
+        // Contas com vencimento no período (inclui tanto as que têm quanto as que não têm competencia)
+        {
+          vencimento: {
+            gte: dataInicio,
+            lte: dataFim
+          }
+        }
+      ];
     }
 
     // Filtrar por tipo de movimento
@@ -161,9 +268,18 @@ export const atualizarContaFinanceira = async (contaId, dados) => {
     if (subcategoriaId !== undefined) dataAtualizacao.subcategoriaId = subcategoriaId ? Number(subcategoriaId) : null;
     if (formaPagamento) dataAtualizacao.formaPagamento = formaPagamento;
     if (valor) dataAtualizacao.valor = parseFloat(valor);
-    if (competencia) dataAtualizacao.competencia = new Date(competencia);
-    if (vencimento) dataAtualizacao.vencimento = new Date(vencimento);
-    if (dataPagamento) dataAtualizacao.dataPagamento = new Date(dataPagamento);
+    if (competencia) {
+      const competenciaDate = validarEConverterData(competencia, false);
+      if (competenciaDate) dataAtualizacao.competencia = competenciaDate;
+    }
+    if (vencimento) {
+      const vencimentoDate = validarEConverterData(vencimento, true);
+      if (vencimentoDate) dataAtualizacao.vencimento = vencimentoDate;
+    }
+    if (dataPagamento) {
+      const dataPagamentoDate = validarEConverterData(dataPagamento, false);
+      if (dataPagamentoDate) dataAtualizacao.dataPagamento = dataPagamentoDate;
+    }
     if (status) dataAtualizacao.status = status;
     if (documento) dataAtualizacao.documento = documento;
     if (observacao !== undefined) dataAtualizacao.observacao = observacao;
@@ -187,11 +303,15 @@ export const atualizarContaFinanceira = async (contaId, dados) => {
 
 export const marcarComoPaga = async (contaId, dataPagamento = null) => {
   try {
+    const dataPagamentoDate = dataPagamento 
+      ? validarEConverterData(dataPagamento, false) || new Date()
+      : new Date();
+
     const conta = await prisma.financeiro.update({
       where: { id: Number(contaId) },
       data: {
         status: 'PAGA',
-        dataPagamento: dataPagamento ? new Date(dataPagamento) : new Date(),
+        dataPagamento: dataPagamentoDate,
         atualizadoEm: new Date()
       },
       include: {
@@ -207,11 +327,15 @@ export const marcarComoPaga = async (contaId, dataPagamento = null) => {
 
 export const marcarComoRecebida = async (contaId, dataRecebimento = null) => {
   try {
+    const dataRecebimentoDate = dataRecebimento 
+      ? validarEConverterData(dataRecebimento, false) || new Date()
+      : new Date();
+
     const conta = await prisma.financeiro.update({
       where: { id: Number(contaId) },
       data: {
         status: 'PAGA',
-        dataPagamento: dataRecebimento ? new Date(dataRecebimento) : new Date(),
+        dataPagamento: dataRecebimentoDate,
         atualizadoEm: new Date()
       },
       include: {

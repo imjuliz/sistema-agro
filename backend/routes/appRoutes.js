@@ -36,6 +36,10 @@ import {
   deletarContaController,
   obterResumoController,
   obterSaldoPorCategoriaController,
+  exportarContasExcelController,
+  exportarDashboardCSVController,
+  exportarDashboardPDFController,
+  exportarContasCSVController,
 } from "../controllers/ContaFinanceiraController.js";
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
@@ -254,13 +258,16 @@ router.post(
   marcarComoRecebidaController
 );
 router.delete("/contas-financeiras/:contaId", auth(), deletarContaController);
+router.get("/contas-financeiras/exportar/excel", auth(), exportarContasExcelController);
+router.get("/contas-financeiras/exportar/csv", auth(), exportarContasCSVController);
 
 // resumos e relatórios financeiros
+// IMPORTANTE: Rotas mais específicas devem vir ANTES das genéricas
+router.get("/financeiro/dashboard/exportar/csv", auth(), exportarDashboardCSVController);
+router.get("/financeiro/dashboard/exportar/pdf", auth(), exportarDashboardPDFController);
+router.get("/financeiro/dashboard", auth(), getDashboardFinanceiroController);
 router.get("/financeiro/resumo", auth(), obterResumoController);
 router.get("/financeiro/saldo-por-categoria", auth(), obterSaldoPorCategoriaController);
-// router.get("/financeiro/dashboard", auth(), getDashboardFinanceiroController);
-// compatibilidade: rota usada pelo frontend moderno
-router.get("/financeiro/dashboard", auth(), obterResumoController);
 // compatibilidade: rota para listar contas usada pelo frontend
 router.get("/financeiro/contas", auth(), listarContasController);
 
