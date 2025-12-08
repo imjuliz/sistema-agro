@@ -1,3 +1,4 @@
+export { default } from "../fornecedores-fazenda/ChatInterface";
 'use client'
 
 import { useState } from 'react';

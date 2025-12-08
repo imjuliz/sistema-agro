@@ -1,3 +1,4 @@
+export { default } from "../fornecedores-fazenda/ConsumerDashboard";
 'use client'
 
 import { useState, useEffect } from 'react';
