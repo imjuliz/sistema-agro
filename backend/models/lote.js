@@ -369,22 +369,52 @@ export const contarLotesAnimaliaImproprios = async (unidadeId) => {
   }
 };
 
-// export async function listarAtividadesPlantio(unidadeId) {
-//   return prisma.atvdAgricola.findMany({
-//     where: {
-//       lote: {
-//         unidadeId: unidadeId,
-//       },
-//     },
-//     include: {
-//       lote: true,
-//       responsavel: true,
-//     },
-//     orderBy: {
-//       dataInicio: "desc",
-//     },
-//   });
-// }
+export const contarLotesAnimaliaPorTipo = async (unidadeId) =>{
+  try {
+    const lotesPorTipo = await prisma.lote.groupBy({
+      by: ['tipo'],
+      where: {
+        tipoProduto: "ANIMALIA",
+        unidadeId: Number(unidadeId),
+      },
+      _count: {
+        tipo: true,
+      },
+    });
+    return {
+      sucesso: true,
+      lotesPorTipo,
+      message: "Lotes de animalia por tipo obtidos com sucesso!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao obter lotes de animalia por tipo!",
+      error: error.message
+    };
+  }
+}
+
+export const contarAnimais = async (unidadeId) => {
+  try {
+    const quantidade = await prisma.animal.count({
+      where: {
+        unidadeId: Number(unidadeId),
+      }
+    });
+    return {
+      sucesso: true,
+      quantidade,
+      message: "Quantidade de animais obtida com sucesso!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao contar animais!",
+      error: error.message
+    };
+  }
+};
 
 export async function listarAtividadesPlantio(unidadeId) {
   try {
@@ -445,6 +475,54 @@ export async function listarAtividadesAnimalia(unidadeId) {
     }
   }
 }
+
+export const listarAtividadesDoLote = async (loteId) => {
+  // Verificar se o lote existe
+  const lote = await prisma.lote.findUnique({
+    where: { id: Number(loteId) },
+  });
+
+  if (!lote) {
+    return {
+      sucesso: false,
+      message: "Lote não encontrado."
+    };
+  }
+
+  // Se o lote for de PLANTIO → buscar em atvdAgricola
+  if (lote.tipoProduto === "PLANTIO") {
+    const atividades = await prisma.atvdAgricola.findMany({
+      where: { loteId: Number(loteId) },
+      orderBy: { dataInicio: "desc" },
+      include: { responsavel: true }
+    });
+
+    return {
+      sucesso: true,
+      tipoProduto: "PLANTIO",
+      lote: lote.nome,
+      atividades
+    };
+  }
+
+  // Se o lote for de ANIMALIA → buscar em atvdAnimalia
+  if (lote.tipoProduto === "ANIMALIA") {
+    const atividades = await prisma.atvdAnimalia.findMany({
+      where: { loteId: Number(loteId) },
+      orderBy: { dataInicio: "desc" },
+      include: { responsavel: true }
+    });
+
+    return {
+      sucesso: true,
+      tipoProduto: "ANIMALIA",
+      lote: lote.nome,
+      atividades
+    };
+  }
+
+  
+};
 
 export const criarAtividadeAgricola = async ({
   descricao,
@@ -508,6 +586,68 @@ export const criarAtividadeAgricola = async ({
   }
 };
 
+export const criarAtividadeAnimalia = async ({
+  descricao,
+  tipo,
+  loteId,
+  dataInicio,
+  dataFim,
+  responsavelId,
+  status
+}) => {
+  try {
+    // Verificar se o lote existe
+    const lote = await prisma.lote.findUnique({
+      where: { id: Number(loteId) }
+    });
+
+    if (!lote) {
+      return {
+        sucesso: false,
+        message: "Lote não encontrado."
+      };
+    }
+
+    // Verificar se o responsável existe
+    const responsavel = await prisma.usuario.findUnique({
+      where: { id: Number(responsavelId) }
+    });
+
+    if (!responsavel) {
+      return {
+        sucesso: false,
+        message: "Responsável não encontrado."
+      };
+    }
+
+    // Criar a atividade
+    const novaAtividade = await prisma.atvdAnimalia.create({
+      data: {
+        descricao,
+        tipo,          // Enum TipoAtvd
+        loteId: Number(loteId),
+        dataInicio: new Date(dataInicio),
+        dataFim: dataFim ? new Date(dataFim) : null,
+        responsavelId: Number(responsavelId),
+        status         // Enum StatusAtvdPlantio
+      }
+    });
+
+    return {
+      sucesso: true,
+      message: "Atividade criada com sucesso!",
+      atividade: novaAtividade
+    };
+
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao criar atividade animalia.",
+      error: error.message
+    };
+  }
+};
+
 
 
 export async function getLotePorId(id) {
@@ -538,7 +678,8 @@ export const criarLote = async (dados) => {
       quantidade,
       preco,
       unidadeMedida,
-      observacoes
+      observacoes,
+      status
     } = dados;
 
     // validações básicas
@@ -560,7 +701,9 @@ export const criarLote = async (dados) => {
         quantidade,
         preco,
         unidadeMedida,   // enum UnidadesDeMedida
-        observacoes: observacoes ?? null
+        observacoes: observacoes ?? null,
+        // status is optional; include if provided so frontend can set initial status
+        ...(status !== undefined ? { status } : {})
       }
     });
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/config';
 import { toast } from 'sonner';
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
+import { CartesianGrid, Line, LineChart, XAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import { IconTrendingDown, IconArrowLeft, IconArrowRight } from "@tabler/icons-react"
 
 // ui
@@ -24,12 +24,32 @@ import { BarChart } from '@mui/x-charts/BarChart';
 function extractArrayFromResponse(data) {
     if (!data) return [];
     if (Array.isArray(data)) return data;
+    // common top-level names we expect
     if (Array.isArray(data.loteVegetais)) return data.loteVegetais;
     if (Array.isArray(data.lotesVegetais)) return data.lotesVegetais;
+    if (Array.isArray(data.lotesAnimalia)) return data.lotesAnimalia;
+    if (Array.isArray(data.loteAnimalia)) return data.loteAnimalia;
     if (Array.isArray(data.lotes)) return data.lotes;
     if (Array.isArray(data.data)) return data.data;
     if (Array.isArray(data.lotesVegetais?.loteVegetais)) return data.lotesVegetais.loteVegetais;
     if (Array.isArray(data.loteVegetais?.loteVegetais)) return data.loteVegetais.loteVegetais;
+
+    // If the API wraps the array inside an object (e.g. { lotesAnimalia: { lotes: [...] } })
+    // try to find the first array value in the object recursively (shallow search)
+    if (typeof data === 'object') {
+        for (const key of Object.keys(data)) {
+            const val = data[key];
+            if (Array.isArray(val)) return val;
+            // nested object that may contain the array under a secondary key
+            if (val && typeof val === 'object') {
+                for (const subKey of Object.keys(val)) {
+                    const subVal = val[subKey];
+                    if (Array.isArray(subVal)) return subVal;
+                }
+            }
+        }
+    }
+
     return [];
 }
 
@@ -44,63 +64,83 @@ function formatDateShort(value) {
 export function SectionCards() {
     const { user, fetchWithAuth } = useAuth();
     const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-    const [lotesDisponiveis, setLotesDisponiveis] = useState(null);
-    const [lotesColheita, setLotesColheita] = useState(null);
+    const [totalLotes, setTotalLotes] = useState(null);
+    const [lotesProntosVenda, setLotesProntosVenda] = useState(null);
+    const [lotesImprorios, setLotesImprorios] = useState(null);
+    const [quantidadeAnimais, setQuantidadeAnimais] = useState(null);
 
     useEffect(() => {
         let mounted = true;
-        async function loadCount() {
+        async function loadAllCounts() {
             if (!unidadeId) return;
+            const fetchFn = fetchWithAuth || fetch;
             try {
-                const fetchFn = fetchWithAuth || fetch;
-                const res = await fetchFn(`${API_URL}/lotesDisponiveis/${unidadeId}`);
-                const data = await res.json().catch(() => ({}));
-                if (!mounted) return;
-                // controller returns { sucesso: true, lotesDisponiveis: { quantidade, ... } }
-                let raw = data?.lotesDisponiveis?.quantidade ?? data?.quantidade;
-                if (raw === undefined && typeof data?.lotesDisponiveis === 'number') raw = data.lotesDisponiveis;
-                const qtd = Number.isFinite(Number(raw)) ? Number(raw) : 0;
-                setLotesDisponiveis(qtd);
-            } catch (err) {
-                console.error('Erro carregando quantidade de lotes disponíveis:', err);
-                setLotesDisponiveis(0);
-            }
-        }
-        loadCount();
-        return () => { mounted = false }
-    }, [unidadeId, fetchWithAuth]);
+                // normalize API base to avoid missing or double slashes
+                const base = String(API_URL || '/api').replace(/\/$/, '');
 
-    useEffect(() => {
-        let mounted = true;
-        async function loadColheitaCount() {
-            if (!unidadeId) return;
-            try {
-                const fetchFn = fetchWithAuth || fetch;
-                const res = await fetchFn(`${API_URL}/lotesColheita/${unidadeId}`);
-                const data = await res.json().catch(() => ({}));
-                if (!mounted) return;
+                // diagnostic log: unidadeId may be undefined while auth loads
+                console.log('[SectionCards] debug start', { unidadeId, API_URL, hasFetchWithAuth: !!fetchWithAuth, base });
 
-                // Controller shape may be nested: { sucesso: true, lotesColheita: { lotesColheita: number } }
-                // or { sucesso: true, lotesColheita: number }
-                let raw = undefined;
-                if (data?.lotesColheita) {
-                    // if it's an object with inner property
-                    if (typeof data.lotesColheita === 'object') {
-                        raw = data.lotesColheita.lotesColheita ?? data.lotesColheita.quantidade ?? data.lotesColheita.valor ?? undefined;
-                    } else {
-                        raw = data.lotesColheita;
-                    }
+                if (!unidadeId) {
+                    console.log('[SectionCards] unidadeId ausente — pulando fetch (aguardando auth)');
+                    return;
                 }
-                // fallback: direct number in response
-                if (raw === undefined && typeof data === 'number') raw = data;
-                const qtd = Number.isFinite(Number(raw)) ? Number(raw) : 0;
-                setLotesColheita(qtd);
+
+                const urls = [
+                    `${base}/totalLotesAnimalia/${unidadeId}`,
+                    `${base}/lotesAnimaliaDisponiveis/${unidadeId}`,
+                    `${base}/lotesAnimaliaImproprios/${unidadeId}`,
+                    `${base}/contarAnimais/${unidadeId}`,
+                ];
+
+                const [resTotal, resProntos, resImpr, resAnimais] = await Promise.all(urls.map(u => fetchFn(u)));
+
+                // log statuses for debugging
+                try { console.log('[SectionCards] fetch statuses', urls.map((u, i) => ({ url: u, ok: [resTotal, resProntos, resImpr, resAnimais][i].ok, status: [resTotal, resProntos, resImpr, resAnimais][i].status }))); } catch (e) { }
+
+                const results = await Promise.all([
+                    resTotal.json().catch(() => ({})),
+                    resProntos.json().catch(() => ({})),
+                    resImpr.json().catch(() => ({})),
+                    resAnimais.json().catch(() => ({})),
+                ]);
+
+                if (!mounted) return;
+
+                console.log('[SectionCards] fetch results', results);
+
+                // totalLotesAnimalia: expect { sucesso: true, quantidade } (sometimes nested)
+                const totalRaw = extractNumericQuantity(results[0]);
+                const parsedTotal = Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : 0;
+                setTotalLotes(parsedTotal);
+
+                // lotes prontos venda
+                const prontosRaw = extractNumericQuantity(results[1]);
+                const parsedProntos = Number.isFinite(Number(prontosRaw)) ? Number(prontosRaw) : 0;
+                setLotesProntosVenda(parsedProntos);
+
+                // lotes improprios: may be array or nested object
+                const imprRaw = extractNumericQuantity(results[2]);
+                const parsedImpr = Number.isFinite(Number(imprRaw)) ? Number(imprRaw) : 0;
+                setLotesImprorios(parsedImpr);
+
+                // contarAnimais
+                const animaisRaw = extractNumericQuantity(results[3]);
+                const parsedAnimais = Number.isFinite(Number(animaisRaw)) ? Number(animaisRaw) : 0;
+                setQuantidadeAnimais(parsedAnimais);
+
+                console.log('[SectionCards] parsed values', { total: parsedTotal, prontos: parsedProntos, impr: parsedImpr, animais: parsedAnimais });
+
             } catch (err) {
-                console.error('Erro carregando quantidade de lotes para colheita:', err);
-                setLotesColheita(0);
+                console.error('Erro carregando contadores dos cards:', err);
+                if (!mounted) return;
+                setTotalLotes(0);
+                setLotesProntosVenda(0);
+                setLotesImprorios(0);
+                setQuantidadeAnimais(0);
             }
         }
-        loadColheitaCount();
+        loadAllCounts();
         return () => { mounted = false }
     }, [unidadeId, fetchWithAuth]);
 
@@ -108,58 +148,46 @@ export function SectionCards() {
         <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Lotes prontos para envio</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesDisponiveis ?? '-'}</CardTitle>
+                    <CardDescription>Quantidade total de lotes</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{totalLotes ?? '-'}</CardTitle>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                    <div className="line-clamp-1 flex gap-2 font-medium">Lotes disponiveis para produção<IconTrendingDown className="size-4" /></div>
-                    <div className="text-muted-foreground">Bom</div>
-                    <Select />
+                    <div className="line-clamp-1 flex gap-2 font-medium">Total de lotes de Animalia</div>
+                    <div className="text-muted-foreground">Resumo</div>
                 </CardFooter>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Lotes para colheita</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesColheita ?? '-'}</CardTitle>
+                    <CardDescription>Lotes prontos para venda</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesProntosVenda ?? '-'}</CardTitle>
                 </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <div className="line-clamp-1 flex gap-2 font-medium">Lotes de Animalia com status PRONTO</div>
+                    <div className="text-muted-foreground">Pronto para venda</div>
+                </CardFooter>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Quantidade colhida</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl columns lg:flex items-center justify-between">12T
-                        <Select>
-                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Produto</SelectLabel>
-                                    <SelectItem value="apple">Maçã</SelectItem><SelectItem value="banana">Banana</SelectItem>
-                                    <SelectItem value="blueberry">Cenoura</SelectItem><SelectItem value="grapes">Milho</SelectItem>
-                                    <SelectItem value="pineapple">Trigo</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </CardTitle>
+                    <CardDescription>Lotes impróprios</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesImprorios ?? '-'}</CardTitle>
                 </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <div className="line-clamp-1 flex gap-2 font-medium">Lotes de Animalia marcados como impróprios</div>
+                    <div className="text-muted-foreground">Atenção sanitária</div>
+                </CardFooter>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
                     <CardDescription>Produção média por cultura</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl columns lg:flex items-center justify-between">10T/ha
-                        <Select>
-                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup><SelectLabel>Produto</SelectLabel>
-                                    <SelectItem value="apple">Maçã</SelectItem><SelectItem value="banana">Banana</SelectItem>
-                                    <SelectItem value="blueberry">Cenoura</SelectItem><SelectItem value="grapes">Milho</SelectItem>
-                                    <SelectItem value="pineapple">Trigo</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </CardTitle>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{quantidadeAnimais ?? '-'}</CardTitle>
                 </CardHeader>
+                <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <div className="line-clamp-1 flex gap-2 font-medium">Quantidade de animais na unidade</div>
+                    <div className="text-muted-foreground">Contagem de animais</div>
+                </CardFooter>
             </Card>
         </div>
     );
@@ -169,6 +197,94 @@ export function SectionCards() {
 export function GraficoDeBarras() {
     return (
         <BarChart xAxis={[{ data: ['Vegetais', 'Frutas', 'Animália'], scaleType: 'band' }]} series={[{ data: [4, 3, 5], color: '#99BF0F' }, { data: [1, 6, 3], color: '#738C16' },]} height={650} barLabel="value" margin={{ left: 0 }} yAxis={[{ width: 50 }]} />
+    );
+}
+
+export function ChartPieLotesAnimalia() {
+    const { user, fetchWithAuth } = useAuth();
+    const [fetchedData, setFetchedData] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+
+    useEffect(() => {
+        let mounted = true;
+        async function load() {
+            setLoading(true);
+            try {
+                if (!unidadeId) {
+                    console.warn('[ChartPieLotesAnimalia] unidadeId ausente — usando dados de demonstração');
+                    return;
+                }
+
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/lotesAnimaliaPorTipo/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+
+                if (res.ok && data.sucesso && Array.isArray(data.lotesPorTipo)) {
+                    const mapped = data.lotesPorTipo
+                        .filter((it) => it && it._count && Number(it._count.tipo) > 0)
+                        .map((it) => ({ name: it.tipo || 'OUTRO', value: Number(it._count.tipo) }));
+                    setFetchedData(mapped);
+                } else {
+                    console.warn('Chart fetch returned no data or unexpected shape:', data);
+                    setFetchedData([]);
+                }
+            } catch (err) {
+                console.error('Erro ao carregar dados do chart de lotes por tipo:', err);
+                setFetchedData([]);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        }
+        load();
+        return () => { mounted = false };
+    }, [unidadeId, fetchWithAuth]);
+
+    const dataToUse = Array.isArray(fetchedData) ? fetchedData : [];
+    const total = dataToUse.reduce((s, item) => s + (Number(item.value) || 0), 0);
+    const colors = ['#738C16', '#99BF0F', '#F59E0B', '#EF4444', '#6366F1', '#06B6D4', '#8B5CF6', '#F472B6', '#10B981'];
+
+    return (
+        <Card className="flex flex-col w-full max-w-[700px] h-[520px]">
+            <CardHeader className="items-center pb-0">
+                <CardTitle>Lotes por tipo</CardTitle>
+                <CardDescription>{loading ? 'Carregando...' : `${total} lote(s)`}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 py-2 flex flex-col items-center justify-center">
+                <ChartContainer config={{ visitors: { label: 'Lotes', color: '#738C16' } }} className="w-[95%] h-[86%] flex items-center justify-center">
+                    {/* Wrapper limits max height so the chart can grow but won't be clipped by surrounding layout */}
+                    <div className="w-full h-full max-h-[440px] flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                                {/* Use larger percentage radii so the donut is visually bigger on larger screens */}
+                                <Pie data={dataToUse} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="72%">
+                                    {dataToUse.map((entry, idx) => (
+                                        <Cell key={`cell-${idx}`} fill={colors[idx % colors.length]} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </ChartContainer>
+            </CardContent>
+            <CardFooter className="flex-wrap gap-2 items-center justify-center px-4 py-1">
+                <div className="flex flex-wrap gap-3 items-center justify-center text-xs">
+                    {dataToUse && dataToUse.length > 0 ? (
+                        dataToUse.map((d, i) => (
+                            <div key={`legend-${i}`} className="flex items-center gap-2 px-1">
+                                <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                                <span className="text-xs text-muted-foreground">{d.name} ({d.value})</span>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-xs text-muted-foreground">Nenhum dado</div>
+                    )}
+                </div>
+            </CardFooter>
+        </Card>
     );
 }
 
@@ -221,7 +337,7 @@ export function TableDemo() {
                 setError(null);
 
                 const response = await fetchWithAuth(
-                    `http://localhost:3000/api/atividadesPlantio/${unidadeId}`,
+                    `${API_URL}/atividadesAnimalia/${unidadeId}`,
                     {
                         method: 'GET',
                         credentials: 'include',
@@ -234,17 +350,17 @@ export function TableDemo() {
                 }
 
                 const data = await response.json();
-                console.log('📋 Dados de atividades recebidos:', data);
+                console.log('📋 Dados de atividades animalia recebidos:', data);
 
-                // O controlador retorna { sucesso: true, atividades: { atividadesPlantio: [...] }, message: ... }
+                // O controlador retorna { sucesso: true, atividades: { atividadesAnimalia: [...] }, message: ... }
                 if (data.sucesso && data.atividades) {
-                    const atividadesList = data.atividades.atividadesPlantio || data.atividades.atividades || [];
+                    const atividadesList = data.atividades.atividadesAnimalia || data.atividades.atividades || [];
                     setAtividades(Array.isArray(atividadesList) ? atividadesList : []);
                 } else {
                     setAtividades([]);
                 }
             } catch (err) {
-                console.error('❌ Erro ao carregar atividades de plantio:', err);
+                console.error('❌ Erro ao carregar atividades de animalia:', err);
                 setError(err.message || 'Erro ao carregar dados');
                 setAtividades([]);
             } finally {
@@ -273,7 +389,7 @@ export function TableDemo() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black flex flex-col h-[600px] p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Atividades Agrícolas</h2>
+                    <h2 className="text-xl font-semibold">Atividades de Animalia</h2>
                 </div>
             </div>
 
@@ -511,24 +627,30 @@ export function TableDemo2() {
     // Enum options (restricted to the requested subset)
     const tipoOptions = [
         { value: 'ALL', label: 'Todos' },
-        { value: 'OUTRO', label: 'Outro' },
-        { value: 'LEGUME', label: 'Legume' },
-        { value: 'FRUTA', label: 'Fruta' },
-        { value: 'VERDURA', label: 'Verdura' },
-        { value: 'GRÃOS', label: 'Grãos' },
+        { value: 'BOVINOS', label: 'BOVINOS' },
+        { value: 'SUINOS', label: 'SUINOS' },
+        { value: 'OVINOS', label: 'OVINOS' },
+        { value: 'AVES', label: 'AVES' },
+        { value: 'EQUINO', label: 'EQUINO' },
+        { value: 'CAPRINOS', label: 'CAPRINOS' },
+        { value: 'OUTRO', label: 'OUTRO' },
     ];
 
     // status filter: restrict to requested subset
     const statusOptions = [
         { value: 'ALL', label: 'Todos' },
-        {value: 'PENDENTE', label: 'Pendente' },
-        { value: 'SEMEADO', label: 'Semeado' },
-        { value: 'CRESCIMENTO', label: 'Crescimento' },
-        { value: 'COLHEITA', label: 'Colheita' },
-        { value: 'COLHIDO', label: 'Colhido' },
-        { value: 'PRONTO', label: 'Pronto' },
-        { value: 'BLOQUEADO', label: 'Bloqueado' },
-        { value: 'VENDIDO', label: 'Vendido' },
+        { value: 'RECEBIDO', label: 'RECEBIDO' },
+        { value: 'EM_QUARENTENA', label: 'EM_QUARENTENA' },
+        { value: 'AVALIACAO_SANITARIA', label: 'AVALIACAO_SANITARIA' },
+        { value: 'EM_CRESCIMENTO', label: 'EM_CRESCIMENTO' },
+        { value: 'EM_ENGORDA', label: 'EM_ENGORDA' },
+        { value: 'EM_REPRODUCAO', label: 'EM_REPRODUCAO' },
+        { value: 'LACTAÇÃO', label: 'LACTAÇÃO' },
+        { value: 'ABATE', label: 'ABATE' },
+        { value: 'PENDENTE', label: 'PENDENTE' },
+        { value: 'PRONTO', label: 'PRONTO' },
+        { value: 'BLOQUEADO', label: 'BLOQUEADO' },
+        { value: 'VENDIDO', label: 'VENDIDO' },
     ];
 
     // helper to call backend partial update endpoint
@@ -596,7 +718,7 @@ export function TableDemo2() {
             if (!unidadeId) return;
             try {
                 const fetchFn = fetchWithAuth || fetch;
-                const res = await fetchFn(`${API_URL}/lotesPlantio/${unidadeId}`);
+                const res = await fetchFn(`${API_URL}/loteAnimalia/${unidadeId}`);
                 const data = await res.json().catch(() => ({}));
                 if (!mounted) return;
 
@@ -626,8 +748,8 @@ export function TableDemo2() {
 
                 setRawLotes(mapped);
             } catch (err) {
-                console.error('Erro carregando lotesPlantio:', err);
-                toast.error('Erro ao carregar lotes da fazenda');
+                console.error('Erro carregando lotesAnimalia:', err);
+                toast.error('Erro ao carregar lotes de animalia');
             }
         }
         loadLotes();
@@ -691,7 +813,7 @@ export function TableDemo2() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Lotes de Vegetais</h2>
+                    <h2 className="text-xl font-semibold">Lotes de Animais</h2>
 
                     <Select onValueChange={(v) => setTipoFilter(v)} value={tipoFilter}>
                         <SelectTrigger className="w-[170px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
@@ -733,13 +855,13 @@ export function TableDemo2() {
             </div>
 
             <Table>
-                <TableCaption>Lotes Vegetais</TableCaption>
+                <TableCaption>Lotes Animais</TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>
                         <TableHead className="font-semibold">Produto</TableHead>
                         <TableHead className="font-semibold">Tipo</TableHead>
-                        <TableHead className="font-semibold">Talhão</TableHead>
+                        {/* <TableHead className="font-semibold">Talhão</TableHead> */}
                         <TableHead className="font-semibold">Validade</TableHead>
                         <TableHead className="font-semibold">Data</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
@@ -756,7 +878,7 @@ export function TableDemo2() {
                             <TableCell className="font-medium">{lote.id}</TableCell>
                             <TableCell>{lote.nome}</TableCell>
                             <TableCell>{lote.tipo}</TableCell>
-                            <TableCell>{lote.talhao}</TableCell>
+                            {/* <TableCell>{lote.talhao}</TableCell> */}
                             {/* removed plantio cell */}
                             <TableCell>{lote.validade}</TableCell>
                             <TableCell>{formatDateShort(lote.dataCriacao)}</TableCell>
@@ -845,4 +967,38 @@ export function TableDemo2() {
             </div>
         </div>
     )
+}
+
+// Robust extractor for numeric "quantidade" values returned in various shapes
+function extractNumericQuantity(payload) {
+    if (payload === null || payload === undefined) return undefined;
+    if (typeof payload === 'number') return payload;
+    if (typeof payload === 'string' && payload.trim() !== '' && !Number.isNaN(Number(payload))) return Number(payload);
+
+    // direct field common cases
+    if (payload.quantidade !== undefined) {
+        return extractNumericQuantity(payload.quantidade);
+    }
+    if (payload.total !== undefined) {
+        return extractNumericQuantity(payload.total);
+    }
+
+    const commonKeys = ['lotesDisponiveis', 'lotesAnimaliaDisponiveis', 'lotesAnimaliaImproprios', 'lotesImproprios', 'animais', 'qtd', 'count', 'totalLotesAnimalia'];
+    for (const k of commonKeys) {
+        if (payload[k] !== undefined) return extractNumericQuantity(payload[k]);
+    }
+
+    // If it's an object that wraps a numeric inside a nested object, try shallow search
+    if (typeof payload === 'object') {
+        // arrays: length
+        if (Array.isArray(payload)) return payload.length;
+
+        for (const key of Object.keys(payload)) {
+            const val = payload[key];
+            const q = extractNumericQuantity(val);
+            if (q !== undefined) return q;
+        }
+    }
+
+    return undefined;
 }

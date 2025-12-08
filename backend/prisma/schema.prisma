@@ -396,16 +396,19 @@ model PedidoItem {
 
 model Animal {
   id           Int            @id @default(autoincrement())
-  animal       String         @db.VarChar(100)
+  especie       EspecieAnimal
   raca         String         @db.VarChar(100)
+  sexo        SexoAnimal?
   sku          String         @unique @db.VarChar(50)
-  dataEntrada  DateTime?
+  dataNasc  DateTime?
   fornecedorId Int?
-  quantidade   Int
-  tipo         TipoAnimais
+  peso        String?
+  formaAquisicao TipoFormaAquisicao?
+  // quantidade   Int
+  // tipo         TipoAnimais
   custo        Decimal?
   unidadeId    Int
-  loteId       Int?           @map("lote_id")
+  loteId       Int?          @map("lote_id")
   lote         Lote?          @relation(fields: [loteId], references: [id])
   unidade      Unidade        @relation(fields: [unidadeId], references: [id])
   atvdAnimalia AtvdAnimalia[]
@@ -455,16 +458,16 @@ model AtvdAgricola {
 
 model AtvdAnimalia {
   id            Int                @id @default(autoincrement())
-  animalId      Int                @map("animal_id")
+  animalId      Int?                @map("animal_id")
   // insumoId      Int?               @map("insumo_id")
   descricao     String
-  tipo          TipoAtividadeAnimalia
+  tipo          TipoAtividadeAnimalia?
   loteId        Int?               @map("lote_id")
   dataInicio    DateTime           @map("data_inicio")
   dataFim       DateTime?          @map("data_fim")
   responsavelId Int                @map("responsavel_id")
   status        StatusAtvd?
-  animal        Animal             @relation(fields: [animalId], references: [id])
+  animal        Animal?             @relation(fields: [animalId], references: [id])
   lote          Lote?              @relation(fields: [loteId], references: [id])
   responsavel   Usuario            @relation("UsuarioAtvdAnimalia", fields: [responsavelId], references: [id])
 
@@ -483,7 +486,7 @@ model Lote {
   nome                   String                @db.VarChar(255)
   tipo                   TipoLote
   tipoProduto            TipoProduto?
-  quantidade             Int?                  @map("qntd_itens")
+  quantidade             Int?                  @map("quantidade")
   preco                  Decimal               @db.Decimal(10, 2)
   unidadeMedida          UnidadesDeMedida      @map("unidade_medida")
   observacoes            String?
@@ -828,7 +831,7 @@ enum TipoProduto {
 }
 
 enum TipoLote {
-  GADO
+  
   SOJA
   LEITE
   BOVINOS
@@ -932,7 +935,6 @@ enum TipoAtividadeAnimalia {
   AJUSTE_DIETA
 
   // --- Reprodução ---
-  MONITORAMENTO_CIO
   INSEMINACAO
   MONITORAMENTO_GESTACAO
   PARTO
@@ -940,13 +942,11 @@ enum TipoAtividadeAnimalia {
 
   // --- Manejo geral ---
   MANEJO_GERAL
-  MANEJO_PESAGEM
   MOVIMENTACAO_INTERNA
-  SEPARACAO_LOTE
+  PESAGEM
 
   // --- Ordenha (para gado leiteiro) ---
   ORDENHA_DIARIA
-  ORDENHA_TESTE
 
   // --- Higiene e ambiente ---
   HIGIENIZACAO_AMBIENTE
@@ -961,6 +961,40 @@ enum TipoAtividadeAnimalia {
   OCORRENCIA
 }
 
+enum SexoAnimal {
+  MACHO
+  FEMEA
+}
+
+enum TipoFormaAquisicao {
+  COMPRA
+  TRANSFERENCIA
+  DOACAO
+  NATURAL
+  OUTRO
+}
+
+enum EspecieAnimal {
+  BOVINO
+  BUBALINO
+  CAPRINO
+  OVINO
+  SUINO
+  EQUINO
+  MUAR
+  AVE
+  GALINHA
+  PERU
+  PATO
+  MARRECO
+  GANSO
+  CODORNA
+  COELHO
+  PEIXE
+  CAMARAO
+  ABELHA
+  OUTRO
+}
 
 enum TipoAnimais {
   ABATE
@@ -1048,6 +1082,8 @@ enum TipoAtvd {
   USO_AGROTOXICO
   PLANTIO
   COLHEITA
+  FERTILIZACAO
+  OUTRO
 }
 
 enum StatusAtvd {

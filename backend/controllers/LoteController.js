@@ -1,4 +1,4 @@
-import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia} from "../models/lote.js";
+import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios,contarLotesAnimaliaPorTipo, contarAnimais, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia, criarAtividadeAnimalia, listarAtividadesDoLote} from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -284,6 +284,41 @@ export const lotesAnimaliaImproprioController = async (req, res) => {
   }
 };
 
+export const contarLotesAnimaliaPorTipoController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const resultado = await contarLotesAnimaliaPorTipo(unidadeId);
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao contar lotes de animalia por tipo!",
+      error: error.message
+    });
+  }
+};
+
+export const contarAnimaisController = async (req, res) => {
+  try{
+    const unidadeId = req.params.unidadeId;
+
+    const resultado = await contarAnimais(unidadeId);
+
+    return res.status(200).json({
+      sucesso: true,
+      quantidade: resultado,
+      message: "Quantidade de animais contada com sucesso!"
+    }); 
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao contar animais!",
+      error: error.message
+    });
+  }
+};
+
 export async function listarAtividadesPlantioController(req, res) {
   try {
     const unidadeId = Number(req.params.unidadeId);
@@ -368,6 +403,69 @@ export const criarAtividadeAgricolaController = async (req, res) => {
       message: "Erro interno ao criar atividade agrícola.",
       error: error.message
     });
+  }
+};
+
+export const criarAtividadeAnimaliaController = async (req, res) => {
+  try {
+    const {
+      descricao,
+      tipo,
+      loteId,
+      dataInicio,
+      dataFim,
+      responsavelId,
+      status
+    } = req.body;
+
+    // Validação simples
+    if (!descricao || !tipo || !loteId || !dataInicio || !responsavelId) {
+      return res.status(400).json({
+        sucesso: false,
+        message: "Campos obrigatórios não foram enviados."
+      });
+    }
+
+    const resultado = await criarAtividadeAnimalia({
+      descricao,
+      tipo,
+      loteId,
+      dataInicio,
+      dataFim,
+      responsavelId,
+      status
+    });
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json(resultado);
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro interno ao criar atividade animalia.",
+      error: error.message
+    });
+  }
+};
+
+export const listarAtividadesDoLoteController = async (req, res) => {
+  try {
+    const loteId = req.params.loteId;
+
+    if (isNaN(loteId)) {
+      return res.status(400).json({ error: "loteId inválido." });
+    }
+
+    const result = await listarAtividadesDoLote(loteId);
+
+    return res.json(result);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Erro ao buscar atividades do lote." });
   }
 };
 

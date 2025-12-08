@@ -90,7 +90,7 @@ function getMenuByPerfil(perfil) {
           },
           {
             title: "Animais",
-            url: "/fazenda/animalia",
+            url: "/fazenda/animais",
             icon: Rabbit,
           },
           {

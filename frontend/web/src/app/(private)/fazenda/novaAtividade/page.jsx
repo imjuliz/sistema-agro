@@ -22,6 +22,7 @@ export default function Page() {
     const [produtos, setProdutos] = useState([])
     const [carregandoProdutos, setCarregandoProdutos] = useState(false)
     const [showAgricolaModal, setShowAgricolaModal] = useState(false)
+    const [showAnimaliaModal, setShowAnimaliaModal] = useState(false)
     const [showLoteModal, setShowLoteModal] = useState(false)
     const [lotes, setLotes] = useState([])
     const [usuarios, setUsuarios] = useState([])
@@ -49,6 +50,17 @@ export default function Page() {
     const [dataFimTime, setDataFimTime] = useState("")
     const [responsavelId, setResponsavelId] = useState("")
     const [statusAtvd, setStatusAtvd] = useState("PENDENTE")
+
+    // form state for atividade animalia
+    const [descricaoAnimalia, setDescricaoAnimalia] = useState("")
+    const [tipoAnimaliaAtvd, setTipoAnimaliaAtvd] = useState("ALIMENTACAO")
+    const [loteIdAnimalia, setLoteIdAnimalia] = useState("")
+    const [dataInicioDateAnimalia, setDataInicioDateAnimalia] = useState("")
+    const [dataInicioTimeAnimalia, setDataInicioTimeAnimalia] = useState("")
+    const [dataFimDateAnimalia, setDataFimDateAnimalia] = useState("")
+    const [dataFimTimeAnimalia, setDataFimTimeAnimalia] = useState("")
+    const [responsavelIdAnimalia, setResponsavelIdAnimalia] = useState("")
+    const [statusAnimaliaAtvd, setStatusAnimaliaAtvd] = useState("PENDENTE")
 
     const selecionarAtividade = async (atividade) => {
         setAtividadeSelecionada(atividade)
@@ -112,6 +124,88 @@ export default function Page() {
                 // if current user is in list, preselect as responsável
                 if (user && usersArr.some(u => Number(u.id) === Number(user.id))) {
                     setResponsavelId(String(user.id))
+                }
+            } catch (err) {
+                console.error('Erro carregando usuários:', err)
+                setUsuarios([])
+            } finally {
+                setCarregandoUsuarios(false)
+            }
+
+            return
+        }
+
+        // Atividade Animalia
+        if (tituloLower.includes("animalia") || tituloLower.includes("pecuaria") || tituloLower.includes("atividade animalia")) {
+            setShowAnimaliaModal(true)
+            const fetchFn = fetchWithAuth || fetch
+            setCarregandoLotes(true)
+            setCarregandoUsuarios(true)
+            try {
+                const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null
+                console.log('[Animalia] UnidadeId:', unidadeId)
+                if (unidadeId) {
+                    const base = String(API_URL || '/api').replace(/\/$/, '')
+                    const url = `${base}/loteAnimalia/${unidadeId}`
+                    console.log('[Animalia] Fazendo requisição para:', url)
+                    const r1 = await fetchFn(url)
+                    console.log('[Animalia] Status da resposta:', r1.status, r1.ok)
+                    const d1 = await r1.json().catch((err) => {
+                        console.error('[Animalia] Erro ao fazer parse JSON:', err)
+                        return {}
+                    })
+
+                    console.log('[Animalia] Resposta bruta da API:', d1)
+
+                    // Procura recursivamente por arrays na resposta (limite de profundidade para evitar loops)
+                    const findFirstArray = (obj, depth = 4, seen = new WeakSet()) => {
+                        if (!obj || depth < 0) return null
+                        if (Array.isArray(obj)) return obj
+                        if (typeof obj !== 'object') return null
+                        if (seen.has(obj)) return null
+                        seen.add(obj)
+
+                        // checar chaves comuns primeiro
+                        if (obj.lotesAnimalia && Array.isArray(obj.lotesAnimalia)) return obj.lotesAnimalia
+                        if (obj.lotes && Array.isArray(obj.lotes)) return obj.lotes
+
+                        for (const key of Object.keys(obj)) {
+                            try {
+                                const v = obj[key]
+                                const res = findFirstArray(v, depth - 1, seen)
+                                if (Array.isArray(res)) return res
+                            } catch (e) {
+                                // ignorar propriedades que lancem
+                            }
+                        }
+                        return null
+                    }
+
+                    const rawLotes = findFirstArray(d1) || []
+                    const filtered = (rawLotes || []).filter(l => String(l?.status || '').toUpperCase() !== 'VENDIDO')
+                    console.log('[Animalia] Lotes extraídos:', rawLotes)
+                    console.log('[Animalia] Lotes após filtro (não VENDIDO):', filtered)
+                    console.log('[Animalia] Quantidade de lotes para exibir:', filtered.length)
+                    setLotes(filtered)
+                } else {
+                    setLotes([])
+                }
+            } catch (err) {
+                console.error('Erro carregando lotes animalia:', err)
+                setLotes([])
+            } finally {
+                setCarregandoLotes(false)
+            }
+
+            try {
+                const base = String(API_URL || '/api').replace(/\/$/, '')
+                const r2 = await fetchFn(`${base}/usuarios/unidade/listar`)
+                const d2 = await r2.json().catch(() => ({}))
+                const maybeUsers = d2?.usuarios || d2?.funcionarios || d2?.data || d2?.usuariosUnidade || (Array.isArray(d2) ? d2 : [])
+                const usersArr = Array.isArray(maybeUsers) ? maybeUsers : (Array.isArray(d2?.usuarios) ? d2.usuarios : [])
+                setUsuarios(usersArr)
+                if (user && usersArr.some(u => Number(u.id) === Number(user.id))) {
+                    setResponsavelIdAnimalia(String(user.id))
                 }
             } catch (err) {
                 console.error('Erro carregando usuários:', err)
@@ -222,6 +316,56 @@ export default function Page() {
             }
         } catch (err) {
             console.error('Erro enviando atividade agrícola:', err)
+            alert('Erro ao enviar atividade')
+        }
+    }
+
+    const enviarAtividadeAnimalia = async (e) => {
+        e?.preventDefault?.()
+        try {
+            const fetchFn = fetchWithAuth || fetch
+            const makeISO = (date, time) => {
+                if (!date) return null
+                if (!time) return new Date(date).toISOString()
+                const combined = `${date}T${time}`
+                const d = new Date(combined)
+                return isNaN(d.getTime()) ? new Date(date).toISOString() : d.toISOString()
+            }
+
+            const payload = {
+                descricao: descricaoAnimalia || null,
+                tipo: tipoAnimaliaAtvd || null,
+                loteId: loteIdAnimalia ? Number(loteIdAnimalia) : null,
+                dataInicio: makeISO(dataInicioDateAnimalia, dataInicioTimeAnimalia),
+                dataFim: dataFimDateAnimalia ? makeISO(dataFimDateAnimalia, dataFimTimeAnimalia) : null,
+                responsavelId: responsavelIdAnimalia ? Number(responsavelIdAnimalia) : null,
+                status: statusAnimaliaAtvd || null,
+            }
+
+            const res = await fetchFn(`${API_URL}/criarAtividadeAnimalia`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+            const body = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setShowAnimaliaModal(false)
+                setDescricaoAnimalia("")
+                setTipoAnimaliaAtvd("ALIMENTACAO")
+                setLoteIdAnimalia("")
+                setDataInicioDateAnimalia("")
+                setDataInicioTimeAnimalia("")
+                setDataFimDateAnimalia("")
+                setDataFimTimeAnimalia("")
+                setResponsavelIdAnimalia("")
+                setStatusAnimaliaAtvd("PENDENTE")
+                router.refresh()
+            } else {
+                console.error('Erro criando atividade animalia:', body)
+                alert(body?.erro || body?.message || 'Erro ao criar atividade')
+            }
+        } catch (err) {
+            console.error('Erro enviando atividade animalia:', err)
             alert('Erro ao enviar atividade')
         }
     }
@@ -437,6 +581,110 @@ export default function Page() {
                         <DialogFooter>
                             <div className="flex gap-2 w-full">
                                 <Button type="button" variant="secondary" onClick={() => setShowAgricolaModal(false)}>Cancelar</Button>
+                                <Button type="submit" className="ml-auto">Salvar</Button>
+                            </div>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={showAnimaliaModal} onOpenChange={setShowAnimaliaModal}>
+                <DialogContent className="max-w-lg w-full">
+                    <DialogHeader>
+                        <DialogTitle>Nova atividade animalia</DialogTitle>
+                        <DialogDescription>Preencha os dados abaixo</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={enviarAtividadeAnimalia} className="space-y-4 mt-4">
+                        <div>
+                            <Label>Descrição</Label>
+                            <Input value={descricaoAnimalia} onChange={(e) => setDescricaoAnimalia(e.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label>Tipo</Label>
+                            <select value={tipoAnimaliaAtvd} onChange={(e) => setTipoAnimaliaAtvd(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="ALIMENTACAO">ALIMENTACAO</option>
+                                <option value="VACINACAO">VACINACAO</option>
+                                <option value="VERMIFUGACAO">VERMIFUGACAO</option>
+                                <option value="TRATAMENTO">TRATAMENTO</option>
+                                <option value="SANIDADE_GERAL">SANIDADE_GERAL</option>
+                                <option value="NUTRICAO">NUTRICAO</option>
+                                <option value="SUPLEMENTACAO">SUPLEMENTACAO</option>
+                                <option value="AJUSTE_DIETA">AJUSTE_DIETA</option>
+                                <option value="INSEMINACAO">INSEMINACAO</option>
+                                <option value="MONITORAMENTO_GESTACAO">MONITORAMENTO_GESTACAO</option>
+                                <option value="PARTO">PARTO</option>
+                                <option value="SECAGEM">SECAGEM</option>
+                                <option value="MANEJO_GERAL">MANEJO_GERAL</option>
+                                <option value="MOVIMENTACAO_INTERNA">MOVIMENTACAO_INTERNA</option>
+                                <option value="PESAGEM">PESAGEM</option>
+                                <option value="ORDENHA_DIARIA">ORDENHA_DIARIA</option>
+                                <option value="HIGIENIZACAO_AMBIENTE">HIGIENIZACAO_AMBIENTE</option>
+                                <option value="BANHO">BANHO</option>
+                                <option value="RECEBIMENTO">RECEBIMENTO</option>
+                                <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                                <option value="VENDA_ANIMAL">VENDA_ANIMAL</option>
+                                <option value="BAIXA_ANIMAL">BAIXA_ANIMAL</option>
+                                <option value="ABATE">ABATE</option>
+                                <option value="OCORRENCIA">OCORRENCIA</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Lote</Label>
+                            {carregandoLotes ? (<p>Carregando lotes...</p>) : (
+                                <select value={loteIdAnimalia} onChange={(e) => setLoteIdAnimalia(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um lote</option>
+                                    {lotes.map((l) => (<option key={l.id} value={l.id}>{l?.nome ?? `Lote ${l.id}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label>Data Início</Label>
+                                <Input type="date" value={dataInicioDateAnimalia} onChange={(e) => setDataInicioDateAnimalia(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label>Hora Início (opcional)</Label>
+                                <Input type="time" value={dataInicioTimeAnimalia} onChange={(e) => setDataInicioTimeAnimalia(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label>Data Fim (opcional)</Label>
+                                <Input type="date" value={dataFimDateAnimalia} onChange={(e) => setDataFimDateAnimalia(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label>Hora Fim (opcional)</Label>
+                                <Input type="time" value={dataFimTimeAnimalia} onChange={(e) => setDataFimTimeAnimalia(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label>Responsável</Label>
+                            {carregandoUsuarios ? (<p>Carregando usuários...</p>) : (
+                                <select value={responsavelIdAnimalia} onChange={(e) => setResponsavelIdAnimalia(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um responsável</option>
+                                    {usuarios.map((u) => (<option key={u.id} value={u.id}>{`${u.id} - ${u.nome || u.nomeCompleto || u.nome_usuario || u.nomeUsuario || u.nome}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div>
+                            <Label>Status</Label>
+                            <select value={statusAnimaliaAtvd} onChange={(e) => setStatusAnimaliaAtvd(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                <option value="PENDENTE">PENDENTE</option>
+                                <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
+                                <option value="CONCLUIDA">CONCLUIDA</option>
+                                <option value="CANCELADA">CANCELADA</option>
+                            </select>
+                        </div>
+
+                        <DialogFooter>
+                            <div className="flex gap-2 w-full">
+                                <Button type="button" variant="secondary" onClick={() => setShowAnimaliaModal(false)}>Cancelar</Button>
                                 <Button type="submit" className="ml-auto">Salvar</Button>
                             </div>
                         </DialogFooter>
