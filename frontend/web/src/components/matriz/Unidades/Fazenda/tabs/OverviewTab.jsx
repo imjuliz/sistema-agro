@@ -8,11 +8,10 @@ import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import buildImageUrl from '@/lib/image';
-import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
@@ -20,112 +19,6 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-
-// --------------------------------------------------------------------------------
-// tabela de dados gerais da fazenda 
-// --------------------------------------------------------------------------------
-const data = [
-  {
-    id: "m5gr84i9",
-    observacao: "Divisão de manejo",
-    dado: "Talhões",
-    valor: "8",
-  },
-  {
-    id: "3u1reuv4",
-    observacao: "Impacta produtividade",
-    dado: "Tipo de solo",
-    valor: "Argiloso / Arenoso",
-  },
-  {
-    id: "derv1ws0",
-    observacao: "Afeta irrigação",
-    dado: "Topografia",
-    valor: "Plana / Ondulada",
-  },
-  {
-    id: "5kma53ae",
-    observacao: "Planejamento",
-    dado: "Clima",
-    valor: "Tropical úmido",
-  },
-  {
-    id: "bhqecj4p",
-    observacao: "Exibir no mapa",
-    dado: "Coordenadas",
-    valor: "-22.908, -47.064",
-  },
-]
-
-export const columns = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <></>
-    ),
-    cell: ({ row }) => (
-      <></>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "dado",
-    header: "Dado",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("dado")}</div>
-    ),
-  },
-  {
-    accessorKey: "valor",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Valor
-          <ArrowUpDown />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("valor")}</div>,
-  },
-  {
-    accessorKey: "observacao",
-    header: () => <div className="">Observação</div>,
-    cell: ({ row }) => (<div className="capitalize">{row.getValue("observacao")}</div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
 
 // --------------------------------------------------------------------------------
 // grafico de Uso do Solo e Cultivo
@@ -153,10 +46,12 @@ export function OverviewTab({ fazendaId }) {
   const [dadosFazenda, setDadosFazenda] = useState(null)
   const [contatosPrincipais, setContatosPrincipais] = useState([])
   const [carregando, setCarregando] = useState(true)
-  const [sorting, setSorting] = useState([])
-  const [columnFilters, setColumnFilters] = useState([])
-  const [columnVisibility, setColumnVisibility] = useState({})
-  const [rowSelection, setRowSelection] = useState({})
+  const [dadosGerais, setDadosGerais] = useState([])
+  const [dadosLoading, setDadosLoading] = useState(false)
+  const [dadosErro, setDadosErro] = useState(null)
+  const [formNovo, setFormNovo] = useState({ dado: "", valor: "", descricao: "" })
+  const [editingId, setEditingId] = useState(null)
+  const [formEdit, setFormEdit] = useState({ dado: "", valor: "", descricao: "" })
 
   // Carregar dados da fazenda ao montar o componente
   useEffect(() => {
@@ -169,7 +64,7 @@ export function OverviewTab({ fazendaId }) {
         }
 
         const response = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`)
-        
+
         if (!response.ok) {
           console.error("Erro ao carregar dados da fazenda: status", response.status)
           return
@@ -177,7 +72,7 @@ export function OverviewTab({ fazendaId }) {
 
         const body = await response.json()
         const unidade = body?.unidade ?? body
-        
+
         if (unidade) {
           setDadosFazenda(unidade)
         } else {
@@ -209,6 +104,103 @@ export function OverviewTab({ fazendaId }) {
       // ignore in SSR or bundlers that don't allow require at runtime
     }
   }, []);
+
+  // Dados gerais da unidade (CRUD)
+  useEffect(() => {
+    let mounted = true;
+    async function carregarDadosGerais() {
+      if (!fazendaId) return;
+      setDadosLoading(true);
+      setDadosErro(null);
+      try {
+        const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais`, { method: "GET", credentials: "include" });
+        const body = await res.json().catch(() => null);
+        const lista = body?.dados ?? body ?? [];
+        if (mounted) setDadosGerais(Array.isArray(lista) ? lista : []);
+      } catch (err) {
+        console.error("[dados-gerais] erro ao listar", err);
+        if (mounted) setDadosErro("Erro ao carregar dados gerais");
+      } finally {
+        if (mounted) setDadosLoading(false);
+      }
+    }
+    carregarDadosGerais();
+    return () => { mounted = false; };
+  }, [fazendaId, fetchWithAuth]);
+
+  async function handleCriarDado(e) {
+    e.preventDefault();
+    if (!formNovo.dado || !formNovo.valor) {
+      setDadosErro("Preencha 'dado' e 'valor'.");
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formNovo),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) {
+        throw new Error(body?.erro || `HTTP ${res.status}`);
+      }
+      const novo = body?.dado ?? body;
+      setDadosGerais(prev => [novo, ...prev]);
+      setFormNovo({ dado: "", valor: "", descricao: "" });
+      setDadosErro(null);
+    } catch (err) {
+      console.error("[dados-gerais] criar", err);
+      setDadosErro("Erro ao criar dado");
+    }
+  }
+
+  function startEdit(item) {
+    setEditingId(item.id);
+    setFormEdit({ dado: item.dado || "", valor: item.valor || "", descricao: item.descricao || "" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setFormEdit({ dado: "", valor: "", descricao: "" });
+  }
+
+  async function handleSalvarEdicao(id) {
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formEdit),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
+      const atualizado = body?.dado ?? body;
+      setDadosGerais(prev => prev.map(d => d.id === id ? atualizado : d));
+      cancelEdit();
+      setDadosErro(null);
+    } catch (err) {
+      console.error("[dados-gerais] atualizar", err);
+      setDadosErro("Erro ao atualizar dado");
+    }
+  }
+
+  async function handleExcluir(id) {
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.erro || `HTTP ${res.status}`);
+      }
+      setDadosGerais(prev => prev.filter(d => d.id !== id));
+    } catch (err) {
+      console.error("[dados-gerais] excluir", err);
+      setDadosErro("Erro ao excluir dado");
+    }
+  }
 
   // formatter: CNPJ (00.000.000/0000-00)
   function formatCNPJ(value) {
@@ -285,26 +277,6 @@ export function OverviewTab({ fazendaId }) {
     fetchContacts();
     return () => { mounted = false; };
   }, [fazendaId, fetchWithAuth]);
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  })
-
 
   return (
     <div className="flex gap-6 ">
@@ -488,88 +460,99 @@ export function OverviewTab({ fazendaId }) {
         </div>
         {/* tabela */}
         <div className="w-full">
-          <div className="flex items-center py-4">
+          <div className="flex justify-between py-4 gap-2">
             <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  Colunas <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) =>
-                          column.toggleVisibility(!!value)
-                        }
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    )
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
+
+          <div className="p-4 border rounded-md mb-4">
+            <form className="grid grid-cols-1 md:grid-cols-4 gap-3" onSubmit={handleCriarDado}>
+              <Input
+                placeholder="Dado*"
+                value={formNovo.dado}
+                onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
+                required
+              />
+              <Input
+                placeholder="Valor*"
+                value={formNovo.valor}
+                onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
+                required
+              />
+              <Input
+                placeholder="Descrição (opcional)"
+                value={formNovo.descricao}
+                onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
+              />
+              <Button type="submit"><Plus className="mr-2 h-4 w-4" />Adicionar</Button>
+            </form>
+            {dadosErro && <div className="text-sm text-red-500 mt-2">{dadosErro}</div>}
+          </div>
+
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                        </TableHead>
-                      )
-                    })}
-                  </TableRow>
-                ))}
+                <TableRow>
+                  <TableHead>Dado</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="w-[180px]">Ações</TableHead>
+                </TableRow>
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
+                {dadosLoading && (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      Nenhum resultado.
-                    </TableCell>
+                    <TableCell colSpan={4} className="text-center">Carregando...</TableCell>
                   </TableRow>
                 )}
+                {!dadosLoading && dadosGerais.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">Nenhum dado cadastrado.</TableCell>
+                  </TableRow>
+                )}
+                {!dadosLoading && dadosGerais.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input value={formEdit.dado} onChange={(e) => setFormEdit(f => ({ ...f, dado: e.target.value }))} />
+                      ) : (
+                        item.dado
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input value={formEdit.valor} onChange={(e) => setFormEdit(f => ({ ...f, valor: e.target.value }))} />
+                      ) : (
+                        item.valor
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input value={formEdit.descricao ?? ""} onChange={(e) => setFormEdit(f => ({ ...f, descricao: e.target.value }))} />
+                      ) : (
+                        item.descricao || "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="space-x-2">
+                      {editingId === item.id ? (
+                        <>
+                          <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
+                          <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Editar</Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleExcluir(item.id)}>Excluir</Button>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
         </div>
 
-        
+
 
         {/* Uso do Solo e Cultivo */}
         <div className="flex gap-8">
@@ -600,42 +583,42 @@ export function OverviewTab({ fazendaId }) {
 
           <div className="flex flex-col gap-6 flex-1 min-w-0">
             {/* mapa */}
-        <div className='h-full'>
-          <Card className='h-full'>
-            <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
-              <CardContent className='h-full'>
-                {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
-                  <div className='h-full rounded-md overflow-hidden'>
-                    <MapContainer
-                      style={{ height: '100%', width: '100%' }}
-                      center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
-                      zoom={12}
-                      scrollWheelZoom={false}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
-                        <Popup>
-                          <div className="min-w-[160px]">
-                            <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
-                            <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    </MapContainer>
-                  </div>
-                ) : (
-                  <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
-                    <div>Coordenadas não disponíveis para esta unidade.</div>
-                  </div>
-                )}
-              </CardContent>
-          </Card>
-        </div>
+            <div className='h-full'>
+              <Card className='h-full'>
+                <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
+                <CardContent className='h-full'>
+                  {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
+                    <div className='h-full rounded-md overflow-hidden'>
+                      <MapContainer
+                        style={{ height: '100%', width: '100%' }}
+                        center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
+                        zoom={12}
+                        scrollWheelZoom={false}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
+                          <Popup>
+                            <div className="min-w-[160px]">
+                              <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
+                              <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
+                    </div>
+                  ) : (
+                    <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
+                      <div>Coordenadas não disponíveis para esta unidade.</div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-            
+
 
           </div>
         </div>

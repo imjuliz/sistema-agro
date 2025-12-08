@@ -42,6 +42,12 @@ import {
   exportarContasCSVController,
   getDashboardFinanceiroController,
 } from "../controllers/ContaFinanceiraController.js";
+import {
+  listarDadosGeraisController,
+  criarDadoGeralController,
+  atualizarDadoGeralController,
+  deletarDadoGeralController,
+} from "../controllers/DadosGeraisController.js";
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
@@ -204,6 +210,28 @@ router.get(
     "FUNCIONARIO_LOJA",
   ]),
   listarProdutosController
+);
+
+// Dados gerais da unidade (CRUD simples)
+router.get(
+  "/unidades/:unidadeId/dados-gerais",
+  auth(),
+  listarDadosGeraisController
+);
+router.post(
+  "/unidades/:unidadeId/dados-gerais",
+  auth(),
+  criarDadoGeralController
+);
+router.put(
+  "/unidades/:unidadeId/dados-gerais/:id",
+  auth(),
+  atualizarDadoGeralController
+);
+router.delete(
+  "/unidades/:unidadeId/dados-gerais/:id",
+  auth(),
+  deletarDadoGeralController
 );
 
 // dashboard - dados agregados para gráficos (por unidade)

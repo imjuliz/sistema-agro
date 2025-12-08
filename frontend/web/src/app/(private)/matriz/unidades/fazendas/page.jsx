@@ -8,6 +8,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -47,11 +55,12 @@ export default function FazendasPage() {
     const [selected, setSelected] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(8);
+    const [perPage, setPerPage] = useState(10);
     const [sheetUnit, setSheetUnit] = useState(null);
     const [metrics, setMetrics] = useState({ total: 0, active: 0, inactive: 0 });
     const [orderBy, setOrderBy] = useState('nome_asc');
     const [totalResults, setTotalResults] = useState(0);
+    const [mapUnits, setMapUnits] = useState([]);
 
     // filtros avançados: tipos e status e local
     const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // rascunho
@@ -145,6 +154,26 @@ export default function FazendasPage() {
         fetchFazendas();
         return () => { mounted = false; };
     }, [fetchWithAuth, appliedFilters, page, perPage, query, orderBy]);
+
+    // lista completa para o mapa (não afetada por filtros de busca/ordenar)
+    useEffect(() => {
+        let mounted = true;
+        async function fetchMapUnits() {
+            try {
+                const res = await fetchWithAuth(`${API_URL}unidades/fazendas`, { method: "GET", credentials: "include" });
+                if (!res.ok) return;
+                const body = await res.json().catch(() => null);
+                const unidades = body?.unidades ?? body ?? [];
+                if (mounted && Array.isArray(unidades)) {
+                    setMapUnits(unidades.map(normalizeUnit));
+                }
+            } catch (err) {
+                console.warn("[fetchMapUnits] erro", err);
+            }
+        }
+        fetchMapUnits();
+        return () => { mounted = false; };
+    }, [fetchWithAuth]);
 
     // Buscar métricas de fazendas (total, ativas, inativas, etc)
     useEffect(() => {
@@ -411,7 +440,7 @@ export default function FazendasPage() {
         return null;
     }
 
-    const totalPages = Math.max(1, Math.ceil(units.length / perPage));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
     useEffect(() => {
         // sempre garante que a página atual seja válida quando filtros / perPage mudarem
         setPage(p => Math.min(Math.max(1, p), totalPages));
@@ -711,6 +740,42 @@ export default function FazendasPage() {
                             </div>
                         )}
                     </CardContent>
+                    <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
+                        <div className="flex items-center gap-3">
+                            <Label className="text-sm font-medium">Linhas por pág.</Label>
+                            <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                                <SelectTrigger className="w-[80px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="5">5</SelectItem>
+                                    <SelectItem value="6">6</SelectItem>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="20">20</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filtered.length / perPage) || 1)}</div>
+
+                            <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
+                                <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
                 </Card>
                 <div className='mb-8'>
                     <Card>
@@ -722,7 +787,7 @@ export default function FazendasPage() {
                                     <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
 
                                     { /* marcadores para unidades que possuam coordenadas válidas */}
-                                    {units.filter(u => u.latitude != null && u.longitude != null).map(u => (
+                                    {mapUnits.filter(u => u.latitude != null && u.longitude != null).map(u => (
                                         <Marker key={u.id} position={[Number(u.latitude), Number(u.longitude)]}>
                                             <Popup>
                                                 <div className="min-w-[200px]">
@@ -735,7 +800,7 @@ export default function FazendasPage() {
                                         </Marker>
                                     ))}
 
-                                    <FitBounds markers={units.filter(u => u.latitude != null && u.longitude != null)} />
+                                    <FitBounds markers={mapUnits.filter(u => u.latitude != null && u.longitude != null)} />
                                 </MapContainer>
                             </div>
                         </CardContent>
