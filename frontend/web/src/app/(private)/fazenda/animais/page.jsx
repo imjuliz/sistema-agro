@@ -20,7 +20,7 @@ export default function AnimaisPage() {
   const [animais, setAnimais] = useState([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterEspecie, setFilterEspecie] = useState('');
   const [isRegisterOpen, setRegisterOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -33,6 +33,12 @@ export default function AnimaisPage() {
     custo: null,
     loteId: null,
   });
+
+  const especiesAnimal = [
+    'BOVINO', 'BUBALINO', 'CAPRINO', 'OVINO', 'SUINO', 'EQUINO', 'MUAR',
+    'AVE', 'GALINHA', 'PERU', 'PATO', 'MARRECO', 'GANSO', 'CODORNA',
+    'COELHO', 'PEIXE', 'CAMARAO', 'ABELHA', 'OUTRO'
+  ];
 
   useEffect(() => {
     if (!user?.unidadeId) return;
@@ -77,12 +83,13 @@ export default function AnimaisPage() {
   function filtered() {
     const q = query.trim().toLowerCase();
     return animais.filter(a => {
-      if (filterStatus && a.status !== filterStatus) return false;
+      if (filterEspecie && a.especie !== filterEspecie) return false;
       if (!q) return true;
       const name = (a.animal || '').toString().toLowerCase();
       const raca = (a.raca || '').toString().toLowerCase();
       const sku = (a.sku || '').toString().toLowerCase();
-      return name.includes(q) || raca.includes(q) || sku.includes(q);
+      const especie = (a.especie || '').toString().toLowerCase();
+      return name.includes(q) || raca.includes(q) || sku.includes(q) || especie.includes(q);
     });
   }
 
@@ -134,20 +141,21 @@ export default function AnimaisPage() {
       <div className="flex items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Animais</h1>
-          <p className="text-sm text-muted-foreground">Lista de animais da fazenda — nome, raça, sku, tipo, quantidade e custo.</p>
+          <p className="text-sm text-muted-foreground">Lista de animais da fazenda — ID, espécie, raça, sexo, SKU, peso e lote.</p>
         </div>
 
         <div className="flex gap-2 items-center">
           <Input placeholder="Buscar por nome, raça, sku..." value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} />
 
-          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v === '__NONE__' ? '' : v)}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Status" />
+          <Select value={filterEspecie} onValueChange={(v) => setFilterEspecie(v === '__NONE__' ? '' : v)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filtrar por Espécie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__NONE__">Todos</SelectItem>
-              <SelectItem value="ATIVO">Ativo</SelectItem>
-              <SelectItem value="INATIVO">Inativo</SelectItem>
+              <SelectItem value="__NONE__">Todas as Espécies</SelectItem>
+              {especiesAnimal.map((especie) => (
+                <SelectItem key={especie} value={especie}>{especie}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -214,14 +222,13 @@ export default function AnimaisPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead></TableHead>
-                    <TableHead>Nome</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Espécie</TableHead>
                     <TableHead>Raça</TableHead>
+                    <TableHead>Sexo</TableHead>
                     <TableHead>SKU</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Quantidade</TableHead>
-                    <TableHead>Custo</TableHead>
-                    <TableHead>Entrada</TableHead>
+                    <TableHead>Peso</TableHead>
+                    <TableHead>Lote ID</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -229,16 +236,13 @@ export default function AnimaisPage() {
                   {paginatedItems.length > 0 ? (
                     paginatedItems.map((animal) => (
                       <TableRow key={animal.id}>
-                        <TableCell>
-                          <div className={`w-3 h-3 rounded-full ${animal.tipo ? 'bg-emerald-500' : 'bg-neutral-300'}`}></div>
-                        </TableCell>
-                        <TableCell className="max-w-xs font-medium">{animal.animal ?? '-'}</TableCell>
+                        <TableCell className="font-mono text-sm">{animal.id ?? '-'}</TableCell>
+                        <TableCell>{animal.especie ?? '-'}</TableCell>
                         <TableCell>{animal.raca ?? '-'}</TableCell>
+                        <TableCell>{animal.sexo ?? '-'}</TableCell>
                         <TableCell className="font-mono text-sm">{animal.sku ?? '-'}</TableCell>
-                        <TableCell>{animal.tipo ?? '-'}</TableCell>
-                        <TableCell>{animal.quantidade ?? '-'}</TableCell>
-                        <TableCell>{fmtBRL(animal.custo)}</TableCell>
-                        <TableCell>{animal.dataEntrada ? new Date(animal.dataEntrada).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell>{animal.peso ?? '-'}</TableCell>
+                        <TableCell className="font-mono text-sm">{animal.loteId ?? '-'}</TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm" onClick={() => { /* abrir detalhes */ }}>Ver</Button>
                         </TableCell>
@@ -246,7 +250,7 @@ export default function AnimaisPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={8} className="text-center py-8">
                         <p className="text-muted-foreground">Nenhum animal encontrado.</p>
                       </TableCell>
                     </TableRow>
