@@ -98,6 +98,67 @@
 
 
 import { getEstoques, getEstoquePorId, createEstoque, updateEstoque, deleteEstoque, createMovimento } from "../models/estoque.js";
+import prisma from "../prisma/client.js";
+
+// Adiciona um produto a um estoque (estoqueProduto)
+export async function adicionarProdutoEstoqueController(req, res) {
+  try {
+    const body = req.body || {};
+    const estoqueId = Number(body.estoqueId ?? body.estoque_id ?? body.id);
+    if (!estoqueId) return res.status(400).json({ sucesso: false, erro: 'estoqueId é obrigatório.' });
+
+    // permissões: somente GERENTE_MATRIZ pode adicionar em qualquer unidade
+    const userUnidadeId = req.usuario?.unidadeId ?? null;
+    const userPerfilNome = req.usuario?.perfil?.nome ?? null;
+    const isGerenteMatriz = userPerfilNome && String(userPerfilNome).toUpperCase() === 'GERENTE_MATRIZ';
+
+    // buscar estoque para verificar pertence à unidade
+    const estoqueResult = await getEstoquePorId(estoqueId);
+    if (!estoqueResult.sucesso) return res.status(404).json({ sucesso: false, erro: 'Estoque não encontrado.' });
+    const estoque = estoqueResult.estoque;
+    if (!isGerenteMatriz && estoque.unidadeId !== userUnidadeId) {
+      return res.status(403).json({ sucesso: false, erro: 'Acesso negado: você só pode modificar estoque da sua unidade.' });
+    }
+
+    // montar dados permitidos
+    const dataToCreate = {
+      estoqueId: estoqueId,
+      produtoId: body.produtoId != null ? Number(body.produtoId) : undefined,
+      nome: body.nome ?? body.description ?? undefined,
+      sku: body.sku ?? undefined,
+      marca: body.marca ?? undefined,
+      qntdAtual: body.qntdAtual != null ? Number(body.qntdAtual) : (body.quantidade != null ? Number(body.quantidade) : 0),
+      qntdMin: body.qntdMin != null ? Number(body.qntdMin) : (body.minimo != null ? Number(body.minimo) : 0),
+      precoUnitario: body.precoUnitario != null ? Number(body.precoUnitario) : undefined,
+      pesoUnidade: body.pesoUnidade != null ? Number(body.pesoUnidade) : undefined,
+      validade: body.validade ? new Date(body.validade) : undefined,
+      unidadeBase: body.unidadeBase ?? undefined,
+      dataEntrada: body.dataEntrada ? new Date(body.dataEntrada) : undefined,
+      pedidoId: body.pedidoId != null ? Number(body.pedidoId) : undefined,
+      fornecedorUnidadeId: body.fornecedorUnidadeId != null ? Number(body.fornecedorUnidadeId) : undefined,
+      fornecedorExternoId: body.fornecedorExternoId != null ? Number(body.fornecedorExternoId) : undefined,
+    };
+
+    // remover chaves undefined para evitar erro do prisma
+    Object.keys(dataToCreate).forEach(k => dataToCreate[k] === undefined && delete dataToCreate[k]);
+
+    const novo = await prisma.estoqueProduto.create({
+      data: dataToCreate,
+      include: {
+        produto: true,
+        lote: true,
+        pedido: true,
+        fornecedorUnidade: true,
+        fornecedorExterno: true,
+      }
+    });
+
+    return res.status(201).json({ sucesso: true, estoqueProduto: novo });
+  } catch (error) {
+    console.error('[EstoqueController] adicionarProdutoEstoqueController error', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao adicionar produto ao estoque.', detalhes: error.message });
+  }
+}
 
 export async function getEstoquesController(req, res) {
   try {
