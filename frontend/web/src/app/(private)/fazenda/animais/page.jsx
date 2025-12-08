@@ -12,6 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 export default function AnimaisPage() {
   const { user, fetchWithAuth } = useAuth();
@@ -140,8 +141,8 @@ export default function AnimaisPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Animais</h1>
-          <p className="text-sm text-muted-foreground">Lista de animais da fazenda — ID, espécie, raça, sexo, SKU, peso e lote.</p>
+          <Transl className="text-2xl font-semibold">Animais</Transl>
+          <Transl className="text-sm text-muted-foreground">Lista de animais da fazenda — ID, espécie, raça, sexo, SKU, peso e lote.</Transl>
         </div>
 
         <div className="flex gap-2 items-center">
@@ -161,46 +162,46 @@ export default function AnimaisPage() {
 
           <Dialog open={isRegisterOpen} onOpenChange={setRegisterOpen}>
             <DialogTrigger asChild>
-              <Button>Registrar Animal</Button>
+              <Button><Transl>Registrar Animal</Transl></Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>Registrar Novo Animal</DialogTitle>
+                <DialogTitle><Transl>Registrar Novo Animal</Transl></DialogTitle>
               </DialogHeader>
 
               <form onSubmit={handleRegister} className="space-y-3 py-2">
                 <div>
-                  <Label>Nome</Label>
+                  <Label><Transl>Nome</Transl></Label>
                   <Input value={newAnimal.animal} onChange={(e) => setNewAnimal({ ...newAnimal, animal: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Raça</Label>
+                  <Label><Transl>Raça</Transl></Label>
                   <Input value={newAnimal.raca} onChange={(e) => setNewAnimal({ ...newAnimal, raca: e.target.value })} />
                 </div>
                 <div>
-                  <Label>SKU</Label>
+                  <Label><Transl>SKU</Transl></Label>
                   <Input value={newAnimal.sku} onChange={(e) => setNewAnimal({ ...newAnimal, sku: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Quantidade</Label>
+                  <Label><Transl>Quantidade</Transl></Label>
                   <Input value={newAnimal.quantidade ?? ''} onChange={(e) => setNewAnimal({ ...newAnimal, quantidade: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Tipo</Label>
+                  <Label><Transl>Tipo</Transl></Label>
                   <Input value={newAnimal.tipo} onChange={(e) => setNewAnimal({ ...newAnimal, tipo: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Custo (BRL)</Label>
+                  <Label><Transl>Custo (BRL)</Transl></Label>
                   <Input value={newAnimal.custo ?? ''} onChange={(e) => setNewAnimal({ ...newAnimal, custo: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Lote ID</Label>
+                  <Label><Transl>Lote ID</Transl></Label>
                   <Input value={newAnimal.loteId ?? ''} onChange={(e) => setNewAnimal({ ...newAnimal, loteId: e.target.value })} />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="ghost" onClick={() => setRegisterOpen(false)}>Cancelar</Button>
-                  <Button type="submit">Salvar</Button>
+                  <Button type="submit"><Transl>Salvar</Transl></Button>
                 </div>
               </form>
             </DialogContent>
@@ -210,26 +211,26 @@ export default function AnimaisPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Animais da Unidade</CardTitle>
+          <CardTitle><Transl>Animais da Unidade</Transl></CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Carregando animais...</p>
+              <Transl className="text-muted-foreground">Carregando animais...</Transl>
             </div>
           ) : (
             <>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Espécie</TableHead>
-                    <TableHead>Raça</TableHead>
-                    <TableHead>Sexo</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Peso</TableHead>
-                    <TableHead>Lote ID</TableHead>
-                    <TableHead>Ações</TableHead>
+                    <TableHead><Transl>ID</Transl></TableHead>
+                    <TableHead><Transl>Espécie</Transl></TableHead>
+                    <TableHead><Transl>Raça</Transl></TableHead>
+                    <TableHead><Transl>Sexo</Transl></TableHead>
+                    <TableHead><Transl>SKU</Transl></TableHead>
+                    <TableHead><Transl>Peso</Transl></TableHead>
+                    <TableHead><Transl>Lote ID</Transl></TableHead>
+                    <TableHead><Transl>Ações</Transl></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -251,7 +252,7 @@ export default function AnimaisPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8">
-                        <p className="text-muted-foreground">Nenhum animal encontrado.</p>
+                        <Transl className="text-muted-foreground">Nenhum animal encontrado.</Transl>
                       </TableCell>
                     </TableRow>
                   )}
@@ -260,7 +261,7 @@ export default function AnimaisPage() {
 
               <div className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
                 <div className="flex items-center gap-3">
-                  <Label className="text-sm font-medium">Linhas por pág.</Label>
+                  <Label className="text-sm font-medium"><Transl>Linhas por pág.</Transl></Label>
                   <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
                     <SelectTrigger className="w-[80px]">
                       <SelectValue />
@@ -275,7 +276,7 @@ export default function AnimaisPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="text-sm">Pág. {page} de {totalPages} | Total: {filteredItems.length}</div>
+                  <div className="text-sm"><Transl>Pág. {page} de {totalPages} | Total: {filteredItems.length}</Transl></div>
                   <div className="inline-flex items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página">&laquo;</Button>
                     <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior">&lt;</Button>

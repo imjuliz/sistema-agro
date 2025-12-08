@@ -408,12 +408,12 @@ export default function SettingsPage() {
                                         <div className="flex items-start gap-6 mt-3">
                                             <button onClick={() => setLocalTheme("light")} className={`rounded-lg border p-3 ${localTheme === "light" ? "border-gray-500" : "border-border"}`} aria-pressed={localTheme === "light"}>
                                                 <div className="w-32 h-20 bg-white border rounded" />
-                                                <div className="text-sm mt-2 text-center"><Transl>Claro</Transl></div>
+                                                <div className="text-sm mt-2 text-center"><Transl>Tema Branco</Transl></div>
                                             </button>
 
                                             <button onClick={() => setLocalTheme("dark")} className={`rounded-lg border p-3 ${localTheme === "dark" ? "border-gray-500" : "border-border"}`} aria-pressed={localTheme === "dark"}>
                                                 <div className="w-32 h-20 bg-slate-900 border rounded" />
-                                                <div className="text-sm mt-2 text-center"><Transl>Escuro</Transl></div>
+                                                <div className="text-sm mt-2 text-center"><Transl>Tema Escuro</Transl></div>
                                             </button>
                                         </div>
                                     </div>

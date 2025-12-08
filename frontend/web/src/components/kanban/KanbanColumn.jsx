@@ -40,7 +40,7 @@ export function KanbanColumn({ column, onMoveTask, onAddTask }) {
         
         {column.tasks.length === 0 && (
           <div className="text-center py-8 text-gray-400">
-            <p className="text-sm">No tasks yet</p>
+            <Transl className="text-sm">No tasks yet</Transl>
           </div>
         )}
       </div>
@@ -49,7 +49,9 @@ export function KanbanColumn({ column, onMoveTask, onAddTask }) {
       <div className="p-4 border-t border-gray-200">
         <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-gray-900 dark:hover:text-gray-200" onClick={onAddTask}>
           <Plus className="w-4 h-4 mr-2" />
+          <Transl>
           Adicionar tarefa
+          </Transl>
         </Button>
       </div>
     </div>
