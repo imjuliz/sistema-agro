@@ -157,7 +157,7 @@ model Produto {
   dataFabricacao  DateTime          @map("data_fabricacao")
   dataValidade    DateTime          @map("data_validade")
   criadoEm        DateTime          @default(now()) @map("criado_em")
-  atualizadoEm    DateTime          @default(now()) @updatedAt @map("atualizado_em")
+  atualizadoEm    DateTime?          @default(now()) @updatedAt @map("atualizado_em")
   unidadeMedida   UnidadesDeMedida? @map("unidade_medida")
   codigoBarras    String?           @map("codigo_barras")
   ncm             String?           @map("ncm")
@@ -168,6 +168,7 @@ model Produto {
   estoqueProdutos EstoqueProduto[]
   // itensVendas     ItemVenda[]
   pedidoItems     PedidoItem[]
+  contratosItens   ContratoItens[]
   producao        Producao[]
   criadoPor       Usuario?          @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
   // fornecedor      FornecedorExterno? @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id])
@@ -287,9 +288,10 @@ model Contrato {
   unidadeId           Int                @map("unidade_id")
   fornecedorUnidadeId Int?               @map("fornecedor_unidade_id")
   fornecedorExternoId Int?               @map("fornecedor_externo_id")
+  descricao          String?            @db.VarChar(500)
   dataInicio          DateTime           @map("data_inicio")
   dataFim             DateTime?          @map("data_fim")
-  dataEnvio           DateTime           @map("data_envio")
+  dataEnvio           DateTime?           @map("data_envio")
   status              StatusContrato
   frequenciaEntregas  FrequenciaEnum     @map("frequencia_entregas")
   diaPagamento        String             @map("dia_pagamento") @db.VarChar(100)
@@ -314,22 +316,24 @@ model Contrato {
 model ContratoItens {
   id            Int               @id @default(autoincrement())
   contratoId    Int               @map("contrato_id")
-  raca          String?
-  pesoUnidade   Decimal?          @db.Decimal(14, 3)
+  produtoId     Int               @map("produto_id")
   nome          String?           @db.VarChar(255)
-  categoria     Json?
+  quantidade    Int
   unidadeMedida UnidadesDeMedida?
-  quantidade    Decimal?          @db.Decimal(14, 3)
-  precoUnitario Decimal?          @map("preco_unitario") @db.Decimal(12, 2)
-  ativo         Boolean           @default(true)
-  criadoEm      DateTime          @default(now())
-  atualizadoEm  DateTime          @default(now()) @updatedAt
+
   contrato      Contrato          @relation("ContratoItens", fields: [contratoId], references: [id], onDelete: Cascade)
+  produto       Produto           @relation(fields: [produtoId], references: [id])
+
   pedidoItems   PedidoItem[]
 
   @@index([contratoId])
+  @@index([produtoId])
+
+  @@unique([contratoId, produtoId]) // evita duplicar o mesmo produto no mesmo contrato
+
   @@map("contrato_itens")
 }
+
 
 model Pedido {
   id                        Int                @id @default(autoincrement())
