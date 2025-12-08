@@ -723,26 +723,28 @@ function addContract() {
       const temContratoComoFornecedora = contracts?.some(c => c.fornecedorUnidadeId);
       const fazeindaStatus = (temContratoComoConsumidora && temContratoComoFornecedora) ? 'ATIVA' : 'INATIVA';
       
+      // Truncar campos para respeitar limites do banco
       const payload = {
-        nome: nome.trim(),
-        endereco: enderecoCompleto,
-        cep: onlyDigits(cep).trim(),
-        cidade: cidade.trim(),
-        estado: estado.trim(),
+        nome: nome.trim().substring(0, 100), // limite: 100 caracteres
+        endereco: enderecoCompleto.substring(0, 500), // limite: 500 caracteres
+        cep: onlyDigits(cep).trim().substring(0, 20), // limite: 20 caracteres
+        cidade: cidade.trim().substring(0, 100), // limite: 100 caracteres
+        estado: estado.trim().substring(0, 100), // limite: 100 caracteres
         tipo: 'FAZENDA',
         status: fazeindaStatus
       };
 
-      if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim();
-      if (email && email.trim()) payload.email = email.trim();
-      if (telefone && onlyDigits(telefone).trim()) payload.telefone = onlyDigits(telefone).trim();
-      // Adicionar imagem apenas se não for muito grande (limite de ~500KB em base64)
+      if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim().substring(0, 20); // limite: 20 caracteres
+      if (email && email.trim()) payload.email = email.trim().substring(0, 255); // limite: 255 caracteres
+      if (telefone && onlyDigits(telefone).trim()) payload.telefone = onlyDigits(telefone).trim().substring(0, 20); // limite: 20 caracteres
+      // Adicionar imagem apenas se não for muito grande (limite de 1000 caracteres no banco)
       if (imagemPreview) {
-        const base64Size = (imagemPreview.length * 3) / 4; // Aproximação do tamanho em bytes
-        if (base64Size < 500 * 1024) { // 500KB
+        // Verificar tamanho da string base64 diretamente (limite do banco: 1000 caracteres)
+        if (imagemPreview.length <= 1000) {
           payload.imagemBase64 = imagemPreview;
         } else {
-          console.warn('Imagem muito grande, removendo do payload. Tamanho:', base64Size, 'bytes');
+          console.warn('Imagem muito grande para salvar no banco, removendo do payload. Tamanho:', imagemPreview.length, 'caracteres (limite: 1000)');
+          // Em produção, aqui você faria upload da imagem para um serviço de storage
         }
       }
       if (areaTotal !== '' && !Number.isNaN(Number(areaTotal))) payload.areaTotal = Number(areaTotal);
@@ -753,7 +755,7 @@ function addContract() {
       if (horarioAbertura) payload.horarioAbertura = horarioAbertura;
       if (horarioFechamento) payload.horarioFechamento = horarioFechamento;
       if (descricaoCurta) payload.descricaoCurta = descricaoCurta;
-      if (focoProdutivo && focoProdutivo.trim()) payload.focoProdutivo = focoProdutivo.trim();
+      if (focoProdutivo && focoProdutivo.trim()) payload.focoProdutivo = focoProdutivo.trim().substring(0, 50); // limite: 50 caracteres
 
     setLoading(true);
 

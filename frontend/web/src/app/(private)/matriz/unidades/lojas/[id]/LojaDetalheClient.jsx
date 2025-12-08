@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CompanyHeader } from "@/components/matriz/Unidades/Fazenda/CompanyHeader";
-import { ActionBar } from "@/components/matriz/Unidades/Fazenda/ActionBar";
-import { TabNavigation } from "@/components/matriz/Unidades/Fazenda/TabNavigation";
-import { CenterPanel } from "@/components/matriz/Unidades/Fazenda/CenterPanel";
-import { LogActivityModal } from "@/components/matriz/Unidades/Fazenda/LogActivityModal";
-import { AddContactModal } from "@/components/matriz/Unidades/Fazenda/AddContactModal";
+import { CompanyHeader } from "@/components/matriz/Unidades/Loja/CompanyHeader";
+import { ActionBar } from "@/components/matriz/Unidades/Loja/ActionBar";
+import { TabNavigation } from "@/components/matriz/Unidades/Loja/TabNavigation";
+import { CenterPanel } from "@/components/matriz/Unidades/Loja/CenterPanel";
+import { LogActivityModal } from "@/components/matriz/Unidades/Loja/LogActivityModal";
+import { AddContactModal } from "@/components/matriz/Unidades/Loja/AddContactModal";
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
@@ -100,13 +100,11 @@ export default function LojaDetalheClient({ id }) {
     <div className="min-h-screen bg-background">
       <CompanyHeader
         id={id}
-        fazenda={loja}
-        loading={loading}
         onLogActivity={() => setShowLogActivity(true)}
       />
 
       <ActionBar
-        fazenda={loja}
+        loja={loja}
         onAddContact={() => setShowAddContact(true)}
         onLogActivity={() => setShowLogActivity(true)}
       />
@@ -116,7 +114,7 @@ export default function LojaDetalheClient({ id }) {
       <div className="flex mt-10 gap-6 px-6 pb-6">
         <CenterPanel
           activeTab={activeTab}
-          fazenda={loja}
+          loja={loja}
           loading={loading}
         />
       </div>

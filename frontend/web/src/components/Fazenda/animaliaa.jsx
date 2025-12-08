@@ -19,6 +19,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import { BarChart } from '@mui/x-charts/BarChart';
+import { Transl } from '../TextoTraduzido/TextoTraduzido';
 
 // Small helper to robustly extract array from various backend shapes
 function extractArrayFromResponse(data) {
@@ -148,45 +149,45 @@ export function SectionCards() {
         <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Quantidade total de lotes</CardDescription>
+                    <CardDescription><Transl>Quantidade total de lotes</Transl></CardDescription>
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{totalLotes ?? '-'}</CardTitle>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                    <div className="line-clamp-1 flex gap-2 font-medium">Total de lotes de Animalia</div>
-                    <div className="text-muted-foreground">Resumo</div>
+                    <div className="line-clamp-1 flex gap-2 font-medium"><Transl>Total de lotes de Animalia</Transl></div>
+                    <div className="text-muted-foreground"><Transl>Resumo</Transl></div>
                 </CardFooter>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Lotes prontos para venda</CardDescription>
+                    <CardDescription><Transl>Lotes prontos para venda</Transl></CardDescription>
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesProntosVenda ?? '-'}</CardTitle>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                    <div className="line-clamp-1 flex gap-2 font-medium">Lotes de Animalia com status PRONTO</div>
-                    <div className="text-muted-foreground">Pronto para venda</div>
+                    <div className="line-clamp-1 flex gap-2 font-medium"><Transl>Lotes de Animalia com status PRONTO</Transl></div>
+                    <div className="text-muted-foreground"><Transl>Pronto para venda</Transl></div>
                 </CardFooter>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Lotes impróprios</CardDescription>
+                    <CardDescription><Transl>Lotes impróprios</Transl></CardDescription>
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesImprorios ?? '-'}</CardTitle>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                    <div className="line-clamp-1 flex gap-2 font-medium">Lotes de Animalia marcados como impróprios</div>
-                    <div className="text-muted-foreground">Atenção sanitária</div>
+                    <div className="line-clamp-1 flex gap-2 font-medium"><Transl>Lotes de Animalia marcados como impróprios</Transl></div>
+                    <div className="text-muted-foreground"><Transl>Atenção sanitária</Transl></div>
                 </CardFooter>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Produção média por cultura</CardDescription>
+                    <CardDescription><Transl>Produção média por cultura</Transl></CardDescription>
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{quantidadeAnimais ?? '-'}</CardTitle>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                    <div className="line-clamp-1 flex gap-2 font-medium">Quantidade de animais na unidade</div>
-                    <div className="text-muted-foreground">Contagem de animais</div>
+                    <div className="line-clamp-1 flex gap-2 font-medium"><Transl>Quantidade de animais na unidade</Transl></div>
+                    <div className="text-muted-foreground"><Transl>Contagem de animais</Transl></div>
                 </CardFooter>
             </Card>
         </div>
@@ -249,7 +250,7 @@ export function ChartPieLotesAnimalia() {
     return (
         <Card className="flex flex-col w-full max-w-[700px] h-[520px]">
             <CardHeader className="items-center pb-0">
-                <CardTitle>Lotes por tipo</CardTitle>
+                <CardTitle><Transl>Lotes por tipo</Transl></CardTitle>
                 <CardDescription>{loading ? 'Carregando...' : `${total} lote(s)`}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-0 py-2 flex flex-col items-center justify-center">
@@ -293,26 +294,26 @@ export function ItemVariant() {
         <div className="flex flex-col gap-6">
             <Item>
                 <ItemContent>
-                    <ItemTitle>Default Variant</ItemTitle>
-                    <ItemDescription>Standard styling with subtle background and borders.</ItemDescription>
+                    <ItemTitle><Transl>Default Variant</Transl></ItemTitle>
+                    <ItemDescription><Transl>Standard styling with subtle background and borders.</Transl></ItemDescription>
                 </ItemContent>
-                <ItemActions><Button variant="outline" size="sm">Open</Button></ItemActions>
+                <ItemActions><Button variant="outline" size="sm"><Transl>Open</Transl></Button></ItemActions>
             </Item>
 
             <Item variant="outline">
                 <ItemContent>
-                    <ItemTitle>Outline Variant</ItemTitle>
-                    <ItemDescription>Outlined style with clear borders and transparent background.</ItemDescription>
+                    <ItemTitle><Transl>Outline Variant</Transl></ItemTitle>
+                    <ItemDescription><Transl>Outlined style with clear borders and transparent background.</Transl></ItemDescription>
                 </ItemContent>
-                <ItemActions><Button variant="outline" size="sm">Open</Button></ItemActions>
+                <ItemActions><Button variant="outline" size="sm"><Transl>Open</Transl></Button></ItemActions>
             </Item>
 
             <Item variant="muted">
                 <ItemContent>
-                    <ItemTitle>Muted Variant</ItemTitle>
-                    <ItemDescription>Subdued appearance with muted colors for secondary content.</ItemDescription>
+                    <ItemTitle><Transl>Muted Variant</Transl></ItemTitle>
+                    <ItemDescription><Transl>Subdued appearance with muted colors for secondary content.</Transl></ItemDescription>
                 </ItemContent>
-                <ItemActions><Button variant="outline" size="sm">Open</Button></ItemActions>
+                <ItemActions><Button variant="outline" size="sm"><Transl>Open</Transl></Button></ItemActions>
             </Item>
         </div>
     )
@@ -389,11 +390,11 @@ export function TableDemo() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black flex flex-col h-[600px] p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Atividades de Animalia</h2>
+                    <Transl className="text-xl font-semibold">Atividades de Animalia</Transl    >
                 </div>
             </div>
 
-            {loading && <p className="text-muted-foreground">Carregando atividades...</p>}
+            {loading && <Transl className="text-muted-foreground">Carregando atividades...</Transl>}
             {error && <p className="text-red-600">Erro: {error}</p>}
 
             {!loading && (
@@ -405,14 +406,14 @@ export function TableDemo() {
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="bg-gray-100 dark:bg-gray-800">
-                                <TableHead className="w-[80px] font-semibold">ID</TableHead>
-                                <TableHead className="w-[250px] font-semibold">Descrição</TableHead>
-                                <TableHead className="font-semibold">Tipo</TableHead>
-                                <TableHead className="font-semibold">Lote</TableHead>
-                                <TableHead className="font-semibold">Status</TableHead>
-                                <TableHead className="font-semibold">Data Início</TableHead>
-                                <TableHead className="font-semibold">Data Fim</TableHead>
-                                <TableHead className="font-semibold">Responsável</TableHead>
+                                <TableHead className="w-[80px] font-semibold"><Transl>ID</Transl></TableHead>
+                                <TableHead className="w-[250px] font-semibold"><Transl>Descrição</Transl></TableHead>
+                                <TableHead className="font-semibold"><Transl>Tipo</Transl></TableHead>
+                                <TableHead className="font-semibold"><Transl>Lote</Transl></TableHead>
+                                <TableHead className="font-semibold"><Transl>Status</Transl></TableHead>
+                                <TableHead className="font-semibold"><Transl>Data Início</Transl></TableHead>
+                                <TableHead className="font-semibold"><Transl>Data Fim</Transl></TableHead>
+                                <TableHead className="font-semibold"><Transl>Responsável</Transl></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -568,7 +569,7 @@ export function ChartLineMultiple() {
     return (
         <Card className="h-full p-4">
             <CardHeader>
-                <CardTitle>Atividades por mês</CardTitle>
+                <CardTitle><Transl>Atividades por mês</Transl></CardTitle>
             </CardHeader>
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4 ">
                 <div className="flex items-center gap-4 flex-wrap font-bold ">
@@ -578,14 +579,14 @@ export function ChartLineMultiple() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Tipos</SelectLabel>
+                                <SelectLabel><Transl>Tipos</Transl></SelectLabel>
                                 {tipos.map((tipo) => (<SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>))}
                             </SelectGroup>
                         </SelectContent>
                     </Select>
                 </div>
             </div>
-            <CardDescription>Semestre atual</CardDescription>
+            <CardDescription><Transl>Semestre atual</Transl></CardDescription>
             <CardContent>
                 <ChartContainer config={chartConfig2}>
                     <LineChart accessibilityLayer data={chartData} margin={{ left: 12, right: 12 }}>
@@ -595,7 +596,7 @@ export function ChartLineMultiple() {
                         <Line dataKey="quantidade" type="monotone" stroke="var(--color-desktop)" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                 </ChartContainer>
-                {loadingChart && <div className="text-sm text-muted-foreground mt-2">Carregando...</div>}
+                {loadingChart && <div className="text-sm text-muted-foreground mt-2"><Transl>Carregando...</Transl></div>}
             </CardContent>
         </Card>
     )
@@ -813,13 +814,13 @@ export function TableDemo2() {
         <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-xl font-semibold">Lotes de Animais</h2>
+                    <Transl className="text-xl font-semibold">Lotes de Animais</Transl>
 
                     <Select onValueChange={(v) => setTipoFilter(v)} value={tipoFilter}>
                         <SelectTrigger className="w-[170px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Tipo (TipoLote)</SelectLabel>
+                                <SelectLabel><Transl>Tipo (TipoLote)</Transl></SelectLabel>
                                 {tipoOptions.map(opt => (
                                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                 ))}
@@ -831,7 +832,7 @@ export function TableDemo2() {
                         <SelectTrigger className="w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Status (StatusLote)</SelectLabel>
+                                <SelectLabel><Transl>Status (StatusLote)</Transl></SelectLabel>
                                 {statusOptions.map(opt => (
                                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                 ))}
@@ -844,9 +845,9 @@ export function TableDemo2() {
                         <SelectContent>
                             <SelectGroup>
                                 <SelectLabel>Preço</SelectLabel>
-                                <SelectItem value="NONE">Sem ordenação</SelectItem>
-                                <SelectItem value="menor">Menor primeiro</SelectItem>
-                                <SelectItem value="maior">Maior primeiro</SelectItem>
+                                <SelectItem value="NONE"><Transl>Sem ordenação</Transl></SelectItem>
+                                <SelectItem value="menor"><Transl>Menor primeiro</Transl></SelectItem>
+                                <SelectItem value="maior"><Transl>Maior primeiro</Transl></SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>
@@ -855,7 +856,7 @@ export function TableDemo2() {
             </div>
 
             <Table>
-                <TableCaption>Lotes Animais</TableCaption>
+                <TableCaption><Transl>Lotes Animais</Transl></TableCaption>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-gray-800">
                         <TableHead className="w-[80px] font-semibold">ID</TableHead>
