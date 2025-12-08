@@ -10,24 +10,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-// export interface Category {
-//   id: string;
-//   name: string;
-//   type: 'entrada' | 'saida';
-//   subcategories: Subcategory[];
-// }
-
-// export interface Subcategory {
-//   id: string;
-//   name: string;
-//   categoryId: string;
-// }
-
-// interface CategoryManagerProps {
-//   categories: Category[];
-//   onCategoriesChange: (categories: Category[]) => void;
-// }
-
 export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth, API_URL, onRefresh }) {
   const { toast } = useToast();
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -439,7 +421,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
+      <div className="flex gap-4 w-130">
         <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -573,11 +555,6 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       <>
                         <div className="flex items-center gap-2 flex-1">
                           <h4 className="text-green-700">{category.name}</h4>
-                          {getPendingAccounts(category).length > 0 && (
-                            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                              {getPendingAccounts(category).length} pendente{getPendingAccounts(category).length > 1 ? 's' : ''}
-                            </Badge>
-                          )}
                         </div>
                         <div className="flex gap-1">
                           <Button
@@ -600,58 +577,6 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </>
                     )}
                   </div>
-                  
-                  {/* Exibir contas pendentes */}
-                  {getPendingAccounts(category).length > 0 && (
-                    <Collapsible 
-                      open={expandedCategories[category.id]} 
-                      onOpenChange={() => toggleCategory(category.id)}
-                      className="mt-2"
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
-                          <span className="flex items-center gap-2">
-                            <AlertCircle className="h-3 w-3 text-orange-600" />
-                            {getPendingAccounts(category).length} conta{getPendingAccounts(category).length > 1 ? 's' : ''} pendente{getPendingAccounts(category).length > 1 ? 's' : ''} 
-                            ({formatCurrency(getTotalPending(category))})
-                          </span>
-                          <span className="text-muted-foreground">
-                            {expandedCategories[category.id] ? 'Ocultar' : 'Ver'}
-                          </span>
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2 space-y-2">
-                        <div className="ml-4 border-l-2 border-orange-200 pl-3 space-y-2">
-                          {getPendingAccounts(category).map((conta) => (
-                            <div key={conta.id} className="bg-orange-50 rounded p-2 text-xs">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1">
-                                  <div className="font-medium text-orange-900">
-                                    {conta.descricao || 'Sem descrição'}
-                                  </div>
-                                  {conta.subcategoria && (
-                                    <div className="text-orange-700 text-xs mt-1">
-                                      Subcategoria: {conta.subcategoria.nome}
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-3 mt-1 text-orange-600">
-                                    <span className="flex items-center gap-1">
-                                      <DollarSign className="h-3 w-3" />
-                                      {formatCurrency(conta.valor)}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <AlertCircle className="h-3 w-3" />
-                                      Vence: {formatDate(conta.vencimento)}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  )}
                   
                   <div className="space-y-1 ml-4">
                     {category.subcategories.map(subcategory => (

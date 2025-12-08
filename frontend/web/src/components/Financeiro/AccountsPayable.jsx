@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Download } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -28,11 +28,76 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   const [formData, setFormData] = useState({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});
   const [loading, setLoading] = useState(false);
   const [localAccounts, setLocalAccounts] = useState(accounts ?? []);
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
+  // Função auxiliar para converter data (reutilizável)
+  const converterDataParaISO = (dataValue) => {
+    if (!dataValue) return null;
+    try {
+      if (typeof dataValue === 'string') {
+        // Formato ISO: "2025-12-12T00:00:00.000Z"
+        const datePart = dataValue.split('T')[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+          return datePart;
+        }
+        // Tentar parsear como Date
+        const date = new Date(dataValue);
+        if (!isNaN(date.getTime())) {
+          return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+      }
+      if (dataValue instanceof Date && !isNaN(dataValue.getTime())) {
+        return `${dataValue.getFullYear()}-${String(dataValue.getMonth() + 1).padStart(2, '0')}-${String(dataValue.getDate()).padStart(2, '0')}`;
+      }
+    } catch (e) {
+      console.warn('[AccountsPayable] Erro ao converter data:', dataValue, e);
+    }
+    return null;
+  };
 
   // Sincroniza prop accounts caso mude externamente
   useEffect(() => {
-    if (Array.isArray(accounts) && accounts.length >= 0) {
-      setLocalAccounts(accounts);
+    if (Array.isArray(accounts)) {
+      console.log('[AccountsPayable] 📥 Recebendo contas via prop:', accounts.length);
+      if (accounts.length > 0) {
+        console.log('[AccountsPayable] 📋 Primeira conta da prop:', accounts[0]);
+        const today = new Date().toISOString().split('T')[0];
+        
+        const contasMapeadas = accounts.map(c => {
+          const competencyDate = converterDataParaISO(c.competencia) || c.competencyDate || '';
+          const dueDate = converterDataParaISO(c.vencimento) || c.dueDate || '';
+          const paymentDate = c.dataPagamento ? converterDataParaISO(c.dataPagamento) : (c.paymentDate || null);
+          
+          let status = 'pending';
+          if (c.status === 'PAGA' || paymentDate) {
+            status = 'paid';
+          } else if (dueDate && dueDate < today) {
+            status = 'overdue';
+          }
+          
+          return {
+            id: String(c.id),
+            competencyDate,
+            dueDate,
+            paymentDate,
+            amount: Number(c.valor ?? c.amount ?? 0),
+            subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
+            description: c.descricao ?? c.description ?? '',
+            status
+          };
+        });
+        
+        console.log('[AccountsPayable] ✅ Contas mapeadas da prop:', contasMapeadas.map(c => ({
+          id: c.id,
+          competencyDate: c.competencyDate || 'N/A',
+          dueDate: c.dueDate || 'N/A'
+        })));
+        setLocalAccounts(contasMapeadas);
+      } else {
+        setLocalAccounts([]);
+      }
     }
   }, [accounts]);
 
@@ -63,29 +128,67 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         const dados = body?.dados ?? body?.contas ?? body ?? [];
         const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.dados) ? dados.dados : []);
         
+        console.log('[AccountsPayable] ✅ Contas recebidas do backend:', lista.length);
+        console.log('[AccountsPayable] 📋 Primeira conta (exemplo):', lista[0]);
+        if (lista.length > 0) {
+          console.log('[AccountsPayable] 📅 Datas da primeira conta:', {
+            competencia: lista[0].competencia,
+            vencimento: lista[0].vencimento,
+            tipoCompetencia: typeof lista[0].competencia,
+            tipoVencimento: typeof lista[0].vencimento
+          });
+        }
+        
         if (mounted) {
-          setLocalAccounts(lista.map(c => {
-            const today = new Date().toISOString().split('T')[0];
-            const vencimento = c.vencimento ? new Date(c.vencimento).toISOString().split('T')[0] : '';
-            let status = 'pending';
+          const today = new Date().toISOString().split('T')[0];
+          
+          const contasMapeadas = lista.map(c => {
+            // Normalizar datas para formato ISO (YYYY-MM-DD)
+            const competencyDate = converterDataParaISO(c.competencia) || '';
+            const dueDate = converterDataParaISO(c.vencimento) || '';
+            const paymentDate = c.dataPagamento ? converterDataParaISO(c.dataPagamento) : null;
             
-            if (c.status === 'PAGA' || c.dataPagamento) {
+            // Determinar status
+            let status = 'pending';
+            if (c.status === 'PAGA' || paymentDate) {
               status = 'paid';
-            } else if (vencimento && vencimento < today) {
+            } else if (dueDate && dueDate < today) {
               status = 'overdue';
             }
             
-            return {
+            const contaMapeada = {
               id: String(c.id),
-              competencyDate: c.competencia ?? c.competencyDate ?? '',
-              dueDate: c.vencimento ?? c.dueDate ?? '',
-              paymentDate: c.dataPagamento ?? c.paymentDate ?? null,
+              competencyDate,
+              dueDate,
+              paymentDate,
               amount: Number(c.valor ?? c.amount ?? 0),
               subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
               description: c.descricao ?? c.description ?? '',
               status
             };
-          }));
+            
+            // Log de erro se não tiver datas
+            if (!competencyDate && !dueDate) {
+              console.error('[AccountsPayable] ❌ ERRO: Conta sem datas mapeadas!', {
+                id: contaMapeada.id,
+                competenciaOriginal: c.competencia,
+                vencimentoOriginal: c.vencimento,
+                tipoCompetencia: typeof c.competencia,
+                tipoVencimento: typeof c.vencimento
+              });
+            }
+            
+            return contaMapeada;
+          });
+          
+          console.log('[AccountsPayable] ✅ Total de contas mapeadas:', contasMapeadas.length);
+          console.log('[AccountsPayable] 📊 Resumo das contas:', contasMapeadas.map(c => ({
+            id: c.id,
+            competencyDate: c.competencyDate || 'N/A',
+            dueDate: c.dueDate || 'N/A',
+            status: c.status
+          })));
+          setLocalAccounts(contasMapeadas);
         }
       } catch (err) {
         console.error('[AccountsPayable] erro ao carregar contas:', err);
@@ -104,8 +207,81 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   }, [fetchWithAuth, API_URL, selectedMonth, selectedYear]);
 
   const resetForm = () => {setFormData({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});};
-  const handleAdd = async () => {if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {return;}
+  
+  // Função para validar e normalizar datas
+  const validarData = (dateString) => {
+    if (!dateString) return null;
+    
+    // Remove espaços e caracteres estranhos
+    const cleanDate = dateString.trim();
+    if (!cleanDate) return null;
+    
+    // Tenta criar a data
+    const date = new Date(cleanDate);
+    
+    // Verifica se a data é válida
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    
+    // Verifica se a data está em um range válido (1900-2100)
+    const year = date.getFullYear();
+    if (year < 1900 || year > 2100) {
+      return null;
+    }
+    
+    // Retorna a data no formato ISO (YYYY-MM-DD)
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleAdd = async () => {
+    // Validação inicial dos campos obrigatórios
+    if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios: Data de Competência, Data de Vencimento, Valor e Subcategoria.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Validar datas antes de enviar
+      const competenciaValidada = validarData(formData.competencyDate);
+      const vencimentoValidado = validarData(formData.dueDate);
+      const pagamentoValidado = formData.paymentDate ? validarData(formData.paymentDate) : null;
+
+      // Mensagens de erro mais específicas
+      if (!vencimentoValidado) {
+        toast({
+          title: "Erro de validação",
+          description: `Data de vencimento inválida: "${formData.dueDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
+          variant: "destructive",
+        });
+        console.error('[AccountsPayable] Data de vencimento inválida:', formData.dueDate);
+        return;
+      }
+
+      if (formData.competencyDate && !competenciaValidada) {
+        toast({
+          title: "Erro de validação",
+          description: `Data de competência inválida: "${formData.competencyDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
+          variant: "destructive",
+        });
+        console.error('[AccountsPayable] Data de competência inválida:', formData.competencyDate);
+        return;
+      }
+
+      if (formData.paymentDate && !pagamentoValidado) {
+        toast({
+          title: "Erro de validação",
+          description: `Data de pagamento inválida: "${formData.paymentDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
+          variant: "destructive",
+        });
+        console.error('[AccountsPayable] Data de pagamento inválida:', formData.paymentDate);
+        return;
+      }
+
       const subcategory = categories
         .flatMap(cat => cat.subcategories)
         .find(sub => sub.id === formData.subcategoryId);
@@ -118,14 +294,14 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,
         formaPagamento: 'DINHEIRO',
         valor: parseFloat(formData.amount),
-        competencia: formData.competencyDate,
-        vencimento: formData.dueDate,
+        competencia: competenciaValidada,
+        vencimento: vencimentoValidado,
         documento: '',
         observacao: formData.description || ''
       };
 
-      if (formData.paymentDate) {
-        contaData.dataPagamento = formData.paymentDate;
+      if (pagamentoValidado) {
+        contaData.dataPagamento = pagamentoValidado;
         contaData.status = 'PAGA';
       }
       
@@ -133,20 +309,55 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       const url = API_URL ? `${API_URL}contas-financeiras` : '/api/contas-financeiras';
       console.debug('[AccountsPayable] POST', url, contaData);
       
+      if (!fetchWithAuth) {
+        toast({
+          title: "Erro de configuração",
+          description: "Função de autenticação não disponível. Por favor, recarregue a página.",
+          variant: "destructive",
+        });
+        console.error('[AccountsPayable] fetchWithAuth não está disponível');
+        return;
+      }
+
       const response = await fetchWithAuth(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(contaData),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        const errorMessage = result.erro || result.detalhes || 'Erro ao criar conta';
-        throw new Error(errorMessage);
+        const errorText = await response.text().catch(() => 'Erro desconhecido');
+        let errorMessage = 'Erro ao criar conta';
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.erro || errorJson.detalhes || errorJson.message || errorMessage;
+        } catch {
+          errorMessage = errorText || `Erro HTTP ${response.status}`;
+        }
+
+        console.error('[AccountsPayable] Erro ao criar conta:', response.status, errorMessage);
+        toast({
+          title: "Erro ao criar conta",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (result.sucesso) {
+      const result = await response.json().catch(() => {
+        console.error('[AccountsPayable] Erro ao parsear resposta JSON');
+        toast({
+          title: "Erro",
+          description: "Erro ao processar resposta do servidor. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        return { sucesso: false };
+      });
+
+      // Verificar se a conta foi criada com sucesso
+      // O backend retorna { sucesso: true, dados: {...} } ou status 201
+      if (result.sucesso || response.status === 201 || result.dados) {
         toast({
           title: "Sucesso!",
           description: "Conta a pagar criada com sucesso.",
@@ -163,9 +374,9 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
           const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
           const newAccount = {
             id: result.dados?.id?.toString() || `temp-${Date.now()}`,
-            competencyDate: formData.competencyDate,
-            dueDate: formData.dueDate,
-            paymentDate: formData.paymentDate || undefined,
+            competencyDate: competenciaValidada || formData.competencyDate,
+            dueDate: vencimentoValidado || formData.dueDate,
+            paymentDate: pagamentoValidado || formData.paymentDate || undefined,
             amount: parseFloat(formData.amount),
             subcategoryId: formData.subcategoryId,
             description: formData.description,
@@ -179,6 +390,14 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         }
         resetForm();
         setIsAddDialogOpen(false);
+      } else {
+        // Se não teve sucesso explícito, mostrar erro
+        const errorMsg = result.erro || result.detalhes || result.message || 'Erro ao criar conta';
+        toast({
+          title: "Erro ao criar conta",
+          description: errorMsg,
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Erro ao criar conta:', error);
@@ -203,6 +422,38 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     }
 
     try {
+      // Validar datas antes de enviar
+      const competenciaValidada = validarData(formData.competencyDate);
+      const vencimentoValidado = validarData(formData.dueDate);
+      const pagamentoValidado = formData.paymentDate ? validarData(formData.paymentDate) : null;
+
+      if (!vencimentoValidado) {
+        toast({
+          title: "Erro",
+          description: "Data de vencimento inválida. Por favor, verifique a data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (formData.competencyDate && !competenciaValidada) {
+        toast({
+          title: "Erro",
+          description: "Data de competência inválida. Por favor, verifique a data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (formData.paymentDate && !pagamentoValidado) {
+        toast({
+          title: "Erro",
+          description: "Data de pagamento inválida. Por favor, verifique a data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const subcategory = categories
         .flatMap(cat => cat.subcategories)
         .find(sub => sub.id === formData.subcategoryId);
@@ -215,14 +466,14 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,
         formaPagamento: 'DINHEIRO',
         valor: parseFloat(formData.amount),
-        competencia: formData.competencyDate,
-        vencimento: formData.dueDate,
+        competencia: competenciaValidada,
+        vencimento: vencimentoValidado,
         documento: '',
         observacao: formData.description || ''
       };
 
-      if (formData.paymentDate) {
-        contaData.dataPagamento = formData.paymentDate;
+      if (pagamentoValidado) {
+        contaData.dataPagamento = pagamentoValidado;
         contaData.status = 'PAGA';
       }
 
@@ -525,22 +776,110 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
 
   // Filtrar contas baseado no período selecionado
   const filteredAccounts = useMemo(() => {
-    if (!localAccounts || localAccounts.length === 0) return [];
+    console.log('[AccountsPayable] 🔍 Iniciando filtro...', {
+      totalContas: localAccounts?.length || 0,
+      mes: selectedMonth,
+      ano: selectedYear
+    });
+    
+    if (!localAccounts || localAccounts.length === 0) {
+      console.log('[AccountsPayable] ⚠️ Nenhuma conta local para filtrar');
+      return [];
+    }
+    
     const month = parseInt(selectedMonth);
     const year = parseInt(selectedYear);
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59);
     
-    return localAccounts.filter(acc => {
-      if (!acc.competencyDate) return false;
+    console.log('[AccountsPayable] 📊 Contas antes do filtro:', localAccounts.map(acc => ({
+      id: acc.id,
+      competencyDate: acc.competencyDate || 'N/A',
+      dueDate: acc.dueDate || 'N/A'
+    })));
+    
+    const filtered = localAccounts.filter(acc => {
+      // Usar competencyDate como critério principal, fallback para dueDate
+      const dateToCheck = acc.competencyDate || acc.dueDate;
+      
+      if (!dateToCheck) {
+        console.warn('[AccountsPayable] ⚠️ Conta sem data:', acc.id);
+        return false;
+      }
+      
       try {
-        const competencyDate = new Date(acc.competencyDate);
-        if (isNaN(competencyDate.getTime())) return false;
-        return competencyDate >= monthStart && competencyDate <= monthEnd;
-      } catch {
+        // Se for string no formato YYYY-MM-DD, extrair diretamente
+        if (typeof dateToCheck === 'string') {
+          const dateMatch = dateToCheck.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (dateMatch) {
+            const [, yearStr, monthStr] = dateMatch;
+            const accountYear = parseInt(yearStr);
+            const accountMonth = parseInt(monthStr);
+            
+            // Comparar diretamente ano e mês
+            const matches = accountYear === year && accountMonth === month;
+            
+            if (matches) {
+              console.log('[AccountsPayable] ✅ Conta passou no filtro:', {
+                id: acc.id,
+                date: dateToCheck,
+                accountYear,
+                accountMonth,
+                filterYear: year,
+                filterMonth: month
+              });
+            } else {
+              console.log('[AccountsPayable] ❌ Conta fora do período:', {
+                id: acc.id,
+                date: dateToCheck,
+                accountYear,
+                accountMonth,
+                filterYear: year,
+                filterMonth: month
+              });
+            }
+            
+            return matches;
+          }
+        }
+        
+        // Se não for formato YYYY-MM-DD, tentar parsear como Date
+        const accountDate = new Date(dateToCheck);
+        if (!isNaN(accountDate.getTime())) {
+          const accountYear = accountDate.getFullYear();
+          const accountMonth = accountDate.getMonth() + 1;
+          
+          const matches = accountYear === year && accountMonth === month;
+          
+          if (matches) {
+            console.log('[AccountsPayable] ✅ Conta passou no filtro (Date):', {
+              id: acc.id,
+              accountYear,
+              accountMonth
+            });
+          }
+          
+          return matches;
+        }
+        
+        console.warn('[AccountsPayable] ⚠️ Data inválida:', dateToCheck, acc.id);
+        return false;
+      } catch (error) {
+        console.error('[AccountsPayable] ❌ Erro ao filtrar conta:', error, acc);
         return false;
       }
     });
+    
+    console.log('[AccountsPayable] ✅ Resultado do filtro:', {
+      filtradas: filtered.length,
+      total: localAccounts.length,
+      filtradasIds: filtered.map(acc => acc.id),
+      filtradasDetalhes: filtered.map(acc => ({
+        id: acc.id,
+        competencyDate: acc.competencyDate,
+        dueDate: acc.dueDate
+      }))
+    });
+    
+    return filtered;
   }, [localAccounts, selectedMonth, selectedYear]);
 
   // Calcular anos disponíveis baseado nas datas de competência
@@ -565,6 +904,23 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     return Array.from(years).filter(y => !isNaN(y) && isFinite(y)).sort((a, b) => b - a);
   }, [localAccounts, currentDate]);
 
+  // Paginação
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredAccounts.length / perPage)), [filteredAccounts.length, perPage]);
+  const paginatedAccounts = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filteredAccounts.slice(start, start + perPage);
+  }, [filteredAccounts, page, perPage]);
+
+  // Resetar página quando filtros mudarem
+  useEffect(() => {
+    setPage(1);
+  }, [selectedMonth, selectedYear, perPage]);
+
+  // Garantir que a página atual seja válida
+  useEffect(() => {
+    setPage(p => Math.min(Math.max(1, p), totalPages));
+  }, [totalPages]);
+
   const exitCategories = categories.filter(cat => cat.type === 'saida');
   const totalPending = filteredAccounts.filter(acc => acc.status === 'pending').reduce((sum, acc) => {
     const amount = Number(acc.amount) || 0;
@@ -580,6 +936,97 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   }, 0);
   const resetImport = () => {setImportFile(null);setImportProgress({ show: false, processed: 0, total: 0, errors: [], imported: 0 });};
   const getSelectedMonthName = () => {const monthObj = months.find(m => m.value === selectedMonth);return monthObj ? monthObj.label : '';};
+
+  // Função para exportar CSV do backend
+  const exportarCSVBackend = async () => {
+    if (!fetchWithAuth || !API_URL) {
+      toast({
+        title: "Erro de configuração",
+        description: "Função de autenticação não disponível.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.set('mes', String(selectedMonth));
+      if (selectedYear) params.set('ano', String(selectedYear));
+      params.set('tipoMovimento', 'SAIDA');
+
+      const url = `${API_URL}contas-financeiras/exportar/csv?${params.toString()}`;
+      console.debug('[AccountsPayable] GET CSV', url);
+      console.debug('[AccountsPayable] Token disponível:', !!fetchWithAuth);
+      
+      const response = await fetchWithAuth(url, { 
+        method: 'GET', 
+        credentials: 'include',
+        headers: {
+          'Accept': 'text/csv, application/json',
+        }
+      });
+
+      if (!response.ok) {
+        let errorText = '';
+        try {
+          errorText = await response.text();
+          // Tentar parsear como JSON
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorText = errorJson.mensagem || errorJson.erro || errorJson.message || errorText;
+          } catch {
+            // Não é JSON, usar texto direto
+          }
+        } catch {
+          errorText = `Erro HTTP ${response.status}`;
+        }
+        console.error('[AccountsPayable] Erro ao exportar CSV:', response.status, errorText);
+        
+        toast({
+          title: "Erro ao exportar CSV",
+          description: errorText || `Erro HTTP ${response.status}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      const urlBlob = URL.createObjectURL(blob);
+      
+      // Tentar obter o nome do arquivo do header Content-Disposition
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const monthName = getSelectedMonthName().replace(/\s+/g, '-').toLowerCase().trim();
+      let filename = `despesas_${monthName}_${selectedYear}_${new Date().getTime()}.csv`.trim();
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1].trim();
+        }
+      }
+      
+      link.setAttribute('href', urlBlob);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "CSV exportado com sucesso",
+        description: `Arquivo "${filename}" baixado do servidor.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('[AccountsPayable] Erro ao exportar CSV do backend:', error);
+      toast({
+        title: "Erro ao exportar CSV",
+        description: "Erro ao exportar do servidor. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -659,6 +1106,13 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                 </Select>
               </div>
               <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={exportarCSVBackend}
+                >
+                  <Download className="h-4 w-4" />Exportar CSV
+                </Button>
                 <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="flex items-center gap-2"><Upload className="h-4 w-4" />Importar CSV</Button>
@@ -791,65 +1245,128 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         </div>
         <div>
           <CardHeader>
-            <CardTitle>Lista de Contas</CardTitle>
-            <CardDescription>Todas as contas a pagar cadastradas</CardDescription>
+            <CardTitle>Lista de Contas/Despesas</CardTitle>
+            <CardDescription>Todas as despesas cadastradas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Competência</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Pagamento</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAccounts.map(account => (
-                    <TableRow key={account.id}>
-                      <TableCell>{formatDate(account.competencyDate)}</TableCell>
-                      <TableCell>{formatDate(account.dueDate)}</TableCell>
-                      <TableCell>{account.paymentDate ? formatDate(account.paymentDate) : '-'}</TableCell>
-                      <TableCell>{formatCurrency(account.amount)}</TableCell>
-                      <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId)}</TableCell>
-                      <TableCell className="max-w-xs truncate">{account.description}</TableCell>
-                      <TableCell>{getStatusBadge(account.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}><Edit className="h-4 w-4" /></Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(account.id)}>Excluir</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredAccounts.length === 0 && (
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Carregando contas...
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        {localAccounts.length === 0 ? 'Nenhuma conta cadastrada' : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`}
-                      </TableCell>
-                    </TableRow>)}
-                </TableBody>
-              </Table>
-            </div>
+                      <TableHead>Competência</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Pagamento</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedAccounts.length > 0 ? (
+                      paginatedAccounts.map(account => (
+                        <TableRow key={account.id}>
+                          <TableCell>{account.competencyDate ? formatDate(account.competencyDate) : '-'}</TableCell>
+                          <TableCell>{account.dueDate ? formatDate(account.dueDate) : '-'}</TableCell>
+                          <TableCell>{account.paymentDate ? formatDate(account.paymentDate) : '-'}</TableCell>
+                          <TableCell>{formatCurrency(account.amount)}</TableCell>
+                          <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId)}</TableCell>
+                          <TableCell className="max-w-xs truncate">{account.description || '-'}</TableCell>
+                          <TableCell>{getStatusBadge(account.status)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}><Edit className="h-4 w-4" /></Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(account.id)}>Excluir</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                          {localAccounts.length === 0 ? (
+                            'Nenhuma conta cadastrada. Clique em "Nova Conta" para adicionar uma conta a pagar.'
+                          ) : (
+                            <div className="space-y-2">
+                              <p>Nenhuma conta encontrada para <strong>{getSelectedMonthName()} de {selectedYear}</strong>.</p>
+                              <p className="text-xs">Total de contas no sistema: <strong>{localAccounts.length}</strong></p>
+                              <div className="text-xs text-muted-foreground mt-2">
+                                <p>Dica: Verifique se as datas de competência ou vencimento das contas estão no mês/ano selecionado.</p>
+                                <p className="mt-1">Contas disponíveis:</p>
+                                <ul className="list-disc list-inside mt-1">
+                                  {localAccounts.slice(0, 5).map(acc => (
+                                    <li key={acc.id}>
+                                      ID: {acc.id} - 
+                                      Competência: {acc.competencyDate || 'N/A'} - 
+                                      Vencimento: {acc.dueDate || 'N/A'}
+                                    </li>
+                                  ))}
+                                  {localAccounts.length > 5 && <li>... e mais {localAccounts.length - 5} contas</li>}
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+                {filteredAccounts.length > 0 && (
+                  <CardFooter className="flex items-center justify-between px-4 py-3 border-t border-neutral-800">
+                    <div className="flex items-center gap-3">
+                      <Label className="text-sm font-medium">Linhas por pág.</Label>
+                      <Select value={String(perPage)} onValueChange={(value) => { const v = Number(value); setPerPage(v); setPage(1); }}>
+                        <SelectTrigger className="w-[70px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="6">6</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredAccounts.length / perPage) || 1)}</div>
+                      <div className="inline-flex items-center gap-1 border-l border-neutral-800 pl-3">
+                        <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página">
+                          <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior">
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                          <ChevronsRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardFooter>
+                )}
+              </div>
+            )}
           </CardContent>
         </div>
       </Card>

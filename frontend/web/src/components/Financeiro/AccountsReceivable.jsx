@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import * as XLSX from 'xlsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Download } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function AccountsReceivable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -25,9 +28,12 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
-  const [formData, setFormData] = useState({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});
+  const [formData, setFormData] = useState({competencyDate: '',amount: '',subcategoryId: '',description: ''});
   const [loading, setLoading] = useState(false); // estado de carregamento local
   const [localAccounts, setLocalAccounts] = useState(accounts ?? []);  // lista local de contas — se `accounts` for passado como prop, usamos ele como fallback
+  // paginacao
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {if (Array.isArray(accounts) && accounts.length >= 0) setLocalAccounts(accounts);}, [accounts]);  // sincroniza prop `accounts` caso mude externamente
 
@@ -56,24 +62,23 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         const dados = body?.dados ?? body?.contas ?? body ?? [];
         // normaliza para array
         const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.dados) ? dados.dados : []);
+        
+        console.debug('[AccountsReceivable] Contas recebidas do backend:', lista.length, lista);
+        
         if (mounted) {
-          setLocalAccounts(lista.map(c => {
-            let status = 'pending';
-            if (c.status === 'PAGA' || c.status === 'RECEBIDA' || c.dataRecebimento) {
-              status = 'received';
-            }
-            
+          const contasMapeadas = lista.map(c => {
             return {
               id: String(c.id),
               competencyDate: c.competencia ?? c.competencyDate ?? '',
-              dueDate: c.vencimento ?? c.dueDate ?? '',
-              paymentDate: c.dataRecebimento ?? c.paymentDate ?? null,
               amount: Number(c.valor ?? c.amount ?? 0),
               subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
               description: c.descricao ?? c.description ?? '',
-              status
+              status: 'received'
             };
-          }));
+          });
+          
+          console.debug('[AccountsReceivable] Contas mapeadas:', contasMapeadas.length, contasMapeadas);
+          setLocalAccounts(contasMapeadas);
         }}
       catch (err) {
         console.error('[AccountsReceivable] erro ao carregar contas:', err);
@@ -86,43 +91,115 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
     return () => { mounted = false; };
   }, [fetchWithAuth, API_URL, selectedMonth, selectedYear]);
 
-  const resetForm = () => {setFormData({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});};
+  const resetForm = () => {setFormData({competencyDate: '',amount: '',subcategoryId: '',description: ''});};
+  
+  // Função para validar e normalizar datas
+  const validarData = (dateString) => {
+    if (!dateString) return null;
+    
+    const cleanDate = dateString.trim();
+    if (!cleanDate) return null;
+    
+    const date = new Date(cleanDate);
+    
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    
+    const year = date.getFullYear();
+    if (year < 1900 || year > 2100) {
+      return null;
+    }
+    
+    return date.toISOString().split('T')[0];
+  };
+
   const handleAdd = async () => {
-    if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) { return; }
+    // Validação inicial dos campos obrigatórios
+    if (!formData.competencyDate || !formData.amount || !formData.subcategoryId) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios: Data de Competência, Valor e Subcategoria.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Validar data de competência antes de enviar
+      const competenciaValidada = validarData(formData.competencyDate);
+
+      if (formData.competencyDate && !competenciaValidada) {
+        toast({
+          title: "Erro de validação",
+          description: `Data de competência inválida: "${formData.competencyDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
+          variant: "destructive",
+        });
+        console.error('[AccountsReceivable] Data de competência inválida:', formData.competencyDate);
+        return;
+      }
+
       const subcategory = categories
         .flatMap(cat => cat.subcategories)
         .find(sub => sub.id === formData.subcategoryId);
       const categoria = categories.find(cat => cat.subcategories.some(sub => sub.id === formData.subcategoryId));
       // garantir o formato esperado pelo backend
       const descricaoValor = (formData.description || `${categoria ? categoria.name : ''}${categoria && subcategory ? ' - ' : ''}${subcategory ? subcategory.name : ''}`).trim();
-      const contaData = {descricao: descricaoValor || 'Conta',tipoMovimento: 'ENTRADA',categoriaId: categoria ? parseInt(categoria.id) : null,subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,formaPagamento: 'DINHEIRO',valor: parseFloat(formData.amount),competencia: formData.competencyDate,vencimento: formData.dueDate,documento: '',observacao: formData.description || ''};
-      if (formData.paymentDate) { contaData.dataRecebimento = formData.paymentDate; }
+      const contaData = {descricao: descricaoValor || 'Conta',tipoMovimento: 'ENTRADA',categoriaId: categoria ? parseInt(categoria.id) : null,subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,formaPagamento: 'DINHEIRO',valor: parseFloat(formData.amount),competencia: competenciaValidada,documento: '',observacao: formData.description || ''};
 
       const url = API_URL ? `${API_URL}contas-financeiras` : '/api/contas-financeiras';
       console.debug('[AccountsReceivable] POST payload:', contaData);
+      
+      if (!fetchWithAuth) {
+        toast({
+          title: "Erro de configuração",
+          description: "Função de autenticação não disponível. Por favor, recarregue a página.",
+          variant: "destructive",
+        });
+        console.error('[AccountsReceivable] fetchWithAuth não está disponível');
+        return;
+      }
+
       const response = await fetchWithAuth(url, {method: 'POST',credentials: 'include',headers: { 'Content-Type': 'application/json', },body: JSON.stringify(contaData)});
+      
       if (!response.ok) {
-        const text = await response.text().catch(() => '<no body>');
-        console.error('[AccountsReceivable] POST erro status:', response.status, 'body:', text);
-        // tentar mostrar o JSON se for JSON
-        try {const parsed = JSON.parse(text);alert('Erro ao criar conta: ' + (parsed.erro || parsed.message || JSON.stringify(parsed)));}
-        catch (e) { alert('Erro ao criar conta: ' + text); }
-        throw new Error(`Erro ao criar conta: ${response.status}`);
+        const errorText = await response.text().catch(() => 'Erro desconhecido');
+        let errorMessage = 'Erro ao criar conta';
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.erro || errorJson.detalhes || errorJson.message || errorMessage;
+        } catch {
+          errorMessage = errorText || `Erro HTTP ${response.status}`;
+        }
+
+        console.error('[AccountsReceivable] Erro ao criar receita:', response.status, errorMessage);
+        toast({
+          title: "Erro ao criar receita",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
       let result = null;
-      try { result = await response.json(); }
-      catch (e) {
+      try { 
+        result = await response.json(); 
+      } catch (e) {
         console.error('[AccountsReceivable] falha ao parsear response.json():', e);
         const text = await response.text().catch(() => '<no body>');
         console.error('[AccountsReceivable] response text:', text);
-        throw e;
+        toast({
+          title: "Erro",
+          description: "Erro ao processar resposta do servidor. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        return;
       }
       if (result.sucesso) {
         toast({
           title: "Sucesso!",
-          description: "Conta a receber criada com sucesso.",
+          description: "Receita criada com sucesso.",
           variant: "default",
         });
 
@@ -135,21 +212,17 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           const newAccount = created ? {
             id: String(created.id),
             competencyDate: created.competencia || formData.competencyDate,
-            dueDate: created.vencimento || formData.dueDate,
-            paymentDate: created.dataRecebimento || formData.paymentDate || undefined,
             amount: created && created.valor !== undefined ? Number(created.valor) : parseAmount(formData.amount),
             subcategoryId: String(created.subcategoriaId ?? formData.subcategoryId),
             description: created.descricao ?? formData.description,
-            status: created.status === 'PAGA' || created.status === 'RECEBIDA' || created.dataRecebimento ? 'received' : 'pending'
+            status: 'received'
           } : {
             id: `local-${Date.now()}`,
             competencyDate: formData.competencyDate,
-            dueDate: formData.dueDate,
-            paymentDate: formData.paymentDate || undefined,
             amount: parseAmount(formData.amount),
             subcategoryId: formData.subcategoryId,
             description: formData.description,
-            status: formData.paymentDate ? 'received' : 'pending'
+            status: 'received'
           };
 
           setLocalAccounts(prev => {
@@ -162,7 +235,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         setIsAddDialogOpen(false);
       }
     } catch (error) {
-      console.error('Erro ao criar conta:', error);
+      console.error('Erro ao criar receita:', error);
       const errorMessage = error.message || 'Erro ao criar conta. Tente novamente.';
       toast({
         title: "Erro",
@@ -174,21 +247,31 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
 
   const handleEdit = (account) => {
     setEditingAccount(account);
-    setFormData({competencyDate: account.competencyDate,dueDate: account.dueDate,paymentDate: account.paymentDate || '',amount: account.amount.toString(),subcategoryId: account.subcategoryId,description: account.description});
+    setFormData({competencyDate: account.competencyDate,amount: account.amount.toString(),subcategoryId: account.subcategoryId,description: account.description});
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = async () => {
-    if (!editingAccount || !formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) { return; }
+    if (!editingAccount || !formData.competencyDate || !formData.amount || !formData.subcategoryId) { return; }
 
     try {
+      const competenciaValidada = validarData(formData.competencyDate);
+      
+      if (formData.competencyDate && !competenciaValidada) {
+        toast({
+          title: "Erro de validação",
+          description: `Data de competência inválida: "${formData.competencyDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const subcategory = categories
         .flatMap(cat => cat.subcategories)
         .find(sub => sub.id === formData.subcategoryId);
 
       const categoria = categories.find(cat => cat.subcategories.some(sub => sub.id === formData.subcategoryId));
-      const contaData = {descricao: formData.description || '',categoriaId: categoria ? parseInt(categoria.id) : null,subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,formaPagamento: editingAccount.formaPagamento || 'DINHEIRO',valor: parseFloat(formData.amount),competencia: formData.competencyDate,vencimento: formData.dueDate,documento: editingAccount.documento || '',observacao: formData.description || ''};
-      if (formData.paymentDate) { contaData.dataRecebimento = formData.paymentDate; }
+      const contaData = {descricao: formData.description || '',categoriaId: categoria ? parseInt(categoria.id) : null,subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,formaPagamento: editingAccount.formaPagamento || 'DINHEIRO',valor: parseFloat(formData.amount),competencia: competenciaValidada,documento: editingAccount.documento || '',observacao: formData.description || ''};
       const url = API_URL ? `${API_URL}contas-financeiras/${editingAccount.id}` : `/api/contas-financeiras/${editingAccount.id}`;
       const response = await fetchWithAuth(url, {
         method: 'PUT',
@@ -219,12 +302,10 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           const updatedAccount = {
             ...editingAccount,
             competencyDate: formData.competencyDate,
-            dueDate: formData.dueDate,
-            paymentDate: formData.paymentDate || undefined,
             amount: parseFloat(formData.amount),
             subcategoryId: formData.subcategoryId,
             description: formData.description,
-            status: formData.paymentDate ? 'received' : 'pending'
+            status: 'received'
           };
 
           setLocalAccounts(prev => {
@@ -278,8 +359,8 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         });
       }
     } catch (error) {
-      console.error('Erro ao deletar conta:', error);
-      const errorMessage = error.message || 'Erro ao deletar conta. Tente novamente.';
+      console.error('Erro ao deletar receita:', error);
+      const errorMessage = error.message || 'Erro ao deletar receita. Tente novamente.';
       toast({
         title: "Erro",
         description: errorMessage,
@@ -450,26 +531,411 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
     }
     return 'Categoria não encontrada';};
 
+  // Função para gerar Excel no formato de relatório financeiro
+  const gerarExcelLocal = () => {
+    if (!localAccounts || localAccounts.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Não há receitas cadastradas para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Filtrar contas do ano selecionado
+    const yearAccounts = localAccounts.filter(acc => {
+      if (!acc.competencyDate) return false;
+      try {
+        const date = new Date(acc.competencyDate);
+        return date.getFullYear() === parseInt(selectedYear);
+      } catch {
+        return false;
+      }
+    });
+
+    if (yearAccounts.length === 0) {
+      toast({
+        title: "Nenhum dado para o ano selecionado",
+        description: `Não há receitas cadastradas para o ano ${selectedYear}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Organizar dados por categoria, subcategoria e mês
+    const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAIO', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+    
+    // Preparar estrutura de dados para a planilha
+    const rows = [];
+    
+    // Cabeçalho do relatório
+    const dataAtual = new Date();
+    const dataFormatada = dataAtual.toLocaleDateString('pt-BR') + ' - ' + dataAtual.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Título do relatório
+    rows.push(['Relatório de Receitas - RuralTech - ' + selectedYear, '', '', '', '', '', '', '', '', '', '', '', '', '']);
+    
+    // Informações da unidade e usuário
+    const nomeUnidade = user?.unidade?.nome || user?.unidade?.name || 'Não informado';
+    const nomeUsuario = user?.nome || user?.name || 'Não informado';
+    rows.push(['Unidade: ' + nomeUnidade, 'Usuario: ' + nomeUsuario, '', '', '', '', '', '', '', '', '', '', '']);
+    
+    // Data e hora da exportação
+    rows.push([dataFormatada, '', '', '', '', '', '', '', '', '', '', '', '']);
+    rows.push([]); // Linha em branco
+
+    // Seção RECEITA
+    rows.push(['RECEITA']);
+    rows.push(['', ...meses, 'ANO']);
+
+    // Iterar categorias de entrada
+    const entryCategoriesData = categories.filter(cat => cat.type === 'entrada');
+    let totalReceitaPorMes = Array(12).fill(0);
+    let totalReceitaAno = 0;
+
+    entryCategoriesData.forEach(categoria => {
+      const subcats = categoria.subcategories || [];
+      if (subcats.length > 0) {
+        rows.push([categoria.name || '<NOME DA CATEGORIA>']);
+        
+        // Linhas das subcategorias
+        subcats.forEach(subcat => {
+          const valoresMes = Array(12).fill(0);
+          let totalSubcat = 0;
+          
+          // Buscar valores dessa subcategoria
+          yearAccounts.forEach(account => {
+            if (account.subcategoryId === subcat.id) {
+              const date = new Date(account.competencyDate);
+              const mes = date.getMonth();
+              const valor = parseFloat(account.amount || 0);
+              valoresMes[mes] += valor;
+              totalSubcat += valor;
+              totalReceitaPorMes[mes] += valor;
+            }
+          });
+          
+          totalReceitaAno += totalSubcat;
+          
+          const row = [subcat.name || '<NOME DA SUBCATEGORIA>'];
+          valoresMes.forEach(valor => {
+            row.push(valor !== 0 ? valor : '');
+          });
+          row.push(totalSubcat !== 0 ? totalSubcat : '');
+          rows.push(row);
+        });
+      }
+    });
+
+    // Total Receita
+    const totalRow = ['Total'];
+    totalReceitaPorMes.forEach(valor => {
+      totalRow.push(valor !== 0 ? valor : '');
+    });
+    totalRow.push(totalReceitaAno);
+    rows.push(totalRow);
+    rows.push([]); // Linha em branco
+
+    // Seção DESPESAS
+    rows.push(['DESPESAS']);
+    rows.push(['', ...meses, 'ANO']);
+    rows.push(['<NOME DA CATEGORIA>']);
+    rows.push(['<NOME DA SUBCATEGORIA>', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+    rows.push(['Total', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+    rows.push([]); // Linha em branco
+
+    // Seção TOTAIS
+    rows.push(['TOTAIS']);
+    rows.push(['', ...meses, 'ANO']);
+    const totalGeralRow = ['Despesas totais'];
+    totalReceitaPorMes.forEach(valor => {
+      totalGeralRow.push(valor !== 0 ? valor : '');
+    });
+    totalGeralRow.push(totalReceitaAno);
+    rows.push(totalGeralRow);
+
+    // Criar workbook e worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    
+    // Configurar largura das colunas
+    const colWidths = [{ wch: 30 }];
+    for (let i = 0; i < 13; i++) colWidths.push({ wch: 12 });
+    worksheet['!cols'] = colWidths;
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Relatório');
+    
+    // Gerar arquivo Excel
+    const filename = `relatorio_financeiro_${selectedYear}_${new Date().getTime()}.xlsx`.trim();
+    XLSX.writeFile(workbook, filename);
+    
+    toast({
+      title: "Relatório Excel gerado com sucesso",
+      description: `Arquivo "${filename}" baixado com sucesso.`,
+      variant: "default",
+    });
+  };
+
+  // Função para exportar CSV do backend
+  const exportarCSVBackend = async () => {
+    if (!fetchWithAuth || !API_URL) {
+      toast({
+        title: "Erro de configuração",
+        description: "Função de autenticação não disponível. Usando exportação local.",
+        variant: "default",
+      });
+      gerarExcelLocal();
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.set('mes', String(selectedMonth));
+      if (selectedYear) params.set('ano', String(selectedYear));
+      params.set('tipoMovimento', 'ENTRADA');
+
+      const url = `${API_URL}contas-financeiras/exportar/csv?${params.toString()}`;
+      console.debug('[AccountsReceivable] GET CSV', url);
+      
+      const response = await fetchWithAuth(url, { 
+        method: 'GET', 
+        credentials: 'include' 
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      const urlBlob = URL.createObjectURL(blob);
+      
+      // Tentar obter o nome do arquivo do header Content-Disposition
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const monthName = getSelectedMonthName().replace(/\s+/g, '-').toLowerCase().trim();
+      let filename = `receitas_${monthName}_${selectedYear}_${new Date().getTime()}.csv`.trim();
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1].trim();
+        }
+      }
+      
+      link.setAttribute('href', urlBlob);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "CSV exportado com sucesso",
+        description: `Arquivo "${filename}" baixado do servidor.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('[AccountsReceivable] Erro ao exportar CSV do backend:', error);
+      toast({
+        title: "Erro ao exportar CSV",
+        description: "Erro ao exportar do servidor. Tentando exportação local...",
+        variant: "default",
+      });
+      // Fallback para exportação local
+      gerarExcelLocal();
+    }
+  };
+
+  // Função para exportar Excel do backend
+  const exportarExcelBackend = async () => {
+    if (!fetchWithAuth || !API_URL) {
+      toast({
+        title: "Erro de configuração",
+        description: "Função de autenticação não disponível. Usando exportação local.",
+        variant: "default",
+      });
+      gerarExcelLocal();
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.set('mes', String(selectedMonth));
+      if (selectedYear) params.set('ano', String(selectedYear));
+      params.set('tipoMovimento', 'ENTRADA');
+
+      const url = `${API_URL}contas-financeiras/exportar/excel?${params.toString()}`;
+      console.debug('[AccountsReceivable] GET Excel', url);
+      
+      const response = await fetchWithAuth(url, { 
+        method: 'GET', 
+        credentials: 'include' 
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      const urlBlob = URL.createObjectURL(blob);
+      
+      // Tentar obter o nome do arquivo do header Content-Disposition
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const monthName = getSelectedMonthName().replace(/\s+/g, '-').toLowerCase().trim();
+      let filename = `receitas_${monthName}_${selectedYear}_${new Date().getTime()}.xlsx`.trim();
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1].trim();
+        }
+      }
+      
+      link.setAttribute('href', urlBlob);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Excel exportado com sucesso",
+        description: `Arquivo "${filename}" baixado do servidor.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('[AccountsReceivable] Erro ao exportar Excel do backend:', error);
+      toast({
+        title: "Erro ao exportar Excel",
+        description: "Erro ao exportar do servidor. Tentando exportação local...",
+        variant: "default",
+      });
+      // Fallback para exportação local
+      gerarExcelLocal();
+    }
+  };
+
   const months = [{ value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' }, { value: '3', label: 'Março' }, { value: '4', label: 'Abril' }, { value: '5', label: 'Maio' }, { value: '6', label: 'Junho' }, { value: '7', label: 'Julho' }, { value: '8', label: 'Agosto' }, { value: '9', label: 'Setembro' }, { value: '10', label: 'Outubro' }, { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' }];
 
   const filteredAccounts = useMemo(() => {
     if (!localAccounts || localAccounts.length === 0) return [];
     const month = parseInt(selectedMonth);
     const year = parseInt(selectedYear);
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59);
     
-    return localAccounts.filter(acc => {
-      if (!acc.competencyDate) return false;
+    console.log('[AccountsReceivable] 🔍 Iniciando filtro...', {
+      totalContas: localAccounts?.length || 0,
+      mes: selectedMonth,
+      ano: selectedYear
+    });
+    
+    console.log('[AccountsReceivable] 📊 Contas antes do filtro:', localAccounts.map(acc => ({
+      id: acc.id,
+      competencyDate: acc.competencyDate || 'N/A'
+    })));
+    
+    const filtered = localAccounts.filter(acc => {
+      // Usar apenas competencyDate para receitas
+      const dateToCheck = acc.competencyDate;
+      
+      if (!dateToCheck) {
+        console.warn('[AccountsReceivable] ⚠️ Conta sem data de competência:', acc.id);
+        return false;
+      }
+      
       try {
-        const competencyDate = new Date(acc.competencyDate);
-        if (isNaN(competencyDate.getTime())) return false;
-        return competencyDate >= monthStart && competencyDate <= monthEnd;
-      } catch {
+        // Se for string no formato YYYY-MM-DD, extrair diretamente
+        if (typeof dateToCheck === 'string') {
+          const dateMatch = dateToCheck.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (dateMatch) {
+            const [, yearStr, monthStr] = dateMatch;
+            const accountYear = parseInt(yearStr);
+            const accountMonth = parseInt(monthStr);
+            
+            // Comparar diretamente ano e mês
+            const matches = accountYear === year && accountMonth === month;
+            
+            if (matches) {
+              console.log('[AccountsReceivable] ✅ Conta passou no filtro:', {
+                id: acc.id,
+                date: dateToCheck,
+                accountYear,
+                accountMonth,
+                filterYear: year,
+                filterMonth: month
+              });
+            } else {
+              console.log('[AccountsReceivable] ❌ Conta fora do período:', {
+                id: acc.id,
+                date: dateToCheck,
+                accountYear,
+                accountMonth,
+                filterYear: year,
+                filterMonth: month
+              });
+            }
+            
+            return matches;
+          }
+        }
+        
+        // Se não for formato YYYY-MM-DD, tentar parsear como Date
+        const accountDate = new Date(dateToCheck);
+        if (!isNaN(accountDate.getTime())) {
+          const accountYear = accountDate.getFullYear();
+          const accountMonth = accountDate.getMonth() + 1;
+          
+          const matches = accountYear === year && accountMonth === month;
+          
+          if (matches) {
+            console.log('[AccountsReceivable] ✅ Conta passou no filtro (Date):', {
+              id: acc.id,
+              accountYear,
+              accountMonth
+            });
+          }
+          
+          return matches;
+        }
+        
+        console.warn('[AccountsReceivable] ⚠️ Data inválida:', dateToCheck, acc.id);
+        return false;
+      } catch (error) {
+        console.error('[AccountsReceivable] ❌ Erro ao filtrar conta:', error, acc);
         return false;
       }
     });
+    
+    console.log('[AccountsReceivable] ✅ Resultado do filtro:', {
+      filtradas: filtered.length,
+      total: localAccounts.length,
+      filtradasIds: filtered.map(acc => acc.id),
+      filtradasDetalhes: filtered.map(acc => ({
+        id: acc.id,
+        competencyDate: acc.competencyDate
+      }))
+    });
+    
+    return filtered;
   }, [localAccounts, selectedMonth, selectedYear]);
+
+  // pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / perPage));
+  useEffect(() => {
+    // sempre garante que a página atual seja válida quando filtros / perPage mudarem
+    setPage(p => Math.min(Math.max(1, p), totalPages));
+  }, [totalPages]);
+
+  // resetar página quando filtros mudarem (UX comum)
+  useEffect(() => {
+    setPage(1);
+  }, [selectedMonth, selectedYear, perPage]);
+
+  // items atualmente visíveis na página
+  const paginatedAccounts = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filteredAccounts.slice(start, start + perPage);
+  }, [filteredAccounts, page, perPage]);
 
   // Calcular anos disponíveis baseado nas datas de competência
   const availableYears = useMemo(() => {
@@ -494,8 +960,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   }, [localAccounts, currentDate]);
 
   const entryCategories = categories.filter(cat => cat.type === 'entrada');
-  const totalPending = filteredAccounts.filter(acc => acc.status === 'pending').reduce((sum, acc) => sum + (Number(acc.amount) || 0), 0);
-  const totalReceived = filteredAccounts.filter(acc => acc.status === 'received').reduce((sum, acc) => sum + (Number(acc.amount) || 0), 0);
+  const totalReceived = filteredAccounts.reduce((sum, acc) => sum + (Number(acc.amount) || 0), 0);
 
   const resetImport = () => {
     setImportFile(null);
@@ -513,7 +978,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 open-sans" />Filtro de Período</CardTitle>
-          <CardDescription>Selecione o mês e ano para filtrar as contas a receber</CardDescription>
+          <CardDescription>Selecione o mês e ano para filtrar as receitas</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -534,18 +999,33 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
               </Select>
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" /> Exibindo contas de <strong>{getSelectedMonthName()} de {selectedYear}</strong>
-            {filteredAccounts.length !== localAccounts.length && (<Badge variant="secondary" className="ml-2">{filteredAccounts.length} de {localAccounts.length} contas</Badge>)}
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground flex flex-row gap-2">
+            <Calendar className="h-4 w-4" />
+            <p>Exibindo receitas de <strong>{getSelectedMonthName()} de {selectedYear}</strong>
+            {filteredAccounts.length !== localAccounts.length && (<Badge variant="secondary" className="ml-2">{filteredAccounts.length} de {localAccounts.length} receitas</Badge>)}</p>
           </div>
         </CardContent>
       </Card>
       <div className="flex justify-between items-center">
         <div>
-          <h2>Contas a Receber - {getSelectedMonthName()}/{selectedYear}</h2>
-          <p className="text-muted-foreground">Gerencie suas contas a receber e receitas</p>
+          <h2>Receitas a Receber - {getSelectedMonthName()}/{selectedYear}</h2>
+          <p className="text-muted-foreground">Gerencie suas receitas</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={exportarCSVBackend}
+          >
+            <Download className="h-4 w-4" />Exportar CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={exportarExcelBackend}
+          >
+            <Download className="h-4 w-4" />Exportar Excel
+          </Button>
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
@@ -554,7 +1034,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />Importar Contas a Receber via CSV</DialogTitle>
+                  <Upload className="h-5 w-5" />Importar dados via CSV</DialogTitle>
                 <DialogDescription>Faça upload de um arquivo CSV com as colunas: Emissão, Vencimento, Pagamento, Valor, Categoria, Obs</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -577,7 +1057,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(importProgress.processed / importProgress.total) * 100}%` }} />
                     </div>
-                    <div className="text-sm text-green-600">{importProgress.imported} contas importadas com sucesso</div>
+                    <div className="text-sm text-green-600">{importProgress.imported} dados importadas com sucesso</div>
                   </div>
                 )}
                 {importProgress.errors.length > 0 && (
@@ -614,28 +1094,18 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           </Dialog>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2"><Plus className="h-4 w-4" />Nova Conta
+              <Button className="flex items-center gap-2"><Plus className="h-4 w-4" />Nova Receita
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Nova Conta a Receber</DialogTitle>
-                <DialogDescription>Adicione uma nova conta a receber ao sistema</DialogDescription>
+                <DialogTitle>Nova Receita</DialogTitle>
+                <DialogDescription>Adicione uma nova receita ao sistema</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="competency-date">Data de Competência</Label>
-                    <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label htmlFor="due-date">Data de Vencimento</Label>
-                    <Input id="due-date" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} />
-                  </div>
-                </div>
                 <div>
-                  <Label htmlFor="payment-date">Data de Pagamento (opcional)</Label>
-                  <Input id="payment-date" type="date" value={formData.paymentDate} onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })} />
+                  <Label htmlFor="competency-date">Data de Competência</Label>
+                  <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -662,7 +1132,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                 </div>
                 <div>
                   <Label htmlFor="description">Descrição</Label>
-                  <Textarea id="description" placeholder="Descrição da conta a receber" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                  <Textarea id="description" placeholder="Descrição da receita" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
@@ -673,17 +1143,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           </Dialog>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Pendente</CardTitle>
-            <Calendar className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-orange-600">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'pending').length} contas</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total Recebido</CardTitle>
@@ -691,7 +1151,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           </CardHeader>
           <CardContent>
             <div className="text-green-600">{formatCurrency(totalReceived)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'received').length} contas</p>
+            <p className="text-xs text-muted-foreground">{filteredAccounts.length} receitas</p>
           </CardContent>
         </Card>
         <Card>
@@ -700,95 +1160,136 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-blue-600">{formatCurrency(totalPending + totalReceived)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.length} contas</p>
+            <div className="text-blue-600">{formatCurrency(totalReceived)}</div>
+            <p className="text-xs text-muted-foreground">{filteredAccounts.length} receitas</p>
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Contas</CardTitle>
-          <CardDescription>Todas as contas a receber cadastradas</CardDescription>
+          <CardTitle>Lista de Receitas</CardTitle>
+          <CardDescription>Todas as receitas cadastradas</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table><TableHeader>
-                <TableRow>
-                  <TableHead>Competência</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAccounts.map(account => (
-                  <TableRow key={account.id}>
-                    <TableCell>{formatDate(account.competencyDate)}</TableCell>
-                    <TableCell>{formatDate(account.dueDate)}</TableCell>
-                    <TableCell>{account.paymentDate ? formatDate(account.paymentDate) : '-'}</TableCell>
-                    <TableCell>{formatCurrency(account.amount)}</TableCell>
-                    <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId)}</TableCell>
-                    <TableCell className="max-w-xs truncate">{account.description}</TableCell>
-                    <TableCell>
-                      <Badge variant={account.status === 'received' ? 'default' : 'secondary'}>{account.status === 'received' ? 'Recebida' : 'Pendente'}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}><Edit className="h-4 w-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>Tem certeza que deseja excluir esta conta a receber? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(account.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredAccounts.length === 0 && (
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Carregando receitas...
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">{localAccounts.length === 0 ? 'Nenhuma conta cadastrada' : `Nenhuma conta encontrada para ${getSelectedMonthName()} de ${selectedYear}`}</TableCell>
+                    <TableHead>Competência</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredAccounts.length > 0 ? (
+                    paginatedAccounts.map(account => (
+                      <TableRow key={account.id}>
+                        <TableCell>{account.competencyDate ? formatDate(account.competencyDate) : '-'}</TableCell>
+                        <TableCell>{formatCurrency(account.amount)}</TableCell>
+                        <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId)}</TableCell>
+                        <TableCell className="max-w-xs truncate">{account.description || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}><Edit className="h-4 w-4" /></Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(account.id)}>Excluir</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        {localAccounts.length === 0 
+                          ? 'Nenhuma receita cadastrada. Clique em "Nova Receita" para adicionar novos registros.' 
+                          : `Nenhuma receita encontrada para ${getSelectedMonthName()} de ${selectedYear}. Total de receita: ${localAccounts.length}`}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+
+              {/* {filteredAccounts.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Nenhuma receita encontrada.</p>
+                </div>
+              )} */}
+
+              <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
+                {/* <div className="text-sm text-neutral-400">
+                  {selected.length} de {filtered.length} linha(s) selecionada(s).
+                </div> */}
+
+                <div className="flex items-center gap-3">
+                  <Label className="text-sm font-medium">Linhas por pág.</Label>
+                  <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                    <SelectTrigger className="w-[80px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="6">6</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredAccounts.length / perPage) || 1)}</div>
+
+                  <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
+                    <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                      <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+
+                    <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+
+                    <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                      <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardFooter>
+            </div>
+          )}
         </CardContent>
       </Card>
       {/* Dialog de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Conta a Receber</DialogTitle>
+            <DialogTitle>Editar Receita</DialogTitle>
             <DialogDescription>Modifique os dados da conta a receber</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit-competency-date">Data de Competência</Label>
-                <Input id="edit-competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })}/>
-              </div>
-              <div>
-                <Label htmlFor="edit-due-date">Data de Vencimento</Label>
-                <Input id="edit-due-date" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}/>
-              </div>
-            </div>
             <div>
-              <Label htmlFor="edit-payment-date">Data de Pagamento (opcional)</Label>
-              <Input id="edit-payment-date" type="date" value={formData.paymentDate} onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}/>
+              <Label htmlFor="edit-competency-date">Data de Competência</Label>
+              <Input id="edit-competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })}/>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -817,7 +1318,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             </div>
             <div>
               <Label htmlFor="edit-description">Descrição</Label>
-              <Textarea id="edit-description" placeholder="Descrição da conta a receber" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+              <Textarea id="edit-description" placeholder="Descrição da receita" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
             </div>
           </div>
           <div className="flex justify-end gap-2">

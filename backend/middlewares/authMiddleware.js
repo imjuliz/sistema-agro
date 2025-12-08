@@ -17,6 +17,15 @@ export const auth = (perfisPermitidos = []) => {
       // 3) Decide token a usar (header tem prioridade)
       const token = tokenFromHeader || tokenFromCookie || null;
 
+      // Debug para rotas de exportação
+      if (req.path && (req.path.includes('/exportar') || req.path.includes('/dashboard/exportar'))) {
+        console.log('[auth] 🔍 Rota de exportação:', req.method, req.path);
+        console.log('[auth] 📋 Headers authorization:', req.headers.authorization ? 'presente' : 'ausente');
+        console.log('[auth] 📋 Token do header:', tokenFromHeader ? 'presente' : 'ausente');
+        console.log('[auth] 📋 Token do cookie:', tokenFromCookie ? 'presente' : 'ausente');
+        console.log('[auth] 📋 Token final:', token ? 'presente' : 'ausente');
+      }
+
       let user = null;
 
       if (token) {
@@ -26,6 +35,9 @@ export const auth = (perfisPermitidos = []) => {
           decoded = jwt.verify(token, JWT_SECRET);
         } catch (err) {
           console.debug("[auth] token inválido:", err?.message ?? err);
+          if (req.path && (req.path.includes('/exportar') || req.path.includes('/dashboard/exportar'))) {
+            console.error('[auth] ❌ Erro ao validar token para exportação:', err.message);
+          }
           return res.status(403).json({ mensagem: "Token inválido" });
         }
 
@@ -54,6 +66,9 @@ export const auth = (perfisPermitidos = []) => {
 
         if (!user) {
           console.debug("[auth] usuário do token não encontrado:", decoded.id ?? decoded.sub);
+          if (req.path && (req.path.includes('/exportar') || req.path.includes('/dashboard/exportar'))) {
+            console.error('[auth] ❌ Usuário não encontrado para exportação, userId:', decoded.id ?? decoded.sub);
+          }
           return res.status(401).json({ mensagem: "Usuário não encontrado" });
         }
 
@@ -81,6 +96,9 @@ export const auth = (perfisPermitidos = []) => {
       // se por algum motivo user ainda não possui perfil, erro
       if (!user || !user.perfil) {
         console.debug("[auth] usuário sem perfil:", user);
+        if (req.path && (req.path.includes('/exportar') || req.path.includes('/dashboard/exportar'))) {
+          console.error('[auth] ❌ Usuário sem perfil para exportação:', user?.id);
+        }
         return res.status(401).json({ mensagem: "Usuário não encontrado" });
       }
 
