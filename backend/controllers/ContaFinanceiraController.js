@@ -757,6 +757,34 @@ export const exportarDashboardPDFController = async (req, res) => {
   }
 };
 
+// Dashboard financeiro (resumo simples)
+export const getDashboardFinanceiroController = async (req, res) => {
+  try {
+    const unidadeId = req.usuario?.unidadeId;
+    if (!unidadeId) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: 'Unidade não identificada',
+      });
+    }
+
+    const stats = await getDashboardStats(unidadeId);
+
+    // Se getDashboardStats retornou erro interno, ainda devolvemos 200 com flag de erro para não quebrar o frontend
+    return res.status(200).json({
+      sucesso: !stats?.erro,
+      dados: stats,
+    });
+  } catch (error) {
+    console.error('[getDashboardFinanceiroController] erro:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: 'Erro ao obter dashboard financeiro',
+      detalhes: error.message,
+    });
+  }
+};
+
 // Exportar Contas CSV (para AccountsPayable)
 export const exportarContasCSVController = async (req, res) => {
   try {

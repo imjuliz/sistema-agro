@@ -269,6 +269,50 @@ export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
   }
 }
 
+// Resumo simples para o dashboard financeiro
+export const getDashboardStats = async (unidadeId) => {
+  try {
+    const [payableAgg, receivedAgg, paidAgg] = await Promise.all([
+      prisma.financeiro.aggregate({
+        _sum: { valor: true },
+        where: {
+          unidadeId: Number(unidadeId),
+          tipoMovimento: 'SAIDA',
+          status: 'PENDENTE',
+          deletadoEm: null,
+        },
+      }),
+      prisma.financeiro.aggregate({
+        _sum: { valor: true },
+        where: {
+          unidadeId: Number(unidadeId),
+          tipoMovimento: 'ENTRADA',
+          status: 'PAGA',
+          deletadoEm: null,
+        },
+      }),
+      prisma.financeiro.aggregate({
+        _sum: { valor: true },
+        where: {
+          unidadeId: Number(unidadeId),
+          tipoMovimento: 'SAIDA',
+          status: 'PAGA',
+          deletadoEm: null,
+        },
+      }),
+    ]);
+
+    return {
+      totalPayable: Number(payableAgg._sum.valor ?? 0),
+      totalReceived: Number(receivedAgg._sum.valor ?? 0),
+      totalPaid: Number(paidAgg._sum.valor ?? 0),
+    };
+  } catch (error) {
+    console.error('[getDashboardStats] erro:', error);
+    return { totalPayable: 0, totalReceived: 0, totalPaid: 0, erro: error.message };
+  }
+};
+
 export const listarVendas = async (unidadeId) => { //FUNCIONA 
     try {
         const vendas = await prisma.venda.findMany({ where: { unidadeId: Number(unidadeId) },});

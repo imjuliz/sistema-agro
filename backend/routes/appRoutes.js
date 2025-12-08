@@ -40,6 +40,7 @@ import {
   exportarDashboardCSVController,
   exportarDashboardPDFController,
   exportarContasCSVController,
+  getDashboardFinanceiroController,
 } from "../controllers/ContaFinanceiraController.js";
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
