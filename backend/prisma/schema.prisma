@@ -64,6 +64,7 @@ model Unidade {
   usuarios                Usuario[]          @relation("UsuarioUnidade")
   vendas                  Venda[]
   categoria               Categoria[]
+  dadosGerais             DadoGeralUnidade[]
 
   @@index([matrizId])
   @@index([gerenteId])

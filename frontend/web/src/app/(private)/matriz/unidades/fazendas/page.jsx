@@ -674,7 +674,7 @@ export default function FazendasPage() {
                                                         <div className="text-base font-medium">Área: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
                                                     <div className="flex flex-row gap-3 ">
-                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.areaHa} ha</div>
+                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.manager || "—"}</div>
                                                     </div>
                                                 </div>
                                                 {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
@@ -691,52 +691,7 @@ export default function FazendasPage() {
                                     </div>
                                 )}
 
-                                {/* Pagination controls */}
-                                {units.length > 0 && (
-                                    <div className="mt-6 flex items-center justify-between">
-                                        <div className="text-sm text-muted-foreground">
-                                            Página <span className="font-semibold">{page}</span> de{' '}
-                                            <span className="font-semibold">{Math.ceil(totalResults / perPage) || 1}</span>
-                                            {' '} ({totalResults} resultado{totalResults !== 1 ? 's' : ''})
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                                                <ChevronLeft className="h-4 w-4" />
-                                                Anterior
-                                            </Button>
-                                            <div className="flex items-center gap-1">
-                                                {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, i) => {
-                                                    const totalPages = Math.ceil(totalResults / perPage);
-                                                    let pageNum;
-                                                    if (totalPages <= 5) {pageNum = i + 1;}
-                                                    else if (page <= 3) {pageNum = i + 1;}
-                                                    else if (page >= totalPages - 2) {pageNum = totalPages - 4 + i;}
-                                                    else {pageNum = page - 2 + i;}
-                                                    return (
-                                                        <Button key={pageNum} variant={pageNum === page ? "default" : "outline"} size="sm" onClick={() => setPage(pageNum)}>
-                                                            {pageNum}
-                                                        </Button>
-                                                    );
-                                                })}
-                                            </div>
-                                            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))} disabled={page >= Math.ceil(totalResults / perPage)}>
-                                                Próximo
-                                                <ChevronRight className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-muted-foreground">Por página:</span>
-                                            <select value={perPage}
-                                                onChange={(e) => {setPerPage(Number(e.target.value));setPage(1);}}
-                                                className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700">
-                                                <option value="8">8</option>
-                                                <option value="16">16</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
+                            
                             </div>
                         )}
                     </CardContent>
