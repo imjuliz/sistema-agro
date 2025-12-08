@@ -63,7 +63,7 @@ export const listarTodosFornecedoresExternos = async () => {
 
 export const criarFornecedorExterno = async (data) => {
   try {
-    const { nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco } = data;
+    const { nomeEmpresa, descricaoEmpresa, cnpjCpf, email, telefone, endereco, status } = data;
 
     if (!nomeEmpresa || !descricaoEmpresa || !cnpjCpf || !telefone) {
       return { sucesso:false, erro: "nomeEmpresa, descricaoEmpresa, cnpj e telefone são obrigatórios.", field: null };
@@ -73,16 +73,16 @@ export const criarFornecedorExterno = async (data) => {
     const existing = await prisma.fornecedorExterno.findFirst({
       where: {
         OR: [
-          { cnpj: cnpjCpf },
+          { cnpjCpf: cnpjCpf },
           { email: email || undefined },
           { telefone: telefone || undefined }
         ]
       },
-      select: { id: true, cnpj: true, email: true, telefone: true }
+      select: { id: true, cnpjCpf: true, email: true, telefone: true }
     });
 
     if (existing) {
-      if (existing.cnpj === cnpjCpf) return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
+      if (existing.cnpjCpf === cnpjCpf) return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpjCpf" };
       if (existing.email && existing.email === email) return { sucesso: false, erro: "Email já cadastrado.", field: "email" };
       if (existing.telefone && existing.telefone === telefone) return { sucesso: false, erro: "Telefone já cadastrado.", field: "telefone" };
       return { sucesso: false, erro: "Fornecedor já cadastrado.", field: null };
@@ -92,19 +92,20 @@ export const criarFornecedorExterno = async (data) => {
       data: {
         nomeEmpresa,
         descricaoEmpresa,
-        cnpj: cnpjCpf,
+        cnpjCpf: cnpjCpf,
         email: email || null,
         telefone,
         endereco: endereco || null,
+        status: status || 'ATIVO'
       },
-      select: { id: true, nomeEmpresa: true, cnpj: true, email: true, telefone: true }
+      select: { id: true, nomeEmpresa: true, cnpjCpf: true, email: true, telefone: true }
     });
 
     return { sucesso: true, fornecedorExterno: f, message: "Fornecedor criado" };
   } catch (error) {
     console.error("Erro ao criar fornecedorExterno:", error);
-    if (error.code === 'P2002' && error.meta?.target?.includes('cnpj')) {
-      return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpj" };
+    if (error.code === 'P2002' && (error.meta?.target?.includes('cnpj') || error.meta?.target?.includes('cnpj_cpf') || error.meta?.target?.includes('cnpjCpf'))) {
+      return { sucesso: false, erro: "CNPJ já cadastrado.", field: "cnpjCpf" };
     }
     return { sucesso: false, erro: "Erro ao criar fornecedorExterno.", detalhes: error.message, field: null };
   }
@@ -369,15 +370,15 @@ export const verContratosComFazendasAsFornecedor = async(unidadeId) => {
           select: {
             id: true,
             nome: true,
-            raca: true,
-            pesoUnidade: true,
+            // raca: true,
+            // pesoUnidade: true,
             quantidade: true,
             unidadeMedida: true,
-            precoUnitario: true,
-            categoria: true,
-            ativo: true,
-            criadoEm: true,
-            atualizadoEm: true
+            // precoUnitario: true,
+            // categoria: true,
+            // ativo: true,
+            // criadoEm: true,
+            // atualizadoEm: true
           }
         }
       }

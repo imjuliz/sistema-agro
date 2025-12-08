@@ -1,3 +1,4 @@
+export { default } from "../fornecedores-fazenda/OrderManagement";
 'use client'
 
 import { useState, useMemo } from 'react';

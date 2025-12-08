@@ -1,3 +1,4 @@
+export { default } from "../fornecedores-fazenda/fornecedores-card";
 "use client"
 import React, { useMemo, useState } from "react";
 import { Button } from '@/components/ui/button';

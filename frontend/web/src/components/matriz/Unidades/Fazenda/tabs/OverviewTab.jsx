@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 // --------------------------------------------------------------------------------
 // grafico de Uso do Solo e Cultivo
@@ -52,6 +54,7 @@ export function OverviewTab({ fazendaId }) {
   const [formNovo, setFormNovo] = useState({ dado: "", valor: "", descricao: "" })
   const [editingId, setEditingId] = useState(null)
   const [formEdit, setFormEdit] = useState({ dado: "", valor: "", descricao: "" })
+  const [openNovo, setOpenNovo] = useState(false)
 
   // Carregar dados da fazenda ao montar o componente
   useEffect(() => {
@@ -119,6 +122,7 @@ export function OverviewTab({ fazendaId }) {
         if (mounted) setDadosGerais(Array.isArray(lista) ? lista : []);
       } catch (err) {
         console.error("[dados-gerais] erro ao listar", err);
+        toast.error("Erro ao carregar dados gerais");
         if (mounted) setDadosErro("Erro ao carregar dados gerais");
       } finally {
         if (mounted) setDadosLoading(false);
@@ -149,9 +153,12 @@ export function OverviewTab({ fazendaId }) {
       setDadosGerais(prev => [novo, ...prev]);
       setFormNovo({ dado: "", valor: "", descricao: "" });
       setDadosErro(null);
+      setOpenNovo(false);
+      toast.success("Dado criado com sucesso");
     } catch (err) {
       console.error("[dados-gerais] criar", err);
       setDadosErro("Erro ao criar dado");
+      toast.error("Erro ao criar dado");
     }
   }
 
@@ -179,9 +186,11 @@ export function OverviewTab({ fazendaId }) {
       setDadosGerais(prev => prev.map(d => d.id === id ? atualizado : d));
       cancelEdit();
       setDadosErro(null);
+      toast.success("Dado atualizado");
     } catch (err) {
       console.error("[dados-gerais] atualizar", err);
       setDadosErro("Erro ao atualizar dado");
+      toast.error("Erro ao atualizar dado");
     }
   }
 
@@ -196,9 +205,11 @@ export function OverviewTab({ fazendaId }) {
         throw new Error(body?.erro || `HTTP ${res.status}`);
       }
       setDadosGerais(prev => prev.filter(d => d.id !== id));
+      toast.success("Dado excluído");
     } catch (err) {
       console.error("[dados-gerais] excluir", err);
       setDadosErro("Erro ao excluir dado");
+      toast.error("Erro ao excluir dado");
     }
   }
 
@@ -464,29 +475,43 @@ export function OverviewTab({ fazendaId }) {
             <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
           </div>
 
-          <div className="p-4 border rounded-md mb-4">
-            <form className="grid grid-cols-1 md:grid-cols-4 gap-3" onSubmit={handleCriarDado}>
-              <Input
-                placeholder="Dado*"
-                value={formNovo.dado}
-                onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
-                required
-              />
-              <Input
-                placeholder="Valor*"
-                value={formNovo.valor}
-                onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
-                required
-              />
-              <Input
-                placeholder="Descrição (opcional)"
-                value={formNovo.descricao}
-                onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
-              />
-              <Button type="submit"><Plus className="mr-2 h-4 w-4" />Adicionar</Button>
-            </form>
-            {dadosErro && <div className="text-sm text-red-500 mt-2">{dadosErro}</div>}
+          <div className="flex justify-between items-center py-2">
+            <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
+            <Dialog open={openNovo} onOpenChange={setOpenNovo}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Novo dado</DialogTitle>
+                </DialogHeader>
+                <form className="space-y-3" onSubmit={handleCriarDado}>
+                  <Input
+                    placeholder="Dado*"
+                    value={formNovo.dado}
+                    onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
+                    required
+                  />
+                  <Input
+                    placeholder="Valor*"
+                    value={formNovo.valor}
+                    onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
+                    required
+                  />
+                  <Input
+                    placeholder="Descrição (opcional)"
+                    value={formNovo.descricao}
+                    onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
+                  />
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
+                    <Button type="submit">Salvar</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
+          {dadosErro && <div className="text-sm text-red-500 mb-2">{dadosErro}</div>}
 
           <div className="overflow-hidden rounded-md border">
             <Table>
