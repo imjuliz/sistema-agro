@@ -3,6 +3,8 @@ import {
   getResumoVendas,
   getTopFazendasProducao,
   buildDashboardPdfData,
+  getDashboardKpis,
+  getResumoFinanceiroMatriz,
 } from "../models/Matriz.js";
 
 export async function getResumoVendasController(req, res) {
@@ -65,6 +67,26 @@ export async function exportDashboardPdfController(_req, res) {
   } catch (error) {
     console.error("exportDashboardPdfController erro:", error);
     return res.status(500).json({ sucesso: false, erro: "Erro ao gerar PDF do dashboard." });
+  }
+}
+
+export async function getDashboardKpisController(_req, res) {
+  try {
+    const resultado = await getDashboardKpis();
+    return res.json(resultado);
+  } catch (error) {
+    console.error("getDashboardKpisController erro:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao buscar KPIs do dashboard." });
+  }
+}
+
+export async function getResumoFinanceiroMatrizController(_req, res) {
+  try {
+    const resultado = await getResumoFinanceiroMatriz();
+    return res.json(resultado);
+  } catch (error) {
+    console.error("getResumoFinanceiroMatrizController erro:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao calcular resumo financeiro." });
   }
 }
 

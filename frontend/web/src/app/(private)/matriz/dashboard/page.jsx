@@ -212,14 +212,23 @@ function ChartRadarGridCircle({ data }) {
     )
 }
 
+import FullPageLoader from "@/components/FullPageLoader"
+
 export default function Page() {
-    usePerfilProtegido("GERENTE_MATRIZ")
+    const { checking } = usePerfilProtegido("GERENTE_MATRIZ")
     const { fetchWithAuth } = useAuth()
     const [salesRange, setSalesRange] = useState("7")
     const [salesData, setSalesData] = useState([])
     const [salesTotal, setSalesTotal] = useState(0)
     const [productionData, setProductionData] = useState([])
     const [loadingPdf, setLoadingPdf] = useState(false)
+    const [activeUsers, setActiveUsers] = useState(0)
+    const [activeUnits, setActiveUnits] = useState(0)
+    const [financeSummary, setFinanceSummary] = useState({
+        receitas: 0,
+        despesas: 0,
+        saldo: 0,
+    })
 
     const apiBase = useMemo(() => (API_URL || "").replace(/\/+$/, ""), [])
 
@@ -248,6 +257,37 @@ export default function Page() {
         }
         loadSales()
     }, [apiBase, authFetch, salesRange])
+
+    useEffect(() => {
+        const loadKpis = async () => {
+            try {
+                const resp = await authFetch(`${apiBase}/matriz/dashboard/kpis`)
+                const body = await resp.json()
+                setActiveUsers(Number(body?.usuariosAtivos) || 0)
+                setActiveUnits(Number(body?.filiaisAtivas) || 0)
+            } catch (err) {
+                console.error("Erro ao carregar KPIs:", err)
+            }
+        }
+        loadKpis()
+    }, [apiBase, authFetch])
+
+    useEffect(() => {
+        const loadFinance = async () => {
+            try {
+                const resp = await authFetch(`${apiBase}/matriz/dashboard/financeiro`)
+                const body = await resp.json()
+                setFinanceSummary({
+                    receitas: Number(body?.receitas) || 0,
+                    despesas: Number(body?.despesas) || 0,
+                    saldo: Number(body?.saldo) || 0,
+                })
+            } catch (err) {
+                console.error("Erro ao carregar resumo financeiro:", err)
+            }
+        }
+        loadFinance()
+    }, [apiBase, authFetch])
 
     useEffect(() => {
         const loadProduction = async () => {
@@ -285,9 +325,7 @@ export default function Page() {
     const stats = [
         {
             icon: Layers,
-            value: productionData[0]
-                ? `${productionData[0]?.nome || "—"}`
-                : "Sem ranking",
+            value: activeUsers || 0,
             label: "Usuários ativos",
         },
         {
@@ -297,7 +335,7 @@ export default function Page() {
         },
         {
             icon: BarChart2,
-            value: productionData.length ? `${productionData.length} unidades` : "—",
+            value: `${activeUnits || 0} unidades`,
             label: "Filiais ativas",
         },
     ]
@@ -314,6 +352,8 @@ export default function Page() {
         { id: 2, text: "Estoque abaixo do mínimo: 12 itens", icon: Box },
         { id: 3, text: "2 lojas com sinistros pendentes", icon: Clock },
     ]
+
+    if (checking) return <FullPageLoader />
 
     return (
         <div className="min-h-screen px-18 py-10 bg-surface-50">
@@ -377,15 +417,19 @@ export default function Page() {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex justify-between">
                                         <div className="text-sm">Receita (Mês)</div>
-                                        <div className="font-semibold">{formatCurrency(salesTotal)}</div>
+                                        <div className="font-semibold">
+                                            {formatCurrency(financeSummary.receitas)}
+                                        </div>
                                     </div>
                                     <div className="flex justify-between">
                                         <div className="text-sm">Despesas (Mês)</div>
-                                        <div className="font-semibold">{formatCurrency(salesTotal)}</div>
+                                        <div className="font-semibold">
+                                            {formatCurrency(financeSummary.despesas)}
+                                        </div>
                                     </div>
                                     <Separator />
                                     <div className="text-sm text-muted-foreground">
-                                        Total de receitas - despesas
+                                        Resultado: {formatCurrency(financeSummary.saldo)}
                                     </div>
                                 </div>
                             </CardContent>
