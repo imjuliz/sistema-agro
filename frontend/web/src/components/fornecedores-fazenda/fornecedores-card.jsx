@@ -12,7 +12,6 @@ import { API_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-
 export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();

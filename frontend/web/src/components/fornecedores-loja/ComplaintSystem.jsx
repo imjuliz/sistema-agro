@@ -1,4 +1,3 @@
-export { default } from "../fornecedores-fazenda/ComplaintSystem";
 'use client'
 
 import { useState } from 'react';
