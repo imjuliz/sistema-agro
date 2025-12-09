@@ -7,6 +7,7 @@ import {
   deleteProduto,
   listarProdutos,
   atualizarQntdMin,
+  adicionarProdutoAoEstoque,
 } from "../models/estoque_produtos.js";
 import { lotesPlantio } from "../models/Fazendas.js";
 import {
@@ -258,6 +259,25 @@ export const listarEstoqueController = async (req, res) => {
 
   return res.status(200).json(resultado);
 };
+
+export async function adicionarProdutoAoEstoqueController(req, res) {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const dadosProduto = req.body;
+
+    const produtoCriado = await adicionarProdutoAoEstoque(
+      Number(unidadeId),
+      dadosProduto
+    );
+
+    return res.status(201).json({
+      message: "Produto adicionado ao estoque com sucesso!",
+      data: produtoCriado,
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+}
 
 export const AtividadesLoteAgricolaController = async (req, res) => {
   try {

@@ -1,4 +1,4 @@
-import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios,contarLotesAnimaliaPorTipo, contarAnimais, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia, criarAtividadeAnimalia, listarAtividadesDoLote} from "../models/lote.js";
+import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesPorUnidade, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios,contarLotesAnimaliaPorTipo, contarAnimais, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia, criarAtividadeAnimalia, listarAtividadesDoLote, criarEnvioLoteService} from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -79,12 +79,16 @@ export const listarLotesPlantioController = async (req, res) => {
 
     const unidadeId = req.params.unidadeId
 
-    const lotesVegetais = await listarLotesPlantio(unidadeId);
+    // Usar o novo service que lista todos os lotes da unidade (independente do tipo)
+    const resultado = await listarLotesPorUnidade(unidadeId);
+
+    const raw = resultado?.lotes || resultado?.loteVegetais || resultado || [];
+    const lotesArray = Array.isArray(raw) ? raw : (Array.isArray(resultado?.lotes) ? resultado.lotes : []);
 
     return res.status(200).json({
       sucesso: true,
-      lotesVegetais,
-      message: "Lotes de vegetais listados com sucesso.",
+      lotes: lotesArray,
+      message: "Lotes listados com sucesso.",
     });
 
   } catch (error) {
@@ -100,10 +104,13 @@ export const listarLotesPlantioController = async (req, res) => {
 export const listarLotesAnimaliaController = async (req, res) => {
   try {
     const unidadeId = req.params.unidadeId;
-    const lotesAnimalia = await listarLotesAnimalia(unidadeId);
+    const resultado = await listarLotesAnimalia(unidadeId);
+    const raw = resultado?.lotesAnimalia || resultado?.loteAnimalia || resultado?.lotes || resultado || [];
+    const lotesArray = Array.isArray(raw) ? raw : (Array.isArray(resultado?.lotesAnimalia) ? resultado.lotesAnimalia : []);
+
     return res.status(200).json({
       sucesso: true,
-      lotesAnimalia,
+      lotes: lotesArray,
       message: "Lotes de animalia listados com sucesso.",
     });
   } catch (error) {
@@ -547,7 +554,41 @@ export async function getLotePorIdController(req, res) {
   }
 }
 
+export const listarEnviosLoteController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    if (isNaN(unidadeId)) {
+      return res.status(400).json({ error: "unidadeId inválido." });
+    }
+    const envios = await listarEnviosLote(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      envios,
+      message: "Envios de lote listados com sucesso!",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      error: "Erro ao listar envios de lote.",
+      detalhes: error.message,
+    });
+  }
+};
 
+export async function criarEnvioLoteController(req, res) {
+  const { contratoId, loteId } = req.body;
+
+  try {
+    const envioCriado = await criarEnvioLoteService({ contratoId, loteId });
+
+    return res.status(201).json({
+      message: "Lote enviado com sucesso e registrado.",
+      data: envioCriado,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+}
 
 // export async function createLoteController(req, res) {
 //   try {
