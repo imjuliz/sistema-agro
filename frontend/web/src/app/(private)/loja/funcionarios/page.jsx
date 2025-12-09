@@ -3,7 +3,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { buildImageUrl } from '@/lib/image';
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
-
 import React, { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,17 +15,16 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Mail, Phone, MessageSquare, Calendar, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
+import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 // Função para formatar telefone
 const formatarTelefone = (telefone) => {
   if (!telefone) return '';
   const cleaned = telefone.replace(/\D/g, '');
-  if (cleaned.length === 11) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-  } else if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-  }
+  if (cleaned.length === 11) {return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;}
+  else if (cleaned.length === 10) {return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;}
   return telefone;
 };
 
@@ -51,24 +49,12 @@ export default function FuncionariosFazenda() {
   const [page, setPage] = useState(1);
 
   // Estados de filtros temporários (para o popover)
-  const [tempTypeFilters, setTempTypeFilters] = useState({
-    "GERENTE_LOJA": true,
-    "FUNCIONARIO_LOJA": true,
-  });
-  const [tempStatusFilters, setTempStatusFilters] = useState({
-    "Ativo": true,
-    "Inativo": false,
-  });
+  const [tempTypeFilters, setTempTypeFilters] = useState({"GERENTE_LOJA": true,"FUNCIONARIO_LOJA": true,});
+  const [tempStatusFilters, setTempStatusFilters] = useState({"Ativo": true,"Inativo": false,});
 
   // Estados de filtros aplicados (usados para filtrar a lista)
-  const [typeFilters, setTypeFilters] = useState({
-    "GERENTE_LOJA": true,
-    "FUNCIONARIO_LOJA": true,
-  });
-  const [statusFilters, setStatusFilters] = useState({
-    "Ativo": true,
-    "Inativo": false,
-  });
+  const [typeFilters, setTypeFilters] = useState({"GERENTE_LOJA": true,"FUNCIONARIO_LOJA": true,});
+  const [statusFilters, setStatusFilters] = useState({"Ativo": true,"Inativo": false,});
 
   // Controle do popover para sincronizar filtros temporários quando aberto
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -108,21 +94,14 @@ export default function FuncionariosFazenda() {
         return;
       }
       if (jsonResponse.sucesso && jsonResponse.usuarios) {
-        const filtered = jsonResponse.usuarios.filter(u =>
-          u.perfil?.funcao === "GERENTE_LOJA" || u.perfil?.funcao === "FUNCIONARIO_LOJA"
-        );
+        const filtered = jsonResponse.usuarios.filter(u =>u.perfil?.funcao === "GERENTE_LOJA" || u.perfil?.funcao === "FUNCIONARIO_LOJA");
         setFuncionarios(filtered);
       }
-    } catch (error) {
-      console.error("[FuncionariosLoja] Erro ao carregar funcionários:", error);
-    } finally {
-      setLoadingFuncionarios(false);
-    }
+    } catch (error) {console.error("[FuncionariosLoja] Erro ao carregar funcionários:", error);}
+    finally {setLoadingFuncionarios(false);}
   };
 
-  useEffect(() => {
-    loadFuncionarios();
-  }, [user?.unidadeId, fetchWithAuth]);
+  useEffect(() => {loadFuncionarios();}, [user?.unidadeId, fetchWithAuth]);
 
   // Funções de filtro
   // Funções para alterar filtros temporários
@@ -148,14 +127,8 @@ export default function FuncionariosFazenda() {
 
   // Resetar filtros
   const resetFilters = () => {
-    const defaults = {
-      "GERENTE_LOJA": true,
-      "FUNCIONARIO_LOJA": true,
-    };
-    const defaultStatus = {
-      "Ativo": true,
-      "Inativo": false,
-    };
+    const defaults = {"GERENTE_LOJA": true,"FUNCIONARIO_LOJA": true,};
+    const defaultStatus = {"Ativo": true,"Inativo": false,};
     setTempTypeFilters(defaults);
     setTempStatusFilters(defaultStatus);
     setTypeFilters(defaults);
@@ -177,7 +150,6 @@ export default function FuncionariosFazenda() {
       // Determinar status do funcionário (ativo/inativo)
       const statusLabel = f.status === true || f.status === 'ativo' ? "Ativo" : "Inativo";
       const matchStatus = !!statusFilters[statusLabel];
-      
       return matchQuery && matchType && matchStatus;
     });
   }, [funcionarios, query, typeFilters, statusFilters]);
@@ -230,9 +202,8 @@ export default function FuncionariosFazenda() {
     } catch (error) {
       console.error("Erro ao salvar edições:", error);
       alert("Erro ao salvar as edições");
-    } finally {
-      setSavingEdit(false);
     }
+    finally {setSavingEdit(false);}
   };
 
   // Abrir modal de deleção
@@ -246,9 +217,7 @@ export default function FuncionariosFazenda() {
     if (!selectedUser) return;
 
     try {
-      const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, {method: 'DELETE',});
 
       const response = await res.json();
 
@@ -272,9 +241,7 @@ export default function FuncionariosFazenda() {
   const openInviteModal = () => setIsInviteModalOpen(true);
   const closeInviteModal = () => setIsInviteModalOpen(false);
 
-  const handleInviteChange = (field, value) => {
-    setInviteData(prev => ({ ...prev, [field]: value }));
-  };
+  const handleInviteChange = (field, value) => {setInviteData(prev => ({ ...prev, [field]: value }));};
 
   const submitInvite = async () => {
     if (!user || user.perfil?.funcao !== 'GERENTE_LOJA') return;
@@ -299,17 +266,28 @@ export default function FuncionariosFazenda() {
         setInviteData({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
         await loadFuncionarios();
       }
-    } catch (err) {
-      console.error('[FuncionariosLoja] submitInvite error', err);
-    } finally {
-      setInviteSaving(false);
-    }
+    } catch (err) {console.error('[FuncionariosLoja] submitInvite error', err);}
+    finally {setInviteSaving(false);}
   };
 
   // Verificar se é gerente da loja (tolerante a diferentes formatos)
   const _userRoleRaw = user?.perfil?.funcao ?? user?.perfil ?? user?.role ?? '';
   const _userRole = typeof _userRoleRaw === 'string' ? _userRoleRaw.toUpperCase() : '';
   const isGerenteLoja = _userRole === 'GERENTE_LOJA' || _userRole === 'GERENTE_LOJA';
+
+   const { lang, changeLang } = useTranslation();
+      const languageOptions = [
+          { value: 'pt-BR', label: 'Português (BR)' },
+          { value: 'en', label: 'English' },
+          { value: 'es', label: 'Español' },
+          { value: 'fr', label: 'Français' }
+      ];
+      const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+      useEffect(() => {
+          setLocalTheme(globalTheme);
+          setLocalSelectedFontSize(globalSelectedFontSize);
+          setLocalLang(lang);
+      }, [globalTheme, globalSelectedFontSize, lang]);
 
   return (
     <div className="min-h-screen px-18 py-10 bg-surface-50">
@@ -318,11 +296,7 @@ export default function FuncionariosFazenda() {
         <div className="space-y-4">
           <div className="flex flex-row items-start gap-3">
             <div className="relative w-full">
-              <Input 
-                placeholder="Buscar por nome, email ou telefone" 
-                value={query} 
-                onChange={e => setQuery(e.target.value)} 
-              />
+              <Input placeholder="Buscar por nome, email ou telefone" value={query} onChange={e => setQuery(e.target.value)} />
             </div>
 
             {/* Filtros avançados */}
@@ -336,13 +310,13 @@ export default function FuncionariosFazenda() {
             }}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2 px-3">
-                  <Sliders className="h-4 w-4" />Filtros
+                  <Sliders className="h-4 w-4" /><Transl>Filtros</Transl>
                 </Button>
               </PopoverTrigger>
               <PopoverContent side="bottom" align="start" className="w-[320px] p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="font-semibold">Filtros Avançados</div>
-                  <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
+                  <Transl className="font-semibold">Filtros Avançados</Transl>
+                  <Transl className="text-sm text-neutral-400">{filtered.length} resultados</Transl>
                 </div>
 
                 <div className="space-y-3">
@@ -363,7 +337,6 @@ export default function FuncionariosFazenda() {
                       ))}
                     </div>
                   </div>
-
                   <Separator />
 
                   {/* Status */}
@@ -373,12 +346,11 @@ export default function FuncionariosFazenda() {
                       {["Ativo", "Inativo"].map(s => (
                         <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:dark:bg-neutral-900 hover:bg-neutral-10 cursor-pointer">
                           <Checkbox checked={!!tempStatusFilters[s]} onCheckedChange={(checked) => setTempStatusFilters(prev => ({ ...prev, [s]: !!checked }))} />
-                          <div className="text-sm">{s}</div>
+                          <Transl className="text-sm">{s}</Transl>
                         </label>
                       ))}
                     </div>
                   </div>
-
                   <Separator />
 
                   {/* Botões */}
@@ -389,20 +361,15 @@ export default function FuncionariosFazenda() {
                 </div>
               </PopoverContent>
             </Popover>
-
-            <Button className='w-fit' size="sm" onClick={openInviteModal} disabled={!isGerenteLoja}><Plus className="w-4 h-4" />Convidar</Button>
+            <Button className='w-fit' size="sm" onClick={openInviteModal} disabled={!isGerenteLoja}><Plus className="w-4 h-4" /><Transl>Convidar</Transl></Button>
           </div>
         </div>
 
         {/* Lista de funcionários */}
         {loadingFuncionarios ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Carregando funcionários...
-          </div>
+          <Transl className="text-center py-8 text-muted-foreground">Carregando funcionários...</Transl>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Nenhum funcionário encontrado
-          </div>
+          <Transl className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado</Transl>
         ) : (
           filtered.map((func) => (
             <Card key={func.id} className="p-0">
@@ -417,34 +384,24 @@ export default function FuncionariosFazenda() {
                       <div className="flex items-center gap-3">
                         <h3 className="font-medium text-lg">{func.nome}</h3>
                         <Badge variant={func.perfil?.funcao === "GERENTE_LOJA" ? "default" : "secondary"}>
-                          {func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}
+                          <Transl>{func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}</Transl>
                         </Badge>
                         <Badge variant={func.status ? "outline" : "destructive"}>
-                          {func.status ? "Ativo" : "Inativo"}
+                          <Transl>{func.status ? "Ativo" : "Inativo"}</Transl>
                         </Badge>
                       </div>
-                      <div className="text-muted-foreground mb-2 text-sm">{func.perfil?.descricao}</div>
+                      <Transl className="text-muted-foreground mb-2 text-sm">{func.perfil?.descricao}</Transl>
                     </div>
                   </div>
 
                   {/* Botões de ação (apenas para Gerente) */}
                   {isGerenteLoja && (
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditClick(func)}
-                      >
-                        <Pen className="size-4 mr-2" />
-                        Editar
+                      <Button variant="outline" size="sm" onClick={() => handleEditClick(func)}>
+                        <Pen className="size-4 mr-2" /><Transl>Editar</Transl> 
                       </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteClick(func)}
-                      >
-                        <Trash className="size-4 mr-2" />
-                        Demitir
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(func)}>
+                        <Trash className="size-4 mr-2" /><Transl>Demitir</Transl>                        
                       </Button>
                     </div>
                   )}
@@ -453,7 +410,7 @@ export default function FuncionariosFazenda() {
                 {/* Contatos */}
                 <div className="flex flex-wrap gap-6 mb-4">
                   <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-2">Contatos</div>
+                    <Transl className="text-sm font-medium text-muted-foreground mb-2">Contatos</Transl>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="size-4 text-muted-foreground" />
@@ -469,32 +426,21 @@ export default function FuncionariosFazenda() {
                   </div>
                   {isGerenteLoja && (
                     <div>
-                      <div className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</div>
+                      <Transl className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</Transl>
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm">
-                          <Mail className="size-4 mr-2" />
-                          Email
+                          <Mail className="size-4 mr-2" />Email
                         </Button>
                         <Button variant="outline" size="sm">
-                          <Phone className="size-4 mr-2" />
-                          Ligar
+                          <Phone className="size-4 mr-2" /> <Transl>Ligar</Transl> 
                         </Button>
                         <Button variant="outline" size="sm">
-                          <MessageSquare className="size-4 mr-2" />
-                          Mensagem
+                          <MessageSquare className="size-4 mr-2" /><Transl>Mensagem</Transl>             
                         </Button>
                       </div>
                     </div>
                   )}
                 </div>
-
-                {/* <div className="flex items-center gap-2 pt-4 border-t">
-                  <Button variant="outline" size="sm">
-                    <Calendar className="size-4 mr-2" />
-                    Marcar reunião
-                  </Button>
-                  <Button size="sm">Adicionar nota</Button>
-                </div> */}
               </CardContent>
             </Card>
           ))
@@ -505,52 +451,26 @@ export default function FuncionariosFazenda() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Editar Funcionário</DialogTitle>
+            <DialogTitle><Transl>Editar Funcionário</Transl></DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nome" className="text-right">Nome</Label>
-              <Input
-                id="nome"
-                value={editingData.nome}
-                onChange={e => setEditingData({ ...editingData, nome: e.target.value })}
-                className="col-span-3"
-              />
+              <Label htmlFor="nome" className="text-right"><Transl>Nome</Transl></Label>
+              <Input id="nome" value={editingData.nome} onChange={e => setEditingData({ ...editingData, nome: e.target.value })} className="col-span-3"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={editingData.email}
-                onChange={e => setEditingData({ ...editingData, email: e.target.value })}
-                className="col-span-3"
-              />
+              <Input id="email" type="email" value={editingData.email} onChange={e => setEditingData({ ...editingData, email: e.target.value })} className="col-span-3"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="telefone" className="text-right">Telefone</Label>
-              <Input
-                id="telefone"
-                value={editingData.telefone}
-                onChange={e => setEditingData({ ...editingData, telefone: formatarTelefoneInput(e.target.value) })}
-                className="col-span-3"
-                placeholder="(XX) XXXXX-XXXX"
-              />
+              <Label htmlFor="telefone" className="text-right"><Transl>Telefone</Transl></Label>
+              <Input id="telefone" value={editingData.telefone} onChange={e => setEditingData({ ...editingData, telefone: formatarTelefoneInput(e.target.value) })} className="col-span-3" placeholder="(XX) XXXXX-XXXX"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="senha" className="text-right">Senha (opcional)</Label>
+              <Label htmlFor="senha" className="text-right"><Transl>Senha (opcional)</Transl></Label>
               <div className="col-span-3 relative">
-                <Input
-                  id="senha"
-                  type={showEditPassword ? "text" : "password"}
-                  value={editingData.senha}
-                  onChange={e => setEditingData({ ...editingData, senha: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowEditPassword(!showEditPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
+                <Input id="senha" type={showEditPassword ? "text" : "password"} value={editingData.senha} onChange={e => setEditingData({ ...editingData, senha: e.target.value })}/>
+                <button type="button" onClick={() => setShowEditPassword(!showEditPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -562,19 +482,17 @@ export default function FuncionariosFazenda() {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GERENTE_LOJA">Gerente</SelectItem>
-                  <SelectItem value="FUNCIONARIO_LOJA">Funcionário</SelectItem>
+                  <SelectItem value="GERENTE_LOJA"><Transl>Gerente</Transl></SelectItem>
+                  <SelectItem value="FUNCIONARIO_LOJA"><Transl>Funcionário</Transl></SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-              Cancelar
+             <Transl>Cancelar</Transl> 
             </Button>
-            <Button onClick={handleSaveEdit} disabled={savingEdit}>
-              {savingEdit ? "Salvando..." : "Salvar"}
-            </Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit}>{savingEdit ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -583,20 +501,16 @@ export default function FuncionariosFazenda() {
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirmar Demissão</DialogTitle>
+            <DialogTitle><Transl>Confirmar Demissão</Transl></DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-muted-foreground">
+            <Transl className="text-sm text-muted-foreground">
               Tem certeza que deseja demitir <strong>{selectedUser?.nome}</strong>? Esta ação não pode ser desfeita.
-            </p>
+            </Transl>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Demitir
-            </Button>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}><Transl>Cancelar</Transl></Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}><Transl>Demitir</Transl> </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -609,7 +523,7 @@ export default function FuncionariosFazenda() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-nome" className="text-right">Nome</Label>
+              <Label htmlFor="invite-nome" className="text-right"><Transl>Nome</Transl></Label>
               <Input id="invite-nome" value={inviteData.nome} onChange={e => handleInviteChange('nome', e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -617,37 +531,33 @@ export default function FuncionariosFazenda() {
               <Input id="invite-email" type="email" value={inviteData.email} onChange={e => handleInviteChange('email', e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-telefone" className="text-right">Telefone</Label>
+              <Label htmlFor="invite-telefone" className="text-right"><Transl>Telefon</Transl>e</Label>
               <Input id="invite-telefone" value={inviteData.telefone} onChange={e => handleInviteChange('telefone', formatarTelefoneInput(e.target.value))} className="col-span-3" placeholder="(XX) XXXXX-XXXX" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-senha" className="text-right">Senha</Label>
+              <Label htmlFor="invite-senha" className="text-right"><Transl>Senha</Transl></Label>
               <div className="col-span-3 relative">
                 <Input id="invite-senha" type={showInvitePassword ? "text" : "password"} value={inviteData.senha} onChange={e => handleInviteChange('senha', e.target.value)} />
-                <button
-                  type="button"
-                  onClick={() => setShowInvitePassword(!showInvitePassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
+                <button type="button" onClick={() => setShowInvitePassword(!showInvitePassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showInvitePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-role" className="text-right">Função</Label>
+              <Label htmlFor="invite-role" className="text-right"><Transl>Função</Transl></Label>
               <Select value={inviteData.role} onValueChange={(v) => handleInviteChange('role', v)} className="col-span-3">
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GERENTE_LOJA">Gerente</SelectItem>
-                  <SelectItem value="FUNCIONARIO_LOJA">Funcionário</SelectItem>
+                  <SelectItem value="GERENTE_LOJA"><Transl>Gerente</Transl></SelectItem>
+                  <SelectItem value="FUNCIONARIO_LOJA"><Transl>Funcionário</Transl></SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}><Transl>Cancelar</Transl></Button>
             <Button onClick={submitInvite} disabled={inviteSaving}>{inviteSaving ? 'Enviando...' : 'Convidar'}</Button>
           </DialogFooter>
         </DialogContent>
