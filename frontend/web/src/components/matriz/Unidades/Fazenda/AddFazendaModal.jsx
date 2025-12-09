@@ -90,6 +90,10 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [newFornecedorNome, setNewFornecedorNome] = useState("");
   const [newFornecedorDocumento, setNewFornecedorDocumento] = useState("");
   const [newFornecedorContato, setNewFornecedorContato] = useState("");
+  const [step1ActiveTab, setStep1ActiveTab] = useState('externo'); // 'externo' ou 'interno'
+  const [internalContractDraft, setInternalContractDraft] = useState({});
+  const [internalContractFormErrors, setInternalContractFormErrors] = useState({});
+  const [existingLojas, setExistingLojas] = useState([]);
 
   // Step 3 (equipe)
   const [teamInvites, setTeamInvites] = useState([]);
@@ -332,44 +336,15 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (contracts.length === 0) {
       e.contracts = "É obrigatório adicionar pelo menos 1 contrato.";
     }
-    // Validar que ao menos 1 contrato seja marcado como fornecedora
-    const hasFornecedora = contracts.some(c => !!c.isFornecedora || !!c.fornecedorUnidadeId);
-    if (!hasFornecedora) {
-      e.contracts_fornecedora = 'Marque pelo menos um contrato onde a fazenda será fornecedora.';
-    }
-    // Validar cada contrato tem pelo menos 1 item
+    // Validar cada contrato tem campos obrigatórios
     contracts.forEach((c, idx) => {
-      if (!c.itens || c.itens.length === 0) {
-        e[`contract_${idx}_items`] = `O contrato "${c.nomeContrato}" deve ter pelo menos 1 item.`;
-      }
-      // Validar campos obrigatórios do contrato
       if (!c.dataInicio) e[`contract_${idx}_dataInicio`] = "Data de início é obrigatória.";
       if (!c.dataEnvio) e[`contract_${idx}_dataEnvio`] = "Dia de envio é obrigatório.";
-      if (!c.duration) e[`contract_${idx}_duration`] = "Duração do contrato é obrigatória.";
-      if (!c.dataFim) e[`contract_${idx}_dataFim`] = "Data de fim é obrigatória.";
+      if (!c.isFornecedora && !c.duration) e[`contract_${idx}_duration`] = "Duração do contrato é obrigatória.";
+      if (!c.isFornecedora && !c.dataFim) e[`contract_${idx}_dataFim`] = "Data de fim é obrigatória.";
       if (!c.diaPagamento) e[`contract_${idx}_diaPagamento`] = "Dia de pagamento é obrigatório.";
       if (!c.formaPagamento) e[`contract_${idx}_formaPagamento`] = "Forma de pagamento é obrigatória.";
       if (!c.frequenciaEntregas) e[`contract_${idx}_frequenciaEntregas`] = "Frequência de entregas é obrigatória.";
-      // Validar itens do contrato
-      if (c.itens && c.itens.length > 0) {
-        c.itens.forEach((item, itemIdx) => {
-          if (!item.nome || !item.nome.trim()) {
-            e[`contract_${idx}_item_${itemIdx}_nome`] = "Nome do item é obrigatório.";
-          }
-          if (!item.quantidade || Number(item.quantidade) <= 0) {
-            e[`contract_${idx}_item_${itemIdx}_quantidade`] = "Quantidade é obrigatória.";
-          }
-          if (!item.unidadeMedida) {
-            e[`contract_${idx}_item_${itemIdx}_unidadeMedida`] = "Unidade de medida é obrigatória.";
-          }
-          if (!item.precoUnitario || Number(item.precoUnitario) <= 0) {
-            e[`contract_${idx}_item_${itemIdx}_precoUnitario`] = "Preço unitário é obrigatório.";
-          }
-          if (!item.pesoUnidade || Number(item.pesoUnidade) <= 0) {
-            e[`contract_${idx}_item_${itemIdx}_pesoUnidade`] = "Peso por unidade (em KG) é obrigatório.";
-          }
-        });
-      }
     });
     return e;
   }
@@ -533,6 +508,59 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     setFornecedores(fornecedoresCopy);
     setContracts(prev => ([...prev, novoContrato]));
     setSelectedFornecedorId(fornecedorId);
+  }
+
+  function createInternalContract() {
+    const errors_new = {};
+    
+    if (!internalContractDraft.selectedLojaId) {
+      errors_new.selectedLojaId = 'Selecione uma loja';
+    }
+    if (!internalContractDraft.dataInicio) {
+      errors_new.dataInicio = 'Data de início é obrigatória';
+    }
+    if (!internalContractDraft.dataFim) {
+      errors_new.dataFim = 'Data de fim é obrigatória';
+    }
+    if (!internalContractDraft.dataEnvio) {
+      errors_new.dataEnvio = 'Dia de envio é obrigatório';
+    }
+    if (!internalContractDraft.frequenciaEntregas) {
+      errors_new.frequenciaEntregas = 'Frequência é obrigatória';
+    }
+    if (!internalContractDraft.diaPagamento) {
+      errors_new.diaPagamento = 'Dia de pagamento é obrigatório';
+    }
+    
+    if (Object.keys(errors_new).length > 0) {
+      setInternalContractFormErrors(errors_new);
+      return;
+    }
+    
+    const nomeLoja = existingLojas.find(l => String(l.id) === internalContractDraft.selectedLojaId)?.nomeEmpresa || 
+                     existingLojas.find(l => String(l.id) === internalContractDraft.selectedLojaId)?.nome || 'Loja';
+    
+    const novoContratoInterno = {
+      nomeContrato: `Contrato com ${nomeLoja}`,
+      descricao: internalContractDraft.descricao || '',
+      dataInicio: internalContractDraft.dataInicio,
+      dataFim: internalContractDraft.dataFim,
+      dataEnvio: internalContractDraft.dataEnvio,
+      frequenciaEntregas: internalContractDraft.frequenciaEntregas,
+      diaPagamento: internalContractDraft.diaPagamento,
+      formaPagamento: internalContractDraft.formaPagamento || '',
+      status: internalContractDraft.status || 'ativo',
+      itens: [],
+      isFornecedora: true,
+      unidadeLojaId: internalContractDraft.selectedLojaId,
+      fornecedorUnidadeId: null
+    };
+    
+    setContracts(prev => [...prev, novoContratoInterno]);
+    setInternalContractDraft({});
+    setInternalContractFormErrors({});
+    setFormError('Contrato interno adicionado com sucesso!');
+    setTimeout(() => setFormError(''), 3000);
   }
 
   // --- Funções de adição de equipe ---
@@ -706,6 +734,35 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     }
 
     fetchContratoMeta();
+  }, [open, accessToken, fetchWithAuth]);
+
+  // useEffect para buscar lojas para contratos internos
+  useEffect(() => {
+    if (!(open && accessToken)) {
+      setExistingLojas([]);
+      return;
+    }
+
+    async function fetchLojas() {
+      try {
+        const base = String(API_URL || '').replace(/\/$/, '');
+        const res = await fetchWithAuth(`${base}/listarTodasAsLojas`, { method: 'GET' });
+        if (!res.ok) return console.warn('Falha ao carregar lojas:', res.status);
+        const json = await res.json();
+        if (Array.isArray(json?.sucesso)) {
+          setExistingLojas(json.sucesso);
+        } else if (Array.isArray(json?.lojas)) {
+          setExistingLojas(json.lojas);
+        } else if (Array.isArray(json)) {
+          setExistingLojas(json);
+        }
+      } catch (err) {
+        console.error('Erro buscando lojas:', err);
+        setExistingLojas([]);
+      }
+    }
+
+    fetchLojas();
   }, [open, accessToken, fetchWithAuth]);
 
   // Removido: não buscamos mais gerentes existentes, apenas criamos novos
@@ -1271,184 +1328,373 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
             {step === 1 && (
               <section className="space-y-6">
-                <h3 className="text-lg font-semibold">Fornecedores</h3>
+                <h3 className="text-lg font-semibold">Fornecedores e Contratos</h3>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="flex flex-row gap-2">
-                    {/* Campo de seleção/criação de fornecedor */}
-                    <div className="space-y-2">
-                      <Label htmlFor="select-fornecedor">Fornecedor *</Label>
-                      <Select value={selectedFornecedorId} onValueChange={(value) => {
-                        setSelectedFornecedorId(value);
-                        // setIsCreatingNewFornecedor(value === "new");
-                        setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
-                      }}>
-                        <SelectTrigger id="select-fornecedor">
-                          <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[1001]">
-                          {/* <SelectItem value="new">Criar Novo Fornecedor</SelectItem> */}
-                          {existingFornecedores.map((f) => (
-                            <SelectItem key={f.id} value={String(f.id)}>
-                              {f.nomeEmpresa}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                    </div>
-                    <div className="flex items-end gap-6">
-                      <Button onClick={addContract}><Plus /></Button>
-                      <Button variant="outline" onClick={() => setIsCreatingNewFornecedor(true)}>Criar fornecedor</Button>
-                    </div>
-                  </div>
-                  {isCreatingNewFornecedor && (
-                    <div className="space-y-4 p-4 border rounded-md bg-muted/20">
-                      <h4 className="font-semibold">Dados do Novo Fornecedor</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-nomeEmpresa">Nome da Empresa *</Label>
-                          <Input
-                            id="novo-nomeEmpresa"
-                            value={newFornecedorData.nomeEmpresa}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, nomeEmpresa: e.target.value }))}
-                            className={cn(newFornecedorErrors.nomeEmpresa && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-cnpjCpf">CNPJ *</Label>
-                          <Input
-                            id="novo-cnpjCpf"
-                            value={formatCNPJ(newFornecedorData.cnpjCpf)}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
-                            placeholder="00.000.000/0000-00"
-                            className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="novo-descricaoEmpresa">Descrição da Empresa</Label>
-                        <Textarea
-                          id="novo-descricaoEmpresa"
-                          value={newFornecedorData.descricaoEmpresa}
-                          onChange={(e) => setNewFornecedorData(prev => ({ ...prev, descricaoEmpresa: e.target.value }))}
-                          className={cn("min-h-[80px]", newFornecedorErrors.descricaoEmpresa && "border-red-500 ring-1 ring-red-500")}
-                        />
-                        {newFornecedorErrors.descricaoEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.descricaoEmpresa}</p>}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-email">Email</Label>
-                          <Input
-                            id="novo-email"
-                            type="email"
-                            value={newFornecedorData.email}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, email: e.target.value }))}
-                            className={cn(newFornecedorErrors.email && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.email && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.email}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-telefone">Telefone *</Label>
-                          <Input
-                            id="novo-telefone"
-                            value={newFornecedorData.telefone}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
-                            className={cn(newFornecedorErrors.telefone && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.telefone}</p>}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="novo-endereco">Endereço</Label>
-                        <Textarea
-                          id="novo-endereco"
-                          value={newFornecedorData.endereco}
-                          onChange={(e) => setNewFornecedorData(prev => ({ ...prev, endereco: e.target.value }))}
-                          className={cn("min-h-[80px]", newFornecedorErrors.endereco && "border-red-500 ring-1 ring-red-500")}
-                        />
-                        {newFornecedorErrors.endereco && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.endereco}</p>}
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button onClick={addFornecedor}>Adicionar Fornecedor</Button>
-                        <Button variant="outline" onClick={() => {
-                          setIsCreatingNewFornecedor(false);
-                          setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
-                          setNewFornecedorErrors({});
-                        }}>Cancelar</Button>
-                      </div>
-                    </div>
-                  )}
+                {/* TAB BUTTONS */}
+                <div className="flex gap-2 border-b">
+                  <Button
+                    variant={step1ActiveTab === 'externo' ? 'default' : 'ghost'}
+                    onClick={() => setStep1ActiveTab('externo')}
+                    className="rounded-b-none"
+                  >
+                    Fornecedor Externo
+                  </Button>
+                  <Button
+                    variant={step1ActiveTab === 'interno' ? 'default' : 'ghost'}
+                    onClick={() => setStep1ActiveTab('interno')}
+                    className="rounded-b-none"
+                  >
+                    Fornecedor Interno (Loja)
+                  </Button>
                 </div>
 
-                {errors.contracts && <p className="text-sm text-red-600">{errors.contracts}</p>}
-                {errors.contracts_fornecedora && <p className="text-sm text-red-600">{errors.contracts_fornecedora}</p>}
+                {/* TAB 1: FORNECEDOR EXTERNO */}
+                {step1ActiveTab === 'externo' && (
+                  <div className="space-y-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-200">Fornecedor Externo</h4>
+                      
+                      <div className="flex flex-row gap-2">
+                        {/* Campo de seleção de fornecedor */}
+                        <div className="space-y-2 flex-1">
+                          <Label htmlFor="select-fornecedor-ext">Fornecedor *</Label>
+                          <Select value={selectedFornecedorId} onValueChange={(value) => {
+                            setSelectedFornecedorId(value);
+                            setNewFornecedorErrors({});
+                          }}>
+                            <SelectTrigger id="select-fornecedor-ext">
+                              <SelectValue placeholder="Selecionar fornecedor existente" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[1001]">
+                              {existingFornecedores.map((f) => (
+                                <SelectItem key={f.id} value={String(f.id)}>
+                                  {f.nomeEmpresa}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end gap-2">
+                          <Button onClick={addContract}><Plus /> Contrato</Button>
+                          <Button variant="outline" onClick={() => setIsCreatingNewFornecedor(true)}>Novo Fornecedor</Button>
+                        </div>
+                      </div>
 
-                <div>
-                  <h4 className="font-medium">Lista de fornecedores</h4>
-                  <ul className="mt-2 space-y-2">
-                    {fornecedores.map((f, i) => {
-                      const documentoFormatado = f.documento || f.cnpjCpf ? formatCNPJ(String(f.documento || f.cnpjCpf || '')) : '-';
-                      const telefoneFormatado = f.contato || f.telefone ? formatTelefone(String(f.contato || f.telefone || '')) : '-';
-                      return (
-                        <li key={i} className="py-2 px-4 border rounded-sm">
-                          <div className="flex justify-between">
-                            <div>
-                              <div className="font-semibold">{f.nome || f.nomeEmpresa}</div>
-                              <div className="text-sm text-muted-foreground">{documentoFormatado} • {telefoneFormatado}</div>
+                      {/* Formulário para criar novo fornecedor EXTERNO */}
+                      {isCreatingNewFornecedor && (
+                        <div className="space-y-4 p-3 border rounded-md bg-white dark:bg-slate-800">
+                          <h5 className="font-semibold text-sm">Dados do Novo Fornecedor Externo</h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-nomeEmpresa" className="text-sm">Nome da Empresa *</Label>
+                              <Input
+                                id="novo-nomeEmpresa"
+                                value={newFornecedorData.nomeEmpresa}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, nomeEmpresa: e.target.value }))}
+                                className={cn(newFornecedorErrors.nomeEmpresa && "border-red-500 ring-1 ring-red-500")}
+                                placeholder="Nome"
+                              />
+                              {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
                             </div>
-                            <div className="flex gap-2 items-center">
-                              <Button variant="ghost" onClick={() => {
-                                // Remover fornecedor e contratos relacionados
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-cnpjCpf" className="text-sm">CNPJ *</Label>
+                              <Input
+                                id="novo-cnpjCpf"
+                                value={formatCNPJ(newFornecedorData.cnpjCpf)}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
+                                placeholder="00.000.000/0000-00"
+                                className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
+                              />
+                              {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-email" className="text-sm">Email</Label>
+                              <Input
+                                id="novo-email"
+                                type="email"
+                                value={newFornecedorData.email}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, email: e.target.value }))}
+                                className={cn(newFornecedorErrors.email && "border-red-500 ring-1 ring-red-500")}
+                                placeholder="email@exemplo.com"
+                              />
+                              {newFornecedorErrors.email && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.email}</p>}
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-telefone" className="text-sm">Telefone *</Label>
+                              <Input
+                                id="novo-telefone"
+                                value={newFornecedorData.telefone}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
+                                className={cn(newFornecedorErrors.telefone && "border-red-500 ring-1 ring-red-500")}
+                                placeholder="(00) 90000-0000"
+                              />
+                              {newFornecedorErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.telefone}</p>}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button onClick={addFornecedor} className="text-sm">Adicionar Fornecedor</Button>
+                            <Button variant="outline" className="text-sm" onClick={() => {
+                              setIsCreatingNewFornecedor(false);
+                              setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+                              setNewFornecedorErrors({});
+                            }}>Cancelar</Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Formulário compacto para contrato EXTERNO */}
+                      <div className="space-y-3 p-3 border rounded-md bg-white dark:bg-slate-800">
+                        <h5 className="font-semibold text-sm">Criar Contrato Externo</h5>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Início *</Label>
+                            <Input
+                              type="date"
+                              placeholder="Data"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Envio *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Duração *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Meses" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="6m">6 meses</SelectItem>
+                                <SelectItem value="1y">1 ano</SelectItem>
+                                <SelectItem value="2y">2 anos</SelectItem>
+                                <SelectItem value="5y">5 anos</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Fim *</Label>
+                            <Input
+                              type="date"
+                              disabled
+                              readOnly
+                              className="text-sm bg-gray-100"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Frequência *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Semanal" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
+                                <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                                <SelectItem value="MENSALMENTE">Mensal</SelectItem>
+                                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Pagamento *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2 col-span-2">
+                            <Label className="text-xs">Forma Pagamento *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                                <SelectItem value="CARTAO">Cartão</SelectItem>
+                                <SelectItem value="PIX">PIX</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: FORNECEDOR INTERNO (LOJA) */}
+                {step1ActiveTab === 'interno' && (
+                  <div className="space-y-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-green-900 dark:text-green-200">Fornecedor Interno (Loja)</h4>
+                      
+                      <div className="flex flex-row gap-2">
+                        {/* Campo de seleção de loja */}
+                        <div className="space-y-2 flex-1">
+                          <Label htmlFor="select-loja">Loja *</Label>
+                          <Select>
+                            <SelectTrigger id="select-loja">
+                              <SelectValue placeholder="Selecionar loja existente" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[1001]">
+                              <SelectItem value="loja1">Loja 1</SelectItem>
+                              <SelectItem value="loja2">Loja 2</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end">
+                          <Button><Plus /> Contrato Interno</Button>
+                        </div>
+                      </div>
+
+                      {/* Formulário compacto para contrato INTERNO */}
+                      <div className="space-y-3 p-3 border rounded-md bg-white dark:bg-slate-800">
+                        <h5 className="font-semibold text-sm">Criar Contrato Interno</h5>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Início *</Label>
+                            <Input
+                              type="date"
+                              placeholder="Data"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Fim *</Label>
+                            <Input
+                              type="date"
+                              placeholder="Data"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Envio *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Frequência *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Semanal" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
+                                <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                                <SelectItem value="MENSALMENTE">Mensal</SelectItem>
+                                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Pagamento *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Forma Pagamento *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                                <SelectItem value="CARTAO">Cartão</SelectItem>
+                                <SelectItem value="PIX">PIX</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Status *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Ativo" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="ATIVO">Ativo</SelectItem>
+                                <SelectItem value="INATIVO">Inativo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* FORA DAS ABAS: Lista de fornecedores, contratos e botões */}
+                <div className="border-t pt-6 space-y-4">
+                  {/* Lista compacta de fornecedores */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Fornecedores Adicionados</h4>
+                    <ul className="space-y-1">
+                      {fornecedores.map((f, i) => {
+                        const documentoFormatado = f.documento || f.cnpjCpf ? formatCNPJ(String(f.documento || f.cnpjCpf || '')) : '-';
+                        return (
+                          <li key={i} className="py-2 px-3 border rounded text-sm flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">{f.nome || f.nomeEmpresa}</span>
+                              <span className="text-xs text-muted-foreground ml-2">{documentoFormatado}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
                                 const fornecedorId = String(f.id);
                                 setFornecedores(prev => prev.filter((_, idx) => idx !== i));
                                 setContracts(prev => prev.filter(c => String(c.fornecedorId) !== fornecedorId));
-                              }}>Remover</Button>
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                              }}
+                            >
+                              Remover
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
 
-                <div>
-                  <h4 className="font-medium">Contratos</h4>
-
-                  <ul className="mt-2 space-y-4">
-                    {contracts.map((c, i) => (
-                      <li key={i} className="p-3 border rounded-lg space-y-4 bg-muted/30">
-
-                        {/* CABEÇALHO DO CONTRATO */}
-                        <div className="flex justify-between items-center">
+                  {/* Lista compacta de contratos */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Contratos Adicionados</h4>
+                    <ul className="space-y-1">
+                      {contracts.map((c, i) => (
+                        <li key={i} className="py-2 px-3 border rounded text-sm flex justify-between items-center">
                           <div>
-                            <div className="font-semibold text-lg">{c.nomeContrato}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <input
-                                type="checkbox"
-                                id={`fornecedora-${i}`}
-                                checked={!!c.isFornecedora}
-                                onChange={(e) => updateContractField(i, 'isFornecedora', e.target.checked)}
-                              />
-                              <label htmlFor={`fornecedora-${i}`} className="text-sm">Esta fazenda será fornecedora (envia produtos)</label>
-                            </div>
-                            {c.isFornecedora && (
-                              <div className="mt-2">
-                                <Label className="text-sm">Destino (opcional - informe unidade destino)</Label>
-                                <Input placeholder="ID ou nome da unidade destino" value={c.fornecedorUnidadeId || ''} onChange={(e) => updateContractField(i, 'fornecedorUnidadeId', e.target.value)} />
-                              </div>
-                            )}
-                            {/* <div className="text-sm text-muted-foreground">
-              Fornecedor: {fornecedores[c.fornecedorIndex]?.nomeEmpresa || '—'}
-            </div> */}
+                            <span className="font-medium">{c.nomeContrato}</span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {c.dataInicio} até {c.dataFim} ({c.status || 'Ativo'})
+                            </span>
                           </div>
-
                           <Button
                             variant="ghost"
+                            size="sm"
                             onClick={() => {
-                              // Remover contrato e fornecedor relacionado
                               const fornecedorId = String(c.fornecedorId);
                               setContracts(prev => prev.filter((_, idx) => idx !== i));
                               setFornecedores(prev => prev.filter(f => String(f.id) !== fornecedorId));
@@ -1456,369 +1702,17 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                           >
                             Remover
                           </Button>
-                        </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-                        {/* CAMPOS OBRIGATÓRIOS DO SCHEMA */}
-                        <div classname="flex flex-row">
-                          <div className="grid grid-cols-4 gap-3">
-                            <div className="space-y-2">
-                              <Label className="text-sm">Data de Início *</Label>
-                              <Input
-                                type="date"
-                                value={c.dataInicio || ""}
-                                max={new Date().toISOString().split('T')[0]}
-                                onChange={(e) => {
-                                  const selectedDate = e.target.value;
-                                  const today = new Date().toISOString().split('T')[0];
-                                  if (selectedDate <= today) {
-                                    updateContractField(i, "dataInicio", selectedDate);
-                                  }
-                                }}
-                                className={cn(errors[`contract_${i}_dataInicio`] && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {errors[`contract_${i}_dataInicio`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataInicio`]}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-sm">Dia de Envio *</Label>
-                              <Input
-                                type="number"
-                                min={1}
-                                max={31}
-                                placeholder="1 a 31"
-                                value={c.dataEnvio || ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const cleaned = val.replace(/\D/g, '');
-                                  const num = cleaned ? parseInt(cleaned, 10) : '';
-                                  if (num === '' || (num >= 1 && num <= 31)) {
-                                    updateContractField(i, "dataEnvio", String(num));
-                                  }
-                                }}
-                                className={cn(errors[`contract_${i}_dataEnvio`] && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {errors[`contract_${i}_dataEnvio`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataEnvio`]}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-sm">Duração do Contrato *</Label>
-                              <Select
-                                value={c.duration || ""}
-                                onValueChange={(v) => {
-                                  updateContractField(i, 'duration', v);
-                                  const start = c.dataInicio || new Date().toISOString().slice(0, 10);
-                                  const end = computeContractEndDate(start, v);
-                                  updateContractField(i, 'dataFim', end);
-                                }}
-                              >
-                                <SelectTrigger className={cn("w-full", errors[`contract_${i}_duration`] && "border-red-500 ring-1 ring-red-500")}>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent className="z-[1001]">
-                                  <SelectItem value="__SELECIONE__">Selecione</SelectItem>
-                                  <SelectItem value="6m">6 meses</SelectItem>
-                                  <SelectItem value="1y">1 ano</SelectItem>
-                                  <SelectItem value="2y">2 anos</SelectItem>
-                                  <SelectItem value="5y">5 anos</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              {errors[`contract_${i}_duration`] && <p className="text-sm text-red-600">{errors[`contract_${i}_duration`]}</p>}
-
-                              
-                            <div className="space-y-2">
-                                <Label className="text-sm">Data de Fim *</Label>
-                                <Input className={cn("w-full", errors[`contract_${i}_dataFim`] && "border-red-500 ring-1 ring-red-500")} type="date" value={c.dataFim || ""} disabled readOnly />
-                                {errors[`contract_${i}_dataFim`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataFim`]}</p>}
-                              </div>
-                              </div>
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-2">
-                              <Label className="text-sm">Frequência de Entregas *</Label>
-                              <Select
-                                value={c.frequenciaEntregas || ""}
-                                onValueChange={(v) => updateContractField(i, 'frequenciaEntregas', v)}
-                              >
-                                <SelectTrigger className={cn("w-full", errors[`contract_${i}_frequenciaEntregas`] && "border-red-500 ring-1 ring-red-500")}>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent className="z-[1001]">
-                                  <SelectItem value="__SELECIONE__">Selecione</SelectItem>
-                                  {frequenciaOptions.length > 0 ? (
-                                    frequenciaOptions.map(opt => (
-                                      <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
-                                    ))
-                                  ) : (
-                                    <>
-                                      <SelectItem value="SEMANALMENTE">Semanalmente</SelectItem>
-                                      <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
-                                      <SelectItem value="MENSALMENTE">Mensalmente</SelectItem>
-                                      <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
-                                      <SelectItem value="SEMESTRAL">Semestral</SelectItem>
-                                    </>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              {errors[`contract_${i}_frequenciaEntregas`] && <p className="text-sm text-red-600">{errors[`contract_${i}_frequenciaEntregas`]}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-sm">Dia do Pagamento *</Label>
-                              <Input
-                                className={cn("w-full", errors[`contract_${i}_diaPagamento`] && "border-red-500 ring-1 ring-red-500")}
-                                type="number"
-                                min={1}
-                                max={31}
-                                placeholder="1 a 31"
-                                value={c.diaPagamento || ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const cleaned = val.replace(/\D/g, '');
-                                  const num = cleaned ? parseInt(cleaned, 10) : '';
-                                  if (num === '' || (num >= 1 && num <= 31)) {
-                                    updateContractField(i, "diaPagamento", String(num));
-                                  }
-                                }}
-                              />
-                              {errors[`contract_${i}_diaPagamento`] && <p className="text-sm text-red-600">{errors[`contract_${i}_diaPagamento`]}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-sm">Forma de Pagamento *</Label>
-                              <Select
-                                value={c.formaPagamento || ""}
-                                onValueChange={(v) => updateContractField(i, 'formaPagamento', v)}
-                              >
-                                <SelectTrigger className={cn("w-full", errors[`contract_${i}_formaPagamento`] && "border-red-500 ring-1 ring-red-500")}>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent className="z-[1001] ">
-                                  <SelectItem value="__SELECIONE__">Selecione</SelectItem>
-                                  {formaPagamentoOptions.length > 0 ? (
-                                    formaPagamentoOptions.map(opt => (
-                                      <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
-                                    ))
-                                  ) : (
-                                    <>
-                                      <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                                      <SelectItem value="CARTAO">Cartão</SelectItem>
-                                      <SelectItem value="PIX">PIX</SelectItem>
-                                    </>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              {errors[`contract_${i}_formaPagamento`] && <p className="text-sm text-red-600">{errors[`contract_${i}_formaPagamento`]}</p>}
-                            </div>
-                          </div>
-
-                        </div>
-
-
-                        {/* -------- ITENS DO CONTRATO ---------- */}
-                        <div className="pt-3 border-t">
-                          <h5 className="font-medium mb-2">Itens do Contrato</h5>
-
-                          {/* LISTA DE ITENS EXISTENTES */}
-                          <ul className="space-y-2">
-                            {c.itens?.map((item, idx) => (
-                              <li
-                                key={idx}
-                                className="border rounded p-2 flex justify-between items-center"
-                              >
-                                <div>
-                                  <div className="font-semibold">{item.nome}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {item.quantidade} {item.unidadeMedida} —
-                                    R$ {item.precoUnitario}
-                                  </div>
-                                </div>
-
-                                <Button
-                                  variant="ghost"
-                                  onClick={() => removeItem(i, idx)}
-                                >
-                                  Remover
-                                </Button>
-                              </li>
-                            ))}
-                          </ul>
-
-                          {/* FORM PARA NOVO ITEM */}
-                          <div className="grid grid-cols-3 gap-3 mt-3 p-3 rounded border">
-                            <div className="space-y-2">
-                              <Label htmlFor={`item-nome-${i}`}>Nome do Item *</Label>
-                              <Input
-                                id={`item-nome-${i}`}
-                                placeholder="Nome do item"
-                                value={getNewItem(i).nome || ""}
-                                onChange={(e) => {
-                                  updateNewItem(i, "nome", e.target.value);
-                                  // Limpar erro ao digitar
-                                  if (itemErrors[i]?.nome) {
-                                    setItemErrors(prev => {
-                                      const copy = { ...prev };
-                                      if (copy[i]) {
-                                        delete copy[i].nome;
-                                        if (Object.keys(copy[i]).length === 0) delete copy[i];
-                                      }
-                                      return copy;
-                                    });
-                                  }
-                                }}
-                                className={cn(itemErrors[i]?.nome && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {itemErrors[i]?.nome && <p className="text-sm text-red-600">{itemErrors[i].nome}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor={`item-quantidade-${i}`}>Quantidade *</Label>
-                              <Input
-                                id={`item-quantidade-${i}`}
-                                placeholder="Qtd"
-                                value={getNewItem(i).quantidade || ""}
-                                onChange={(e) => {
-                                  updateNewItem(i, "quantidade", e.target.value.replace(/\D/g, ''));
-                                  if (itemErrors[i]?.quantidade) {
-                                    setItemErrors(prev => {
-                                      const copy = { ...prev };
-                                      if (copy[i]) {
-                                        delete copy[i].quantidade;
-                                        if (Object.keys(copy[i]).length === 0) delete copy[i];
-                                      }
-                                      return copy;
-                                    });
-                                  }
-                                }}
-                                className={cn(itemErrors[i]?.quantidade && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {itemErrors[i]?.quantidade && <p className="text-sm text-red-600">{itemErrors[i].quantidade}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor={`item-unidade-${i}`}>Unidade de Medida *</Label>
-                              <Select
-                                value={getNewItem(i).unidadeMedida || ""}
-                                onValueChange={(v) => {
-                                  updateNewItem(i, "unidadeMedida", v);
-                                  if (itemErrors[i]?.unidadeMedida) {
-                                    setItemErrors(prev => {
-                                      const copy = { ...prev };
-                                      if (copy[i]) {
-                                        delete copy[i].unidadeMedida;
-                                        if (Object.keys(copy[i]).length === 0) delete copy[i];
-                                      }
-                                      return copy;
-                                    });
-                                  }
-                                }}
-                              >
-                                <SelectTrigger className={cn("w-full", itemErrors[i]?.unidadeMedida && "border-red-500 ring-1 ring-red-500")} id={`item-unidade-${i}`}>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent className="z-[1002]">
-                                  {unidadesMedidaOptions && unidadesMedidaOptions.length > 0 ? (
-                                    unidadesMedidaOptions.map((opcao) => (
-                                      <SelectItem key={opcao.valor || opcao.label} value={opcao.valor}>
-                                        {opcao.label}
-                                      </SelectItem>
-                                    ))
-                                  ) : (
-                                    <>
-                                      <SelectItem value="KG">KG</SelectItem>
-                                      <SelectItem value="G">G</SelectItem>
-                                      <SelectItem value="UNIDADE">UNIDADE</SelectItem>
-                                      <SelectItem value="LITRO">LITRO</SelectItem>
-                                      <SelectItem value="TONELADA">TONELADA</SelectItem>
-                                      <SelectItem value="METRO">METRO</SelectItem>
-                                      <SelectItem value="METRO_QUADRADO">METRO²</SelectItem>
-                                    </>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              {itemErrors[i]?.unidadeMedida && <p className="text-sm text-red-600">{itemErrors[i].unidadeMedida}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor={`item-preco-${i}`}>Preço Unitário *</Label>
-                              <Input
-                                id={`item-preco-${i}`}
-                                placeholder="R$ 0,00"
-                                value={getNewItem(i).precoUnitario || ""}
-                                onChange={(e) => {
-                                  updateNewItem(i, "precoUnitario", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'));
-                                  if (itemErrors[i]?.precoUnitario) {
-                                    setItemErrors(prev => {
-                                      const copy = { ...prev };
-                                      if (copy[i]) {
-                                        delete copy[i].precoUnitario;
-                                        if (Object.keys(copy[i]).length === 0) delete copy[i];
-                                      }
-                                      return copy;
-                                    });
-                                  }
-                                }}
-                                className={cn(itemErrors[i]?.precoUnitario && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {itemErrors[i]?.precoUnitario && <p className="text-sm text-red-600">{itemErrors[i].precoUnitario}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor={`item-peso-${i}`}>Peso por Unidade (KG) *</Label>
-                              <Input
-                                id={`item-peso-${i}`}
-                                placeholder="Peso em KG"
-                                value={getNewItem(i).pesoUnidade || ""}
-                                onChange={(e) => {
-                                  updateNewItem(i, "pesoUnidade", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'));
-                                  if (itemErrors[i]?.pesoUnidade) {
-                                    setItemErrors(prev => {
-                                      const copy = { ...prev };
-                                      if (copy[i]) {
-                                        delete copy[i].pesoUnidade;
-                                        if (Object.keys(copy[i]).length === 0) delete copy[i];
-                                      }
-                                      return copy;
-                                    });
-                                  }
-                                }}
-                                className={cn(itemErrors[i]?.pesoUnidade && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {itemErrors[i]?.pesoUnidade && <p className="text-sm text-red-600">{itemErrors[i].pesoUnidade}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor={`item-raca-${i}`}>Raça (opcional)</Label>
-                              <Input
-                                id={`item-raca-${i}`}
-                                placeholder="Raça"
-                                value={getNewItem(i).raca || ""}
-                                onChange={(e) => updateNewItem(i, "raca", e.target.value)}
-                              />
-                            </div>
-
-                            <Button
-                              className="col-span-3"
-                              onClick={() => addItemToContract(i)}
-                            >
-                              Adicionar Item
-                            </Button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Botões de navegação */}
+                  <div className="flex gap-2 justify-end pt-4">
+                    <Button variant="outline" onClick={handleBack}>Voltar</Button>
+                    <Button onClick={handleNext}>Próximo</Button>
+                  </div>
                 </div>
-
-
-                {/* <div className="flex items-center justify-between pt-4"> */}
-                {/* <Button variant="outline" onClick={handleBack}>Voltar</Button> */}
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleBack}>Voltar</Button>
-                  {/* <Button variant="ghost" onClick={() => { resetAll(); onOpenChange(false); }}>Cancelar</Button> */}
-                  <Button onClick={handleNext}>Próximo</Button>
-                </div>
-                {/* </div> */}
               </section>
             )}
 
