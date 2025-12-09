@@ -336,8 +336,8 @@ export const columns = [
 ]
 
 
-export function FinanceiroTab() {
-  const { fetchWithAuth } = useAuth();
+export function FinanceiroTab({ unidadeId }) {
+  const { fetchWithAuth, user } = useAuth();
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
   const [columnVisibility, setColumnVisibility] = useState({})
@@ -377,6 +377,14 @@ export function FinanceiroTab() {
       // pagination: { pageSize },
     },
   })
+
+  const userPerfilRaw = user?.perfil ?? null;
+  const perfilNome = typeof userPerfilRaw === 'string'
+    ? userPerfilRaw.toUpperCase()
+    : String(userPerfilRaw?.funcao ?? userPerfilRaw?.nome ?? '').toUpperCase();
+  const isGerenteMatriz = perfilNome === 'GERENTE_MATRIZ';
+  const userUnidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+  const readOnly = isGerenteMatriz && unidadeId && unidadeId !== userUnidadeId;
 
   // Dados padrão para inicialização
   const defaultCategories = [
@@ -512,18 +520,21 @@ export function FinanceiroTab() {
   // Funções para buscar dados do backend
   const fetchCategorias = async () => {
     try {
-      const response = await fetchWithAuth(`${API_URL}/api/categorias`, {
+      const qs = unidadeId ? `?unidadeId=${unidadeId}` : '';
+      const response = await fetchWithAuth(`${API_URL}/categorias${qs}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao buscar categorias');
+        const text = await response.text().catch(() => '');
+        const msg = text || `Status ${response.status}`;
+        setError('Erro ao carregar categorias');
+        return;
       }
 
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
       if (result.sucesso && result.dados) {
         // Buscar subcategorias para cada categoria
         const categoriasComSubcategorias = await Promise.all(
@@ -584,21 +595,24 @@ export function FinanceiroTab() {
       const mes = parseInt(selectedMonth);
       const ano = parseInt(selectedYear);
 
+      const unidadeQs = unidadeId ? `&unidadeId=${unidadeId}` : '';
       const response = await fetchWithAuth(
-        `${API_URL}/api/contas-financeiras?mes=${mes}&ano=${ano}`,
+        `${API_URL}/contas-financeiras?mes=${mes}&ano=${ano}${unidadeQs}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Erro ao buscar contas');
+        const text = await response.text().catch(() => '');
+        const msg = text || `Status ${response.status}`;
+        setError('Erro ao carregar contas');
+        return;
       }
 
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
       if (result.sucesso && result.dados) {
         // Separar contas a pagar e a receber
         const contasPagar = [];
@@ -754,7 +768,7 @@ export function FinanceiroTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* <div className="grid grid-cols-2 gap-4 mb-6">
         <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -783,10 +797,9 @@ export function FinanceiroTab() {
           </CardContent>
         </Card>
 
-      </div>
+      </div> */}
 
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {/* Receitas e Despesas por mês */}
+      {/* <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
         <Card>
           <CardHeader>
             <CardTitle>Receitas e Despesas por mês</CardTitle>
@@ -817,7 +830,6 @@ export function FinanceiroTab() {
           </CardFooter>
         </Card>
 
-        {/* Distribuição de despesas por categoria */}
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
             <CardTitle>Distribuição de despesas por categoria</CardTitle>
@@ -848,7 +860,6 @@ export function FinanceiroTab() {
           </CardFooter>
         </Card>
 
-        {/* Fontes de receita */}
         <Card>
           <CardHeader>
             <CardTitle>Fontes de receita</CardTitle>
@@ -877,7 +888,7 @@ export function FinanceiroTab() {
             </div>
           </CardFooter>
         </Card>
-      </div>
+      </div> */}
 
       <Tabs defaultValue="payable" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -889,7 +900,6 @@ export function FinanceiroTab() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Contas a Pagar */}
         <TabsContent value="payable">
           {loading ? (
             <div className="flex items-center justify-center p-8">
@@ -906,6 +916,8 @@ export function FinanceiroTab() {
               fetchWithAuth={fetchWithAuth}
               API_URL={API_URL}
               onRefresh={fetchContas}
+              readOnly={readOnly}
+              unidadeId={unidadeId}
             />
           )}
         </TabsContent>
@@ -926,6 +938,8 @@ export function FinanceiroTab() {
               fetchWithAuth={fetchWithAuth}
               API_URL={API_URL}
               onRefresh={fetchContas}
+              readOnly={readOnly}
+              unidadeId={unidadeId}
             />
           )}
         </TabsContent>

@@ -61,7 +61,7 @@ export default function TransferirUsuarioModal({ usuario, open, onOpenChange, on
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle>Transferir {usuario?.nome}</DialogTitle>
+          <DialogTitle>Transferir {usuario?.nome ?? usuario?.name}</DialogTitle>
           <DialogDescription>Selecione a unidade de destino.</DialogDescription>
         </DialogHeader>
 

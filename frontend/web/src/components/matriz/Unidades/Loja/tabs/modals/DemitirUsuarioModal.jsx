@@ -39,7 +39,7 @@ export default function DemitirUsuarioModal({ usuario, open, onOpenChange, onSuc
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Demitir {usuario?.nome}</DialogTitle>
+          <DialogTitle>Demitir {usuario?.nome ?? usuario?.name}</DialogTitle>
           <DialogDescription>Esta ação removerá o usuário do sistema. Esta operação pode ser irreversível.</DialogDescription>
         </DialogHeader>
 
