@@ -135,9 +135,9 @@ export default function DashboardLoja() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-2">
-                  <a href="/(private)/loja/estoque" className="rounded-md p-3 bg-muted/5 hover:bg-muted/10 flex items-center justify-between">Estoque</a>
-                  <a href="/(private)/loja/fornecedores" className="rounded-md p-3 bg-muted/5 hover:bg-muted/10 flex items-center justify-between">Fornecedores</a>
-                  <a href="/(private)/loja/frenteCaixa" className="rounded-md p-3 bg-muted/5 hover:bg-muted/10 flex items-center justify-between">Frente de Caixa</a>
+                  <a href="/loja/estoque" className="rounded-md p-3 bg-muted/5 hover:bg-muted/10 flex items-center justify-between">Estoque</a>
+                  <a href="/loja/fornecedores" className="rounded-md p-3 bg-muted/5 hover:bg-muted/10 flex items-center justify-between">Fornecedores</a>
+                  <a href="/loja/frenteCaixa" className="rounded-md p-3 bg-muted/5 hover:bg-muted/10 flex items-center justify-between">Frente de Caixa</a>
                 </div>
               </CardContent>
             </Card>
@@ -147,7 +147,7 @@ export default function DashboardLoja() {
         <Separator className="my-6" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Equipe & Ações</CardTitle>
               <CardDescription>Status de funcionários e tarefas</CardDescription>
@@ -155,7 +155,7 @@ export default function DashboardLoja() {
             <CardContent>
               <ContributorsTable />
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card>
             <CardHeader>

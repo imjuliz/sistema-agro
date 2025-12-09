@@ -55,7 +55,7 @@ export default function FazendasPage() {
     const [selected, setSelected] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(10);
+    const [perPage, setPerPage] = useState(8);
     const [sheetUnit, setSheetUnit] = useState(null);
     const [metrics, setMetrics] = useState({ total: 0, active: 0, inactive: 0 });
     const [orderBy, setOrderBy] = useState('nome_asc');
@@ -288,6 +288,12 @@ export default function FazendasPage() {
         return filtered.slice(start, start + perPage);
     }, [filtered, page, perPage]);
 
+    // If backend provides `totalResults` then `units` is expected to contain
+    // only the current page (server-side pagination). In that case render
+    // `units` directly; otherwise render client-side paged results.
+    const isServerPaged = !!(totalResults && totalResults > 0);
+    const displayed = isServerPaged ? units : paged;
+
     function toggleSelect(id) {setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);}
 
     function toggleStatus(status) {
@@ -322,7 +328,7 @@ export default function FazendasPage() {
     }
 
     function selectAllOnPage() {
-        const ids = paged.map(u => u.id);
+        const ids = displayed.map(u => u.id);
         const all = ids.every(id => selected.includes(id));
         setSelected(s => all ? s.filter(x => !ids.includes(x)) : [...new Set([...s, ...ids])]);
     }
@@ -440,7 +446,7 @@ export default function FazendasPage() {
         return null;
     }
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    const totalPages = Math.max(1, Math.ceil((totalResults && totalResults > 0 ? totalResults : filtered.length) / perPage));
     useEffect(() => {
         // sempre garante que a página atual seja válida quando filtros / perPage mudarem
         setPage(p => Math.min(Math.max(1, p), totalPages));
@@ -495,7 +501,7 @@ export default function FazendasPage() {
                                         {/* header com ações rápidas */}
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="font-semibold">Filtros Avançados</div>
-                                            <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
+                                            <div className="text-sm text-neutral-400">{(totalResults && totalResults > 0) ? totalResults : filtered.length} resultados</div>
                                         </div>
 
                                         <div className="space-y-3">
@@ -622,7 +628,7 @@ export default function FazendasPage() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <div className="flex items-center gap-2 ml-3">
+                                {/* <div className="flex items-center gap-2 ml-3">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant='outline' size='sm'>
@@ -641,7 +647,7 @@ export default function FazendasPage() {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                </div>
+                                </div> */}
                                 <Button variant="" size="sm" className="flex items-center gap-1" onClick={() => setOpenAddFazenda(true)}>
                                     <span className="flex flex-row gap-3 items-center text-sm"><Plus />Adicionar fazenda</span>
                                 </Button>
@@ -659,7 +665,7 @@ export default function FazendasPage() {
                         ) : ( <div>
                                 {/* Grid of cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-                                    {units.map(u => (
+                                    {displayed.map(u => (
                                         <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`} onMouseEnter={() => prefetchFazenda(u.id)}>
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex flex-col items-start justify-between gap-3">
@@ -696,7 +702,7 @@ export default function FazendasPage() {
                                 </div>
 
                                 {/* Empty state */}
-                                {units.length === 0 && !loading && (
+                                {displayed.length === 0 && !loading && (
                                     <div className="py-8 flex flex-col items-center gap-4 text-center text-muted-foreground">
                                         <Tractor size={50} />
                                         <p className="font-medium">Nenhuma fazenda encontrada.</p>
@@ -707,7 +713,7 @@ export default function FazendasPage() {
                             </div>
                         )}
                     </CardContent>
-                    <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
+                    <CardFooter className="flex items-center justify-between border-t dark:border-neutral-800 border-neutral-200">
                         <div className="flex items-center gap-3">
                             <Label className="text-sm font-medium">Linhas por pág.</Label>
                             <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
@@ -715,10 +721,10 @@ export default function FazendasPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="5">5</SelectItem>
-                                    <SelectItem value="6">6</SelectItem>
-                                    <SelectItem value="10">10</SelectItem>
-                                    <SelectItem value="20">20</SelectItem>
+                                    <SelectItem value="4">4</SelectItem>
+                                    <SelectItem value="8">8</SelectItem>
+                                    <SelectItem value="12">12</SelectItem>
+                                    <SelectItem value="16">16</SelectItem>
                                 </SelectContent>
                             </Select>
 

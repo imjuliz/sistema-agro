@@ -746,7 +746,7 @@ export function FinanceiroTab() {
   if (loading && categories.length === 0 && accountsPayable.length === 0 && accountsReceivable.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader className="h-8 w-8 animate-spin" />
+        
         <span className="ml-2">Carregando dados financeiros...</span>
       </div>
     );
@@ -754,7 +754,7 @@ export function FinanceiroTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -783,33 +783,6 @@ export function FinanceiroTab() {
           </CardContent>
         </Card>
 
-        <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2">
-                <Package className="size-10" />
-              </div>
-              <div>
-                <div className="text-2xl font-medium">94%</div>
-                <div className="text-sm text-muted-foreground">Custo por cultura</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2">
-                <Crosshair className="size-10" />
-              </div>
-              <div>
-                <div className="text-2xl font-medium">94%</div>
-                <div className="text-sm text-muted-foreground">Comparativo com meta</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -906,123 +879,13 @@ export function FinanceiroTab() {
         </Card>
       </div>
 
-
-
-      {/* tabela Detalhamento de custos e receitas */}
-      <div className="w-full">
-        <div className="flex items-center py-4">
-          <h3 className='font-bold'>Detalhamento de custos e receitas</h3>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Colunas <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <div className="overflow-hidden rounded-md border bg-card">
-          <Table >
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    Nenhum resultado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-            <TableFooter>
-              <DataTablePagination table={table} pageSizeOptions={[5, 10, 20, 50]} />
-            </TableFooter>
-          </Table>
-
-        </div>
-
-        {/* --- action bar: aparece quando TODOS os rows filtrados estão selecionados --- */}
-        <DataTableActionBar table={table}>
-          <DataTableActionBarSelection table={table} />
-
-          <DataTableActionBarAction tooltip="Exportar selecionados" onClick={() => {
-            const selected = table.getFilteredSelectedRowModel().rows.map(r => r.original);
-            console.log("Export selected", selected);
-          }}>
-            <Download />
-          </DataTableActionBarAction>
-
-          {/* <DataTableActionBarAction tooltip="Deletar todos selecionados" onClick={() => {
-            const selectedIds = table.getFilteredSelectedRowModel().rows.map(r => r.original.id);
-            console.log("Delete selected", selectedIds);
-            // remova do data/state conforme necessário
-          }}>
-            <Trash2/>
-          </DataTableActionBarAction> */}
-        </DataTableActionBar>
-      </div>
-
-
       <Tabs defaultValue="payable" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="payable" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />Contas a Pagar
+            <CreditCard className="h-4 w-4" />Despesas
           </TabsTrigger>
           <TabsTrigger value="receivable" className="flex items-center gap-2">
-            <Wallet className="h-4 w-4" />Contas a Receber
+            <Wallet className="h-4 w-4" />Receitas
           </TabsTrigger>
         </TabsList>
 
@@ -1030,7 +893,7 @@ export function FinanceiroTab() {
         <TabsContent value="payable">
           {loading ? (
             <div className="flex items-center justify-center p-8">
-              <Loader className="h-8 w-8 animate-spin" />
+              
               <span className="ml-2">Carregando contas a pagar...</span>
             </div>
           ) : error ? (
@@ -1050,7 +913,7 @@ export function FinanceiroTab() {
         <TabsContent value="receivable">
           {loading ? (
             <div className="flex items-center justify-center p-8">
-              <Loader className="h-8 w-8 animate-spin" />
+              
               <span className="ml-2">Carregando contas a receber...</span>
             </div>
           ) : error ? (

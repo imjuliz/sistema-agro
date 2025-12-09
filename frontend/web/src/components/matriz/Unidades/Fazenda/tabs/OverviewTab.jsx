@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "
 import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { useToast } from '@/components/ui/use-toast';
 
 // --------------------------------------------------------------------------------
 // grafico de Uso do Solo e Cultivo
@@ -45,6 +45,7 @@ const cultivosConfig = {
 
 export function OverviewTab({ fazendaId }) {
   const { fetchWithAuth } = useAuth()
+  const { toast } = useToast();
   const [dadosFazenda, setDadosFazenda] = useState(null)
   const [contatosPrincipais, setContatosPrincipais] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -70,6 +71,7 @@ export function OverviewTab({ fazendaId }) {
 
         if (!response.ok) {
           console.error("Erro ao carregar dados da fazenda: status", response.status)
+          toast.error(`Erro ao carregar dados da fazenda (status ${response.status})`);
           return
         }
 
@@ -78,11 +80,15 @@ export function OverviewTab({ fazendaId }) {
 
         if (unidade) {
           setDadosFazenda(unidade)
+          // sinalizar carregamento bem-sucedido (silencioso) — opcional
+          // toast.success('Dados da fazenda carregados');
         } else {
           console.error("Erro ao carregar dados da fazenda:", body)
+          toast.error('Erro ao carregar dados da fazenda.');
         }
       } catch (error) {
         console.error("Erro ao buscar dados da fazenda:", error)
+        toast.error('Erro ao buscar dados da fazenda. Verifique a sua conexão.');
       } finally {
         setCarregando(false)
       }
@@ -220,6 +226,24 @@ export function OverviewTab({ fazendaId }) {
     if (digits.length === 0) return '-';
     const padded = digits.padEnd(14, '0').slice(0, 14);
     return padded.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+
+  // formatter: CEP (00000-000)
+  function formatCEP(value) {
+    if (!value) return '-';
+    const digits = String(value).replace(/\D/g, '');
+    if (!digits) return '-';
+    if (digits.length <= 5) return digits;
+    const d = digits.slice(0, 8).padEnd(8, '0');
+    return d.replace(/(\d{5})(\d{3})/, '$1-$2');
+  }
+
+  function formatCoords(lat, lng) {
+    if (lat === null || lat === undefined || lng === null || lng === undefined) return '-';
+    const la = Number(lat);
+    const lo = Number(lng);
+    if (Number.isNaN(la) || Number.isNaN(lo)) return '-';
+    return `${la.toFixed(6)}, ${lo.toFixed(6)}`;
   }
 
   // small phone formatter (brasileiro-ish)
@@ -471,16 +495,20 @@ export function OverviewTab({ fazendaId }) {
         </div>
         {/* tabela */}
         <div className="w-full">
-          <div className="flex justify-between py-4 gap-2">
-            <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
+          <div className="flex flex-row justify-between">
+            <div className="flex flex-col gap-2">
+              <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
+              <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
+            </div>
+
+            <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
           </div>
 
           <div className="flex justify-between items-center py-2">
-            <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
             <Dialog open={openNovo} onOpenChange={setOpenNovo}>
-              <DialogTrigger asChild>
+              {/* <DialogTrigger asChild>
                 <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
-              </DialogTrigger>
+              </DialogTrigger> */}
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Novo dado</DialogTitle>
@@ -577,36 +605,8 @@ export function OverviewTab({ fazendaId }) {
           </div>
         </div>
 
-
-
-        {/* Uso do Solo e Cultivo */}
         <div className="flex gap-8">
-          {/* Gráfico de pizza (área por cultura) */}
-          <Card className="flex flex-col flex-1 min-w-0">
-            <CardHeader className="items-center pb-0">
-              <CardTitle>Área por cultura</CardTitle>
-              <CardDescription>January - June 2024</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 pb-0">
-              <ChartContainer
-                config={cultivosConfig}
-                className="mx-auto aspect-square max-h-[300px]"
-              >
-                <PieChart>
-                  <ChartTooltip
-                    content={<ChartTooltipContent nameKey="cultura" hideLabel />}
-                  />
-                  <Pie data={cultivos} dataKey="area" />
-                  <ChartLegend
-                    content={<ChartLegendContent nameKey="cultura" />}
-                    className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
-                  />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col gap-6 flex-1 min-w-0">
+          <div className="flex flex-col gap-6 basis-[70%] min-w-0">
             {/* mapa */}
             <div className='h-full'>
               <Card className='h-full'>
@@ -642,88 +642,57 @@ export function OverviewTab({ fazendaId }) {
                 </CardContent>
               </Card>
             </div>
-
-
-
           </div>
+          <div className="basis-[30%]">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Localização</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Briefcase className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.endereco || '—')}</div>
+                    <div className="text-sm text-muted-foreground">Endereço</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Users className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.cidade || '—')}</div>
+                    <div className="text-sm text-muted-foreground">Cidade</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Calendar className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.estado || '—')}</div>
+                    <div className="text-sm text-muted-foreground">Estado</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <ScrollText className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCEP(dadosFazenda?.cep || dadosFazenda?.cep)}</div>
+                    <div className="text-sm text-muted-foreground">CEP</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <ScrollText className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCoords(dadosFazenda?.latitude, dadosFazenda?.longitude)}</div>
+                    <div className="text-sm text-muted-foreground">Coordenadas</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
         </div>
-
-        {/* Produção e Produtividade */}
-
-        {/* Estrutura e Infraestrutura */}
-
-        {/* Indicadores Ambientais e Legais */}
-
-        {/* Job Progress */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Job Progress Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {jobMetrics.map((job, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{job.title}</span>
-                      <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
-                        {job.status}
-                      </Badge>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {job.applications} applications
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Shortlisted</div>
-                      <div className="font-medium">{job.shortlisted}</div>
-                      <Progress value={(job.shortlisted / job.applications) * 100} className="h-1 mt-1" />
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Interviewed</div>
-                      <div className="font-medium">{job.interviewed}</div>
-                      <Progress value={(job.interviewed / job.shortlisted) * 100} className="h-1 mt-1" />
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Offered</div>
-                      <div className="font-medium">1</div>
-                      <Progress value={33} className="h-1 mt-1" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card> */}
-
-        {/* Recent Activity */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <Avatar className="size-8">
-                    <AvatarImage src={`/api/placeholder/32/32`} />
-                    <AvatarFallback>{activity.user.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="text-sm">{activity.description}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {activity.user} • {activity.time}
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {activity.type}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card> */}
 
       </div>
     </div>

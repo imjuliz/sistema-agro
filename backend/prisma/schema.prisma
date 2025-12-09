@@ -331,13 +331,16 @@ model Contrato {
 model ContratoItens {
   id            Int               @id @default(autoincrement())
   contratoId    Int               @map("contrato_id")
-  produtoId     Int               @map("produto_id")
+  produtoId     Int?               @map("produto_id")
   nome          String?           @db.VarChar(255)
   quantidade    Int
+  raca          String?           
+  pesoUnidade   Decimal?          @map("peso_por_unidade")
+  precoUnitario Decimal?          @map("preco_unitario")
   unidadeMedida UnidadesDeMedida?
 
   contrato      Contrato          @relation("ContratoItens", fields: [contratoId], references: [id], onDelete: Cascade)
-  produto       Produto           @relation(fields: [produtoId], references: [id])
+  produto       Produto?           @relation(fields: [produtoId], references: [id])
 
   pedidoItems   PedidoItem[]
 
@@ -348,7 +351,6 @@ model ContratoItens {
 
   @@map("contrato_itens")
 }
-
 
 model Pedido {
   id                        Int                @id @default(autoincrement())

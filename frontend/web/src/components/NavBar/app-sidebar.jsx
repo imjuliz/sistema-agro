@@ -131,7 +131,7 @@ function getMenuByPerfil(perfil) {
 
 export function AppSidebar({ ...props }) {
   const { user } = useAuth();
-  // console.log("USER NA SIDEBAR →", user);
+  console.log("USER NA SIDEBAR →", user);
 
   const perfil = user?.perfil
   const { navMain, projects, projectsLabel, navMainLabel } = getMenuByPerfil(perfil)

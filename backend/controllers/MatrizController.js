@@ -1,127 +1,71 @@
-// import {
-//   deleteUnidade,
-//   getUnidadePorId,
-//   getUnidades,
-//   updateStatusUnidade,
-//   createUnidade,
-//   getFazendas,
-//   getLoja,
-//   getMatriz,
-//   FazendaService,
-//   LojaService,
-//   updateUnidade
-// } from "../models/Matriz.js";
-// import { unidadeSchema } from "../schemas/unidadeSchema.js";
+import PDFDocument from "pdfkit";
+import {
+  getResumoVendas,
+  getTopFazendasProducao,
+  buildDashboardPdfData,
+} from "../models/Matriz.js";
 
-// // GET /unidades
-// export async function getUnidadesController(req, res) {
-//   const resultado = await getUnidades();
-//   if (!resultado.sucesso) return res.status(500).json(resultado);
-//   return res.json(resultado);
-// }
+export async function getResumoVendasController(req, res) {
+  try {
+    const { range } = req.query;
+    const resultado = await getResumoVendas({ dias: range });
+    return res.json(resultado);
+  } catch (error) {
+    console.error("getResumoVendasController erro:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao calcular resumo de vendas." });
+  }
+}
 
-// // GET /unidades/:id
-// export async function getUnidadePorIdController(req, res) {
-//   const { id } = req.params;
-//   const resultado = await getUnidadePorId(Number(id));
-//   if (!resultado.sucesso) return res.status(404).json(resultado);
-//   return res.json(resultado);
-// }
+export async function getTopFazendasProducaoController(_req, res) {
+  try {
+    const resultado = await getTopFazendasProducao({ limite: 5 });
+    return res.json(resultado);
+  } catch (error) {
+    console.error("getTopFazendasProducaoController erro:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao listar produção das fazendas." });
+  }
+}
 
-// // GET /fazendas
-// export async function getFazendasController(req, res) {
-//   const resultado = await getFazendas();
-//   if (!resultado.sucesso) return res.status(500).json(resultado);
-//   return res.json(resultado);
-// }
+export async function exportDashboardPdfController(_req, res) {
+  try {
+    const data = await buildDashboardPdfData();
 
-// // GET /lojas
-// export async function getLojaController(req, res) {
-//   const resultado = await getLoja();
-//   if (!resultado.sucesso) return res.status(500).json(resultado);
-//   return res.json(resultado);
-// }
+    const doc = new PDFDocument({ margin: 32 });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=\"dashboard-matriz.pdf\"");
+    doc.pipe(res);
 
-// // GET /matrizes
-// export async function getMatrizController(req, res) {
-//   const resultado = await getMatriz();
-//   if (!resultado.sucesso) return res.status(500).json(resultado);
-//   return res.json(resultado);
-// }
+    doc.fontSize(18).text("Dashboard Matriz", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(new Date().toLocaleString(), { align: "center" });
+    doc.moveDown();
 
-// // CONTAGEM
-// export async function contarFazendasController(req, res) {
-//   try {
-//     const total = await FazendaService.contarFazendas();
-//     const ativas = await FazendaService.contarFazendasAtivas();
-//     const inativas = await FazendaService.contarFazendasInativas();
-//     return res.json({ total, ativas, inativas });
-//   } catch (error) {
-//     return res.status(500).json({ error: 'Erro interno no servidor', detalhes: error.message });
-//   }
-// }
+    doc.fontSize(14).text("Vendas - Últimos 7 dias");
+    data.vendas7.pontos.forEach((p) => {
+      doc.fontSize(10).text(`${p.data}: R$ ${p.total.toFixed(2)}`);
+    });
+    doc.fontSize(10).text(`Total 7 dias: R$ ${data.vendas7.totalPeriodo.toFixed(2)}`);
+    doc.moveDown();
 
-// export async function contarLojasController(req, res) {
-//   try {
-//     const total = await LojaService.contarLojas();
-//     const ativas = await LojaService.contarLojasAtivas();
-//     const inativas = await LojaService.contarLojasInativas();
-//     return res.json({ total, ativas, inativas });
-//   } catch (error) {
-//     return res.status(500).json({ error: 'Erro interno no servidor', detalhes: error.message });
-//   }
-// }
+    doc.fontSize(14).text("Vendas - Últimos 30 dias");
+    data.vendas30.pontos.slice(-10).forEach((p) => {
+      doc.fontSize(10).text(`${p.data}: R$ ${p.total.toFixed(2)}`);
+    });
+    doc.fontSize(10).text(`Total 30 dias: R$ ${data.vendas30.totalPeriodo.toFixed(2)}`);
+    doc.moveDown();
 
-// // CRIAR
-// export async function createUnidadeController(req, res) {
-//   try {
-//     // supondo que unidadeSchema retorna os campos da unidade (não { data })
-//     const data = unidadeSchema.parse(req.body);
-//     const resultado = await createUnidade(data);
-//     if (!resultado.sucesso) return res.status(400).json(resultado);
-//     return res.status(201).json(resultado);
-//   } catch (error) {
-//     return res.status(400).json({ sucesso: false, erro: "Erro ao criar unidade.", detalhes: error.message });
-//   }
-// }
+    doc.fontSize(14).text("Top 5 Fazendas (Produção estimada)");
+    data.producao.fazendas.forEach((f, idx) => {
+      doc.fontSize(10).text(
+        `${idx + 1}º ${f.nome} - ${f.totalEstimado.toFixed(2)} (peso total)`
+      );
+    });
 
-// // ATUALIZAR
-// export async function updateUnidadeController(req, res) {
-//   try {
-//     const { id } = req.params;
-//     const data = unidadeSchema.parse(req.body);
-//     const resultado = await updateUnidade(id, data);
-//     if (!resultado.sucesso) return res.status(400).json(resultado);
-//     return res.json(resultado);
-//   } catch (error) {
-//     return res.status(400).json({ sucesso: false, erro: "Erro ao atualizar unidade.", detalhes: error.message });
-//   }
-// }
+    doc.end();
+  } catch (error) {
+    console.error("exportDashboardPdfController erro:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao gerar PDF do dashboard." });
+  }
+}
 
-// // DELETAR
-// export async function deleteUnidadeController(req, res) {
-//   try {
-//     const { id } = req.params;
-//     const resultado = await deleteUnidade(Number(id));
-//     if (!resultado.sucesso) return res.status(400).json(resultado);
-//     return res.json(resultado);
-//   } catch (error) {
-//     return res.status(500).json({ sucesso: false, erro: "Erro ao deletar unidade.", detalhes: error.message });
-//   }
-// }
 
-// // UPDATE STATUS
-// export const updateStatusUnidadeController = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { novoStatus } = req.body;
-//     if (!id || isNaN(Number(id))) return res.status(400).json({ sucesso: false, erro: "ID inválido." });
-//     if (!novoStatus) return res.status(400).json({ sucesso: false, erro: "O campo 'novoStatus' é obrigatório." });
-
-//     const resultado = await updateStatusUnidade(Number(id), novoStatus);
-//     if (!resultado.sucesso) return res.status(400).json(resultado);
-//     return res.json(resultado);
-//   } catch (error) {
-//     return res.status(500).json({ sucesso: false, erro: "Erro interno ao atualizar status.", detalhes: error.message });
-//   }
-// };
