@@ -26,6 +26,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
   const [formData, setFormData] = useState({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: '',description: ''});
+  const [formErrors, setFormErrors] = useState({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: ''});
   const [loading, setLoading] = useState(false);
   const [localAccounts, setLocalAccounts] = useState(accounts ?? []);
   // Paginação
@@ -235,12 +236,20 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   };
 
   const handleAdd = async () => {
-    // Validação inicial dos campos obrigatórios
-    if (!formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
+    // Validação inicial dos campos obrigatórios (inline + toast)
+    const errors = {competencyDate: '', dueDate: '', paymentDate: '', amount: '', subcategoryId: ''};
+    if (!formData.competencyDate) errors.competencyDate = 'Data de Competência é obrigatório';
+    if (!formData.dueDate) errors.dueDate = 'Data de Vencimento é obrigatório';
+    if (!formData.amount) errors.amount = 'Valor é obrigatório';
+    if (!formData.subcategoryId) errors.subcategoryId = 'Subcategoria é obrigatório';
+    const hasErrors = Object.values(errors).some(v => v && v.length > 0);
+    if (hasErrors) {
+      setFormErrors(errors);
+      const missing = Object.entries(errors).filter(([_, v]) => v).map(([k, _]) => k).join(', ');
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios: Data de Competência, Data de Vencimento, Valor e Subcategoria.",
-        variant: "destructive",
+        title: 'Campos obrigatórios',
+        description: `Preencha os campos obrigatórios: ${missing}`,
+        variant: 'destructive'
       });
       return;
     }
@@ -251,35 +260,38 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       const vencimentoValidado = validarData(formData.dueDate);
       const pagamentoValidado = formData.paymentDate ? validarData(formData.paymentDate) : null;
 
-      // Mensagens de erro mais específicas
+      // Mensagens de erro mais específicas e checagem de relação entre datas
       if (!vencimentoValidado) {
-        toast({
-          title: "Erro de validação",
-          description: `Data de vencimento inválida: "${formData.dueDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
-          variant: "destructive",
-        });
+        setFormErrors(prev => ({ ...prev, dueDate: 'Data de vencimento inválida' }));
+        toast({ title: 'Erro de validação', description: `Data de vencimento inválida: "${formData.dueDate}".`, variant: 'destructive' });
         console.error('[AccountsPayable] Data de vencimento inválida:', formData.dueDate);
         return;
       }
 
       if (formData.competencyDate && !competenciaValidada) {
-        toast({
-          title: "Erro de validação",
-          description: `Data de competência inválida: "${formData.competencyDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
-          variant: "destructive",
-        });
+        setFormErrors(prev => ({ ...prev, competencyDate: 'Data de competência inválida' }));
+        toast({ title: 'Erro de validação', description: `Data de competência inválida: "${formData.competencyDate}".`, variant: 'destructive' });
         console.error('[AccountsPayable] Data de competência inválida:', formData.competencyDate);
         return;
       }
 
       if (formData.paymentDate && !pagamentoValidado) {
-        toast({
-          title: "Erro de validação",
-          description: `Data de pagamento inválida: "${formData.paymentDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
-          variant: "destructive",
-        });
+        setFormErrors(prev => ({ ...prev, paymentDate: 'Data de pagamento inválida' }));
+        toast({ title: 'Erro de validação', description: `Data de pagamento inválida: "${formData.paymentDate}".`, variant: 'destructive' });
         console.error('[AccountsPayable] Data de pagamento inválida:', formData.paymentDate);
         return;
+      }
+
+      // Garantir que a data de pagamento não seja anterior à data de competência
+      if (pagamentoValidado && competenciaValidada) {
+        const pay = new Date(pagamentoValidado);
+        const comp = new Date(competenciaValidada);
+        if (pay < comp) {
+          setFormErrors(prev => ({ ...prev, paymentDate: 'Data de pagamento não pode ser anterior à data de competência' }));
+          toast({ title: 'Erro de validação', description: 'Data de pagamento não pode ser anterior à data de competência.', variant: 'destructive' });
+          console.error('[AccountsPayable] paymentDate < competencyDate', pagamentoValidado, competenciaValidada);
+          return;
+        }
       }
 
       const subcategory = categories
@@ -358,17 +370,16 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       // Verificar se a conta foi criada com sucesso
       // O backend retorna { sucesso: true, dados: {...} } ou status 201
       if (result.sucesso || response.status === 201 || result.dados) {
-        toast({
-          title: "Sucesso!",
-          description: "Conta a pagar criada com sucesso.",
-          variant: "default",
-        });
+        toast({ title: 'Sucesso!', description: 'Conta a pagar criada com sucesso.', variant: 'default' });
 
         // Recarregar dados do backend
         if (onRefresh) {
           await onRefresh('payable');
+          // Garantir toast após o refresh
+          toast({ title: 'Sucesso!', description: 'Conta a pagar criada com sucesso.', variant: 'default' });
         } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
           await fetchWithAuth.__loadContas();
+          toast({ title: 'Sucesso!', description: 'Conta a pagar criada com sucesso.', variant: 'default' });
         } else {
           const today = new Date().toISOString().split('T')[0];
           const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
@@ -388,6 +399,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
             return updated;
           });
         }
+        setFormErrors({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: ''});
         resetForm();
         setIsAddDialogOpen(false);
       } else {
@@ -502,8 +514,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
 
         if (onRefresh) {
           await onRefresh('payable');
+          toast({ title: 'Sucesso!', description: 'Conta a pagar atualizada com sucesso.', variant: 'default' });
         } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
           await fetchWithAuth.__loadContas();
+          toast({ title: 'Sucesso!', description: 'Conta a pagar atualizada com sucesso.', variant: 'default' });
         } else {
           const today = new Date().toISOString().split('T')[0];
           const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
@@ -562,8 +576,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
 
       if (onRefresh) {
         await onRefresh('payable');
+        toast({ title: 'Sucesso!', description: 'Conta a pagar deletada com sucesso.', variant: 'default' });
       } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
         await fetchWithAuth.__loadContas();
+        toast({ title: 'Sucesso!', description: 'Conta a pagar deletada com sucesso.', variant: 'default' });
       } else {
         setLocalAccounts(prev => {
           const updated = prev.filter(acc => acc.id !== id);
@@ -736,6 +752,12 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     // Adicionar contas válidas
     if (newAccounts.length > 0) {onAccountsChange([...accounts, ...newAccounts]);}
     setImportProgress(prev => ({...prev,errors,imported: newAccounts.length}));
+    // Mostrar toast resumo da importação
+    if (errors.length > 0) {
+      toast({ title: 'Import concluída com erros', description: `${newAccounts.length} importadas, ${errors.length} erros. Veja detalhes no painel de importação.`, variant: 'destructive' });
+    } else {
+      toast({ title: 'Import concluída', description: `${newAccounts.length} contas importadas com sucesso.`, variant: 'default' });
+    }
   };
 
   const handleFileChange = (e) => {
@@ -1113,7 +1135,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                 >
                   <Download className="h-4 w-4" />Exportar CSV
                 </Button>
-                <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                {/* <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="flex items-center gap-2"><Upload className="h-4 w-4" />Importar CSV</Button>
                   </DialogTrigger>
@@ -1176,12 +1198,12 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                       <Button onClick={handleImportCSV} disabled={!importFile || importProgress.show}>Importar</Button>
                     </div>
                   </DialogContent>
-                </Dialog>
+                </Dialog> */}
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="flex items-center gap-2"><Plus className="h-4 w-4" />Nova Conta</Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Nova Conta a Pagar</DialogTitle>
                       <DialogDescription>Adicione uma nova conta a pagar ao sistema</DialogDescription>
@@ -1189,27 +1211,31 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Data de Competência</Label>
-                          <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })}/>
+                          <Label className={"pb-3"}>Data de Competência</Label>
+                          <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => { setFormData({ ...formData, competencyDate: e.target.value }); setFormErrors(prev => ({ ...prev, competencyDate: '' })); }} className={formErrors.competencyDate ? 'border-destructive' : ''} />
+                          {formErrors.competencyDate && (<p className="text-sm text-destructive mt-2">Data de Competência é obrigatório</p>)}
                         </div>
                         <div>
-                          <Label>Data de Vencimento</Label>
-                          <Input id="due-date" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}/>
+                          <Label className={"pb-3"}>Data de Vencimento</Label>
+                          <Input id="due-date" type="date" value={formData.dueDate} onChange={(e) => { setFormData({ ...formData, dueDate: e.target.value }); setFormErrors(prev => ({ ...prev, dueDate: '' })); }} className={formErrors.dueDate ? 'border-destructive' : ''} />
+                          {formErrors.dueDate && (<p className="text-sm text-destructive mt-2">Data de Vencimento é obrigatório</p>)}
                         </div>
                       </div>
                       <div>
-                        <Label>Data de Pagamento (opcional)</Label>
-                        <Input id="payment-date" type="date" value={formData.paymentDate} onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}/>
+                        <Label className={"pb-3"}>Data de Pagamento (opcional)</Label>
+                        <Input id="payment-date" type="date" value={formData.paymentDate} onChange={(e) => { setFormData({ ...formData, paymentDate: e.target.value }); setFormErrors(prev => ({ ...prev, paymentDate: '' })); }} className={formErrors.paymentDate ? 'border-destructive' : ''} />
+                        {formErrors.paymentDate && (<p className="text-sm text-destructive mt-2">{formErrors.paymentDate}</p>)}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Valor</Label>
-                          <Input id="amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })}/>
+                          <Label className={"pb-3"}>Valor</Label>
+                          <Input id="amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => { setFormData({ ...formData, amount: e.target.value }); setFormErrors(prev => ({ ...prev, amount: '' })); }} className={formErrors.amount ? 'border-destructive' : ''} />
+                          {formErrors.amount && (<p className="text-sm text-destructive mt-2">Valor é obrigatório</p>)}
                         </div>
                         <div>
-                          <Label>Subcategoria</Label>
-                          <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
-                            <SelectTrigger><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
+                          <Label className={"pb-3"}>Subcategoria</Label>
+                          <Select value={formData.subcategoryId} onValueChange={(value) => { setFormData({ ...formData, subcategoryId: value }); setFormErrors(prev => ({ ...prev, subcategoryId: '' })); }}>
+                            <SelectTrigger className={formErrors.subcategoryId ? 'border-destructive' : ''}><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
                             <SelectContent>
                               {exitCategories.map(category => (
                                 <React.Fragment key={category.id}>
@@ -1222,15 +1248,16 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                               ))}
                             </SelectContent>
                           </Select>
+                          {formErrors.subcategoryId && (<p className="text-sm text-destructive mt-2">Subcategoria é obrigatório</p>)}
                         </div>
                       </div>
                       <div>
-                        <Label>Descrição</Label>
+                        <Label className={"pb-3"}>Descrição</Label>
                         <Textarea id="description" placeholder="Descrição da conta a pagar" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}/>
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
+                      <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setFormErrors({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: ''}); }}>Cancelar</Button>
                       <Button onClick={handleAdd}>Adicionar</Button>
                     </div>
                   </DialogContent>
@@ -1372,8 +1399,8 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       </Card>
 
       {/* Dialog de Edição */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar Conta a Pagar</DialogTitle>
             <DialogDescription>Modifique os dados da conta a pagar</DialogDescription>

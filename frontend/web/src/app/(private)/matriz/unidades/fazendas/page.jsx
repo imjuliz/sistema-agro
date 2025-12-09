@@ -664,8 +664,20 @@ export default function FazendasPage() {
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex flex-col items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar><AvatarFallback>F</AvatarFallback></Avatar>
-                                                        <div>
+                                                                    <Avatar>
+                                                                        {u.raw?.imagemUrl || u.imagemUrl ? (
+                                                                            <AvatarImage src={u.raw?.imagemUrl || u.imagemUrl} alt={u.name} />
+                                                                        ) : (
+                                                                            <AvatarFallback>{(() => {
+                                                                                const parts = String(u.name || '').split(' ').filter(Boolean);
+                                                                                const a = parts[0]?.[0] ?? '';
+                                                                                const b = parts[1]?.[0] ?? '';
+                                                                                const initials = (a + b).toUpperCase() || (String(u.name || '').slice(0,2).toUpperCase() || 'F');
+                                                                                return initials;
+                                                                            })()}</AvatarFallback>
+                                                                        )}
+                                                                    </Avatar>
+                                                                    <div>
                                                             <div className="font-bold text-lg">{u.name}</div>
                                                             <div className="text-sm text-muted-foreground">{u.location}</div>
                                                         </div>

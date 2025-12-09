@@ -29,6 +29,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
   const [formData, setFormData] = useState({competencyDate: '',amount: '',subcategoryId: '',description: ''});
+  const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false); // estado de carregamento local
   const [localAccounts, setLocalAccounts] = useState(accounts ?? []);  // lista local de contas — se `accounts` for passado como prop, usamos ele como fallback
   // paginacao
@@ -115,29 +116,29 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   };
 
   const handleAdd = async () => {
-    // Validação inicial dos campos obrigatórios
-    if (!formData.competencyDate || !formData.amount || !formData.subcategoryId) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios: Data de Competência, Valor e Subcategoria.",
-        variant: "destructive",
-      });
+    // limpar erros anteriores
+    setFormErrors({});
+
+    // validação inline (mostra mensagem abaixo do input e borda vermelha)
+    const errors = {};
+    if (!formData.competencyDate) errors.competencyDate = 'Data de competência é obrigatória.';
+    if (!formData.amount) errors.amount = 'Valor é obrigatório.';
+    if (!formData.subcategoryId) errors.subcategoryId = 'Subcategoria é obrigatória.';
+
+    // validar formato de data quando informado
+    const competenciaValidada = formData.competencyDate ? validarData(formData.competencyDate) : null;
+    if (formData.competencyDate && !competenciaValidada) {
+      errors.competencyDate = `Data de competência inválida: "${formData.competencyDate}".`;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
     try {
-      // Validar data de competência antes de enviar
-      const competenciaValidada = validarData(formData.competencyDate);
-
-      if (formData.competencyDate && !competenciaValidada) {
-        toast({
-          title: "Erro de validação",
-          description: `Data de competência inválida: "${formData.competencyDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
-          variant: "destructive",
-        });
-        console.error('[AccountsReceivable] Data de competência inválida:', formData.competencyDate);
-        return;
-      }
+      // já validado acima; normalizar data
+      const competenciaValidadaNorm = competenciaValidada || null;
 
       const subcategory = categories
         .flatMap(cat => cat.subcategories)
@@ -145,18 +146,14 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       const categoria = categories.find(cat => cat.subcategories.some(sub => sub.id === formData.subcategoryId));
       // garantir o formato esperado pelo backend
       const descricaoValor = (formData.description || `${categoria ? categoria.name : ''}${categoria && subcategory ? ' - ' : ''}${subcategory ? subcategory.name : ''}`).trim();
-      const contaData = {descricao: descricaoValor || 'Conta',tipoMovimento: 'ENTRADA',categoriaId: categoria ? parseInt(categoria.id) : null,subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,formaPagamento: 'DINHEIRO',valor: parseFloat(formData.amount),competencia: competenciaValidada,documento: '',observacao: formData.description || ''};
+      const contaData = { descricao: descricaoValor || 'Conta', tipoMovimento: 'ENTRADA', categoriaId: categoria ? parseInt(categoria.id) : null, subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null, formaPagamento: 'DINHEIRO', valor: parseFloat(formData.amount), documento: '', observacao: formData.description || '' };
+      if (competenciaValidadaNorm) contaData.competencia = competenciaValidadaNorm;
 
       const url = API_URL ? `${API_URL}contas-financeiras` : '/api/contas-financeiras';
       console.debug('[AccountsReceivable] POST payload:', contaData);
       
       if (!fetchWithAuth) {
-        toast({
-          title: "Erro de configuração",
-          description: "Função de autenticação não disponível. Por favor, recarregue a página.",
-          variant: "destructive",
-        });
-        console.error('[AccountsReceivable] fetchWithAuth não está disponível');
+        setFormErrors({ _global: 'Função de autenticação não disponível. Recarregue a página.' });
         return;
       }
 
@@ -165,20 +162,13 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Erro desconhecido');
         let errorMessage = 'Erro ao criar conta';
-        
         try {
           const errorJson = JSON.parse(errorText);
           errorMessage = errorJson.erro || errorJson.detalhes || errorJson.message || errorMessage;
         } catch {
           errorMessage = errorText || `Erro HTTP ${response.status}`;
         }
-
-        console.error('[AccountsReceivable] Erro ao criar receita:', response.status, errorMessage);
-        toast({
-          title: "Erro ao criar receita",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        setFormErrors({ _global: errorMessage });
         return;
       }
 
@@ -197,11 +187,8 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         return;
       }
       if (result.sucesso) {
-        toast({
-          title: "Sucesso!",
-          description: "Receita criada com sucesso.",
-          variant: "default",
-        });
+        // sucesso: limpar erros e fechar modal
+        setFormErrors({});
 
         if (onRefresh) {
           await onRefresh('receivable');
@@ -209,16 +196,27 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           await fetchWithAuth.__loadContas();
         } else {
           const created = result.dados || null;
-          const newAccount = created ? {
-            id: String(created.id),
-            competencyDate: created.competencia || formData.competencyDate,
-            amount: created && created.valor !== undefined ? Number(created.valor) : parseAmount(formData.amount),
-            subcategoryId: String(created.subcategoriaId ?? formData.subcategoryId),
-            description: created.descricao ?? formData.description,
-            status: 'received'
-          } : {
+          // normalize competency dates so the client-side filter matches immediately
+          const normalizeCompetency = (raw) => {
+            if (!raw) return null;
+            // prefer YYYY-MM-DD if possible
+            const v = validarData(String(raw));
+            return v || String(raw);
+          };
+
+          const newAccount = created ? (function(){
+            const createdCompetency = normalizeCompetency(created.competencia || created.competencyDate) || formData.competencyDate || '';
+            return {
+              id: String(created.id),
+              competencyDate: createdCompetency,
+              amount: created && created.valor !== undefined ? Number(created.valor) : parseAmount(formData.amount),
+              subcategoryId: String(created.subcategoriaId ?? formData.subcategoryId),
+              description: created.descricao ?? formData.description,
+              status: 'received'
+            };
+          })() : {
             id: `local-${Date.now()}`,
-            competencyDate: formData.competencyDate,
+            competencyDate: validarData(formData.competencyDate) || formData.competencyDate || '',
             amount: parseAmount(formData.amount),
             subcategoryId: formData.subcategoryId,
             description: formData.description,
@@ -228,6 +226,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           setLocalAccounts(prev => {
             const updated = [newAccount, ...prev];
             if (onAccountsChange) onAccountsChange(updated);
+            console.debug('[AccountsReceivable] localAccounts after add:', updated.map(a => ({ id: a.id, competencyDate: a.competencyDate })));
             return updated;
           });
         }
@@ -252,26 +251,34 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   };
 
   const handleUpdate = async () => {
-    if (!editingAccount || !formData.competencyDate || !formData.amount || !formData.subcategoryId) { return; }
+    // limpar erros anteriores
+    setFormErrors({});
+    if (!editingAccount) return;
+
+    const errors = {};
+    if (!formData.competencyDate) errors.competencyDate = 'Data de competência é obrigatória.';
+    if (!formData.amount) errors.amount = 'Valor é obrigatório.';
+    if (!formData.subcategoryId) errors.subcategoryId = 'Subcategoria é obrigatória.';
+
+    const competenciaValidada = formData.competencyDate ? validarData(formData.competencyDate) : null;
+    if (formData.competencyDate && !competenciaValidada) {
+      errors.competencyDate = `Data de competência inválida: "${formData.competencyDate}".`;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
 
     try {
-      const competenciaValidada = validarData(formData.competencyDate);
-      
-      if (formData.competencyDate && !competenciaValidada) {
-        toast({
-          title: "Erro de validação",
-          description: `Data de competência inválida: "${formData.competencyDate}". Por favor, use uma data válida entre 1900 e 2100 no formato YYYY-MM-DD.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
       const subcategory = categories
         .flatMap(cat => cat.subcategories)
         .find(sub => sub.id === formData.subcategoryId);
 
       const categoria = categories.find(cat => cat.subcategories.some(sub => sub.id === formData.subcategoryId));
-      const contaData = {descricao: formData.description || '',categoriaId: categoria ? parseInt(categoria.id) : null,subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null,formaPagamento: editingAccount.formaPagamento || 'DINHEIRO',valor: parseFloat(formData.amount),competencia: competenciaValidada,documento: editingAccount.documento || '',observacao: formData.description || ''};
+      const competenciaValidadaNorm = competenciaValidada || null;
+      const contaData = { descricao: formData.description || '', categoriaId: categoria ? parseInt(categoria.id) : null, subcategoriaId: subcategory ? parseInt(formData.subcategoryId) : null, formaPagamento: editingAccount.formaPagamento || 'DINHEIRO', valor: parseFloat(formData.amount), documento: editingAccount.documento || '', observacao: formData.description || '' };
+      if (competenciaValidadaNorm) contaData.competencia = competenciaValidadaNorm;
       const url = API_URL ? `${API_URL}contas-financeiras/${editingAccount.id}` : `/api/contas-financeiras/${editingAccount.id}`;
       const response = await fetchWithAuth(url, {
         method: 'PUT',
@@ -280,20 +287,17 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         body: JSON.stringify(contaData),
       });
 
-      const result = await response.json();
+      let result = {};
+      try { result = await response.json(); } catch (e) { /* ignore parse errors */ }
 
       if (!response.ok) {
-        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar conta';
-        throw new Error(errorMessage);
+        const errorMessage = result.erro || result.detalhes || result.message || `Erro HTTP ${response.status}`;
+        setFormErrors({ _global: errorMessage });
+        return;
       }
 
       if (result.sucesso) {
-        toast({
-          title: "Sucesso!",
-          description: "Conta a receber atualizada com sucesso.",
-          variant: "default",
-        });
-
+        // operação bem sucedida — atualizar lista e fechar modal
         if (onRefresh) {
           await onRefresh('receivable');
         } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
@@ -301,7 +305,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         } else {
           const updatedAccount = {
             ...editingAccount,
-            competencyDate: formData.competencyDate,
+            competencyDate: validarData(formData.competencyDate) || formData.competencyDate || '',
             amount: parseFloat(formData.amount),
             subcategoryId: formData.subcategoryId,
             description: formData.description,
@@ -311,21 +315,18 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           setLocalAccounts(prev => {
             const updated = prev.map(acc => acc.id === editingAccount.id ? updatedAccount : acc);
             if (onAccountsChange) onAccountsChange(updated);
+            console.debug('[AccountsReceivable] localAccounts after update:', updated.map(a => ({ id: a.id, competencyDate: a.competencyDate })));
             return updated;
           });
         }
+
         resetForm();
         setEditingAccount(null);
         setIsEditDialogOpen(false);
+        setFormErrors({});
       }
     } catch (error) {
-      console.error('Erro ao atualizar conta:', error);
-      const errorMessage = error.message || 'Erro ao atualizar conta. Tente novamente.';
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setFormErrors({ _global: error?.message || 'Erro ao atualizar conta. Tente novamente.' });
     }
   };
 
@@ -355,6 +356,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         setLocalAccounts(prev => {
           const updated = prev.filter(acc => acc.id !== id);
           if (onAccountsChange) onAccountsChange(updated);
+          console.debug('[AccountsReceivable] localAccounts after delete:', updated.map(a => ({ id: a.id, competencyDate: a.competencyDate })));
           return updated;
         });
       }
@@ -1019,103 +1021,32 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           >
             <Download className="h-4 w-4" />Exportar CSV
           </Button>
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2"
-            onClick={exportarExcelBackend}
-          >
-            <Download className="h-4 w-4" />Exportar Excel
-          </Button>
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />Importar CSV</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />Importar dados via CSV</DialogTitle>
-                <DialogDescription>Faça upload de um arquivo CSV com as colunas: Emissão, Vencimento, Pagamento, Valor, Categoria, Obs</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="csv-file">Arquivo CSV</Label>
-                  <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} className="mt-2" />
-                </div>
-                {importFile && (
-                  <Alert>
-                    <FileText className="h-4 w-4" />
-                    <AlertDescription>Arquivo selecionado: {importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)</AlertDescription>
-                  </Alert>
-                )}
-                {importProgress.show && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Processando...</span>
-                      <span>{importProgress.processed} de {importProgress.total}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(importProgress.processed / importProgress.total) * 100}%` }} />
-                    </div>
-                    <div className="text-sm text-green-600">{importProgress.imported} dados importadas com sucesso</div>
-                  </div>
-                )}
-                {importProgress.errors.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-red-600">Erros encontrados ({importProgress.errors.length}):</span>
-                    </div>
-                    <div className="max-h-32 overflow-y-auto bg-red-50 p-2 rounded text-sm">
-                      {importProgress.errors.map((error, index) => (<div key={index} className="text-red-600">{error}</div>))}
-                    </div>
-                  </div>
-                )}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="mb-2">Formato do CSV esperado:</h4>
-                  <div className="text-sm space-y-1">
-                    <div><strong>Emissão:</strong> Data de competência (DD/MM/YYYY)</div>
-                    <div><strong>Vencimento:</strong> Data de vencimento (DD/MM/YYYY)</div>
-                    <div><strong>Pagamento:</strong> Data de pagamento (DD/MM/YYYY) - opcional</div>
-                    <div><strong>Valor:</strong> Valor em reais (ex: "1.500,00")</div>
-                    <div><strong>Categoria:</strong> Nome da subcategoria (deve existir)</div>
-                    <div><strong>Obs:</strong> Descrição - opcional</div>
-                  </div>
-                  <div className="mt-2 text-sm text-blue-600">
-                    <strong>Nota:</strong> Valores com vírgulas devem estar entre aspas. Certifique-se de que as categorias mencionadas no CSV existem no sistema.
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={resetImport}>Cancelar</Button>
-                <Button onClick={handleImportCSV} disabled={!importFile || importProgress.show}>Importar</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2"><Plus className="h-4 w-4" />Nova Receita
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-xl">
               <DialogHeader>
                 <DialogTitle>Nova Receita</DialogTitle>
                 <DialogDescription>Adicione uma nova receita ao sistema</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="competency-date">Data de Competência</Label>
-                  <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} />
+                  <Label htmlFor="competency-date" className="pb-3">Data de Competência</Label>
+                  <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} className={formErrors.competencyDate ? 'border-red-600 ring-1 ring-red-600' : ''} />
+                  {formErrors.competencyDate && <p className="text-sm text-red-600 mt-1">{formErrors.competencyDate}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="amount">Valor</Label>
-                    <Input id="amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} />
+                    <Label htmlFor="amount" className="pb-3">Valor</Label>
+                    <Input id="amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={formErrors.amount ? 'border-red-600 ring-1 ring-red-600' : ''} />
+                    {formErrors.amount && <p className="text-sm text-red-600 mt-1">{formErrors.amount}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="subcategory">Subcategoria</Label>
+                    <Label htmlFor="subcategory" className="pb-3">Subcategoria</Label>
                     <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
-                      <SelectTrigger id="subcategory"><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
+                      <SelectTrigger id="subcategory" className={formErrors.subcategoryId ? 'border-red-600 ring-1 ring-red-600' : ''}><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
                       <SelectContent>
                         {entryCategories.map(category => (
                           <React.Fragment key={category.id}>
@@ -1128,10 +1059,11 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                         ))}
                       </SelectContent>
                     </Select>
+                    {formErrors.subcategoryId && <p className="text-sm text-red-600 mt-1">{formErrors.subcategoryId}</p>}
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="description">Descrição</Label>
+                  <Label htmlFor="description" className="pb-3">Descrição</Label>
                   <Textarea id="description" placeholder="Descrição da receita" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                 </div>
               </div>
@@ -1143,7 +1075,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           </Dialog>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1  gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total Recebido</CardTitle>
@@ -1151,16 +1083,6 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           </CardHeader>
           <CardContent>
             <div className="text-green-600">{formatCurrency(totalReceived)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.length} receitas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Geral</CardTitle>
-            <FileText className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-blue-600">{formatCurrency(totalReceived)}</div>
             <p className="text-xs text-muted-foreground">{filteredAccounts.length} receitas</p>
           </CardContent>
         </Card>
@@ -1287,19 +1209,22 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             <DialogDescription>Modifique os dados da conta a receber</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {formErrors._global && <div className="text-sm text-red-600">{formErrors._global}</div>}
             <div>
               <Label htmlFor="edit-competency-date">Data de Competência</Label>
-              <Input id="edit-competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })}/>
+              <Input id="edit-competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} className={formErrors.competencyDate ? 'border-red-600 ring-1 ring-red-600' : ''} />
+              {formErrors.competencyDate && <p className="text-sm text-red-600 mt-1">{formErrors.competencyDate}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-amount">Valor</Label>
-                <Input id="edit-amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })}/>
+                <Input id="edit-amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={formErrors.amount ? 'border-red-600 ring-1 ring-red-600' : ''} />
+                {formErrors.amount && <p className="text-sm text-red-600 mt-1">{formErrors.amount}</p>}
               </div>
               <div>
                 <Label htmlFor="edit-subcategory">Subcategoria</Label>
                 <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
-                  <SelectTrigger id="edit-subcategory">
+                  <SelectTrigger id="edit-subcategory" className={formErrors.subcategoryId ? 'border-red-600 ring-1 ring-red-600' : ''}>
                     <SelectValue placeholder="Selecione uma subcategoria" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1314,6 +1239,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                     ))}
                   </SelectContent>
                 </Select>
+                {formErrors.subcategoryId && <p className="text-sm text-red-600 mt-1">{formErrors.subcategoryId}</p>}
               </div>
             </div>
             <div>
