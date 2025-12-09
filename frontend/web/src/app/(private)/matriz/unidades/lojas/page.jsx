@@ -33,6 +33,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
+import AddLojaModal from '@/components/matriz/Unidades/Loja/AddLojaModal';
 
 // corrige o caminho dos ícones padrão em bundlers modernos
 if (typeof window !== 'undefined') {
@@ -73,6 +74,11 @@ export default function LojasPage() {
     const [draftResponsibleQuery, setDraftResponsibleQuery] = useState("");
     const [citySuggestions, setCitySuggestions] = useState([]);
     const citySuggestTimer = useRef(null);
+    const [draftCep, setDraftCep] = useState("");
+    const [cepLoading, setCepLoading] = useState(false);
+    const [cepError, setCepError] = useState("");
+    const [cepPreenchido, setCepPreenchido] = useState(false);
+    const [addLojaModalOpen, setAddLojaModalOpen] = useState(false);
 
     // filtros aplicados (só atualiza quando clicar em APLICAR)
     const [appliedFilters, setAppliedFilters] = useState({
@@ -228,6 +234,41 @@ export default function LojasPage() {
     const router = useRouter();
     const prefetchCache = useRef(new Map());
 
+    // Função para buscar CEP e preencher campos
+    async function fetchCepAndFill(rawCep) {
+        const digits = rawCep.replace(/\D/g, '');
+        setCepError("");
+        if (digits.length !== 8) return;
+        try {
+            setCepLoading(true);
+            const res = await fetchWithAuth(`${API_URL}unidades/cep?cep=${digits}`, { method: 'GET' });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                setCepError(body?.erro || `Erro buscando CEP (${res.status})`);
+                return;
+            }
+            const json = await res.json();
+            if (!json?.sucesso) {
+                setCepError(json?.erro || 'CEP não encontrado');
+                return;
+            }
+
+            const { endereco: logradouro, complemento, bairro, cidade: localidade, estado: uf } = json;
+            const enderecoMontado = [logradouro, bairro, complemento].filter(Boolean).join(", ");
+            if (enderecoMontado) {
+                setDraftLocationFilter(`${localidade}${uf ? ', ' + uf : ''}`);
+            }
+            if (localidade && uf) {
+                setCepPreenchido(true);
+            }
+        } catch (err) {
+            console.warn("Erro lookup CEP:", err);
+            setCepError(typeof err === "string" ? err : err?.message || "Erro ao buscar CEP");
+        } finally {
+            setCepLoading(false);
+        }
+    }
+
     async function prefetchLoja(id) {
         if (!id || prefetchCache.current.has(id)) return;
         router.prefetch(`/matriz/unidades/lojas/${id}`);
@@ -327,6 +368,85 @@ export default function LojasPage() {
     }
 
     // normalizador (mesma lógica que você já usa na fetchLojas)
+    function formatTime(timeValue) {
+        if (!timeValue) return '—';
+        try {
+            // Se for string
+            if (typeof timeValue === 'string') {
+                const trimmed = timeValue.trim();
+                if (!trimmed) return '—';
+                
+                // Se for string ISO (ex: "1970-01-01T10:00" ou "1970-01-01T10:00:00.000Z")
+                if (trimmed.includes('T')) {
+                    const timePart = trimmed.split('T')[1];
+                    if (timePart) {
+                        // Remove timezone e milissegundos se existirem
+                        const timeOnly = timePart.split('.')[0].split('Z')[0].split('+')[0];
+                        const parts = timeOnly.split(':');
+                        if (parts.length >= 2) {
+                            const hours = parts[0].padStart(2, '0');
+                            const minutes = parts[1].padStart(2, '0');
+                            return `${hours}:${minutes}`;
+                        }
+                    }
+                }
+                
+                // Se for string no formato HH:mm ou HH:mm:ss
+                const parts = trimmed.split(':');
+                if (parts.length >= 2) {
+                    const hours = parts[0].padStart(2, '0');
+                    const minutes = parts[1].padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                }
+            }
+            // Se for Date/DateTime
+            if (timeValue instanceof Date) {
+                return timeValue.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }
+            // Se for objeto com horas/minutos
+            if (typeof timeValue === 'object' && timeValue.hours !== undefined) {
+                return `${String(timeValue.hours).padStart(2, '0')}:${String(timeValue.minutes || 0).padStart(2, '0')}`;
+            }
+        } catch (e) {
+            console.warn('Erro ao formatar horário:', e);
+        }
+        return '—';
+    }
+
+    function formatDate(dateValue) {
+        if (!dateValue) return '—';
+        try {
+            const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+            if (isNaN(date.getTime())) return '—';
+            return date.toLocaleDateString('pt-BR', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        } catch (e) {
+            console.warn('Erro ao formatar data:', e);
+            return '—';
+        }
+    }
+
+    function formatDateTime(dateValue) {
+        if (!dateValue) return '—';
+        try {
+            const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+            if (isNaN(date.getTime())) return '—';
+            return date.toLocaleString('pt-BR', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            console.warn('Erro ao formatar data/hora:', e);
+            return '—';
+        }
+    }
+
     function normalizeUnit(u) {
         const rawType = String(u.tipo ?? u.type ?? '').trim();
         const type = rawType.length === 0 ? 'Loja'
@@ -346,8 +466,11 @@ export default function LojasPage() {
             manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
             status,
             sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
+            syncFormatado: formatDateTime(u.atualizadoEm ?? u.criadoEm),
             horarioAbertura: u.horarioAbertura ?? u.horario_abertura ?? null,
             horarioFechamento: u.horarioFechamento ?? u.horario_fechamento ?? null,
+            horarioAberturaFormatado: formatTime(u.horarioAbertura ?? u.horario_abertura),
+            horarioFechamentoFormatado: formatTime(u.horarioFechamento ?? u.horario_fechamento),
             latitude: u.latitude != null ? Number(u.latitude)
                 : (u.lat != null ? Number(u.lat)
                     : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
@@ -418,6 +541,28 @@ export default function LojasPage() {
         setPage(p => Math.min(Math.max(1, p), totalPages));
     }, [totalPages]);
 
+    // callback quando modal criar loja com sucesso
+    function handleCreated(novaUnidade) {
+        try {
+            const normalized = normalizeUnit(novaUnidade.unidade || novaUnidade);
+            // evita duplicatas
+            setUnits(prev => {
+                if (prev.some(u => u.id === normalized.id)) return prev;
+                return [normalized, ...prev];
+            });
+            // atualiza métricas
+            setMetrics(prev => {
+                const total = (prev.total || 0) + 1;
+                const active = (prev.active || 0) + ((String(normalized.status).toUpperCase() === 'ATIVA') ? 1 : 0);
+                const inactive = Math.max(0, total - active);
+                return { total, active, inactive };
+            });
+            setPage(1);
+        } catch (err) {
+            console.error('handleCreated error', err);
+        }
+    }
+
     return (
         <div className="min-h-screen px-18 py-10 bg-surface-50">
             <div className="w-full">
@@ -449,7 +594,13 @@ export default function LojasPage() {
                 {/* Filters + cards */}
                 <Card className={"mb-8"}>
                     <CardHeader>
-                        <CardTitle className={"mb-4"}>Lista de Lojas</CardTitle>
+                        <div className="flex items-center justify-between mb-4">
+                            <CardTitle>Lista de Lojas</CardTitle>
+                            <Button onClick={() => setAddLojaModalOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nova Loja
+                            </Button>
+                        </div>
                         <div className="flex items-center justify-between pb-3 border-b dark:border-neutral-800 border-neutral-200">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
@@ -489,34 +640,63 @@ export default function LojasPage() {
                                             {/* LOCALIZAÇÃO */}
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                                                <div className="relative">
-                                                    <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
-                                                        const v = e.target.value;
-                                                        setDraftLocationFilter(v);
-                                                        setPage(1);
-                                                        // debounce suggestions
-                                                        if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
-                                                        citySuggestTimer.current = setTimeout(async () => {
-                                                            try {
-                                                                const q = v.trim();
-                                                                if (!q || q.length < 2) { setCitySuggestions([]); return; }
-                                                                const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
-                                                                const res = await fetchWithAuth(url);
-                                                                if (!res.ok) { setCitySuggestions([]); return; }
-                                                                const body = await res.json().catch(() => null);
-                                                                setCitySuggestions(body?.suggestions ?? []);
-                                                            } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
-                                                        }, 300);
-                                                    }} />
-                                                    {citySuggestions.length > 0 && (
-                                                        <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
-                                                            {citySuggestions.map((s, idx) => (
-                                                                <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
-                                                                    <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                <div className="space-y-2">
+                                                    <div>
+                                                        <Label className="text-xs mb-1">CEP</Label>
+                                                        <Input 
+                                                            placeholder="00000-000" 
+                                                            value={draftCep} 
+                                                            onChange={(e) => {
+                                                                const v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                                                const formatted = v.length > 5 ? `${v.slice(0, 5)}-${v.slice(5)}` : v;
+                                                                setDraftCep(formatted);
+                                                                setCepError("");
+                                                                setCepPreenchido(false);
+                                                                const digits = v;
+                                                                if (digits.length === 8) {
+                                                                    fetchCepAndFill(digits);
+                                                                }
+                                                            }}
+                                                            onBlur={() => {
+                                                                const digits = draftCep.replace(/\D/g, '');
+                                                                if (digits.length === 8) {
+                                                                    fetchCepAndFill(digits);
+                                                                }
+                                                            }}
+                                                            disabled={cepPreenchido}
+                                                        />
+                                                        {cepLoading && <p className="text-xs text-muted-foreground mt-1">Buscando endereço...</p>}
+                                                        {cepError && <p className="text-xs text-red-600 mt-1">{cepError}</p>}
+                                                    </div>
+                                                    <div className="relative">
+                                                        <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
+                                                            const v = e.target.value;
+                                                            setDraftLocationFilter(v);
+                                                            setPage(1);
+                                                            // debounce suggestions
+                                                            if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
+                                                            citySuggestTimer.current = setTimeout(async () => {
+                                                                try {
+                                                                    const q = v.trim();
+                                                                    if (!q || q.length < 2) { setCitySuggestions([]); return; }
+                                                                    const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
+                                                                    const res = await fetchWithAuth(url);
+                                                                    if (!res.ok) { setCitySuggestions([]); return; }
+                                                                    const body = await res.json().catch(() => null);
+                                                                    setCitySuggestions(body?.suggestions ?? []);
+                                                                } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
+                                                            }, 300);
+                                                        }} disabled={cepPreenchido} />
+                                                        {citySuggestions.length > 0 && !cepPreenchido && (
+                                                            <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
+                                                                {citySuggestions.map((s, idx) => (
+                                                                    <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                        <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <Separator />
@@ -618,21 +798,23 @@ export default function LojasPage() {
                                                             <div className="text-sm text-muted-foreground">{u.location}</div>
                                                         </div>
                                                     </div>
-                                                    {u.horarioAbertura && (
+                                                    {u.horarioAberturaFormatado && u.horarioAberturaFormatado !== '—' && (
                                                         <div className="flex flex-row gap-3 ">
-                                                            <div className="text-base font-medium">Abertura: </div><div className="text-base font-normal">{u.horarioAbertura}</div>
+                                                            <div className="text-base font-medium">Abertura: </div><div className="text-base font-normal">{u.horarioAberturaFormatado}</div>
                                                         </div>
                                                     )}
-                                                    {u.horarioFechamento && (
+                                                    {u.horarioFechamentoFormatado && u.horarioFechamentoFormatado !== '—' && (
                                                         <div className="flex flex-row gap-3 ">
-                                                            <div className="text-base font-medium">Fechamento: </div><div className="text-base font-normal">{u.horarioFechamento}</div>
+                                                            <div className="text-base font-medium">Fechamento: </div><div className="text-base font-normal">{u.horarioFechamentoFormatado}</div>
                                                         </div>
                                                     )}
                                                     <div className="flex flex-row gap-3 ">
                                                         <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.manager || "—"}</div>
                                                     </div>
                                                 </div>
-                                                {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
+                                                {u.syncFormatado && u.syncFormatado !== '—' && (
+                                                    <div className="mt-3 text-sm text-muted-foreground">Última sync: {u.syncFormatado}</div>
+                                                )}
                                             </div>
                                         </Link>
                                     ))}
@@ -703,8 +885,8 @@ export default function LojasPage() {
                                                 <div className="min-w-[200px]">
                                                     <div className="font-semibold">{u.name}</div>
                                                     <div className="text-sm text-muted-foreground">{u.location}</div>
-                                                    {u.horarioAbertura && <div className="text-xs">Abertura: {u.horarioAbertura}</div>}
-                                                    {u.horarioFechamento && <div className="text-xs">Fechamento: {u.horarioFechamento}</div>}
+                                                    {u.horarioAberturaFormatado && u.horarioAberturaFormatado !== '—' && <div className="text-xs">Abertura: {u.horarioAberturaFormatado}</div>}
+                                                    {u.horarioFechamentoFormatado && u.horarioFechamentoFormatado !== '—' && <div className="text-xs">Fechamento: {u.horarioFechamentoFormatado}</div>}
                                                     <Link href={`/matriz/unidades/lojas/${u.id}`} className="text-blue-500 text-sm">Abrir</Link>
                                                 </div>
                                             </Popup>
@@ -718,9 +900,8 @@ export default function LojasPage() {
                     </Card>
                 </div>
 
-                <div className="flex flex-row gap-8">
+                {/* <div className="flex flex-row gap-8">
                     <div className="w-full">
-                        {/* LOJA */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Lojas com mais vendas</CardTitle>
@@ -775,9 +956,11 @@ export default function LojasPage() {
                             </CardFooter>
                         </Card>
                     </div>
-                </div>
+                </div> */}
 
             </div>
+
+            <AddLojaModal open={addLojaModalOpen} onOpenChange={setAddLojaModalOpen} onCreated={handleCreated} />
         </div>
     );
 }

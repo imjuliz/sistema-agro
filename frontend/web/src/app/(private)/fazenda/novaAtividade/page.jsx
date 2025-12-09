@@ -58,7 +58,7 @@ export default function Page() {
 
     // form state for atividade animalia
     const [descricaoAnimalia, setDescricaoAnimalia] = useState("")
-    const [tipoAnimaliaAtvd, setTipoAnimaliaAtvd] = useState("ALIMENTACAO")
+    const [tipoAnimaliaAtvd, setTipoAnimaliaAtvd] = useState("NUTRICAO")
     const [loteIdAnimalia, setLoteIdAnimalia] = useState("")
     const [dataInicioDateAnimalia, setDataInicioDateAnimalia] = useState("")
     const [dataInicioTimeAnimalia, setDataInicioTimeAnimalia] = useState("")
@@ -491,7 +491,7 @@ export default function Page() {
             if (res.ok) {
                 setShowAnimaliaModal(false)
                 setDescricaoAnimalia("")
-                setTipoAnimaliaAtvd("ALIMENTACAO")
+                setTipoAnimaliaAtvd("NUTRICAO")
                 setLoteIdAnimalia("")
                 setDataInicioDateAnimalia("")
                 setDataInicioTimeAnimalia("")
@@ -861,7 +861,6 @@ export default function Page() {
                                 <option value="VERMIFUGACAO">VERMIFUGACAO</option>
                                 <option value="TRATAMENTO">TRATAMENTO</option>
                                 <option value="SANIDADE_GERAL">SANIDADE_GERAL</option>
-                                <option value="NUTRICAO">NUTRICAO</option>
                                 <option value="SUPLEMENTACAO">SUPLEMENTACAO</option>
                                 <option value="AJUSTE_DIETA">AJUSTE_DIETA</option>
                                 <option value="INSEMINACAO">INSEMINACAO</option>

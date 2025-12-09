@@ -1,4 +1,4 @@
-import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas, abrirCaixa } from '../models/Financeiro.js';
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas, abrirCaixa, listarCaixas } from '../models/Financeiro.js';
 import fs from "fs";
 
 // ABRIR CAIXA
@@ -26,6 +26,40 @@ export const abrirCaixaController = async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao abrir caixa.",
+      detalhes: error.message,
+    });
+  }
+};
+
+// LISTAR CAIXAS
+export const listarCaixasController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params;
+    const { dataInicio, dataFim } = req.query;
+
+    if (!unidadeId) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID da unidade é obrigatório."
+      });
+    }
+
+    const resultado = await listarCaixas(Number(unidadeId), dataInicio || null, dataFim || null);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json({
+      sucesso: true,
+      caixas: resultado.caixas,
+      total: resultado.total
+    });
+  } catch (error) {
+    console.error("Erro no controller ao listar caixas:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao listar caixas.",
       detalhes: error.message,
     });
   }

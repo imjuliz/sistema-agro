@@ -197,12 +197,7 @@ export function CompanyHeader({ id, onLogActivity }) {
                 <MapPin className="size-4" />
                 <span>{loja?.location ?? "N/I"}</span>
               </div>
-              {loja?.horarioAbertura && loja?.horarioFechamento && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="size-4" />
-                  <span>{loja.horarioAbertura} - {loja.horarioFechamento}</span>
-                </div>
-              )}
+             
             </div>
           </div>
         </div>

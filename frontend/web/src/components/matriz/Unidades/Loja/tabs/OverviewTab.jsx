@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import buildImageUrl from '@/lib/image';
-import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase, CreditCard } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,6 +21,7 @@ import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from '@/components/ui/use-toast';
+import { MoreHorizontal } from 'lucide-react';
 
 const cultivos = [
   { cultura: "milho", area: 70, fill: "var(--chart-1)" },
@@ -46,16 +47,11 @@ export function OverviewTab({ lojaId }) {
   const [dadosLoja, setDadosLoja] = useState(null)
   const [contatosPrincipais, setContatosPrincipais] = useState([])
   const [carregando, setCarregando] = useState(true)
-  const [dadosGerais, setDadosGerais] = useState([])
-  const [dadosLoading, setDadosLoading] = useState(false)
-  const [dadosErro, setDadosErro] = useState(null)
-  const [formNovo, setFormNovo] = useState({ dado: "", valor: "", descricao: "" })
-  const [editingId, setEditingId] = useState(null)
-  const [formEdit, setFormEdit] = useState({ dado: "", valor: "", descricao: "" })
-  const [openNovo, setOpenNovo] = useState(false)
+  const [caixas, setCaixas] = useState([])
+  const [caixasLoading, setCaixasLoading] = useState(false)
   const [openEditInfo, setOpenEditInfo] = useState(false)
   const [openEditLocal, setOpenEditLocal] = useState(false)
-  const [formInfo, setFormInfo] = useState({ focoProdutivo: "", quantidadeFuncionarios: "", cnpj: "" })
+  const [formInfo, setFormInfo] = useState({ quantidadeFuncionarios: "", cnpj: "" })
   const [formLocal, setFormLocal] = useState({ endereco: "", cidade: "", estado: "", cep: "", latitude: "", longitude: "" })
 
   const isGerenteMatriz = useMemo(() => {
@@ -119,107 +115,54 @@ export function OverviewTab({ lojaId }) {
 
   useEffect(() => {
     let mounted = true;
-    async function carregarDadosGerais() {
+    async function carregarCaixas() {
       if (!lojaId) return;
-      setDadosLoading(true);
-      setDadosErro(null);
+      setCaixasLoading(true);
       try {
-        const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}/dados-gerais`, { method: "GET", credentials: "include" });
+        // Buscar caixas da unidade de hoje
+        const hoje = new Date();
+        const inicioDoDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+        const fimDoDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
+        
+        // Tentar endpoint específico primeiro, depois fallback
+        let res;
+        try {
+          res = await fetchWithAuth(`${API_URL}unidades/${lojaId}/caixas?dataInicio=${inicioDoDia.toISOString()}&dataFim=${fimDoDia.toISOString()}`, { method: "GET", credentials: "include" });
+        } catch (e) {
+          // Fallback: buscar todos os caixas da unidade e filtrar no frontend
+          res = await fetchWithAuth(`${API_URL}unidades/${lojaId}/caixas`, { method: "GET", credentials: "include" });
+        }
+        
+        if (!res.ok) {
+          if (mounted) setCaixas([]);
+          return;
+        }
+        
         const body = await res.json().catch(() => null);
-        const lista = body?.dados ?? body ?? [];
-        if (mounted) setDadosGerais(Array.isArray(lista) ? lista : []);
+        let lista = body?.caixas ?? body?.data ?? body ?? [];
+        
+        // Se retornou todos os caixas, filtrar apenas os de hoje
+        if (Array.isArray(lista) && lista.length > 0) {
+          lista = lista.filter(c => {
+            if (!c.abertoEm) return false;
+            const abertoEm = new Date(c.abertoEm);
+            return abertoEm >= inicioDoDia && abertoEm <= fimDoDia;
+          });
+        }
+        
+        if (mounted) setCaixas(Array.isArray(lista) ? lista : []);
       } catch (err) {
-        console.error("[dados-gerais] erro ao listar", err);
-        toast({ title: "Erro ao carregar dados gerais", variant: "destructive" });
-        if (mounted) setDadosErro("Erro ao carregar dados gerais");
+        console.error("[caixas] erro ao listar", err);
+        toast({ title: "Erro ao carregar caixas", variant: "destructive" });
+        if (mounted) setCaixas([]);
       } finally {
-        if (mounted) setDadosLoading(false);
+        if (mounted) setCaixasLoading(false);
       }
     }
-    carregarDadosGerais();
+    carregarCaixas();
     return () => { mounted = false; };
   }, [lojaId, fetchWithAuth, toast]);
 
-  async function handleCriarDado(e) {
-    e.preventDefault();
-    if (!formNovo.dado || !formNovo.valor) {
-      setDadosErro("Preencha 'dado' e 'valor'.");
-      return;
-    }
-    try {
-      const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}/dados-gerais`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formNovo),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || body?.sucesso === false) {
-        throw new Error(body?.erro || `HTTP ${res.status}`);
-      }
-      const novo = body?.dado ?? body;
-      setDadosGerais(prev => [novo, ...prev]);
-      setFormNovo({ dado: "", valor: "", descricao: "" });
-      setDadosErro(null);
-      setOpenNovo(false);
-      toast({ title: "Dado criado com sucesso" });
-    } catch (err) {
-      console.error("[dados-gerais] criar", err);
-      setDadosErro("Erro ao criar dado");
-      toast({ title: "Erro ao criar dado", variant: "destructive" });
-    }
-  }
-
-  function startEdit(item) {
-    setEditingId(item.id);
-    setFormEdit({ dado: item.dado || "", valor: item.valor || "", descricao: item.descricao || "" });
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setFormEdit({ dado: "", valor: "", descricao: "" });
-  }
-
-  async function handleSalvarEdicao(id) {
-    try {
-      const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}/dados-gerais/${id}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formEdit),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
-      const atualizado = body?.dado ?? body;
-      setDadosGerais(prev => prev.map(d => d.id === id ? atualizado : d));
-      cancelEdit();
-      setDadosErro(null);
-      toast({ title: "Dado atualizado" });
-    } catch (err) {
-      console.error("[dados-gerais] atualizar", err);
-      setDadosErro("Erro ao atualizar dado");
-      toast({ title: "Erro ao atualizar dado", variant: "destructive" });
-    }
-  }
-
-  async function handleExcluir(id) {
-    try {
-      const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}/dados-gerais/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.erro || `HTTP ${res.status}`);
-      }
-      setDadosGerais(prev => prev.filter(d => d.id !== id));
-      toast({ title: "Dado excluído" });
-    } catch (err) {
-      console.error("[dados-gerais] excluir", err);
-      setDadosErro("Erro ao excluir dado");
-      toast({ title: "Erro ao excluir dado", variant: "destructive" });
-    }
-  }
 
   function formatCnpjInput(value) {
     const digits = String(value || "").replace(/\D/g, "").slice(0, 14);
@@ -233,7 +176,6 @@ export function OverviewTab({ lojaId }) {
 
   function hydrateFormsFromDados(unidade) {
     setFormInfo({
-      focoProdutivo: Array.isArray(unidade?.focoProdutivo) ? unidade.focoProdutivo.join(", ") : (unidade?.focoProdutivo ?? ""),
       quantidadeFuncionarios: unidade?.quantidadeFuncionarios ?? "",
       cnpj: formatCnpjInput(unidade?.cnpj ?? ""),
     });
@@ -254,7 +196,6 @@ export function OverviewTab({ lojaId }) {
   async function salvarInfo() {
     try {
       const payload = {
-        focoProdutivo: formInfo.focoProdutivo,
         cnpj: formInfo.cnpj ? formInfo.cnpj.replace(/\D/g, "") : null,
       };
       const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}`, {
@@ -339,6 +280,92 @@ export function OverviewTab({ lojaId }) {
     return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
   }
 
+  function formatTime(timeValue) {
+    if (!timeValue) return '—';
+    try {
+      // Se for string
+      if (typeof timeValue === 'string') {
+        const trimmed = timeValue.trim();
+        if (!trimmed) return '—';
+        
+        // Se for string ISO (ex: "1970-01-01T10:00" ou "1970-01-01T10:00:00.000Z")
+        if (trimmed.includes('T')) {
+          const timePart = trimmed.split('T')[1];
+          if (timePart) {
+            // Remove timezone e milissegundos se existirem
+            const timeOnly = timePart.split('.')[0].split('Z')[0].split('+')[0];
+            const parts = timeOnly.split(':');
+            if (parts.length >= 2) {
+              const hours = parts[0].padStart(2, '0');
+              const minutes = parts[1].padStart(2, '0');
+              return `${hours}:${minutes}`;
+            }
+          }
+        }
+        
+        // Se for string no formato HH:mm ou HH:mm:ss
+        const parts = trimmed.split(':');
+        if (parts.length >= 2) {
+          const hours = parts[0].padStart(2, '0');
+          const minutes = parts[1].padStart(2, '0');
+          return `${hours}:${minutes}`;
+        }
+      }
+      // Se for Date/DateTime
+      if (timeValue instanceof Date) {
+        return timeValue.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      }
+      // Se for objeto com horas/minutos
+      if (typeof timeValue === 'object' && timeValue.hours !== undefined) {
+        return `${String(timeValue.hours).padStart(2, '0')}:${String(timeValue.minutes || 0).padStart(2, '0')}`;
+      }
+    } catch (e) {
+      console.warn('Erro ao formatar horário:', e);
+    }
+    return '—';
+  }
+
+  function formatDate(dateValue) {
+    if (!dateValue) return '—';
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      if (isNaN(date.getTime())) return '—';
+      return date.toLocaleDateString('pt-BR', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (e) {
+      console.warn('Erro ao formatar data:', e);
+      return '—';
+    }
+  }
+
+  function formatDateTime(dateValue) {
+    if (!dateValue) return '—';
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      if (isNaN(date.getTime())) return '—';
+      return date.toLocaleString('pt-BR', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.warn('Erro ao formatar data/hora:', e);
+      return '—';
+    }
+  }
+
+  function formatCurrency(value) {
+    if (!value && value !== 0) return 'R$ 0,00';
+    const num = Number(value);
+    if (isNaN(num)) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+  }
+
   function buildWhatsAppUrl(phone) {
     if (!phone) return '#';
     const digits = String(phone).replace(/\D/g, '');
@@ -405,21 +432,7 @@ export function OverviewTab({ lojaId }) {
             )}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Briefcase className="size-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Culturas atuais</div>
-                <div className="text-sm text-muted-foreground">
-                  {carregando
-                    ? "Carregando..."
-                    : (
-                      Array.isArray(dadosLoja?.focoProdutivo)
-                        ? dadosLoja.focoProdutivo.join(', ')
-                        : (dadosLoja?.focoProdutivo ?? '—')
-                    )}
-                </div>
-              </div>
-            </div>
+           
             <div className="flex items-center gap-3">
               <Users className="size-4 text-muted-foreground" />
               <div>
@@ -431,7 +444,7 @@ export function OverviewTab({ lojaId }) {
               <Calendar className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Criado em</div>
-                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : (dadosLoja?.criadoEm ? new Date(dadosLoja.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }) : "-")}</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatDate(dadosLoja?.criadoEm)}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -487,16 +500,16 @@ export function OverviewTab({ lojaId }) {
 
 
       <div className=" flex-1 min-w-0 space-y-6">
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-6">
           <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg">
-                  <LandPlot className="size-10" />
+                  <Clock className="size-10" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosLoja?.areaTotal ? `${parseFloat(dadosLoja.areaTotal).toFixed(2)} ha` : "0 ha")}</div>
-                  <div className="text-sm text-muted-foreground">Área Total</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosLoja?.horarioAbertura ? formatTime(dadosLoja.horarioAbertura) : "—")}</div>
+                  <div className="text-sm text-muted-foreground">Horário de abertura</div>
                 </div>
               </div>
             </CardContent>
@@ -505,139 +518,73 @@ export function OverviewTab({ lojaId }) {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg">
-                  <Tractor className="size-10" />
+                  <Clock className="size-10" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosLoja?.areaProdutiva ? `${parseFloat(dadosLoja.areaProdutiva).toFixed(2)} ha` : "0 ha")}</div>
-                  <div className="text-sm text-muted-foreground">Área Produtiva</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg">
-                  <Trees className="size-10 " />
-                </div>
-                <div>
-                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosLoja?.areaTotal && dadosLoja?.areaProdutiva ? `${(parseFloat(dadosLoja.areaTotal) - parseFloat(dadosLoja.areaProdutiva)).toFixed(2)} ha` : "0 ha")}</div>
-                  <div className="text-sm text-muted-foreground">Não Produtiva</div>
+                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosLoja?.horarioFechamento ? formatTime(dadosLoja.horarioFechamento) : "—")}</div>
+                  <div className="text-sm text-muted-foreground">Horário de fechamento</div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+
         <div className="w-full">
-            <div className="flex flex-row justify-between">
-            <div className="flex flex-col gap-2">
-              <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
-              <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
+            <div className="flex flex-row justify-between mb-4">
+              <div className="flex flex-col gap-2">
+                <h3 className="leading-none font-semibold">Caixas do Dia</h3>
+                <h4 className="text-sm text-muted-foreground">Caixas abertos hoje e faturamento.</h4>
+              </div>
             </div>
-
-            {isGerenteMatriz && (
-              <Button size="sm" onClick={() => setOpenNovo(true)}><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
-            )}
-          </div>
-
-          <div className="flex justify-between items-center py-2">
-            <Dialog open={openNovo} onOpenChange={setOpenNovo}>
-            <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                  <DialogTitle>Novo dado</DialogTitle>
-                </DialogHeader>
-                <form className="space-y-3" onSubmit={handleCriarDado}>
-                  <Input
-                    placeholder="Dado*"
-                    value={formNovo.dado}
-                    onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
-                    required
-                  />
-                  <Input
-                    placeholder="Valor*"
-                    value={formNovo.valor}
-                    onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
-                    required
-                  />
-                  <Input
-                    placeholder="Descrição (opcional)"
-                    value={formNovo.descricao}
-                    onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
-                  />
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
-                    <Button type="submit">Salvar</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {dadosErro && <div className="text-sm text-red-500 mb-2">{dadosErro}</div>}
 
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="max-w-[200px]">Dado</TableHead>
-                  <TableHead className="max-w-[220px]">Valor</TableHead>
-                  <TableHead className="max-w-[260px]">Descrição</TableHead>
-                  <TableHead className="w-[180px]">Ações</TableHead>
+                  <TableHead>Caixa ID</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Saldo Inicial</TableHead>
+                  <TableHead>Saldo Final</TableHead>
+                  <TableHead>Faturamento do Dia</TableHead>
+                  <TableHead>Aberto em</TableHead>
+                  <TableHead>Fechado em</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dadosLoading && (
+                {caixasLoading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">Carregando...</TableCell>
+                    <TableCell colSpan={7} className="text-center">Carregando...</TableCell>
                   </TableRow>
                 )}
-                {!dadosLoading && dadosGerais.length === 0 && (
+                {!caixasLoading && caixas.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">Nenhum dado cadastrado.</TableCell>
+                    <TableCell colSpan={7} className="text-center">Nenhum caixa encontrado para hoje.</TableCell>
                   </TableRow>
                 )}
-                {!dadosLoading && dadosGerais.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="max-w-[200px] whitespace-nowrap text-ellipsis overflow-hidden">
-                      {editingId === item.id ? (
-                        <Input value={formEdit.dado} onChange={(e) => setFormEdit(f => ({ ...f, dado: e.target.value }))} />
-                      ) : (
-                        item.dado
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[220px] whitespace-nowrap text-ellipsis overflow-hidden">
-                      {editingId === item.id ? (
-                        <Input value={formEdit.valor} onChange={(e) => setFormEdit(f => ({ ...f, valor: e.target.value }))} />
-                      ) : (
-                        item.valor
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[260px] break-words whitespace-pre-wrap">
-                      {editingId === item.id ? (
-                        <Input value={formEdit.descricao ?? ""} onChange={(e) => setFormEdit(f => ({ ...f, descricao: e.target.value }))} />
-                      ) : (
-                        item.descricao || "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="space-x-2">
-                      {isGerenteMatriz ? (
-                        editingId === item.id ? (
-                          <>
-                            <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
-                            <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Editar</Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleExcluir(item.id)}>Excluir</Button>
-                          </>
-                        )
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Somente leitura</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {!caixasLoading && caixas.map((caixa) => {
+                  const faturamento = caixa.saldoFinal && caixa.saldoInicial 
+                    ? Number(caixa.saldoFinal) - Number(caixa.saldoInicial)
+                    : 0;
+                  return (
+                    <TableRow key={caixa.id}>
+                      <TableCell className="font-medium">#{caixa.id}</TableCell>
+                      <TableCell>
+                        <Badge variant={caixa.status ? "default" : "secondary"}>
+                          {caixa.status ? "Aberto" : "Fechado"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{formatCurrency(caixa.saldoInicial)}</TableCell>
+                      <TableCell>{formatCurrency(caixa.saldoFinal || 0)}</TableCell>
+                      <TableCell className="font-semibold">{formatCurrency(faturamento)}</TableCell>
+                      <TableCell>
+                        {formatDateTime(caixa.abertoEm)}
+                      </TableCell>
+                      <TableCell>
+                        {caixa.fechadoEm ? formatDateTime(caixa.fechadoEm) : '—'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -745,13 +692,6 @@ export function OverviewTab({ lojaId }) {
           <DialogTitle>Editar informações da unidade</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Culturas atuais (separe por vírgula)</Label>
-            <Input
-              value={formInfo.focoProdutivo}
-              onChange={(e) => setFormInfo((f) => ({ ...f, focoProdutivo: e.target.value }))}
-            />
-          </div>
           <div className="space-y-1">
             <Label>Quantidade de funcionários</Label>
             <Input

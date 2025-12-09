@@ -57,7 +57,7 @@ export default function DashboardLoja() {
       <div className="">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((s, i) => (
-            <StatCard key={i} icon={s.icon} value={s.value} label={s.label} delta={s.delta} />
+            <StatCard key={i} icon={s.icon} value={s.value} label={s.label} />
           ))}
         </div>
 
@@ -108,23 +108,17 @@ export default function DashboardLoja() {
           </div>
 
           <div className="space-y-6">
+
             <Card>
               <CardHeader>
-                <CardTitle>Alertas</CardTitle>
-                <CardDescription>Ações que precisam de atenção</CardDescription>
+                <CardTitle>Resumo de Caixa</CardTitle>
+                <CardDescription>Saldo atual, entradas e saídas rápidas</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-3">
-                  {alerts.map(a => (
-                    <div key={a.id} className="flex items-start gap-3">
-                      <div className="p-2 rounded-md bg-red-500/10">
-                        <a.icon className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm">{a.text}</div>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="flex justify-between"><div className="text-sm">Saldo atual</div><div className="font-semibold">R$ 4.320</div></div>
+                  <div className="flex justify-between"><div className="text-sm">Entradas (hoje)</div><div className="font-semibold">R$ 12.450</div></div>
+                  <div className="flex justify-between"><div className="text-sm">Saídas (hoje)</div><div className="font-semibold">R$ 8.130</div></div>
                 </div>
               </CardContent>
             </Card>
@@ -146,31 +140,7 @@ export default function DashboardLoja() {
 
         <Separator className="my-6" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Equipe & Ações</CardTitle>
-              <CardDescription>Status de funcionários e tarefas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ContributorsTable />
-            </CardContent>
-          </Card> */}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumo de Caixa</CardTitle>
-              <CardDescription>Saldo atual, entradas e saídas rápidas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-3">
-                <div className="flex justify-between"><div className="text-sm">Saldo atual</div><div className="font-semibold">R$ 4.320</div></div>
-                <div className="flex justify-between"><div className="text-sm">Entradas (hoje)</div><div className="font-semibold">R$ 12.450</div></div>
-                <div className="flex justify-between"><div className="text-sm">Saídas (hoje)</div><div className="font-semibold">R$ 8.130</div></div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   )

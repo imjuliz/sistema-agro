@@ -38,7 +38,7 @@ function getStockStatus(current, minimum) {
 
 export function StoreLevelView({ onOpenMovimento }) {
   const { getStoreItems, storeMapping, refresh, atualizarMinimumStockRemote, isGerenteMatriz, isGerenteFazenda, isGerenteLoja } = useInventory();
-  const { fetchWithAuth } = useAuth();
+  const { fetchWithAuth, user } = useAuth();
   const { toast } = useToast();
   
   const [isMinModalOpen, setIsMinModalOpen] = useState(false);
@@ -77,15 +77,28 @@ export function StoreLevelView({ onOpenMovimento }) {
 
   // Carregar fornecedores externos quando modal abrir
   useEffect(() => {
-    if (isAddProductModalOpen && stores.length > 0) {
-      const currentStore = stores[0];
-      const unidadeId = currentStore?.id;
+    if (isAddProductModalOpen) {
+      // Tentar obter unidadeId do stores, user autenticado ou contexto
+      let unidadeId = null;
+      
+      // Prioridade 1: stores[0] se disponível
+      if (stores && stores.length > 0) {
+        unidadeId = stores[0]?.id;
+      }
+      
+      // Prioridade 2: user autenticado
+      if (!unidadeId && user) {
+        unidadeId = user.unidadeId ?? user.unidade?.id;
+      }
       
       if (unidadeId) {
         loadFornecedoresExternos(unidadeId);
+      } else {
+        console.warn('[StoreLevelView] Não foi possível obter unidadeId para carregar fornecedores');
+        setFornecedoresExternos([]);
       }
     }
-  }, [isAddProductModalOpen, stores]);
+  }, [isAddProductModalOpen, stores, user]);
 
   async function loadFornecedoresExternos(unidadeId) {
     setLoadingFornecedores(true);
@@ -112,12 +125,16 @@ export function StoreLevelView({ onOpenMovimento }) {
         fornecedoresList = data;
       }
       
-      console.log('[StoreLevelView] Fornecedores carregados:', fornecedoresList);
+      console.log('[StoreLevelView] Fornecedores carregados (count):', fornecedoresList.length);
       setFornecedoresExternos(fornecedoresList);
     } catch (err) {
-      console.error('Erro ao carregar fornecedores externos:', err);
+      console.error('[StoreLevelView] Erro ao carregar fornecedores externos:', err);
       setFornecedoresExternos([]);
-      toast({ title: 'Erro ao carregar fornecedores', description: 'Não foi possível obter os fornecedores externos.', variant: 'destructive' });
+      toast({ 
+        title: 'Erro ao carregar fornecedores', 
+        description: 'Não foi possível obter os fornecedores externos. Verifique o console.', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoadingFornecedores(false);
     }
@@ -155,11 +172,21 @@ export function StoreLevelView({ onOpenMovimento }) {
 
     setIsSubmittingProduct(true);
     try {
-      const currentStore = stores[0];
-      const unidadeId = currentStore?.id;
+      // Obter unidadeId com fallback: stores[0] ou user autenticado
+      let unidadeId = null;
+      
+      // Prioridade 1: stores[0]
+      if (stores && stores.length > 0) {
+        unidadeId = stores[0]?.id;
+      }
+      
+      // Prioridade 2: user autenticado
+      if (!unidadeId && user) {
+        unidadeId = user.unidadeId ?? user.unidade?.id;
+      }
       
       if (!unidadeId) {
-        throw new Error('Unidade não identificada');
+        throw new Error('Unidade não identificada. Faça login novamente.');
       }
 
       const body = {
@@ -445,7 +472,7 @@ export function StoreLevelView({ onOpenMovimento }) {
                                     setIsMinModalOpen(true);
                                   }}>Editar mínimo</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onOpenMovimento(item)}>Registrar movimentação</DropdownMenuItem>
-                                  <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                                  {/* <DropdownMenuItem>Ver detalhes</DropdownMenuItem> */}
                           {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>

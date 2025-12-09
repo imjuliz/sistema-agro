@@ -364,7 +364,12 @@ export function EquipeTab({ lojaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
+                    toast({ title: 'Usuário editado com sucesso', description: 'As informações foram atualizadas.' });
                   }
+                })
+                .catch(err => {
+                  console.error('Erro ao recarregar equipe:', err);
+                  toast({ title: 'Erro ao recarregar equipe', description: 'Tente atualizar a página.', variant: 'destructive' });
                 })
                 .finally(() => setCarregando(false))
             }}
@@ -378,6 +383,8 @@ export function EquipeTab({ lojaId }) {
             onOpenChange={setAbrirModalDemitir}
             onSuccess={() => {
               setAbrirModalDemitir(false)
+              setCarregando(true)
+              setErroEquipe(null)
               const url = `${API_URL}unidades/${lojaId}/usuarios?page=1&perPage=100`
               fetchWithAuth(url)
                 .then(res => res.ok ? res.json() : null)
@@ -406,8 +413,14 @@ export function EquipeTab({ lojaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
+                    toast({ title: 'Usuário demitido com sucesso', description: 'O funcionário foi removido da equipe.' });
                   }
                 })
+                .catch(err => {
+                  console.error('Erro ao recarregar equipe:', err);
+                  toast({ title: 'Erro ao recarregar equipe', description: 'Tente atualizar a página.', variant: 'destructive' });
+                })
+                .finally(() => setCarregando(false))
             }}
           />
         )}
@@ -419,6 +432,8 @@ export function EquipeTab({ lojaId }) {
             onOpenChange={setAbrirModalTransferir}
             onSuccess={() => {
               setAbrirModalTransferir(false)
+              setCarregando(true)
+              setErroEquipe(null)
               const url = `${API_URL}unidades/${lojaId}/usuarios?page=1&perPage=100`
               fetchWithAuth(url)
                 .then(res => res.ok ? res.json() : null)
@@ -447,9 +462,14 @@ export function EquipeTab({ lojaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
-                    toast({ title: 'Equipe atualizada' });
+                    toast({ title: 'Usuário transferido com sucesso', description: 'O funcionário foi transferido para outra unidade.' });
                   }
                 })
+                .catch(err => {
+                  console.error('Erro ao recarregar equipe:', err);
+                  toast({ title: 'Erro ao recarregar equipe', description: 'Tente atualizar a página.', variant: 'destructive' });
+                })
+                .finally(() => setCarregando(false))
             }}
           />
         )}

@@ -53,7 +53,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
       if (effectiveUnidadeId != null) params.set("unidadeId", String(effectiveUnidadeId));
       if (q) params.set("q", q);
 
-      const url = `${API_URL}loja/estoque${params.toString() ? `?${params.toString()}` : ""}`;
+      const url = `${API_URL}estoque${params.toString() ? `?${params.toString()}` : ""}`;
       console.debug("[Inventory] carregando estoques →", url, { userId: user?.id, perfilNome: userPerfilNome, isGerenteMatriz, canOnlySeeOwnUnit, userUnidadeId });
 
       // tenta usar fetchWithAuth (preserva refresh token / cookies)
@@ -74,7 +74,11 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
           bodyText = parsed?.mensagem ?? parsed?.erro ?? parsed?.message ?? bodyText;
         } catch (e) { /* ignore */ }
         console.warn("[Inventory] resposta não OK", res.status, bodyText);
-        throw new Error(bodyText || `HTTP ${res.status}`);
+        // Não lança erro, apenas define mensagem de erro e retorna lista vazia
+        setError(bodyText || `HTTP ${res.status}`);
+        setItems([]);
+        setLoading(false);
+        return;
       }
 
       const body = await res.json().catch(() => null);
@@ -122,7 +126,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
 
   async function addItemRemote(data) {
     try {
-      const url = `${API_URL}loja/estoque`;
+      const url = `${API_URL}estoque`;
       const res = await fetchWithAuth(url, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
@@ -141,7 +145,7 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
     const before = items;
     setItems(prev => prev.filter(it => it.id !== id));
     try {
-      const url = `${API_URL}loja/estoque/${id}`;
+      const url = `${API_URL}estoque/${id}`;
       const res = await fetchWithAuth(url, { method: "DELETE", credentials: "include" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return { sucesso: true };
