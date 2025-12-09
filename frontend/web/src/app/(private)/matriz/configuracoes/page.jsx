@@ -29,12 +29,8 @@ export default function SettingsPage() {
         // If it's an email and contains @, use the part before @ as fallback
         const candidate = s.includes('@') ? s.split('@')[0] : s;
         const parts = candidate.split(/\s+/).filter(Boolean);
-        if (parts.length >= 2) {
-            return (parts[0][0] + parts[1][0]).toUpperCase();
-        }
-        if (parts[0].length >= 2) {
-            return (parts[0][0] + parts[0][1]).toUpperCase();
-        }
+        if (parts.length >= 2) {return (parts[0][0] + parts[1][0]).toUpperCase();}
+        if (parts[0].length >= 2) {return (parts[0][0] + parts[0][1]).toUpperCase();}
         return parts[0][0].toUpperCase();
     }
 
@@ -119,13 +115,9 @@ export default function SettingsPage() {
         if (!f) return;
         // revoke previous blob URL if present to avoid leaks and stale references
         try {
-            if (avatarUrl && String(avatarUrl).startsWith('blob:')) {
-                URL.revokeObjectURL(avatarUrl);
-            }
-        } catch (err) {
+            if (avatarUrl && String(avatarUrl).startsWith('blob:')) {URL.revokeObjectURL(avatarUrl);}
+        } catch (err) { }
             // ignore
-        }
-
         const url = URL.createObjectURL(f);
         setAvatarUrl(url);
         setAvatarFile(f);
@@ -170,9 +162,7 @@ export default function SettingsPage() {
                         // compute the absolute URL when rendering. Do NOT call buildImageUrl here.
                         // revoke any existing blob preview before switching to server path
                         try {
-                            if (avatarUrl && String(avatarUrl).startsWith('blob:')) {
-                                URL.revokeObjectURL(avatarUrl);
-                            }
+                            if (avatarUrl && String(avatarUrl).startsWith('blob:')) {URL.revokeObjectURL(avatarUrl);}
                         } catch (err) {}
                         setAvatarUrl(uploadedPath);
                         // clear avatarFile since it's uploaded
@@ -191,9 +181,7 @@ export default function SettingsPage() {
         try {
             const res = await fetchWithAuth("/api/auth/me", { // Alterado para usar /api/auth/me
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json',},
                 body: JSON.stringify(dataToUpdate),
             });
 
@@ -207,9 +195,8 @@ export default function SettingsPage() {
                     description: result.mensagem || "Perfil atualizado com sucesso!",
                 });
                 // Atualiza o usuário no contexto: requisição direta a /auth/me
-                try {
-                    await refreshUser();
-                } catch (e) {
+                try {await refreshUser();}
+                catch (e) {
                     // fallback: tenta o fluxo de refresh de token
                     console.warn('saveProfile - refreshUser falhou, tentando doRefresh()', e);
                     await doRefresh();
@@ -253,9 +240,7 @@ export default function SettingsPage() {
         // Apply language only when the user confirms by saving preferences
         try {
             if (localLang && localLang !== lang) changeLang(localLang);
-        } catch (e) {
-            console.error('savePreferences - erro ao aplicar idioma', e);
-        }
+        } catch (e) {console.error('savePreferences - erro ao aplicar idioma', e);}
         console.log("savePreferences - Chamando toast de sucesso.");
         toast({
             title: "Sucesso",

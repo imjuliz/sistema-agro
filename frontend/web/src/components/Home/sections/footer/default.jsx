@@ -1,9 +1,26 @@
+"use client";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Footer, FooterBottom, FooterColumn, FooterContent } from "@/components/ui/footer";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 export default function FooterSection(props) {
+  const { lang, changeLang } = useTranslation();
+    const languageOptions = [
+        { value: 'pt-BR', label: 'Português (BR)' },
+        { value: 'en', label: 'English' },
+        { value: 'es', label: 'Español' },
+        { value: 'fr', label: 'Français' }
+    ];
+ const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+useEffect(() => {
+        setLocalTheme(globalTheme);
+        setLocalSelectedFontSize(globalSelectedFontSize);
+        setLocalLang(lang);
+    }, [globalTheme, globalSelectedFontSize, lang]);
+
   const {
     logo = <img src={'/img/ruraltech-logo.svg'} className="h-6"/>,
     name = "RuralTech",
@@ -11,7 +28,7 @@ export default function FooterSection(props) {
       {
         title: "Outros conteúdos relevantes",
         links: [
-          { text: "Sobre Nós", href: '/sobreNos' },
+          { text: <Transl>"Sobre Nós"</Transl>, href: '/sobreNos' },
           { text: "Blog", href: '/blog' },
         ],
       },
@@ -19,15 +36,15 @@ export default function FooterSection(props) {
         title: "Contatos",
         links: [
           { text: "Email", href: 'mailto:ruraltech052@gmail.com' },
-          { text: "Telefone", href: siteConfig.url },
+          { text: <Transl>"Telefone"</Transl>, href: siteConfig.url },
           { text: "Instagram", href: 'https://www.instagram.com/' },
         ],
       },
     ],
-    copyright = "© 2025 RuralTech. Todos os direitos reservados",
+    copyright = <Transl>"© 2025 RuralTech. Todos os direitos reservados"</Transl>,
     policies = [
-      { text: "Política de Privacidade", href: '/politicaPrivacidade' },
-      { text: "Termos de Uso", href: '/termosDeUso' },
+      { text: <Transl>"Política de Privacidade"</Transl>, href: '/politicaPrivacidade' },
+      { text: <Transl>"Termos de Uso"</Transl>, href: '/termosDeUso' },
     ],
     showModeToggle = true,
     className,
@@ -41,12 +58,12 @@ export default function FooterSection(props) {
             <FooterColumn className="col-span-2 sm:col-span-3 md:col-span-1">
               <div className="flex items-center gap-2">
                 {logo}
-                <h3 className="text-xl font-bold">{name}</h3>
+                <Transl className="text-xl font-bold">{name}</Transl>
               </div>
             </FooterColumn>
             {columns.map((column, index) => (
               <FooterColumn key={index}>
-                <h3 className="text-md pt-1 font-semibold">{column.title}</h3>
+                <Transl className="text-md pt-1 font-semibold">{column.title}</Transl>
                 {column.links.map((link, linkIndex) => (
                   <a key={linkIndex} href={link.href} className="text-muted-foreground text-sm">
                     {link.text}
