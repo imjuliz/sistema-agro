@@ -325,17 +325,34 @@ export const atualizarQntdMin = async (estoqueProdutoId, qntdMin) => {
 };
 
 export async function adicionarProdutoAoEstoque(unidadeId, dadosProduto) {
-  // 1. Verifica se a unidade possui estoque
-  const estoque = await prisma.estoque.findUnique({
-    where: { unidadeId: Number(unidadeId) },
-  });
-
-  if (!estoque) {
-    throw new Error("Estoque não encontrado para esta unidade.");
-  }
-
-  // 2. Tenta criar o produto no estoque
   try {
+    // 1. Verifica se a unidade existe
+    const unidade = await prisma.unidade.findUnique({
+      where: { id: Number(unidadeId) },
+    });
+
+    if (!unidade) {
+      throw new Error("Unidade não encontrada.");
+    }
+
+    // 2. Tenta encontrar ou criar o estoque para a unidade
+    let estoque = await prisma.estoque.findUnique({
+      where: { unidadeId: Number(unidadeId) },
+    });
+
+    if (!estoque) {
+      // Se não existir, cria um novo estoque para esta unidade
+      estoque = await prisma.estoque.create({
+        data: {
+          unidadeId: Number(unidadeId),
+          descricao: `Estoque da unidade ${unidade.nome}`,
+          qntdItens: 0,
+        },
+      });
+      console.log(`[adicionarProdutoAoEstoque] Estoque criado automaticamente para unidadeId=${unidadeId}`);
+    }
+
+    // 3. Tenta criar o produto no estoque
     const novoProduto = await prisma.estoqueProduto.create({
       data: {
         estoqueId: estoque.id,
@@ -346,25 +363,19 @@ export async function adicionarProdutoAoEstoque(unidadeId, dadosProduto) {
         qntdAtual: dadosProduto.qntdAtual ?? 0,
         qntdMin: dadosProduto.qntdMin ?? 0,
 
-        // Campos comentados — não são enviados:
-        // produtoId: dadosProduto.produtoId,
-        // loteId: dadosProduto.loteId,
-        // producaoId: dadosProduto.producaoId,
-
         precoUnitario: dadosProduto.precoUnitario ?? null,
 
-        // pesoUnidade: dadosProduto.pesoUnidade,
         validade: dadosProduto.validade ? new Date(dadosProduto.validade) : null,
 
         unidadeBase: dadosProduto.unidadeBase, // obrigatório
 
-        // fornecedorUnidadeId: dadosProduto.fornecedorUnidadeId,
         fornecedorExternoId: dadosProduto.fornecedorExternoId ?? null,
 
         dataEntrada: new Date(),
       },
     });
 
+    console.log(`[adicionarProdutoAoEstoque] Produto adicionado com sucesso: id=${novoProduto.id}, nome=${novoProduto.nome}`);
     return novoProduto;
   } catch (err) {
     // Trata erro de duplicidade baseado no índice único (estoqueId + produtoId)
@@ -372,7 +383,7 @@ export async function adicionarProdutoAoEstoque(unidadeId, dadosProduto) {
       throw new Error("Este produto já está cadastrado neste estoque.");
     }
 
-    console.error("Erro ao adicionar produto ao estoque:", err);
-    throw new Error("Erro ao registrar produto no estoque.");
+    console.error("[adicionarProdutoAoEstoque] Erro:", err);
+    throw new Error("Erro ao registrar produto no estoque: " + (err.message ?? err));
   }
 }
