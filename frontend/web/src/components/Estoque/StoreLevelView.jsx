@@ -445,7 +445,7 @@ export function StoreLevelView({ onOpenMovimento }) {
                                     setIsMinModalOpen(true);
                                   }}>Editar mínimo</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onOpenMovimento(item)}>Registrar movimentação</DropdownMenuItem>
-                                  <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                                  {/* <DropdownMenuItem>Ver detalhes</DropdownMenuItem> */}
                           {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>

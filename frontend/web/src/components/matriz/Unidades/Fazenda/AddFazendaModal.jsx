@@ -781,6 +781,27 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
     // monta payload unidade
     const enderecoCompleto = endereco.trim() + (enderecoNumero && enderecoNumero.trim() ? `, nº ${enderecoNumero.trim()}` : '');
+    
+    // Se não temos latitude/longitude mas temos endereço completo, buscar coordenadas
+    if ((latitude === null || longitude === null) && enderecoCompleto && cidade && estado) {
+      try {
+        const enderecoParaGeocode = `${enderecoCompleto}, ${cidade}, ${estado}, Brasil`;
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoParaGeocode)}&limit=1`;
+        const geoResponse = await fetch(nominatimUrl, {
+          headers: { 'User-Agent': 'SistemaAgro/1.0 (node.js)' }
+        });
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          if (geoData && geoData.length > 0) {
+            setLatitude(parseFloat(geoData[0].lat));
+            setLongitude(parseFloat(geoData[0].lon));
+          }
+        }
+      } catch (geoErr) {
+        console.warn("[handleSubmitAll] Erro ao buscar coordenadas:", geoErr.message);
+      }
+    }
+    
     // build payload without sending `null` for optional fields (Zod expects omitted fields instead)
 
     // Determinar status da fazenda: ATIVA apenas se tiver AMBOS os tipos de contrato
