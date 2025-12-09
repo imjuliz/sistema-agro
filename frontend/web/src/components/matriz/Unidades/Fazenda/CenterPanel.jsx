@@ -21,7 +21,7 @@ export function CenterPanel({ activeTab, fazenda }) {
       // case 'atividades':
       //   return <AtividadesTab />;
       case 'financeiro':
-        return <FinanceiroTab />;
+        return <FinanceiroTab unidadeId={fazenda?.id} />;
       case 'fornecedores':
         return <FornecedoresTab fazenda={fazenda} />;
       case 'comunicados':

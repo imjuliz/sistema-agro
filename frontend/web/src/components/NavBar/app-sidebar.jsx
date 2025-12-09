@@ -19,8 +19,16 @@ const teamsExample = [
 // ------------------------------
 // SWITCH CASE DO PERFIL
 // ------------------------------
+function normalizePerfil(perfil) {
+  if (!perfil) return "";
+  if (typeof perfil === "string") return perfil.toUpperCase();
+  if (typeof perfil === "object") return String(perfil.funcao ?? perfil.nome ?? "").toUpperCase();
+  return "";
+}
+
 function getMenuByPerfil(perfil) {
-  switch (perfil) {
+  const perfilKey = normalizePerfil(perfil);
+  switch (perfilKey) {
     case "GERENTE_MATRIZ":
       return {
         navMain: [

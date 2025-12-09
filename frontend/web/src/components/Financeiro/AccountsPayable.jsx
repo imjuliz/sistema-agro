@@ -13,7 +13,7 @@ import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 
-export function AccountsPayable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
+export function AccountsPayable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh, readOnly = false, unidadeId = null }) {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -32,6 +32,8 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   // Paginação
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const isReadOnly = !!readOnly;
+  const notifyReadOnly = () => toast({ title: 'Modo somente leitura', description: 'O gerente da matriz pode apenas visualizar os lançamentos desta unidade.', variant: 'secondary' });
 
   // Função auxiliar para converter data (reutilizável)
   const converterDataParaISO = (dataValue) => {
@@ -114,8 +116,9 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         if (selectedMonth) params.set('mes', String(selectedMonth));
         if (selectedYear) params.set('ano', String(selectedYear));
         params.set('tipoMovimento', 'SAIDA');
+        if (unidadeId) params.set('unidadeId', String(unidadeId));
 
-        const url = `${API_URL}contas-financeiras?${params.toString()}`;
+        const url = `${API_URL}/contas-financeiras?${params.toString()}`;
         console.debug('[AccountsPayable] GET', url);
         const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
         
@@ -236,6 +239,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   };
 
   const handleAdd = async () => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     // Validação inicial dos campos obrigatórios (inline + toast)
     const errors = {competencyDate: '', dueDate: '', paymentDate: '', amount: '', subcategoryId: ''};
     if (!formData.competencyDate) errors.competencyDate = 'Data de Competência é obrigatório';
@@ -423,12 +430,20 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   };
 
   const handleEdit = (account) => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     setEditingAccount(account);
     setFormData({competencyDate: account.competencyDate,dueDate: account.dueDate,paymentDate: account.paymentDate || '',amount: account.amount.toString(),subcategoryId: account.subcategoryId,description: account.description});
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = async () => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     if (!editingAccount || !formData.competencyDate || !formData.dueDate || !formData.amount || !formData.subcategoryId) {
       return;
     }
@@ -553,6 +568,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   };
 
   const handleDelete = async (id) => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     try {
       const url = API_URL ? `${API_URL}contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
       console.debug('[AccountsPayable] DELETE', url);
@@ -1199,9 +1218,9 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                     </div>
                   </DialogContent>
                 </Dialog> */}
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!isReadOnly) setIsAddDialogOpen(open); }}>
                   <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2"><Plus className="h-4 w-4" />Nova Conta</Button>
+                    <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Conta</Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
@@ -1308,10 +1327,10 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                           <TableCell>{getStatusBadge(account.status)}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}><Edit className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                                  <Button variant="ghost" size="sm" disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
@@ -1320,7 +1339,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(account.id)}>Excluir</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}>Excluir</AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>

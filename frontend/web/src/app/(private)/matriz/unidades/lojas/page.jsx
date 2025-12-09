@@ -1,23 +1,13 @@
 // Gestão de Vendas (Lojas): Controlar as operações de varejo.
 // layout: Lista de lojas → resumo de vendas e estoque. PDV (para visão geral das operações).
 // Funcionalidades: Relatório de vendas por loja. Controle de estoque de cada loja. Ajuste centralizado de preços (se necessário).
-"use client";
 
-import React, { useEffect, useMemo, useState, useRef } from "react";
+"use client"
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Sliders, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DownloadIcon, FileTextIcon, FileSpreadsheetIcon } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
-import { useAuth } from "@/contexts/AuthContext";
-import { API_URL } from "@/lib/api";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,378 +16,779 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TrendingUp, Sliders, DownloadIcon, FileTextIcon, FileSpreadsheetIcon, Store, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Line, LineChart, } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { API_URL } from "@/lib/api";
+import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+import { useAuth } from "@/contexts/AuthContext";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 
-export default function LojasPage() {
-  usePerfilProtegido("GERENTE_MATRIZ");
-  const { fetchWithAuth } = useAuth();
-
-  const [units, setUnits] = useState([]);
-  const [mapUnits, setMapUnits] = useState([]);
-  const [query, setQuery] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [selected, setSelected] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const [orderBy, setOrderBy] = useState("nome_asc");
-  const [totalResults, setTotalResults] = useState(0);
-
-  const [statusFilters, setStatusFilters] = useState({ ATIVA: true, INATIVA: true });
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const citySuggestTimer = useRef(null);
-
-  useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 350);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    async function fetchLojas() {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (query) params.set("q", query);
-        const loc = String(locationFilter || "").trim();
-        if (loc) params.set("cidade", loc);
-
-        // status filter
-        const allowedStatuses = Object.entries(statusFilters).filter(([, v]) => v).map(([k]) => k);
-        if (allowedStatuses.length > 0) params.set("status", allowedStatuses.join(","));
-
-        params.set("page", String(page));
-        params.set("perPage", String(perPage));
-        params.set("orderBy", orderBy);
-
-        const url = `${API_URL}unidades/lojas?${params.toString()}`;
-        const res = await fetchWithAuth(url, { method: "GET", credentials: "include" });
-        if (!res.ok) {
-          toast.error("Erro ao carregar lojas");
-          setUnits([]);
-          setTotalResults(0);
-          return;
-        }
-        const body = await res.json().catch(() => null);
-        const unidades = body?.unidades ?? body?.data ?? [];
-        const total = body?.total ?? unidades.length ?? 0;
-        if (Array.isArray(unidades)) {
-          const normalized = unidades.map(normalizeUnit);
-          if (mounted) {
-            setUnits(normalized);
-            setTotalResults(total);
-          }
-        }
-      } catch (err) {
-        console.error("[fetchLojas] erro", err);
-        if (mounted) {
-          setUnits([]);
-          setTotalResults(0);
-        }
-        toast.error("Erro ao carregar lojas");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    fetchLojas();
-    return () => { mounted = false; };
-  }, [fetchWithAuth, query, locationFilter, statusFilters, page, perPage, orderBy]);
-
-  useEffect(() => {
-    let mounted = true;
-    async function fetchMapUnits() {
-      try {
-        const res = await fetchWithAuth(`${API_URL}unidades/lojas`, { method: "GET", credentials: "include" });
-        if (!res.ok) return;
-        const body = await res.json().catch(() => null);
-        const unidades = body?.unidades ?? body ?? [];
-        if (mounted && Array.isArray(unidades)) {
-          setMapUnits(unidades.map(normalizeUnit));
-        }
-      } catch (err) {
-        console.warn("[fetchMapUnits lojas] erro", err);
-      }
-    }
-    fetchMapUnits();
-    return () => { mounted = false; };
-  }, [fetchWithAuth]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const locFilter = String(locationFilter ?? "").trim().toLowerCase();
-    const statusAllowed = statusFilters;
-    return units.filter(u => {
-      const matchQ = q === "" || [u.name, u.location, u.manager, String(u.id)].some(f => String(f ?? "").toLowerCase().includes(q));
-      const matchLoc = locFilter === "" || String(u.location ?? "").toLowerCase().includes(locFilter);
-      const matchStatus = statusAllowed[String(u.status).toUpperCase()] ?? true;
-      return matchQ && matchLoc && matchStatus;
+// corrige o caminho dos ícones padrão em bundlers modernos
+if (typeof window !== 'undefined') {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+        iconUrl: require('leaflet/dist/images/marker-icon.png'),
+        shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
     });
-  }, [units, query, locationFilter, statusFilters]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  useEffect(() => {
-    setPage(p => Math.min(Math.max(1, p), totalPages));
-  }, [totalPages]);
-
-  const paged = useMemo(() => {
-    const start = (page - 1) * perPage;
-    return filtered.slice(start, start + perPage);
-  }, [filtered, page, perPage]);
-
-  function toggleStatusFilter(status) {
-    setStatusFilters(prev => ({ ...prev, [status]: !prev[status] }));
-    setPage(1);
-  }
-
-  function resetFilters() {
-    setQuery("");
-    setLocationFilter("");
-    setStatusFilters({ ATIVA: true, INATIVA: true });
-    setPage(1);
-  }
-
-  function normalizeUnit(u) {
-    return {
-      id: Number(u.id),
-      name: u.nome ?? u.name ?? `Loja ${u.id}`,
-      location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
-      manager: u.gerente?.nome ?? u.manager ?? "—",
-      status: (u.status || "ATIVA").toString().toUpperCase() === "ATIVA" ? "Ativa" : "Inativa",
-      areaHa: u.areaProdutiva ? Number(u.areaProdutiva) : 0,
-      latitude: u.latitude != null ? Number(u.latitude) : null,
-      longitude: u.longitude != null ? Number(u.longitude) : null,
-      sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
-    };
-  }
-
-  return (
-    <div className="min-h-screen px-6 py-6 bg-surface-50">
-      <div className="max-w-screen-2xl mx-auto w-full">
-        <header className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Unidades — Lojas</h1>
-            <p className="text-sm text-muted-foreground">Visão dedicada para a Matriz: resumo e detalhes de lojas</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={resetFilters}>Limpar filtros</Button>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <Card>
-            <CardHeader><CardTitle>Total de lojas</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{filtered.length}</div>
-              <div className="text-sm text-muted-foreground mt-1">Total de unidades do tipo Loja</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Ativas</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{filtered.filter(u => u.status === "Ativa").length}</div>
-              <div className="text-sm text-muted-foreground mt-1">Lojas com status Ativa</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Inativas</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{filtered.filter(u => u.status !== "Ativa").length}</div>
-              <div className="text-sm text-muted-foreground mt-1">Lojas com status Inativa</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between pb-3 border-b dark:border-neutral-800 border-neutral-200">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Input placeholder="Buscar unidades, cidade ou responsável" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
-                </div>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <Sliders className="h-4 w-4" />Filtros avançados
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" className="w-[360px] p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-semibold">Filtros Avançados</div>
-                      <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">Status</div>
-                        <div className="flex gap-2">
-                          {["ATIVA", "INATIVA"].map(s => (
-                            <label key={s} className="flex items-center gap-2 px-2 py-1 rounded dark:hover:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
-                              <Checkbox checked={!!statusFilters[s]} onCheckedChange={() => toggleStatusFilter(s)} />
-                              <div className="text-sm">{s === "ATIVA" ? "Ativa" : "Inativa"}</div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <Separator />
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">Localização</div>
-                        <div className="relative">
-                          <Input
-                            placeholder="Filtrar por cidade / estado"
-                            value={locationFilter}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setLocationFilter(v);
-                              setPage(1);
-                              if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
-                              citySuggestTimer.current = setTimeout(() => {
-                                setCitySuggestions([]);
-                              }, 300);
-                            }}
-                          />
-                          {citySuggestions.length > 0 && (
-                            <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
-                              {citySuggestions.map((s, idx) => (
-                                <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
-                                  <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='sm'>
-                      <DownloadIcon className='mr-2 h-4 w-4' />
-                      Exportar
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={() => handleExportCSV(filtered)}>
-                      <FileTextIcon className='mr-2 h-4 w-4' />
-                      Exportar CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <FileSpreadsheetIcon className='mr-2 h-4 w-4' />
-                      Exportar PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : (
-              <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {paged.map(u => (
-                    <Link key={u.id} href={`/matriz/unidades/lojas/${u.id}`}>
-                      <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar><AvatarFallback>L</AvatarFallback></Avatar>
-                            <div>
-                              <div className="font-medium text-lg">{u.name}</div>
-                              <div className="text-sm text-muted-foreground">{u.location}</div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-1 rounded ${u.status === 'Ativa' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                              {u.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 text-sm text-muted-foreground">Última atualização: {new Date(u.sync).toLocaleString()}</div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {filtered.length === 0 && (
-                  <div className="py-8 text-center text-muted-foreground">Nenhuma loja encontrada.</div>
-                )}
-              </div>
-            )}
-          </CardContent>
-
-          <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
-            <div className="flex items-center gap-3">
-              <Label className="text-sm font-medium">Linhas por pág.</Label>
-              <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filtered.length / perPage) || 1)}</div>
-
-              <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
-                <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-
-                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-
-                <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardFooter>
-        </Card>
-
-        <div className="mt-6">
-          <Card>
-            <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-56 bg-muted rounded-md flex items-center justify-center">
-                <div className="text-sm text-muted-foreground">Mapa com pins das lojas (dados carregados, não filtrados)</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
 }
 
+export default function LojasPage() {
+    usePerfilProtegido("GERENTE_MATRIZ");
+    const { user, logout, fetchWithAuth } = useAuth();
+
+    const [units, setUnits] = useState([]);
+    const [query, setQuery] = useState("");
+    const [locationFilter, setLocationFilter] = useState("");
+    const [selected, setSelected] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(8);
+    const [sheetUnit, setSheetUnit] = useState(null);
+    const [metrics, setMetrics] = useState({ total: 0, active: 0, inactive: 0 });
+    const [orderBy, setOrderBy] = useState('nome_asc');
+    const [totalResults, setTotalResults] = useState(0);
+    const [mapUnits, setMapUnits] = useState([]);
+
+    // filtros avançados: tipos e status e local
+    const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // rascunho
+    const [statusFilters, setStatusFilters] = useState({ Ativa: true, Inativa: true }); // rascunho
+    const [locationQuery, setLocationQuery] = useState(''); // rascunho (responsável / área etc)
+
+    // estados que efetivamente serão usados para filtrar (applied)
+    const [draftTypeFilters, setDraftTypeFilters] = useState(typeFilters);
+    const [draftStatusFilters, setDraftStatusFilters] = useState(statusFilters);
+    const [draftLocationFilter, setDraftLocationFilter] = useState(""); // cidade/estado rascunho
+    const [draftResponsibleQuery, setDraftResponsibleQuery] = useState("");
+    const [citySuggestions, setCitySuggestions] = useState([]);
+    const citySuggestTimer = useRef(null);
+
+    // filtros aplicados (só atualiza quando clicar em APLICAR)
+    const [appliedFilters, setAppliedFilters] = useState({
+        typeFilters: typeFilters,
+        statusFilters: statusFilters,
+        locationFilter: "",
+        locationEstado: "",
+        responsibleQuery: ""
+    });
+
+    useEffect(() => {
+        setLoading(true);
+        const t = setTimeout(() => setLoading(false), 350);
+        return () => clearTimeout(t);
+    }, []);
+
+    // busca lista de lojas
+    useEffect(() => {
+        let mounted = true;
+
+        async function fetchLojas() {
+            setLoading(true);
+            try {
+                const params = new URLSearchParams();
+                if (query) params.set('q', query);
+                const loc = String(appliedFilters.locationFilter || '').trim();
+                if (loc) params.set('cidade', loc);
+                const estadoParam = String(appliedFilters.locationEstado || '').trim();
+                if (estadoParam) params.set('estado', estadoParam);
+                const resp = String(appliedFilters.responsibleQuery || '').trim();
+                if (resp) params.set('responsible', resp);
+                // send status filters and type filters to backend as comma-separated lists
+                const types = appliedFilters.typeFilters ? Object.entries(appliedFilters.typeFilters).filter(([, v]) => v).map(([k]) => k) : [];
+                if (types.length > 0) params.set('tipos', types.join(','));
+                const statuses = appliedFilters.statusFilters ? Object.entries(appliedFilters.statusFilters).filter(([, v]) => v).map(([k]) => k.toUpperCase()) : [];
+                if (statuses.length > 0) params.set('status', statuses.join(','));
+                params.set('page', String(page));
+                params.set('perPage', String(perPage));
+                params.set('orderBy', orderBy);
+
+                const url = `${API_URL}unidades/lojas?${params.toString()}`;
+                console.debug('[fetchLojas] GET', url);
+                const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
+                if (!res.ok) {
+                    console.warn('[fetchLojas] resposta não OK', res.status);
+                    setUnits([]);
+                    setTotalResults(0);
+                    return;
+                }
+                const body = await res.json().catch(() => null);
+                const unidades = body?.unidades ?? [];
+                const total = body?.total ?? 0;
+                if (Array.isArray(unidades) && unidades.length > 0) {
+                    const normalized = unidades.map(normalizeUnit);
+                    if (mounted) {
+                        setUnits(normalized);
+                        setTotalResults(total);
+                    }
+                } else {
+                    if (mounted) {
+                        setUnits([]);
+                        setTotalResults(total);
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao carregar lojas:', err);
+                if (mounted) {
+                    setUnits([]);
+                    setTotalResults(0);
+                }
+            } finally {if (mounted) setLoading(false);}
+        }
+
+        fetchLojas();
+        return () => { mounted = false; };
+    }, [fetchWithAuth, appliedFilters, page, perPage, query, orderBy]);
+
+    // lista completa para o mapa (não afetada por filtros de busca/ordenar)
+    useEffect(() => {
+        let mounted = true;
+        async function fetchMapUnits() {
+            try {
+                const res = await fetchWithAuth(`${API_URL}unidades/lojas`, { method: "GET", credentials: "include" });
+                if (!res.ok) return;
+                const body = await res.json().catch(() => null);
+                const unidades = body?.unidades ?? body ?? [];
+                if (mounted && Array.isArray(unidades)) {
+                    setMapUnits(unidades.map(normalizeUnit));
+                }
+            } catch (err) {
+                console.warn("[fetchMapUnits] erro", err);
+            }
+        }
+        fetchMapUnits();
+        return () => { mounted = false; };
+    }, [fetchWithAuth]);
+
+    // Buscar métricas de lojas (total, ativas, inativas, etc)
+    useEffect(() => {
+        let mounted = true;
+
+        async function fetchMetrics() {
+            try {
+                // URL correta (conforme suas rotas backend)
+                const url = `${API_URL}unidades/contar-lojas`;
+                console.debug("[fetchMetrics] requesting", url);
+
+                // usando seu fetchWithAuth (faz refresh se necessário)
+                const res = await fetchWithAuth(url, { method: "GET", credentials: "include",
+                    headers: { Accept: "application/json" } });
+
+                console.debug("[fetchMetrics] status:", res.status);
+
+                if (res.status === 401) {
+                    console.warn("[fetchMetrics] 401 — não autorizado (cookie/refresh faltando)");
+                    if (!mounted) return;
+                    setMetrics({ total: 0, active: 0, inactive: 0 });
+                    return;
+                }
+
+                const body = await res.json().catch(() => null);
+                console.debug("[fetchMetrics] body:", body);
+
+                // tenta vários formatos possíveis (fallbacks)
+                const total = Number(body?.total ?? body?.count ?? body?.resultado?.total ?? 0) || 0;
+                const active = Number(body?.ativas ?? body?.active ?? 0) || 0;
+                const inactive = Number(body?.inativas ?? body?.inactive ?? Math.max(0, total - active)) || 0;
+
+                // fallback se backend retornou uma lista em 'unidades'
+                if (total === 0 && Array.isArray(body?.unidades)) {
+                    if (!mounted) return;
+                    setMetrics({
+                        total: body.unidades.length,
+                        active: Number(body.unidades.filter(u => String(u.status).toUpperCase() === 'ATIVA').length) || 0,
+                        inactive: Number(body.unidades.filter(u => String(u.status).toUpperCase() === 'INATIVA').length) || 0
+                    });
+                    return;
+                }
+
+                if (!mounted) return;
+                setMetrics({ total, active, inactive });
+            } catch (err) {
+                console.error("[fetchMetrics] erro:", err);
+                if (mounted) setMetrics({ total: 0, active: 0, inactive: 0 });
+            }
+        }
+
+        fetchMetrics();
+        return () => { mounted = false; };
+    }, [fetchWithAuth]); // depende do fetchWithAuth
+
+    // buscar unidade por id
+    const router = useRouter();
+    const prefetchCache = useRef(new Map());
+
+    async function prefetchLoja(id) {
+        if (!id || prefetchCache.current.has(id)) return;
+        router.prefetch(`/matriz/unidades/lojas/${id}`);
+        try {
+            const url = `${API_URL}unidades/${id}`;
+            const res = await fetchWithAuth(url);
+            if (!res.ok) return;
+            const body = await res.json().catch(() => null);
+            prefetchCache.current.set(id, body);
+            sessionStorage.setItem(`prefetched_loja_${id}`, JSON.stringify(body));
+        } catch (e) { console.debug(e); }
+    }
+
+    // filtra somente lojas e aplica query + localização
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase(); // busca livre (mantém ativa)
+        const locFilter = String(appliedFilters.locationFilter ?? "").trim().toLowerCase();
+        const respFilter = String(appliedFilters.responsibleQuery ?? "").trim().toLowerCase();
+
+        const statusAllowed = appliedFilters.statusFilters ?? { Ativa: true, Inativa: true };
+        const typeAllowed = appliedFilters.typeFilters ?? { Matriz: true, Fazenda: true, Loja: true };
+
+        return units.filter(u => {
+            // tipo: ainda filtra apenas Lojas por padrão — mantenha se desejar
+            const isLoja = String(u.type ?? "").toLowerCase() === "loja";
+
+            // busca principal (query) continua ativa
+            const matchQ =
+                q === "" ||
+                [u.name, u.location, u.manager, String(u.id)]
+                    .some(f => String(f ?? "").toLowerCase().includes(q));
+
+            // localização (aplicada apenas após clicar em aplicar)
+            const matchLoc = locFilter === "" || String(u.location ?? "").toLowerCase().includes(locFilter);
+
+            // responsável
+            const matchResp = respFilter === "" || String(u.manager ?? "").toLowerCase().includes(respFilter);
+
+            // status e tipo (usam appliedFilters)
+            const matchStatus = !!statusAllowed[String(u.status) ?? "Ativa"];
+            const matchType = !!typeAllowed[String(u.type) ?? "Loja"];
+
+            return isLoja && matchQ && matchLoc && matchResp && matchStatus && matchType;
+        });
+    }, [units, query, appliedFilters]);
+
+    const paged = useMemo(() => {
+        const start = (page - 1) * perPage;
+        return filtered.slice(start, start + perPage);
+    }, [filtered, page, perPage]);
+
+    // If backend provides `totalResults` then `units` is expected to contain
+    // only the current page (server-side pagination). In that case render
+    // `units` directly; otherwise render client-side paged results.
+    const isServerPaged = !!(totalResults && totalResults > 0);
+    const displayed = isServerPaged ? units : paged;
+
+    function toggleSelect(id) {setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);}
+
+    function toggleStatus(status) {
+        setStatusFilters(prev => ({
+            ...prev,
+            [status]: !prev[status]
+        }));
+    }
+
+    function resetFilters() {
+        setQuery("");
+        setLocationFilter("");
+        setLocationQuery("");
+        setStatusFilters({ Ativa: true, Inativa: true });
+        setTypeFilters({ Matriz: true, Fazenda: true, Loja: true });
+        setPage(1);
+        // clear drafts and applied filters as well
+        setDraftLocationFilter('');
+        setDraftResponsibleQuery('');
+        setDraftStatusFilters({ Ativa: true, Inativa: true });
+        setDraftTypeFilters({ Matriz: true, Fazenda: true, Loja: true });
+        setCitySuggestions([]);
+        setAppliedFilters({
+            typeFilters: { Matriz: true, Fazenda: true, Loja: true },
+            statusFilters: { Ativa: true, Inativa: true },
+            locationFilter: '',
+            locationEstado: '',
+            responsibleQuery: ''
+        });
+    }
+
+    function selectAllOnPage() {
+        const ids = displayed.map(u => u.id);
+        const all = ids.every(id => selected.includes(id));
+        setSelected(s => all ? s.filter(x => !ids.includes(x)) : [...new Set([...s, ...ids])]);
+    }
+    function bulkDelete() {
+        setUnits(prev => prev.filter(u => !selected.includes(u.id)));
+        setSelected([]);
+    }
+
+    // normalizador (mesma lógica que você já usa na fetchLojas)
+    function normalizeUnit(u) {
+        const rawType = String(u.tipo ?? u.type ?? '').trim();
+        const type = rawType.length === 0 ? 'Loja'
+            : rawType.toUpperCase() === 'LOJA' ? 'Loja'
+                : rawType[0]?.toUpperCase() + rawType.slice(1).toLowerCase();
+
+        const rawStatus = String(u.status ?? '').trim();
+        const status = rawStatus.length === 0 ? 'Ativa'
+            : rawStatus.toUpperCase() === 'ATIVA' ? 'Ativa'
+                : rawStatus[0]?.toUpperCase() + rawStatus.slice(1).toLowerCase();
+
+        return {
+            id: Number(u.id),
+            name: u.nome ?? u.name ?? String(u.id),
+            type,
+            location: (u.cidade ? `${u.cidade}${u.estado ? ', ' + u.estado : ''}` : (u.location ?? "")),
+            manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
+            status,
+            sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
+            horarioAbertura: u.horarioAbertura ?? u.horario_abertura ?? null,
+            horarioFechamento: u.horarioFechamento ?? u.horario_fechamento ?? null,
+            latitude: u.latitude != null ? Number(u.latitude)
+                : (u.lat != null ? Number(u.lat)
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
+            longitude: u.longitude != null ? Number(u.longitude)
+                : (u.lng != null ? Number(u.lng)
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null)),
+            raw: u
+        };
+    }
+
+    // ---------------------------------------------------------------------
+    // grafico de barras "Lojas com mais vendas"
+    // ---------------------------------------------------------------------
+    const LojasMaisVendas = [
+        { month: "Loja 1", desktop: 18600, mobile: 8000 },
+        { month: "Loja 2", desktop: 30500, mobile: 20000 },
+        { month: "Loja 3", desktop: 23700, mobile: 12000 },
+        { month: "Loja 4", desktop: 7300, mobile: 19000 },
+        { month: "Loja 5", desktop: 20900, mobile: 13000 },
+    ]
+
+    const chartConfigLojasMaisVendas = {
+        desktop: {
+            label: "Vendas",
+            color: "var(--chart-2)",
+        },
+        mobile: {
+            label: "Mobile",
+            color: "var(--chart-2)",
+        },
+        label: {color: "var(--background)",},
+    }
+
+    // ---------------------------------------------------------------------
+    // grafico de linhas "Vendas semanais"
+    // ---------------------------------------------------------------------
+    const VendasSemanais = [
+        { week: "Domingo", desktop: 21400 },
+        { week: "Segunda-feira", desktop: 18600 },
+        { week: "Terça-feira", desktop: 30500 },
+        { week: "Quarta-feira", desktop: 23700 },
+        { week: "Quinta-feira", desktop: 7300 },
+        { week: "Sexta-feira", desktop: 20900 },
+        { week: "Sábado", desktop: 21400 },
+    ]
+    const chartConfigVendasSemanais = {
+        desktop: {
+            label: "Vendas",
+            color: "var(--chart-1)",
+        },
+    }
+
+    function FitBounds({ markers }) {
+        const map = useMap();
+        useEffect(() => {
+            if (!map) return;
+            const coords = markers.map(m => [Number(m.latitude), Number(m.longitude)]);
+            if (coords.length === 0) return;
+            const bounds = L.latLngBounds(coords);
+            map.fitBounds(bounds, { padding: [40, 40] }); // ajusta zoom/centro para todos os pins
+        }, [map, markers]);
+        return null;
+    }
+
+    const totalPages = Math.max(1, Math.ceil((totalResults && totalResults > 0 ? totalResults : filtered.length) / perPage));
+    useEffect(() => {
+        // sempre garante que a página atual seja válida quando filtros / perPage mudarem
+        setPage(p => Math.min(Math.max(1, p), totalPages));
+    }, [totalPages]);
+
+    return (
+        <div className="min-h-screen px-18 py-10 bg-surface-50">
+            <div className="w-full">
+                {/* METRICS */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
+                        <CardHeader><CardTitle>Total de Lojas</CardTitle></CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold">{metrics.total}</div>
+                            <div className="text-sm text-muted-foreground mt-1">Total de unidades do tipo Loja</div>
+                        </CardContent>
+                    </Card>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
+                        <CardHeader><CardTitle>Ativas</CardTitle></CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold">{metrics.active}</div>
+                            <div className="text-sm text-muted-foreground mt-1">Lojas com status Ativa</div>
+                        </CardContent>
+                    </Card>
+                    <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border dark:border-white/10 border-black/10 transition"}>
+                        <CardHeader><CardTitle>Inativas</CardTitle></CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold">{metrics.inactive}</div>
+                            <div className="text-sm text-muted-foreground mt-1">Lojas com status Inativa</div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Filters + cards */}
+                <Card className={"mb-8"}>
+                    <CardHeader>
+                        <CardTitle className={"mb-4"}>Lista de Lojas</CardTitle>
+                        <div className="flex items-center justify-between pb-3 border-b dark:border-neutral-800 border-neutral-200">
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <Input placeholder="Buscar unidades, cidade ou responsável" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
+                                </div>
+
+                                {/* FILTROS AVANÇADOS: usa Popover para menu parecido com dropdown */}
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                            <Sliders className="h-4 w-4" />Filtros avançados
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent side="bottom" align="start" className="w-[360px] p-3">
+                                        {/* header com ações rápidas */}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="font-semibold">Filtros Avançados</div>
+                                            <div className="text-sm text-neutral-400">{(totalResults && totalResults > 0) ? totalResults : filtered.length} resultados</div>
+                                        </div>
+
+                                        <div className="space-y-3">
+
+                                            {/* STATUS */}
+                                            <div>
+                                                <div className="text-xs text-muted-foreground mb-1">Status</div>
+                                                <div className="flex gap-2">
+                                                    {["Ativa", "Inativa"].map(s => (
+                                                        <label key={s} className="flex items-center gap-2 px-2 py-1 rounded dark:hover:bg-neutral-900 hover:bg-neutral-100 cursor-pointer">
+                                                            <Checkbox checked={!!draftStatusFilters[s]} onCheckedChange={() => { setDraftStatusFilters(prev => ({ ...prev, [s]: !prev[s] }));}}/>
+                                                            <div className="text-sm">{s}</div>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <Separator />
+
+                                            {/* LOCALIZAÇÃO */}
+                                            <div>
+                                                <div className="text-xs text-muted-foreground mb-1">Localização</div>
+                                                <div className="relative">
+                                                    <Input placeholder="Filtrar por cidade / estado" value={draftLocationFilter} onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setDraftLocationFilter(v);
+                                                        setPage(1);
+                                                        // debounce suggestions
+                                                        if (citySuggestTimer.current) clearTimeout(citySuggestTimer.current);
+                                                        citySuggestTimer.current = setTimeout(async () => {
+                                                            try {
+                                                                const q = v.trim();
+                                                                if (!q || q.length < 2) { setCitySuggestions([]); return; }
+                                                                const url = `${API_URL}unidades/cidades?query=${encodeURIComponent(q)}&limit=10`;
+                                                                const res = await fetchWithAuth(url);
+                                                                if (!res.ok) { setCitySuggestions([]); return; }
+                                                                const body = await res.json().catch(() => null);
+                                                                setCitySuggestions(body?.suggestions ?? []);
+                                                            } catch (err) { console.error('sugestões erro', err); setCitySuggestions([]); }
+                                                        }, 300);
+                                                    }} />
+                                                    {citySuggestions.length > 0 && (
+                                                        <div className="absolute z-40 mt-1 w-full bg-card border rounded shadow max-h-48 overflow-auto">
+                                                            {citySuggestions.map((s, idx) => (
+                                                                <div key={idx} className="px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer" onClick={() => { setDraftLocationFilter(`${s.cidade}${s.estado ? ', ' + s.estado : ''}`); setCitySuggestions([]); }}>
+                                                                    <div className="text-sm">{s.cidade}{s.estado ? `, ${s.estado}` : ''}</div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <Separator />
+                                            {/* RESPONSAVEL */}
+                                            <div>
+                                                <div className="text-xs text-muted-foreground mb-1">Responsável</div>
+                                                <Input placeholder="Filtrar por responsável" value={draftResponsibleQuery} onChange={(e) => { setDraftResponsibleQuery(e.target.value); }}/>
+                                            </div>
+                                            {/* APLICAR / RESET */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Button size="sm" onClick={() => {
+                                                        // parse draftLocationFilter which may contain "Cidade, ESTADO"
+                                                        const parts = String(draftLocationFilter || '').split(',').map(s => s.trim()).filter(Boolean);
+                                                        const cidade = parts[0] || '';
+                                                        const estado = parts[1] || '';
+                                                        setAppliedFilters({
+                                                            typeFilters: draftTypeFilters,
+                                                            statusFilters: draftStatusFilters,
+                                                            locationFilter: cidade,
+                                                            locationEstado: estado,
+                                                            responsibleQuery: draftResponsibleQuery
+                                                        }); setPage(1); }}>
+                                                        Aplicar
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => {
+                                                        resetFilters();
+                                                        setDraftLocationFilter('');
+                                                        setDraftResponsibleQuery('');
+                                                        setCitySuggestions([]);
+                                                    }}>Limpar</Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                            <span className="text-sm">Ordenar Por</span>
+                                            <div className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded dark:bg-neutral-800 bg-neutral-200 dark:text-neutral-300 text-neutral-700 text-xs">
+                                                {orderBy === 'nome_asc' ? 'AZ' : orderBy === 'nome_desc' ? 'ZA' : orderBy === 'mais_recente' ? 'REC' : 'ANT'}
+                                            </div>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align='start'>
+                                        <DropdownMenuItem onClick={() => { setOrderBy('nome_asc'); setPage(1); }}>
+                                            A - Z (Nome)
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setOrderBy('nome_desc'); setPage(1); }}>
+                                            Z - A (Nome)
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => { setOrderBy('mais_recente'); setPage(1); }}>
+                                            Mais Recente
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setOrderBy('mais_antigo'); setPage(1); }}>
+                                            Mais Antigo
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    </CardHeader>
+
+                    <CardContent>
+                        {loading ? (
+                            <div className="space-y-2">
+                                <Skeleton className="h-8 w-full" />
+                                <Skeleton className="h-8 w-full" />
+                                <Skeleton className="h-8 w-full" />
+                            </div>
+                        ) : ( <div>
+                                {/* Grid of cards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                                    {displayed.map(u => (
+                                        <Link key={u.id} href={`/matriz/unidades/lojas/${u.id}`} onMouseEnter={() => prefetchLoja(u.id)}>
+                                            <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
+                                                <div className="flex flex-col items-start justify-between gap-3">
+                                                    <div className="flex items-center gap-3">
+                                                                    <Avatar>
+                                                                        {u.raw?.imagemUrl || u.imagemUrl ? (
+                                                                            <AvatarImage src={u.raw?.imagemUrl || u.imagemUrl} alt={u.name} />
+                                                                        ) : (
+                                                                            <AvatarFallback>{(() => {
+                                                                                const parts = String(u.name || '').split(' ').filter(Boolean);
+                                                                                const a = parts[0]?.[0] ?? '';
+                                                                                const b = parts[1]?.[0] ?? '';
+                                                                                const initials = (a + b).toUpperCase() || (String(u.name || '').slice(0,2).toUpperCase() || 'L');
+                                                                                return initials;
+                                                                            })()}</AvatarFallback>
+                                                                        )}
+                                                                    </Avatar>
+                                                                    <div>
+                                                            <div className="font-bold text-lg">{u.name}</div>
+                                                            <div className="text-sm text-muted-foreground">{u.location}</div>
+                                                        </div>
+                                                    </div>
+                                                    {u.horarioAbertura && (
+                                                        <div className="flex flex-row gap-3 ">
+                                                            <div className="text-base font-medium">Abertura: </div><div className="text-base font-normal">{u.horarioAbertura}</div>
+                                                        </div>
+                                                    )}
+                                                    {u.horarioFechamento && (
+                                                        <div className="flex flex-row gap-3 ">
+                                                            <div className="text-base font-medium">Fechamento: </div><div className="text-base font-normal">{u.horarioFechamento}</div>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-row gap-3 ">
+                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.manager || "—"}</div>
+                                                    </div>
+                                                </div>
+                                                {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+
+                                {/* Empty state */}
+                                {displayed.length === 0 && !loading && (
+                                    <div className="py-8 flex flex-col items-center gap-4 text-center text-muted-foreground">
+                                        <Store size={50} />
+                                        <p className="font-medium">Nenhuma loja encontrada.</p>
+                                    </div>
+                                )}
+
+                            
+                            </div>
+                        )}
+                    </CardContent>
+                    <CardFooter className="flex items-center justify-between border-t dark:border-neutral-800 border-neutral-200">
+                        <div className="flex items-center gap-3">
+                            <Label className="text-sm font-medium">Linhas por pág.</Label>
+                            <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                                <SelectTrigger className="w-[80px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="4">4</SelectItem>
+                                    <SelectItem value="8">8</SelectItem>
+                                    <SelectItem value="12">12</SelectItem>
+                                    <SelectItem value="16">16</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil((totalResults && totalResults > 0 ? totalResults : filtered.length) / perPage) || 1)}</div>
+
+                            <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
+                                <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                </Card>
+                <div className='mb-8'>
+                    <Card>
+                        <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
+                        <CardContent>
+                            <div className='h-100 rounded-md overflow-hidden z-0 relative'>
+                                <MapContainer style={{ height: "100%", width: "100%" }} center={[-14.235004, -51.92528]} // fallback (centro do Brasil)
+                                    zoom={4} scrollWheelZoom={false}>
+                                    <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+
+                                    { /* marcadores para unidades que possuam coordenadas válidas */}
+                                    {mapUnits.filter(u => u.latitude != null && u.longitude != null).map(u => (
+                                        <Marker key={u.id} position={[Number(u.latitude), Number(u.longitude)]}>
+                                            <Popup>
+                                                <div className="min-w-[200px]">
+                                                    <div className="font-semibold">{u.name}</div>
+                                                    <div className="text-sm text-muted-foreground">{u.location}</div>
+                                                    {u.horarioAbertura && <div className="text-xs">Abertura: {u.horarioAbertura}</div>}
+                                                    {u.horarioFechamento && <div className="text-xs">Fechamento: {u.horarioFechamento}</div>}
+                                                    <Link href={`/matriz/unidades/lojas/${u.id}`} className="text-blue-500 text-sm">Abrir</Link>
+                                                </div>
+                                            </Popup>
+                                        </Marker>
+                                    ))}
+
+                                    <FitBounds markers={mapUnits.filter(u => u.latitude != null && u.longitude != null)} />
+                                </MapContainer>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="flex flex-row gap-8">
+                    <div className="w-full">
+                        {/* LOJA */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Lojas com mais vendas</CardTitle>
+                                <CardDescription>January - June 2024</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ChartContainer config={chartConfigLojasMaisVendas}>
+                                    <BarChart accessibilityLayer data={LojasMaisVendas} layout="vertical" margin={{ right: 16, }}>
+                                        <CartesianGrid horizontal={false} />
+                                        <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} hide />
+                                        <XAxis dataKey="desktop" type="number" hide />
+                                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                                        <Bar dataKey="desktop" layout="vertical" fill="var(--color-desktop)" radius={4} >
+                                            <LabelList dataKey="month" position="insideLeft" offset={8} className="fill-(--color-label)" fontSize={12} />
+                                            <LabelList dataKey="desktop" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                                        </Bar>
+                                    </BarChart>
+                                </ChartContainer>
+                            </CardContent>
+                            <CardFooter className="flex-col items-start gap-2 text-sm">
+                                <div className="flex gap-2 leading-none font-medium">
+                                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                                </div>
+                                <div className="text-muted-foreground leading-none">Vendas em R$
+                                </div>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                    <div className="w-full">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Vendas semanais</CardTitle>
+                                <CardDescription>January - June 2024</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ChartContainer config={chartConfigVendasSemanais}>
+                                    <LineChart accessibilityLayer data={VendasSemanais} margin={{ left: 20, right: 20, }} >
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis dataKey="week" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                                        <Line dataKey="desktop" type="natural" stroke="var(--color-desktop)" strokeWidth={2} dot={false} />
+                                    </LineChart>
+                                </ChartContainer>
+                            </CardContent>
+                            <CardFooter className="flex-col items-start gap-2 text-sm">
+                                <div className="flex gap-2 leading-none font-medium">
+                                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                                </div>
+                                <div className="text-muted-foreground leading-none">
+                                    Vendas em R$
+                                </div>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+}
+
+// --- helpers locais (não exportados) ---
 function handleExportCSV(units) {
-  const headers = ["id", "name", "location", "manager", "status", "sync"];
-  const rows = units.map(u => headers.map(h => JSON.stringify(u[h] ?? "")).join(','));
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `lojas_export_${new Date().toISOString()}.csv`; a.click(); URL.revokeObjectURL(url);
+    const headers = ["id", "name", "type", "location", "manager", "status", "sync", "horarioAbertura", "horarioFechamento"];
+    const rows = units.map(u => headers.map(h => JSON.stringify(u[h] ?? "")).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `lojas_export_${new Date().toISOString()}.csv`; a.click(); URL.revokeObjectURL(url);
 }

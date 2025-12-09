@@ -15,7 +15,7 @@ export function CenterPanel({ activeTab, loja, loading }) {
       case 'equipe':
         return <EquipeTab lojaId={loja?.id} />;
       case 'financeiro':
-        return <FinanceiroTab />;
+        return <FinanceiroTab unidadeId={loja?.id} />;
       case 'fornecedores':
         return <FornecedoresTab loja={loja} />;
       case 'comunicados':

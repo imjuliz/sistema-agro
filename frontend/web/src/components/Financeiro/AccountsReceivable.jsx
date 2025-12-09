@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function AccountsReceivable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh }) {
+export function AccountsReceivable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh, readOnly = false, unidadeId = null }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -35,6 +35,8 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   // paginacao
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const isReadOnly = !!readOnly;
+  const notifyReadOnly = () => toast({ title: 'Modo somente leitura', description: 'O gerente da matriz pode apenas visualizar os lançamentos desta unidade.', variant: 'secondary' });
 
   useEffect(() => {if (Array.isArray(accounts) && accounts.length >= 0) setLocalAccounts(accounts);}, [accounts]);  // sincroniza prop `accounts` caso mude externamente
 
@@ -50,8 +52,9 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         if (selectedMonth) params.set('mes', String(selectedMonth));// filtro por mês/ano (usa selectedMonth/selectedYear do componente)
         if (selectedYear) params.set('ano', String(selectedYear));        
         params.set('tipoMovimento', 'ENTRADA');// apenas contas de entrada para este componente (contas a receber)
+        if (unidadeId) params.set('unidadeId', String(unidadeId));
 
-        const url = `${API_URL}contas-financeiras?${params.toString()}`;
+        const url = `${API_URL}/contas-financeiras?${params.toString()}`;
         console.debug('[AccountsReceivable] GET', url);
         const res = await fetchWithAuth(url, { method: 'GET', credentials: 'include' });
         if (!res.ok) { console.warn('[AccountsReceivable] resposta não OK', res.status);
@@ -116,6 +119,10 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   };
 
   const handleAdd = async () => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     // limpar erros anteriores
     setFormErrors({});
 
@@ -245,12 +252,20 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   };
 
   const handleEdit = (account) => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     setEditingAccount(account);
     setFormData({competencyDate: account.competencyDate,amount: account.amount.toString(),subcategoryId: account.subcategoryId,description: account.description});
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = async () => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     // limpar erros anteriores
     setFormErrors({});
     if (!editingAccount) return;
@@ -331,6 +346,10 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   };
 
   const handleDelete = async (id) => {
+    if (isReadOnly) {
+      notifyReadOnly();
+      return;
+    }
     try {
       const url = API_URL ? `${API_URL}contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
       const response = await fetchWithAuth(url, {method: 'DELETE',credentials: 'include',headers: { 'Content-Type': 'application/json', },});
@@ -1021,9 +1040,9 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           >
             <Download className="h-4 w-4" />Exportar CSV
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!isReadOnly) setIsAddDialogOpen(open); }}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2"><Plus className="h-4 w-4" />Nova Receita
+              <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Receita
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-xl">
@@ -1119,10 +1138,10 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                         <TableCell className="max-w-xs truncate">{account.description || '-'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="sm" disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -1131,7 +1150,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(account.id)}>Excluir</AlertDialogAction>
+                                  <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}>Excluir</AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>

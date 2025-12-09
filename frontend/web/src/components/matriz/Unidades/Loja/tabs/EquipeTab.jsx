@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,9 +15,11 @@ import { EditarUsuarioModal } from './modals/EditarUsuarioModal';
 import DemitirUsuarioModal from './modals/DemitirUsuarioModal';
 import TransferirUsuarioModal from './modals/TransferirUsuarioModal';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuContent  } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/components/ui/use-toast';
 
 export function EquipeTab({ lojaId }) {
-  const { fetchWithAuth, doRefresh, logout, initialized } = useAuth()
+  const { fetchWithAuth, logout, initialized } = useAuth()
+  const { toast } = useToast();
   const [query, setQuery] = useState('');
   const [equipe, setEquipe] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -32,7 +34,6 @@ export function EquipeTab({ lojaId }) {
   const [abrirModalDemitir, setAbrirModalDemitir] = useState(false);
   const [abrirModalTransferir, setAbrirModalTransferir] = useState(false);
 
-  // Carregar equipe da unidade
   useEffect(() => {
     const carregarEquipe = async () => {
       try {
@@ -52,11 +53,14 @@ export function EquipeTab({ lojaId }) {
           const status = response.status;
           if (status === 401) {
             setErroEquipe('Sessão expirada. Faça login novamente.');
+            toast({ title: 'Sessão expirada', description: 'Faça login novamente.', variant: 'destructive' });
             await logout()
           } else if (status === 403) {
             setErroEquipe('Você não tem permissão para ver a equipe desta unidade.');
+            toast({ title: 'Sem permissão', description: 'Você não pode ver a equipe desta unidade.', variant: 'destructive' });
           } else {
             setErroEquipe(`Erro ao carregar equipe (${status}).`);
+            toast({ title: 'Erro ao carregar equipe', description: `Status ${status}`, variant: 'destructive' });
           }
           return
         }
@@ -65,7 +69,6 @@ export function EquipeTab({ lojaId }) {
         const usuarios = body?.usuarios ?? []
         
         if (Array.isArray(usuarios)) {
-          // Helper para formatar telefones BR
           const formatPhone = (raw) => {
             if (!raw) return 'Não informado';
             const digits = String(raw).replace(/\D/g, '');
@@ -79,7 +82,6 @@ export function EquipeTab({ lojaId }) {
             return 'Não informado';
           }
 
-          // Mapear dados do backend para o formato da tela
           const equipeFormatada = usuarios.map(user => {
             const rawPhone = String(user.telefone || '').replace(/\D/g, '');
             return ({
@@ -104,6 +106,7 @@ export function EquipeTab({ lojaId }) {
       } catch (error) {
         console.error("Erro ao buscar equipe:", error)
         setErroEquipe('Erro ao carregar a equipe. Tente novamente.')
+        toast({ title: 'Erro ao carregar equipe', description: 'Tente novamente.', variant: 'destructive' });
       } finally {
         setCarregando(false)
       }
@@ -112,9 +115,8 @@ export function EquipeTab({ lojaId }) {
     if (lojaId && initialized) {
       carregarEquipe()
     }
-  }, [lojaId, fetchWithAuth, initialized, logout])
+  }, [lojaId, fetchWithAuth, initialized, logout, toast])
 
-  // Filtragem principal - integra query, tipos, status e localização
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return equipe.filter(eqp => {
@@ -146,16 +148,12 @@ export function EquipeTab({ lojaId }) {
       
       <div className="flex-1 min-w-0 space-y-4">
          <div>
-          {/* <CardHeader>
-            <CardTitle className="text-base">Ações</CardTitle>
-          </CardHeader> */}
           <div className="space-y-4">
             <div className="flex flex-row items-start gap-3">
               <div className="relative w-full">
                 <Input placeholder="Buscar por nome ou email" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
               </div>
 
-              {/* FILTROS AVANÇADOS: usa Popover para menu parecido com dropdown */}
               <Popover >
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="flex items-center gap-2 px-3">
@@ -163,14 +161,12 @@ export function EquipeTab({ lojaId }) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent side="bottom" align="start" className="w-[360px] p-3">
-                  {/* header com ações rápidas */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-semibold">Filtros Avançados</div>
                     <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
                   </div>
 
                   <div className="space-y-3">
-                    {/* funcao */}
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Função</div>
                       <div className="grid grid-cols-1 gap-1">
@@ -187,7 +183,6 @@ export function EquipeTab({ lojaId }) {
                     </div>
 
                     <Separator />
-                    {/* STATUS */}
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Status</div>
                       <div className="flex gap-2">
@@ -201,7 +196,6 @@ export function EquipeTab({ lojaId }) {
                     </div>
                     <Separator />
 
-                    {/* TURNO */}
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Turno</div>
                       <div className="flex gap-2">
@@ -214,10 +208,9 @@ export function EquipeTab({ lojaId }) {
                       </div>
                     </div>
 
-                    {/* APLICAR / RESET */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <Button size="sm" onClick={() => { setPage(1); /* já aplica por react */ }}>Aplicar</Button>
+                        <Button size="sm" onClick={() => { setPage(1); }}>Aplicar</Button>
                         <Button size="sm" variant="ghost" onClick={() => resetFilters()}>Limpar</Button>
                       </div>
                     </div>
@@ -266,7 +259,6 @@ export function EquipeTab({ lojaId }) {
                         <Badge variant="default">Primary Contact</Badge>
                       )}
                     </div>
-                    {/* <div className="text-muted-foreground mb-2">{eqp.title}</div> */}
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Briefcase className="size-3" />
@@ -285,7 +277,6 @@ export function EquipeTab({ lojaId }) {
                     Editar
                   </Button>
 
-                  {/* Opções: Transferência / Demitir */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" aria-label="Mais opções">
@@ -339,7 +330,6 @@ export function EquipeTab({ lojaId }) {
               setAbrirModalEditar(false)
               setCarregando(true)
               setErroEquipe(null)
-              // Recarregar equipe após edição bem-sucedida
               const url = `${API_URL}unidades/${lojaId}/usuarios?page=1&perPage=100`
               fetchWithAuth(url)
                 .then(res => res.ok ? res.json() : null)
@@ -457,6 +447,7 @@ export function EquipeTab({ lojaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
+                    toast({ title: 'Equipe atualizada' });
                   }
                 })
             }}
@@ -466,3 +457,5 @@ export function EquipeTab({ lojaId }) {
     </div>
   );
 }
+
+

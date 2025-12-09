@@ -51,7 +51,7 @@ function EstoqueTabContent({ fazenda }) {
     if (!modalItem) return;
     const quantidade = Number(movimentoQuantidade);
     if (isNaN(quantidade) || quantidade <= 0) {
-      toast.error('Informe uma quantidade válida maior que zero.');
+      toast({ title: 'Quantidade inválida', description: 'Informe um número maior que zero.', variant: 'destructive' });
       return;
     }
 
@@ -64,7 +64,7 @@ function EstoqueTabContent({ fazenda }) {
         observacoes: movimentoObs || undefined
       };
 
-      const url = `${API_URL}estoque/movimento`;
+      const url = `${API_URL}loja/estoque/movimento`;
       let res;
       try {
         res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -81,10 +81,10 @@ function EstoqueTabContent({ fazenda }) {
       // success -> refresh inventory to show updated quantities
       await refresh();
       closeMovimentoModal();
-      toast.success('Movimentação registrada com sucesso.');
+      toast({ title: 'Movimentação registrada', description: 'Estoque atualizado com sucesso.' });
     } catch (err) {
       console.error('Erro ao registrar movimentação', err);
-      toast.error(String(err?.message ?? 'Erro ao registrar movimentação'));
+      toast({ title: 'Erro ao registrar movimentação', description: String(err?.message ?? 'Erro ao registrar movimentação'), variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }

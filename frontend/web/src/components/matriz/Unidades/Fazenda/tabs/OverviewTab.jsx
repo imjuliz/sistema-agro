@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
@@ -44,7 +45,7 @@ const cultivosConfig = {
 }
 
 export function OverviewTab({ fazendaId }) {
-  const { fetchWithAuth } = useAuth()
+  const { fetchWithAuth, user } = useAuth()
   const { toast } = useToast();
   const [dadosFazenda, setDadosFazenda] = useState(null)
   const [contatosPrincipais, setContatosPrincipais] = useState([])
@@ -56,6 +57,16 @@ export function OverviewTab({ fazendaId }) {
   const [editingId, setEditingId] = useState(null)
   const [formEdit, setFormEdit] = useState({ dado: "", valor: "", descricao: "" })
   const [openNovo, setOpenNovo] = useState(false)
+  const [openEditInfo, setOpenEditInfo] = useState(false)
+  const [openEditLocal, setOpenEditLocal] = useState(false)
+  const [formInfo, setFormInfo] = useState({ focoProdutivo: "", quantidadeFuncionarios: "", cnpj: "" })
+  const [formLocal, setFormLocal] = useState({ endereco: "", cidade: "", estado: "", cep: "", latitude: "", longitude: "" })
+
+  const isGerenteMatriz = useMemo(() => {
+    const perfil = user?.perfil;
+    const val = typeof perfil === "string" ? perfil : (perfil?.funcao ?? perfil?.nome);
+    return String(val || "").toUpperCase() === "GERENTE_MATRIZ";
+  }, [user]);
 
   // Carregar dados da fazenda ao montar o componente
   useEffect(() => {
@@ -71,7 +82,7 @@ export function OverviewTab({ fazendaId }) {
 
         if (!response.ok) {
           console.error("Erro ao carregar dados da fazenda: status", response.status)
-          toast.error(`Erro ao carregar dados da fazenda (status ${response.status})`);
+          toast({ title: "Erro ao carregar dados da fazenda", description: `Status ${response.status}`, variant: "destructive" });
           return
         }
 
@@ -84,11 +95,11 @@ export function OverviewTab({ fazendaId }) {
           // toast.success('Dados da fazenda carregados');
         } else {
           console.error("Erro ao carregar dados da fazenda:", body)
-          toast.error('Erro ao carregar dados da fazenda.');
+          toast({ title: "Erro ao carregar dados da fazenda", variant: "destructive" });
         }
       } catch (error) {
         console.error("Erro ao buscar dados da fazenda:", error)
-        toast.error('Erro ao buscar dados da fazenda. Verifique a sua conexão.');
+        toast({ title: "Erro ao buscar dados da fazenda", description: "Verifique a sua conexão.", variant: "destructive" });
       } finally {
         setCarregando(false)
       }
@@ -128,7 +139,7 @@ export function OverviewTab({ fazendaId }) {
         if (mounted) setDadosGerais(Array.isArray(lista) ? lista : []);
       } catch (err) {
         console.error("[dados-gerais] erro ao listar", err);
-        toast.error("Erro ao carregar dados gerais");
+        toast({ title: "Erro ao carregar dados gerais", variant: "destructive" });
         if (mounted) setDadosErro("Erro ao carregar dados gerais");
       } finally {
         if (mounted) setDadosLoading(false);
@@ -160,11 +171,11 @@ export function OverviewTab({ fazendaId }) {
       setFormNovo({ dado: "", valor: "", descricao: "" });
       setDadosErro(null);
       setOpenNovo(false);
-      toast.success("Dado criado com sucesso");
+      toast({ title: "Dado criado com sucesso" });
     } catch (err) {
       console.error("[dados-gerais] criar", err);
       setDadosErro("Erro ao criar dado");
-      toast.error("Erro ao criar dado");
+      toast({ title: "Erro ao criar dado", variant: "destructive" });
     }
   }
 
@@ -192,11 +203,11 @@ export function OverviewTab({ fazendaId }) {
       setDadosGerais(prev => prev.map(d => d.id === id ? atualizado : d));
       cancelEdit();
       setDadosErro(null);
-      toast.success("Dado atualizado");
+      toast({ title: "Dado atualizado" });
     } catch (err) {
       console.error("[dados-gerais] atualizar", err);
       setDadosErro("Erro ao atualizar dado");
-      toast.error("Erro ao atualizar dado");
+      toast({ title: "Erro ao atualizar dado", variant: "destructive" });
     }
   }
 
@@ -211,11 +222,95 @@ export function OverviewTab({ fazendaId }) {
         throw new Error(body?.erro || `HTTP ${res.status}`);
       }
       setDadosGerais(prev => prev.filter(d => d.id !== id));
-      toast.success("Dado excluído");
+      toast({ title: "Dado excluído" });
     } catch (err) {
       console.error("[dados-gerais] excluir", err);
       setDadosErro("Erro ao excluir dado");
-      toast.error("Erro ao excluir dado");
+      toast({ title: "Erro ao excluir dado", variant: "destructive" });
+    }
+  }
+
+  function formatCnpjInput(value) {
+    const digits = String(value || "").replace(/\D/g, "").slice(0, 14);
+    if (!digits) return "";
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return digits.replace(/(\d{2})(\d+)/, "$1.$2");
+    if (digits.length <= 8) return digits.replace(/(\d{2})(\d{3})(\d+)/, "$1.$2.$3");
+    if (digits.length <= 12) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, "$1.$2.$3/$4");
+    return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, "$1.$2.$3/$4-$5");
+  }
+
+  function hydrateFormsFromDados(unidade) {
+    setFormInfo({
+      focoProdutivo: Array.isArray(unidade?.focoProdutivo) ? unidade.focoProdutivo.join(", ") : (unidade?.focoProdutivo ?? ""),
+      quantidadeFuncionarios: unidade?.quantidadeFuncionarios ?? "",
+      cnpj: formatCnpjInput(unidade?.cnpj ?? ""),
+    });
+    setFormLocal({
+      endereco: unidade?.endereco ?? "",
+      cidade: unidade?.cidade ?? "",
+      estado: unidade?.estado ?? "",
+      cep: unidade?.cep ?? "",
+      latitude: unidade?.latitude ?? "",
+      longitude: unidade?.longitude ?? "",
+    });
+  }
+
+  useEffect(() => {
+    if (dadosFazenda) hydrateFormsFromDados(dadosFazenda);
+  }, [dadosFazenda]);
+
+  async function salvarInfo() {
+    try {
+      const payload = {
+        focoProdutivo: formInfo.focoProdutivo,
+        cnpj: formInfo.cnpj ? formInfo.cnpj.replace(/\D/g, "") : null,
+      };
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
+      const unidadeAtualizada = body?.unidade ?? body;
+      setDadosFazenda(prev => ({ ...prev, ...unidadeAtualizada }));
+      hydrateFormsFromDados(unidadeAtualizada);
+      setOpenEditInfo(false);
+      toast({ title: "Informações atualizadas" });
+    } catch (err) {
+      console.error("[unidade] atualizar info", err);
+      toast({ title: "Erro ao salvar informações da unidade", variant: "destructive" });
+    }
+  }
+
+  async function salvarLocal() {
+    try {
+      const payload = {
+        endereco: formLocal.endereco,
+        cidade: formLocal.cidade,
+        estado: formLocal.estado,
+        cep: formLocal.cep,
+        latitude: formLocal.latitude ? Number(formLocal.latitude) : null,
+        longitude: formLocal.longitude ? Number(formLocal.longitude) : null,
+      };
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
+      const unidadeAtualizada = body?.unidade ?? body;
+      setDadosFazenda(prev => ({ ...prev, ...unidadeAtualizada }));
+      hydrateFormsFromDados(unidadeAtualizada);
+      setOpenEditLocal(false);
+      toast({ title: "Localização atualizada" });
+    } catch (err) {
+      console.error("[unidade] atualizar localização", err);
+      toast({ title: "Erro ao salvar localização", variant: "destructive" });
     }
   }
 
@@ -314,12 +409,18 @@ export function OverviewTab({ fazendaId }) {
   }, [fazendaId, fetchWithAuth]);
 
   return (
+    <>
     <div className="flex gap-6 ">
       <div className="w-80 space-y-6">
         {/* Company Details */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex items-center justify-between">
             <CardTitle className="text-base">Informações da unidade</CardTitle>
+            {isGerenteMatriz && (
+              <Button variant="outline" size="sm" onClick={() => setOpenEditInfo(true)}>
+                Editar
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
@@ -495,13 +596,15 @@ export function OverviewTab({ fazendaId }) {
         </div>
         {/* tabela */}
         <div className="w-full">
-          <div className="flex flex-row justify-between">
+            <div className="flex flex-row justify-between">
             <div className="flex flex-col gap-2">
               <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
               <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
             </div>
 
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+            {isGerenteMatriz && (
+              <Button size="sm" onClick={() => setOpenNovo(true)}><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+            )}
           </div>
 
           <div className="flex justify-between items-center py-2">
@@ -509,7 +612,7 @@ export function OverviewTab({ fazendaId }) {
               {/* <DialogTrigger asChild>
                 <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
               </DialogTrigger> */}
-              <DialogContent>
+            <DialogContent className="sm:max-w-[480px]">
                 <DialogHeader>
                   <DialogTitle>Novo dado</DialogTitle>
                 </DialogHeader>
@@ -545,9 +648,9 @@ export function OverviewTab({ fazendaId }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Dado</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Descrição</TableHead>
+                  <TableHead className="max-w-[200px]">Dado</TableHead>
+                  <TableHead className="max-w-[220px]">Valor</TableHead>
+                  <TableHead className="max-w-[260px]">Descrição</TableHead>
                   <TableHead className="w-[180px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -564,21 +667,21 @@ export function OverviewTab({ fazendaId }) {
                 )}
                 {!dadosLoading && dadosGerais.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>
+                    <TableCell className="max-w-[200px] whitespace-nowrap text-ellipsis overflow-hidden">
                       {editingId === item.id ? (
                         <Input value={formEdit.dado} onChange={(e) => setFormEdit(f => ({ ...f, dado: e.target.value }))} />
                       ) : (
                         item.dado
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[220px] whitespace-nowrap text-ellipsis overflow-hidden">
                       {editingId === item.id ? (
                         <Input value={formEdit.valor} onChange={(e) => setFormEdit(f => ({ ...f, valor: e.target.value }))} />
                       ) : (
                         item.valor
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[260px] break-words whitespace-pre-wrap">
                       {editingId === item.id ? (
                         <Input value={formEdit.descricao ?? ""} onChange={(e) => setFormEdit(f => ({ ...f, descricao: e.target.value }))} />
                       ) : (
@@ -586,16 +689,20 @@ export function OverviewTab({ fazendaId }) {
                       )}
                     </TableCell>
                     <TableCell className="space-x-2">
-                      {editingId === item.id ? (
-                        <>
-                          <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
-                          <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
-                        </>
+                      {isGerenteMatriz ? (
+                        editingId === item.id ? (
+                          <>
+                            <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
+                            <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Editar</Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleExcluir(item.id)}>Excluir</Button>
+                          </>
+                        )
                       ) : (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Editar</Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleExcluir(item.id)}>Excluir</Button>
-                        </>
+                        <span className="text-xs text-muted-foreground">Somente leitura</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -614,8 +721,8 @@ export function OverviewTab({ fazendaId }) {
                 <CardContent className='h-full'>
                   {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
                     <div className='h-full rounded-md overflow-hidden'>
-                      <MapContainer
-                        style={{ height: '100%', width: '100%' }}
+                  <MapContainer
+                    style={{ height: '100%', width: '100%', zIndex: 0 }}
                         center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
                         zoom={12}
                         scrollWheelZoom={false}
@@ -645,8 +752,13 @@ export function OverviewTab({ fazendaId }) {
           </div>
           <div className="basis-[30%]">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex items-center justify-between">
                 <CardTitle className="text-base">Localização</CardTitle>
+                {isGerenteMatriz && (
+                  <Button variant="outline" size="sm" onClick={() => setOpenEditLocal(true)}>
+                    Editar
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -696,5 +808,86 @@ export function OverviewTab({ fazendaId }) {
 
       </div>
     </div>
+
+    {/* Dialog editar informações principais */}
+    <Dialog open={openEditInfo} onOpenChange={setOpenEditInfo}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar informações da unidade</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Culturas atuais (separe por vírgula)</Label>
+            <Input
+              value={formInfo.focoProdutivo}
+              onChange={(e) => setFormInfo((f) => ({ ...f, focoProdutivo: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Quantidade de funcionários</Label>
+            <Input
+              type="number"
+              value={formInfo.quantidadeFuncionarios}
+              onChange={(e) => setFormInfo((f) => ({ ...f, quantidadeFuncionarios: f.quantidadeFuncionarios }))}
+              disabled
+              readOnly
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>CNPJ</Label>
+            <Input
+              value={formInfo.cnpj}
+              onChange={(e) => setFormInfo((f) => ({ ...f, cnpj: formatCnpjInput(e.target.value) }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpenEditInfo(false)}>Cancelar</Button>
+          <Button onClick={salvarInfo}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Dialog editar localização */}
+    <Dialog open={openEditLocal} onOpenChange={setOpenEditLocal}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar localização</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Endereço</Label>
+            <Input value={formLocal.endereco} onChange={(e) => setFormLocal(f => ({ ...f, endereco: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Cidade</Label>
+            <Input value={formLocal.cidade} onChange={(e) => setFormLocal(f => ({ ...f, cidade: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Estado</Label>
+            <Input value={formLocal.estado} onChange={(e) => setFormLocal(f => ({ ...f, estado: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>CEP</Label>
+            <Input value={formLocal.cep} onChange={(e) => setFormLocal(f => ({ ...f, cep: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label>Latitude</Label>
+              <Input value={formLocal.latitude} onChange={(e) => setFormLocal(f => ({ ...f, latitude: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Longitude</Label>
+              <Input value={formLocal.longitude} onChange={(e) => setFormLocal(f => ({ ...f, longitude: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpenEditLocal(false)}>Cancelar</Button>
+          <Button onClick={salvarLocal}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from "@/lib/api";
+import { useToast } from '@/components/ui/use-toast';
 
 const UNIDADES_DE_MEDIDA = [
   { value: 'KG', label: 'Quilograma (kg)' },
@@ -38,6 +39,7 @@ function getStockStatus(current, minimum) {
 export function StoreLevelView({ onOpenMovimento }) {
   const { getStoreItems, storeMapping, refresh, atualizarMinimumStockRemote, isGerenteMatriz, isGerenteFazenda, isGerenteLoja } = useInventory();
   const { fetchWithAuth } = useAuth();
+  const { toast } = useToast();
   
   const [isMinModalOpen, setIsMinModalOpen] = useState(false);
   const [minModalItem, setMinModalItem] = useState(null);
@@ -115,6 +117,7 @@ export function StoreLevelView({ onOpenMovimento }) {
     } catch (err) {
       console.error('Erro ao carregar fornecedores externos:', err);
       setFornecedoresExternos([]);
+      toast({ title: 'Erro ao carregar fornecedores', description: 'Não foi possível obter os fornecedores externos.', variant: 'destructive' });
     } finally {
       setLoadingFornecedores(false);
     }
@@ -141,12 +144,12 @@ export function StoreLevelView({ onOpenMovimento }) {
 
   async function submitAddProduct() {
     if (!formData.nome.trim()) {
-      alert('Nome do produto é obrigatório');
+      toast({ title: 'Informe o nome do produto', description: 'O campo nome é obrigatório.', variant: 'destructive' });
       return;
     }
     
     if (!formData.unidadeBase) {
-      alert('Unidade de medida é obrigatória');
+      toast({ title: 'Selecione a unidade', description: 'Escolha a unidade de medida para continuar.', variant: 'destructive' });
       return;
     }
 
@@ -186,10 +189,10 @@ export function StoreLevelView({ onOpenMovimento }) {
       // Sucesso: fechar modal e atualizar tabela
       closeAddProductModal();
       await refresh();
-      alert('Produto adicionado ao estoque com sucesso!');
+      toast({ title: 'Produto adicionado', description: 'O item foi incluído no estoque.', variant: 'default' });
     } catch (err) {
       console.error('Erro ao adicionar produto:', err);
-      alert(`Erro: ${err.message || 'Falha ao adicionar produto'}`);
+      toast({ title: 'Erro ao adicionar produto', description: err.message || 'Tente novamente.', variant: 'destructive' });
     } finally {
       setIsSubmittingProduct(false);
     }
@@ -252,8 +255,7 @@ export function StoreLevelView({ onOpenMovimento }) {
     const newVal = Number(String(minInputValue || '').trim());
     if (!epId) return;
     if (isNaN(newVal)) {
-      // keep it simple: don't use alert, log and keep modal open
-      console.warn('Valor inválido para mínimo:', minInputValue);
+      toast({ title: 'Valor inválido', description: 'Informe um número para a quantidade mínima.', variant: 'destructive' });
       return;
     }
 
@@ -262,15 +264,17 @@ export function StoreLevelView({ onOpenMovimento }) {
       const resp = await atualizarMinimumStockRemote(epId, newVal);
       if (!resp || resp.sucesso === false) {
         console.error('Erro ao atualizar mínimo remoto', resp);
-        // keep modal open to allow retry
+        toast({ title: 'Erro ao salvar mínimo', description: resp?.erro || 'Não foi possível salvar. Tente novamente.', variant: 'destructive' });
         return;
       }
       // success: refresh inventory and close
       await refresh();
       setIsMinModalOpen(false);
       setMinModalItem(null);
+      toast({ title: 'Mínimo atualizado', description: 'Quantidade mínima salva com sucesso.' });
     } catch (err) {
       console.error('Erro confirmUpdateMinimum', err);
+      toast({ title: 'Erro ao salvar mínimo', description: err.message || 'Falha ao atualizar.', variant: 'destructive' });
     } finally {
       setIsSavingMin(false);
     }
@@ -428,12 +432,12 @@ export function StoreLevelView({ onOpenMovimento }) {
                                   <DropdownMenuItem onClick={() => {
                                     const isManager = isGerenteMatriz || isGerenteFazenda || isGerenteLoja;
                                     if (!isManager) {
-                                      console.warn('Ação disponível apenas para gerentes.');
+                                      toast({ title: 'Ação restrita', description: 'Somente gerentes podem editar o mínimo.', variant: 'destructive' });
                                       return;
                                     }
                                     const epId = item.rawItemId ?? null;
                                     if (!epId) {
-                                      console.warn('Esse item não suporta edição remota de mínimo.');
+                                      toast({ title: 'Item sem suporte', description: 'Este item não permite edição remota de mínimo.', variant: 'destructive' });
                                       return;
                                     }
                                     setMinModalItem(item);

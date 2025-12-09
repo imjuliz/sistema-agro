@@ -24,7 +24,7 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     if (error) {
       console.error("⚠️ Erro ao conectar com o servidor de email:", error.message);
     } else {
-      console.log("✅ Servidor de email conectado com sucesso");
+      // console.log("✅ Servidor de email conectado com sucesso");
     }
   });
 } else {

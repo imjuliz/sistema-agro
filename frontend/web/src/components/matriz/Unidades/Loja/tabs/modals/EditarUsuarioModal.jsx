@@ -26,11 +26,11 @@ export function EditarUsuarioModal({ usuario, open, onOpenChange, onSuccess }) {
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
   const [formData, setFormData] = useState({
-    nome: usuario?.nome || '',
+    nome: usuario?.nome || usuario?.name || '',
     email: usuario?.email || '',
-    telefone: usuario?.telefone || '',
-    telefoneRaw: String(usuario?.telefone || '').replace(/\D/g, ''),
-    role: usuario?.perfil?.funcao || ''
+    telefone: usuario?.telefone || usuario?.phone || '',
+    telefoneRaw: String(usuario?.telefone || usuario?.phone || '').replace(/\D/g, ''),
+    role: usuario?.perfil?.funcao || usuario?.title || ''
   })
 
   const handleMudarCampo = (campo, valor) => {
@@ -216,4 +216,5 @@ export function EditarUsuarioModal({ usuario, open, onOpenChange, onSuccess }) {
     </Dialog>
   )
 }
+
 

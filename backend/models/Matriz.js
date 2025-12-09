@@ -124,6 +124,21 @@ function formatISODate(date) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
+export async function getDashboardKpis() {
+  const [usuariosAtivos, filiaisAtivas] = await Promise.all([
+    prisma.usuario.count({ where: { status: true } }),
+    prisma.unidade.count({
+      where: { status: 'ATIVA', tipo: { in: ['FAZENDA', 'LOJA'] } },
+    }),
+  ]);
+
+  return {
+    sucesso: true,
+    usuariosAtivos,
+    filiaisAtivas,
+  };
+}
+
 export async function getResumoVendas({ dias }) {
   const diasNum = Number.isFinite(Number(dias)) ? Number(dias) : 7;
   const inicio = new Date();
@@ -197,6 +212,29 @@ export async function getTopFazendasProducao({ limite = 5 } = {}) {
     .slice(0, limite);
 
   return { sucesso: true, fazendas: ordenado };
+}
+
+export async function getResumoFinanceiroMatriz() {
+  const [receitasAgg, despesasAgg] = await Promise.all([
+    prisma.financeiro.aggregate({
+      _sum: { valor: true },
+      where: { tipoMovimento: 'ENTRADA', unidade: { tipo: 'MATRIZ' } },
+    }),
+    prisma.financeiro.aggregate({
+      _sum: { valor: true },
+      where: { tipoMovimento: 'SAIDA', unidade: { tipo: 'MATRIZ' } },
+    }),
+  ]);
+
+  const receitas = asPlainNumber(receitasAgg?._sum?.valor);
+  const despesas = asPlainNumber(despesasAgg?._sum?.valor);
+
+  return {
+    sucesso: true,
+    receitas,
+    despesas,
+    saldo: receitas - despesas,
+  };
 }
 
 export async function buildDashboardPdfData() {
