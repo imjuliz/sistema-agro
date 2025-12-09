@@ -13,57 +13,61 @@ function EstoqueTable() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
+  let mounted = true;
 
-    async function fetchEstoque() {
-      const unidadeId = user?.unidadeId ?? user?.unidade?.id;
-      
-      if (!unidadeId) {
-        console.warn('[fetchEstoque] unidadeId não disponível.');
-        if (mounted) {
-          setEstoque([]);
-          setLoading(false);
-        }
-        return;
+  async function fetchEstoque() {
+    const unidadeId = user?.unidadeId ?? user?.unidade?.id;
+
+    if (!unidadeId) {
+      console.warn('[fetchEstoque] unidadeId não disponível.');
+      if (mounted) {
+        setEstoque([]);
+        setLoading(false);
       }
-
-      try {
-        setLoading(true);
-        const url = `${API_URL}unidade/${unidadeId}/produtos`;
-        const res = await fetchWithAuth(url, {
-          method: 'GET',
-          credentials: 'include',
-          headers: { Accept: 'application/json' }
-        });
-
-        if (!res?.ok) {
-          throw new Error(`Erro ao carregar estoque: ${res?.status}`);
-        }
-
-        const body = await res.json();
-        const payload = body?.estoque ?? body?.produtos ?? body?.data ?? body ?? [];
-
-        if (mounted) {
-          setEstoque(Array.isArray(payload) ? payload : []);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('[fetchEstoque] erro:', err);
-        if (mounted) {
-          setError(err.message);
-          setEstoque([]);
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
+      return;
     }
 
-    if (fetchWithAuth) {
-      fetchEstoque();
-    }
+    try {
+      setLoading(true);
 
-    return () => { mounted = false; };
-  }, [fetchWithAuth, user]);
+      const url = `${API_URL}unidade/${unidadeId}/produtos`;
+      const res = await fetchWithAuth(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { Accept: 'application/json' }
+      });
+
+      if (!res?.ok) {
+        throw new Error(`Erro ao carregar estoque: ${res?.status}`);
+      }
+
+      const body = await res.json();
+
+      // Tenta pegar o payload em diferentes formatos de resposta que o backend possa retornar.
+      const payload = body?.estoque ?? body?.produtos ?? body?.data ?? body ?? [];
+
+      if (mounted) {
+        setEstoque(Array.isArray(payload) ? payload : []);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('[fetchEstoque] erro:', err);
+      if (mounted) {
+        setError(err.message);
+        setEstoque([]);
+      }
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  }
+
+  // Executa somente quando o USER mudar, evitando loops desnecessários
+  if (user) {
+    fetchEstoque();
+  }
+
+  return () => { mounted = false; };
+}, [user]);  // <--- apenas user como dependência
 
   const estoquesFiltrados = estoque.filter(item => {
     if (!busca) return true;
@@ -77,21 +81,6 @@ function EstoqueTable() {
     return nome.toLowerCase().includes(searchTerm) || 
            fornecedor.toLowerCase().includes(searchTerm) ||
            String(item?.id ?? '').includes(searchTerm);
-  });
-
-  useEffect(() => {
-    async function listandoEstoque() {
-      const response = await fetch(`http://localhost:8080/unidade/produtos`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json', authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao carregar estoque: ${response.status}`);
-      }
-      }
-      listandoEstoque()
   });
 
   return (

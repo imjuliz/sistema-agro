@@ -106,7 +106,7 @@ router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/produto-mais-vendido", auth(), buscarProdutoMaisVendidoController);
 router.get("/produtos", auth(), listarProdutosController);
 router.get("/estoqueSomar", auth(), somarQtdTotalEstoqueController);
-router.get("/unidade/:unidadeId/produtos", listarEstoqueController);
+router.get("/unidade/produtos", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "FUNCIONARIO"]), listarEstoqueController);
 // router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
 router.get("/lotesPlantio/:unidadeId", listarLotesPlantioController);
 router.get("/loteAnimalia/:unidadeId", listarLotesAnimaliaController);

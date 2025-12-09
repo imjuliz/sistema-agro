@@ -63,7 +63,7 @@ function EstoqueTabContent({ loja }) {
         observacoes: movimentoObs || undefined
       };
 
-      const url = `${API_URL}loja/estoque/movimento`;
+      const url = `${API_URL}estoque/movimento`;
       let res;
       try {
         res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

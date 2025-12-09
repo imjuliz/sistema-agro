@@ -780,9 +780,8 @@ export default function FazendasPage() {
                     </Card>
                 </div>
 
-                <div className="flex flex-row gap-8">
+                {/* <div className="flex flex-row gap-8">
                     <div className="w-full">
-                        {/* FAZENDA */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Fazendas mais produtivas</CardTitle>
@@ -837,7 +836,7 @@ export default function FazendasPage() {
                             </CardFooter>
                         </Card>
                     </div>
-                </div>
+                </div> */}
 
             </div>
 
