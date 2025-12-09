@@ -51,7 +51,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController} from "../controllers/LoteController.js";
+import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController} from "../controllers/LoteController.js";
 import { adicionarProdutoEstoqueController } from "../controllers/EstoqueController.js";
 
 // tradução
@@ -122,6 +122,9 @@ router.get("/lotesAnimaliaPorTipo/:unidadeId", contarLotesAnimaliaPorTipoControl
 
 router.get("/contarAnimais/:unidadeId", contarAnimaisController); //colocar na pag animalia
 router.get("/qtdColheitasMes/:unidadeId/:mes/:ano", qtdColheitasPorMesController);
+
+router.get("/listarEnviosLote/:unidadeId", listarEnviosLoteController); //rota para listar envios de lote para loja
+router.post("/criarEnvioLote", criarEnvioLoteController); //rota para criar envio de lote para loja
 
 // rota para atualização parcial de lote (status / preco / statusQualidade)
 router.patch("/lotes/:id", auth(), atualizarCamposLoteController);

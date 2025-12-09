@@ -66,7 +66,7 @@ model Unidade {
   categoria               Categoria[]
   dadosGerais             DadoGeralUnidade[]
   fornecedoresExternos   FornecedorExterno[]  @relation("FornecedorExterno")
-
+envioLotes             EnvioLote[]
   @@index([matrizId])
   @@index([gerenteId])
   @@index([tipo])
@@ -321,6 +321,7 @@ model Contrato {
   itens               ContratoItens[]    @relation("ContratoItens")
   lotes               Lote[]
   pedidos             Pedido[]
+  enviosLote         EnvioLote[]
 
   @@index([status])
   @@index([dataInicio])
@@ -414,6 +415,25 @@ model PedidoItem {
   @@index([insumoId])
   @@index([loteId])
   @@map("pedido_item")
+}
+
+model EnvioLote {
+  id          Int          @id @default(autoincrement())
+  unidadeId   Int          @map("unidade_id")        // unidade que está enviando
+  contratoId  Int          @map("contrato_id")       // contrato associado
+  loteId      Int          @map("lote_id")           // lote que está sendo enviado
+  status      StatusEnvio  @default(PENDENTE)        // status do envio
+  dataEnvio   DateTime?    @map("data_envio")        // quando foi enviado
+  criadoEm    DateTime     @default(now()) @map("criado_em")
+  atualizadoEm DateTime    @default(now()) @updatedAt @map("atualizado_em")
+
+  contrato    Contrato     @relation(fields: [contratoId], references: [id])
+  lote        Lote         @relation(fields: [loteId], references: [id])
+  unidade     Unidade      @relation(fields: [unidadeId], references: [id])
+
+  @@index([contratoId])
+  @@index([loteId])
+  @@map("envio_lote")
 }
 
 model Animal {
@@ -534,6 +554,7 @@ model Lote {
   rastreabilidadeDestino RastreabilidadeLote[] @relation("LoteDestino")
   rastreabilidadeOrigem  RastreabilidadeLote[] @relation("LoteOrigem")
   registrosSanitarios    RegistroSanitario[]
+  envioLotes             EnvioLote[]
 
   @@index([unidadeId])
   @@index([responsavelId])
@@ -942,6 +963,13 @@ enum StatusQualidade {
   IMPROPRIO
 
   @@map("status_qualidade")
+}
+
+enum StatusEnvio {
+  PENDENTE   // registro criado, ainda não enviado
+  EM_PREPARO // lote sendo preparado para envio
+  ENVIADO    // lote enviado para a loja
+  ENTREGUE   // lote recebido na loja
 }
 
 enum TipoAtividadeAnimalia {

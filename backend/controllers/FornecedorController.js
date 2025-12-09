@@ -272,12 +272,24 @@ export const verContratosComFazendasAsFornecedorController = async (req, res) =>
         erro: "Usuário não possui unidade vinculada!"
       })
     }
-    
-    const contratos = await verContratosComFazendasAsFornecedor(unidadeId);
-    
+    const result = await verContratosComFazendasAsFornecedor(unidadeId);
+
+    // Normalizar: o service pode devolver { sucesso: true, contratos: [...] } ou
+    // diretamente um array. Garantir que retornamos sempre um array em `contratos`.
+    let contratosArray = [];
+    if (Array.isArray(result)) {
+      contratosArray = result;
+    } else if (Array.isArray(result?.contratos)) {
+      contratosArray = result.contratos;
+    } else if (Array.isArray(result?.data)) {
+      contratosArray = result.data;
+    }
+
+    console.log('[verContratosComFazendasAsFornecedorController] contratos count (normalized)=', contratosArray.length);
+
     return res.status(200).json({
       sucesso: true,
-      contratos,
+      contratos: contratosArray,
       message: "Contratos onde você é fornecedor listados com sucesso!"
     });
 

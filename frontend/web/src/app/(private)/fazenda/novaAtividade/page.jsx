@@ -80,6 +80,15 @@ export default function Page() {
     const [statusContrato, setStatusContrato] = useState("ATIVO")
     const [descricaoContrato, setDescricaoContrato] = useState("")
 
+    // envio de lote (modal)
+    const [showEnvioLoteModal, setShowEnvioLoteModal] = useState(false)
+    const [contratosEnvio, setContratosEnvio] = useState([])
+    const [lotesEnvio, setLotesEnvio] = useState([])
+    const [selectedContratoEnvio, setSelectedContratoEnvio] = useState("")
+    const [selectedLoteEnvio, setSelectedLoteEnvio] = useState("")
+    const [carregandoContratosEnvio, setCarregandoContratosEnvio] = useState(false)
+    const [carregandoLotesEnvio, setCarregandoLotesEnvio] = useState(false)
+
     // Effect para carregar lojas/fornecedores quando o tipo de contrato muda
     useEffect(() => {
         if (!showContratoModal) return
@@ -125,6 +134,54 @@ export default function Page() {
         setAtividadeSelecionada(atividade)
 
         const tituloLower = String(atividade.titulo || "").toLowerCase();
+
+        // Envio de lote: abrir modal e pré-carregar contratos (onde esta unidade é fornecedora) e lotes
+        if (tituloLower.includes("enviar lote") || tituloLower.includes("envio lote")) {
+            setShowEnvioLoteModal(true)
+            const fetchFn = fetchWithAuth || fetch
+            setCarregandoContratosEnvio(true)
+            setCarregandoLotesEnvio(true)
+            try {
+                const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null
+                const base = String(API_URL || '/api').replace(/\/$/, '')
+                if (unidadeId) {
+                    // contratos onde esta unidade é fornecedor
+                    const r1 = await fetchFn(`${base}/verContratosComFazendasAsFornecedor/${unidadeId}`)
+                    const d1 = await r1.json().catch(() => ({}))
+                    const contratosArray = d1?.contratos || d1?.data || (Array.isArray(d1) ? d1 : [])
+                    setContratosEnvio(Array.isArray(contratosArray) ? contratosArray : [])
+
+                    // lotes da unidade
+                    const r2 = await fetchFn(`${base}/lotesPlantio/${unidadeId}`)
+                    const d2 = await r2.json().catch(() => ({}))
+                    const extractArray = (obj) => {
+                        if (!obj) return []
+                        if (Array.isArray(obj)) return obj
+                        const keys = ['lotesPlantio','lotes','data','lotesVegetais','loteVegetais']
+                        for (const k of keys) if (Array.isArray(obj[k])) return obj[k]
+                        const vals = Object.values(obj)
+                        for (const v of vals) if (Array.isArray(v)) return v
+                        return []
+                    }
+                    const rawLotes = extractArray(d2)
+                    const filtered = (rawLotes || []).filter(l => String(l?.status || '').toUpperCase() !== 'VENDIDO')
+                    setLotesEnvio(filtered)
+                } else {
+                    setContratosEnvio([])
+                    setLotesEnvio([])
+                }
+            } catch (err) {
+                console.error('Erro carregando dados de envio de lote:', err)
+                setContratosEnvio([])
+                setLotesEnvio([])
+            } finally {
+                setCarregandoContratosEnvio(false)
+                setCarregandoLotesEnvio(false)
+            }
+
+            return
+        }
+
         if (tituloLower.includes("agrícola") || tituloLower.includes("agricola") || tituloLower.includes("atividade agrícola")) {
             // open centered modal and preload lotes + usuarios
             setShowAgricolaModal(true)
@@ -572,6 +629,50 @@ export default function Page() {
         }
     }
 
+    const enviarEnvioLote = async (e) => {
+        e?.preventDefault?.()
+        try {
+            if (!selectedLoteEnvio) {
+                alert('Selecione um lote para enviar')
+                return
+            }
+            if (!selectedContratoEnvio) {
+                // contrato pode ser opcional, mas exigimos aqui conforme requisito
+                alert('Selecione um contrato interno')
+                return
+            }
+
+            const fetchFn = fetchWithAuth || fetch
+            const base = String(API_URL || '/api').replace(/\/$/, '')
+
+            const payload = {
+                contratoId: Number(selectedContratoEnvio),
+                loteId: Number(selectedLoteEnvio)
+            }
+
+            const res = await fetchFn(`${base}/criarEnvioLote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+
+            const body = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setShowEnvioLoteModal(false)
+                setSelectedContratoEnvio("")
+                setSelectedLoteEnvio("")
+                alert('Envio de lote criado com sucesso!')
+                router.refresh()
+            } else {
+                console.error('Erro criando envio de lote:', body)
+                alert(body?.erro || body?.message || 'Erro ao criar envio de lote')
+            }
+        } catch (err) {
+            console.error('Erro enviando envio de lote:', err)
+            alert('Erro ao criar envio de lote')
+        }
+    }
+
     const atividades = [
         {
             titulo: "atividade agrícola",
@@ -616,6 +717,12 @@ export default function Page() {
                 { name: "nome", label: "Nome do lote", type: "text" },
             ],
             icone: <CubeIcon className="w-12 h-12 text-sky-600 -ml-5" />,
+        },
+        {
+            titulo: "enviar lote",
+            rotaApi: "/criarEnvioLote",
+            campos: [],
+            icone: <TruckIcon className="w-12 h-12 text-emerald-600 -ml-5" />,
         },
         {
             titulo: "contrato",
@@ -1060,6 +1167,44 @@ export default function Page() {
                             <div className="flex gap-2 w-full">
                                 <Button type="button" variant="secondary" onClick={() => setShowContratoModal(false)}>Cancelar</Button>
                                 <Button type="submit" className="ml-auto">Salvar</Button>
+                            </div>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            {/* Modal: Envio de Lote para Loja */}
+            <Dialog open={showEnvioLoteModal} onOpenChange={setShowEnvioLoteModal}>
+                <DialogContent className="max-w-md w-full">
+                    <DialogHeader>
+                        <DialogTitle>Enviar Lote para Loja</DialogTitle>
+                        <DialogDescription>Selecione contrato interno e lote para enviar</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={enviarEnvioLote} className="space-y-4 mt-4">
+                        <div>
+                            <Label>Contrato Interno</Label>
+                            {carregandoContratosEnvio ? (<p>Carregando contratos...</p>) : (
+                                <select value={selectedContratoEnvio} onChange={(e) => setSelectedContratoEnvio(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um contrato</option>
+                                    {contratosEnvio.map((c) => (<option key={c.id} value={c.id}>{c.titulo || c.numero || `Contrato ${c.id}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div>
+                            <Label>Lote</Label>
+                            {carregandoLotesEnvio ? (<p>Carregando lotes...</p>) : (
+                                <select value={selectedLoteEnvio} onChange={(e) => setSelectedLoteEnvio(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                    <option value="">Selecione um lote</option>
+                                    {lotesEnvio.map((l) => (<option key={l.id} value={l.id}>{l?.nome ?? `Lote ${l.id}`}</option>))}
+                                </select>
+                            )}
+                        </div>
+
+                        <DialogFooter>
+                            <div className="flex gap-2 w-full">
+                                <Button type="button" variant="secondary" onClick={() => setShowEnvioLoteModal(false)}>Cancelar</Button>
+                                <Button type="submit" className="ml-auto">Enviar</Button>
                             </div>
                         </DialogFooter>
                     </form>

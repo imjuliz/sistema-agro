@@ -106,6 +106,32 @@ export const listarLotesPlantio = async (unidadeId) => {
   }
 };
 
+// Novo: listar todos os lotes de uma unidade (independente do tipoProduto)
+export const listarLotesPorUnidade = async (unidadeId) => {
+  try {
+    const lotes = await prisma.lote.findMany({
+      where: {
+        unidadeId: Number(unidadeId),
+      },
+      orderBy: {
+        dataCriacao: "desc",
+      },
+    });
+
+    return {
+      sucesso: true,
+      lotes,
+      message: "Lotes listados com sucesso!!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar lotes!!",
+      error: error.message,
+    };
+  }
+};
+
 export const listarLotesAnimalia = async(unidadeId) =>{
   try{
     const lotesAnimalia = await prisma.lote.findMany({
@@ -721,6 +747,61 @@ export const criarLote = async (dados) => {
     };
   }
 };
+
+export const listarEnviosLote = async (unidadeId) => {
+  try {
+    const envios = await prisma.envioLote.findMany({
+      where: { unidadeId: Number(unidadeId) },
+      include: {
+        lote: true,
+        contrato: true,
+      },
+      orderBy: {
+        dataEnvio: "desc",
+      },
+    });
+    return {
+      sucesso: true,
+      envios,
+      message: "Envios de lote listados com sucesso!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao listar envios de lote!",
+      error: error.message
+    };
+  }
+};
+
+export async function criarEnvioLoteService({ contratoId, loteId }) {
+  // 1. Verifica se o lote existe
+  const lote = await prisma.lote.findUnique({
+    where: { id: Number(loteId) }
+  });
+
+  if (!lote) throw new Error("Lote não encontrado.");
+
+  // 2. Cria o envio de lote já como concluído
+  // Preencher também `unidadeId` (unidade que está enviando) a partir do lote
+  const envio = await prisma.envioLote.create({
+    data: {
+      unidadeId: Number(lote.unidadeId),
+      contratoId: contratoId ? Number(contratoId) : Number(lote.contratoId) || null,
+      loteId: Number(loteId),
+      status: "ENVIADO",
+      dataEnvio: new Date(),
+    },
+  });
+
+  // 3. Atualiza o status do lote para VENDIDO
+  await prisma.lote.update({
+    where: { id: Number(loteId) },
+    data: { status: "VENDIDO" },
+  });
+
+  return envio;
+}
 
 // export async function createLote(data, unidadeId, contratoId) {
 //   try {
