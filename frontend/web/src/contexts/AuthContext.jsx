@@ -92,8 +92,29 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
         if (result?.success) {
           // aplicar estado AQUI, no mesmo contexto
           if (result.newAccessToken) setAccessToken(result.newAccessToken);
-          if (result.usuario) setUser(result.usuario);
-          else setUser(null);
+          if (result.usuario) {
+            // If usuario doesn't include ftPerfil, try to fetch /auth/me to obtain full profile
+            if (!result.usuario.ftPerfil) {
+              try {
+                const meRes = await fetch(`${BACKEND_BASE}auth/me`, {
+                  method: 'GET',
+                  credentials: 'include',
+                  headers: { Authorization: result.newAccessToken ? `Bearer ${result.newAccessToken}` : undefined },
+                });
+                if (meRes.ok) {
+                  const meData = await meRes.json().catch(() => ({}));
+                  const fullUser = meData.usuario ?? meData.user ?? result.usuario;
+                  setUser(fullUser);
+                } else {
+                  setUser(result.usuario);
+                }
+              } catch (err) {
+                setUser(result.usuario);
+              }
+            } else {
+              setUser(result.usuario);
+            }
+          } else setUser(null);
         } else {
           // refresh falhou (por ex 401) => limpar estado
           setAccessToken(null);
@@ -222,7 +243,22 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
           throw new Error('Refresh falhou durante retry');
         }
         if (refreshResult.newAccessToken) setAccessToken(refreshResult.newAccessToken);
-        if (refreshResult.usuario) setUser(refreshResult.usuario);
+        if (refreshResult.usuario) {
+          // try to ensure ftPerfil is present
+          if (!refreshResult.usuario.ftPerfil) {
+            try {
+              const meRes = await fetch(`${BACKEND_BASE}auth/me`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { Authorization: refreshResult.newAccessToken ? `Bearer ${refreshResult.newAccessToken}` : undefined },
+              });
+              if (meRes.ok) {
+                const meData = await meRes.json().catch(() => ({}));
+                setUser(meData.usuario ?? meData.user ?? refreshResult.usuario);
+              } else setUser(refreshResult.usuario);
+            } catch (e) { setUser(refreshResult.usuario); }
+          } else setUser(refreshResult.usuario);
+        }
 
         // reconstrói init com novo token
         const retryInit = {
@@ -253,8 +289,21 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
 
         // aplicar o resultado DO REFRESH aqui, antes de re-tentar
         if (refreshResult.newAccessToken) setAccessToken(refreshResult.newAccessToken);
-        if (refreshResult.usuario) setUser(refreshResult.usuario);
-        else setUser(null);
+        if (refreshResult.usuario) {
+          if (!refreshResult.usuario.ftPerfil) {
+            try {
+              const meRes = await fetch(`${BACKEND_BASE}auth/me`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { Authorization: refreshResult.newAccessToken ? `Bearer ${refreshResult.newAccessToken}` : undefined },
+              });
+              if (meRes.ok) {
+                const meData = await meRes.json().catch(() => ({}));
+                setUser(meData.usuario ?? meData.user ?? refreshResult.usuario);
+              } else setUser(refreshResult.usuario);
+            } catch (e) { setUser(refreshResult.usuario); }
+          } else setUser(refreshResult.usuario);
+        } else setUser(null);
 
         // reconstroi init com novo token
         initCopy = {
@@ -276,8 +325,29 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
     return res;
   }, [accessToken, doRefresh]);
 
+  // Força um fetch de /auth/me e atualiza o estado `user` no contexto.
+  const refreshUser = useCallback(async () => {
+    try {
+      const meRes = await fetch(`${BACKEND_BASE}auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (meRes.ok) {
+        const meData = await meRes.json().catch(() => ({}));
+        const usuario = meData.usuario ?? meData.user ?? null;
+        setUser(usuario);
+        return { success: true, usuario };
+      }
+      setUser(null);
+      return { success: false };
+    } catch (err) {
+      console.warn('[Auth] refreshUser failed', err);
+      return { success: false, error: err };
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ accessToken, user, loading, initialized, login, logout, fetchWithAuth, doRefresh }}>
+    <AuthContext.Provider value={{ accessToken, user, loading, initialized, login, logout, fetchWithAuth, doRefresh, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

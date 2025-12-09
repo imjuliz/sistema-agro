@@ -17,11 +17,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+import { API_URL } from '@/lib/api'
 
 export default function SettingsPage() {
     usePerfilProtegido("GERENTE_MATRIZ");
 
-    const { user, loading, initialized, fetchWithAuth, doRefresh } = useAuth();
+    const { user, loading, initialized, fetchWithAuth, doRefresh, refreshUser } = useAuth();
     const { toast } = useToast();
     const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
 
@@ -34,12 +35,14 @@ export default function SettingsPage() {
     ];
 
     const [active, setActive] = useState("Perfil");
+    const [localLang, setLocalLang] = useState(lang);
     const [username, setUsername] = useState("agrotech_admin");
     const [telefone, setTelefone] = useState("");
     const [emailSelect, setEmailSelect] = useState("");
     const [nome, setNome] = useState("");
     const [urls, setUrls] = useState(["https://agrotech.com.br"]);
     const [avatarUrl, setAvatarUrl] = useState("");
+    const [avatarFile, setAvatarFile] = useState(null);
     const fileRef = useRef(null);
 
     // Estados locais para edição temporária antes de salvar
@@ -47,7 +50,8 @@ export default function SettingsPage() {
     const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
 
     // Indica se o usuário alterou alguma preferência em relação ao valor global
-    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize;
+    // Inclui idioma (`localLang`) para habilitar o botão quando o usuário apenas trocar o idioma
+    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
 
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [profileEditing, setProfileEditing] = useState(false);
@@ -59,7 +63,8 @@ export default function SettingsPage() {
     useEffect(() => {
         setLocalTheme(globalTheme);
         setLocalSelectedFontSize(globalSelectedFontSize);
-    }, [globalTheme, globalSelectedFontSize]);
+        setLocalLang(lang);
+    }, [globalTheme, globalSelectedFontSize, lang]);
 
     // Remover useEffects antigos de tema e font size
     // ... (o conteúdo dos useEffects para theme e selectedFontSize deve ser removido aqui)
@@ -100,6 +105,7 @@ export default function SettingsPage() {
         if (!f) return;
         const url = URL.createObjectURL(f);
         setAvatarUrl(url);
+        setAvatarFile(f);
     }
     function handleCompanyAvatarChange(e) {
         const f = e.target.files?.[0];
@@ -117,11 +123,42 @@ export default function SettingsPage() {
         const dataToUpdate = {
             nome: nome,
             telefone: telefone,
-            ftPerfil: avatarUrl, // Mapear avatarUrl para ftPerfil
+            // ftPerfil será enviado se já for um path válido; caso contrário
+            // faremos upload do arquivo `avatarFile` e usaremos o path retornado
         };
 
         console.log("saveProfile - Dados a enviar:", dataToUpdate);
 
+        // If user selected a new file, upload it first to the backend upload endpoint
+        if (avatarFile) {
+            try {
+                const form = new FormData();
+                form.append('foto', avatarFile);
+                const uploadRes = await fetchWithAuth(`${API_URL}usuarios/editarFoto`, {
+                    method: 'POST',
+                    body: form,
+                });
+                if (uploadRes.ok) {
+                    const uploadJson = await uploadRes.json().catch(() => ({}));
+                    const uploadedPath = uploadJson.usuario?.ftPerfil || uploadJson.usuario?.ftPerfil;
+                    if (uploadedPath) {
+                        dataToUpdate.ftPerfil = uploadedPath;
+                        // store the relative path (e.g. 'uploads/..') in state and let buildImageUrl
+                        // compute the absolute URL when rendering. Do NOT call buildImageUrl here.
+                        setAvatarUrl(uploadedPath);
+                        // clear avatarFile since it's uploaded
+                        setAvatarFile(null);
+                    }
+                } else {
+                    const err = await uploadRes.json().catch(() => ({}));
+                    console.error('Erro ao subir avatar:', err);
+                    try { toast({ title: 'Erro', description: err.erro || 'Falha ao enviar imagem.', variant: 'destructive' }); } catch (e) {}
+                }
+            } catch (err) {
+                console.error('saveProfile - erro upload avatar:', err);
+                try { toast({ title: 'Erro', description: 'Erro ao enviar imagem.', variant: 'destructive' }); } catch (e) {}
+            }
+        }
         try {
             const res = await fetchWithAuth("/api/auth/me", { // Alterado para usar /api/auth/me
                 method: 'PUT',
@@ -134,13 +171,20 @@ export default function SettingsPage() {
             const result = await res.json();
             console.log("saveProfile - Resposta da API:", res.status, result);
 
-            if (res.ok) {
+                if (res.ok) {
                 console.log("saveProfile - Chamando toast de sucesso.");
                 toast({
                     title: "Sucesso",
                     description: result.mensagem || "Perfil atualizado com sucesso!",
                 });
-                await doRefresh(); 
+                // Atualiza o usuário no contexto: requisição direta a /auth/me
+                try {
+                    await refreshUser();
+                } catch (e) {
+                    // fallback: tenta o fluxo de refresh de token
+                    console.warn('saveProfile - refreshUser falhou, tentando doRefresh()', e);
+                    await doRefresh();
+                }
             } else {
                 console.log("saveProfile - Chamando toast de erro.");
                 toast({
@@ -165,7 +209,13 @@ export default function SettingsPage() {
 
     async function savePreferences() {
         console.log("savePreferences - Função chamada.");
-        applyPreferences(localTheme, localSelectedFontSize); 
+        applyPreferences(localTheme, localSelectedFontSize);
+        // Apply language only when the user confirms by saving preferences
+        try {
+            if (localLang && localLang !== lang) changeLang(localLang);
+        } catch (e) {
+            console.error('savePreferences - erro ao aplicar idioma', e);
+        }
         console.log("savePreferences - Chamando toast de sucesso.");
         toast({
             title: "Sucesso",
@@ -394,7 +444,7 @@ export default function SettingsPage() {
                                     {/* Language selector */}
                                     <div className="flex items-center gap-2">
                                         <Label htmlFor="language-select" className="hidden md:inline-block font-bold"><Transl>Idioma</Transl></Label>
-                                        <Select value={lang} onValueChange={(v) => changeLang(v)}>
+                                            <Select value={localLang} onValueChange={(v) => setLocalLang(v)}>
                                             <SelectTrigger id="language-select" className="w-40">
                                                 <SelectValue />
                                             </SelectTrigger>

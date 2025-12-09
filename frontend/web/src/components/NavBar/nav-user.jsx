@@ -69,12 +69,12 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={buildImageUrl(user.avatar)} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.nome?.[0]?.toUpperCase() ?? "N/I"}</AvatarFallback>
+                <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} />
+                <AvatarFallback className="rounded-lg">{(user.nome ? user.nome.slice(0, 2) : (user.email ? user.email.slice(0,2) : 'N/I')).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.nome}</span>
+                <span className="truncate font-medium">{user.nome}</span>
+                <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -83,8 +83,8 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={buildImageUrl(user.avatar)} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.nome?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} />
+                  <AvatarFallback className="rounded-lg">{(user.nome ? user.nome.slice(0,2) : (user.email ? user.email.slice(0,2) : 'NI')).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.nome}</span>

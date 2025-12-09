@@ -36,9 +36,16 @@ export function CompanyHeader({ id, onLogActivity }) {
       : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null));
     const areaHa = u.areaProdutiva ? Number(u.areaProdutiva) : (u.areaHa ?? null);
     const site = u.site ?? u.website ?? u.url ?? null;
+    const imagem = u.imagemUrl ?? u.imagem ?? u.image ?? null;
+    const nameParts = String(nome || '').split(' ').filter(Boolean);
+    let initials = '';
+    if (nameParts.length >= 2) initials = `${nameParts[0][0] || ''}${nameParts[1][0] || ''}`;
+    else initials = (nameParts[0] ? nameParts[0].slice(0,2) : 'F');
+    initials = String(initials).toUpperCase();
     return {
       id: Number(u.id),
       name: nome,
+      imagemUrl: imagem,
       cidade,
       estado,
       location,
@@ -48,6 +55,7 @@ export function CompanyHeader({ id, onLogActivity }) {
       longitude,
       areaHa,
       site,
+      initials,
       raw: u
     };
   }
@@ -175,8 +183,11 @@ export function CompanyHeader({ id, onLogActivity }) {
         {/* Company Info */}
         <div className="flex items-center gap-4">
           <Avatar className="size-12">
-            <AvatarImage src="/api/placeholder/48/48" alt="Empresa" />
-            <AvatarFallback>{(fazenda?.name ?? "F").slice(0, 2).toUpperCase()}</AvatarFallback>
+            {fazenda?.imagemUrl ? (
+              <AvatarImage src={fazenda.imagemUrl} alt={fazenda?.name ?? 'Empresa'} />
+            ) : (
+              <AvatarFallback>{(fazenda?.initials ?? (fazenda?.name || 'F').slice(0,2)).toUpperCase()}</AvatarFallback>
+            )}
           </Avatar>
 
           <div>

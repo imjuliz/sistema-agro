@@ -97,8 +97,8 @@ export const criarContaFinanceira = async (dados) => {
     // Para SAIDA, vencimento é obrigatório
     let vencimentoDate = null;
     if (tipoMovimento === 'ENTRADA') {
-      // Se não houver vencimento, usa a competência
-      vencimentoDate = validarEConverterData(vencimento, true) || competenciaDate;
+      // Se não houver vencimento, usa a competência (vencimento é opcional para ENTRADA)
+      vencimentoDate = validarEConverterData(vencimento, false) || competenciaDate;
     } else {
       // Para SAIDA, vencimento é obrigatório
       vencimentoDate = validarEConverterData(vencimento, true);

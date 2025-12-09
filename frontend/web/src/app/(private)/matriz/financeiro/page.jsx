@@ -8,13 +8,13 @@ import { AccountsPayable } from "@/components/Financeiro/AccountsPayable";
 import { AccountsReceivable } from "@/components/Financeiro/AccountsReceivable";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, CreditCard, Wallet, TrendingUp, TrendingDown, BarChart3, Calendar, Filter, Loader, Download, FileText } from "lucide-react";
+import { Calculator, CreditCard, Wallet, TrendingUp, TrendingDown, BarChart3, Calendar, Filter, Loader, Download, FileText, FileTextIcon, FileSpreadsheetIcon, DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
-
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 // para tradução
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
@@ -26,7 +26,7 @@ export default function FinancasMatriz() {
   const [categories, setCategories] = useState([]);
   const [accountsPayable, setAccountsPayable] = useState([]);
   const [accountsReceivable, setAccountsReceivable] = useState([]);
-  const [dashboardStats, setDashboardStats] = useState({totalReceivable: 0,totalPayable: 0,totalReceived: 0,totalPaid: 0,receivablePendingCount: 0,payablePendingCount: 0,receivedCount: 0,paidCount: 0,});
+  const [dashboardStats, setDashboardStats] = useState({ totalReceivable: 0, totalPayable: 0, totalReceived: 0, totalPaid: 0, receivablePendingCount: 0, payablePendingCount: 0, receivedCount: 0, paidCount: 0, });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const currentDate = new Date();
@@ -37,10 +37,10 @@ export default function FinancasMatriz() {
     try {
       const url = `${API_URL}categorias`;
       console.debug("[fetchCategorias] GET", url);
-      const res = await fetchWithAuth(url, {method: "GET",credentials: "include",headers: {Accept: "application/json","Content-Type": "application/json",},});
+      const res = await fetchWithAuth(url, { method: "GET", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", }, });
       console.debug("[fetchCategorias] status:", res.status);
 
-      if (res.status === 401) {console.warn("[fetchCategorias] 401 — não autorizado");setCategories([]);return;}
+      if (res.status === 401) { console.warn("[fetchCategorias] 401 — não autorizado"); setCategories([]); return; }
       if (!res.ok) {
         const t = await res.text().catch(() => "");
         console.warn(
@@ -49,6 +49,7 @@ export default function FinancasMatriz() {
           t.slice ? t.slice(0, 300) : t
         );
         setCategories([]);
+        toast({ title: "Erro ao carregar categorias", description: `Servidor respondeu com status ${res.status}.`, variant: "destructive" });
         return;
       }
 
@@ -57,21 +58,21 @@ export default function FinancasMatriz() {
 
       const lista = body?.dados ?? (Array.isArray(body) ? body : body?.categorias ?? []);
 
-      if (!Array.isArray(lista)) {setCategories([]);return;}
+      if (!Array.isArray(lista)) { setCategories([]); return; }
 
       const categoriasComSubcategorias = await Promise.all(
         lista.map(async (categoria) => {
           if (!categoria || !categoria.id) return null;
           try {
             const subUrl = `${API_URL}categorias/${categoria.id}/subcategorias`;
-            const subRes = await fetchWithAuth(subUrl, {method: "GET",credentials: "include",headers: {Accept: "application/json",Authorization: `Bearer ${localStorage.getItem("accessToken")}`,},});
+            const subRes = await fetchWithAuth(subUrl, { method: "GET", credentials: "include", headers: { Accept: "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}`, }, });
             const subBody = await subRes.json().catch(() => null);
             const subs = subBody?.dados ?? (Array.isArray(subBody) ? subBody : []);
             return {
               id: String(categoria.id),
               name: categoria.nome || categoria.title || "",
               type: categoria.tipo === "ENTRADA" ? "entrada" : "saida",
-              subcategories: Array.isArray(subs) ? subs.map((s) => ({id: String(s.id),name: s.nome || s.title || "",categoryId: String(categoria.id),})) : [],
+              subcategories: Array.isArray(subs) ? subs.map((s) => ({ id: String(s.id), name: s.nome || s.title || "", categoryId: String(categoria.id), })) : [],
               financeiros: Array.isArray(categoria.financeiros) ? categoria.financeiros.map((f) => ({
                 id: String(f.id),
                 descricao: f.descricao || '',
@@ -84,14 +85,15 @@ export default function FinancasMatriz() {
               })) : [],
             };
           } catch (err) {
-            console.warn("[fetchCategorias] falha ao buscar subcategorias",err);
-            return {id: String(categoria.id),name: categoria.nome || "",type: categoria.tipo === "ENTRADA" ? "entrada" : "saida",subcategories: [],};
+            console.warn("[fetchCategorias] falha ao buscar subcategorias", err);
+            return { id: String(categoria.id), name: categoria.nome || "", type: categoria.tipo === "ENTRADA" ? "entrada" : "saida", subcategories: [], };
           }
         })
       );
       setCategories(categoriasComSubcategorias.filter(Boolean));
     } catch (err) {
       console.error("[fetchCategorias] erro:", err);
+      toast({ title: "Erro ao carregar categorias", description: err?.message || String(err), variant: "destructive" });
       setError("Erro ao carregar categorias");
       setCategories([]);
     }
@@ -103,15 +105,19 @@ export default function FinancasMatriz() {
       const tipoParam = tipo === "payable" ? "pagar" : "receber";
       const url = `${API_URL}financeiro/contas?tipo=${tipoParam}&mes=${selectedMonth}&ano=${selectedYear}`;
       console.debug("[fetchContas] GET", url);
-      const res = await fetchWithAuth(url, { method: "GET", credentials: "include", headers: {Accept: "application/json",},});
+      const res = await fetchWithAuth(url, { method: "GET", credentials: "include", headers: { Accept: "application/json", }, });
       console.debug("[fetchContas] status:", res.status);
-      if (res.status === 401) { console.warn("[fetchContas] 401 — não autorizado");
+      if (res.status === 401) {
+        console.warn("[fetchContas] 401 — não autorizado");
+        toast({ title: "Sessão expirada", description: "Não autorizado. Faça login novamente.", variant: "destructive" });
         if (tipo === "payable") setAccountsPayable([]);
         else setAccountsReceivable([]);
         return;
       }
-      if (!res.ok) { const t = await res.text().catch(() => "");
+      if (!res.ok) {
+        const t = await res.text().catch(() => "");
         console.warn("[fetchContas] resposta não OK", res.status, t.slice ? t.slice(0, 300) : t);
+        toast({ title: "Erro ao carregar contas", description: `Servidor respondeu com status ${res.status}.`, variant: "destructive" });
         if (tipo === "payable") setAccountsPayable([]);
         else setAccountsReceivable([]);
         return;
@@ -123,6 +129,7 @@ export default function FinancasMatriz() {
       else setAccountsReceivable(Array.isArray(contas) ? contas : []);
     } catch (err) {
       console.error("[fetchContas] erro", err);
+      toast({ title: "Erro de conexão", description: err?.message || String(err), variant: "destructive" });
       if (tipo === "payable") setAccountsPayable([]);
       else setAccountsReceivable([]);
     }
@@ -132,12 +139,13 @@ export default function FinancasMatriz() {
     try {
       const url = `${API_URL}financeiro/dashboard`;
       console.debug("[fetchDashboardStats] GET", url);
-      const res = await fetchWithAuth(url, {method: "GET",credentials: "include",headers: {Accept: "application/json"}});
+      const res = await fetchWithAuth(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } });
       console.debug("[fetchDashboardStats] status:", res.status);
 
       if (res.status === 401) {
         console.warn("[fetchDashboardStats] 401 — não autorizado");
-        setDashboardStats({totalReceivable: 0,totalPayable: 0,totalReceived: 0,totalPaid: 0,receivablePendingCount: 0,payablePendingCount: 0,receivedCount: 0,paidCount: 0,});
+        toast({ title: "Sessão expirada", description: "Não autorizado. Faça login novamente.", variant: "destructive" });
+        setDashboardStats({ totalReceivable: 0, totalPayable: 0, totalReceived: 0, totalPaid: 0, receivablePendingCount: 0, payablePendingCount: 0, receivedCount: 0, paidCount: 0, });
         return;
       }
 
@@ -148,15 +156,17 @@ export default function FinancasMatriz() {
           res.status,
           t.slice ? t.slice(0, 300) : t
         );
-        return;}
+        toast({ title: "Erro ao carregar dashboard", description: `Servidor respondeu com status ${res.status}.`, variant: "destructive" });
+        return;
+      }
       const body = await res.json().catch(() => null);
       console.debug("[fetchDashboardStats] body:", body);
       // possíveis formatos de resposta: {dados: {...}} ou {...} ou lista
       const statsObj = body?.dados ?? (typeof body === "object" ? body : {});
       // Normaliza chaves que usamos
       const normalized = {
-        totalReceivable: Number( statsObj.totalReceivable ?? statsObj.totalRecebimentos ?? statsObj.totalReceivable ?? 0),
-        totalPayable: Number( statsObj.totalPayable ?? statsObj.totalPagamentos ?? statsObj.totalPayable ?? 0),
+        totalReceivable: Number(statsObj.totalReceivable ?? statsObj.totalRecebimentos ?? statsObj.totalReceivable ?? 0),
+        totalPayable: Number(statsObj.totalPayable ?? statsObj.totalPagamentos ?? statsObj.totalPayable ?? 0),
         totalReceived: Number(statsObj.totalReceived ?? statsObj.recebido ?? 0),
         totalPaid: Number(statsObj.totalPaid ?? statsObj.pago ?? 0),
         receivablePendingCount: Number(statsObj.receivablePendingCount ?? statsObj.recebiveisPendentes ?? 0),
@@ -166,7 +176,7 @@ export default function FinancasMatriz() {
       };
 
       setDashboardStats((prev) => ({ ...prev, ...normalized }));
-    } catch (err) {console.error("[fetchDashboardStats] erro", err);}
+    } catch (err) { console.error("[fetchDashboardStats] erro", err); toast({ title: "Erro ao carregar dashboard", description: err?.message || String(err), variant: "destructive" }); }
   };
 
   // UseEffect agrupando buscas do dashboard (baseado no seu exemplo)
@@ -177,8 +187,8 @@ export default function FinancasMatriz() {
       setLoading(true);
       try {
         // Executa buscas em paralelo quando possível
-        await Promise.all([fetchCategorias(),fetchContas("payable"),fetchContas("receivable"),fetchDashboardStats(),]);
-      } catch (err) {console.error("Erro ao carregar dados do financeiro:", err);if (mounted) setError("Erro ao carregar dados do financeiro");}
+        await Promise.all([fetchCategorias(), fetchContas("payable"), fetchContas("receivable"), fetchDashboardStats(),]);
+      } catch (err) { console.error("Erro ao carregar dados do financeiro:", err); if (mounted) setError("Erro ao carregar dados do financeiro"); }
       finally { if (mounted) setLoading(false); }
     }
     fetchAll();
@@ -186,10 +196,10 @@ export default function FinancasMatriz() {
   }, [fetchWithAuth, selectedMonth, selectedYear]);
 
   // Helpers mínimos usados na UI (se já existirem em outra parte remova/ajuste)
-  const months = useMemo( () => [ { value: "1", label: "Janeiro" }, { value: "2", label: "Fevereiro" }, { value: "3", label: "Março" }, { value: "4", label: "Abril" }, { value: "5", label: "Maio" }, { value: "6", label: "Junho" }, { value: "7", label: "Julho" }, { value: "8", label: "Agosto" }, { value: "9", label: "Setembro" }, { value: "10", label: "Outubro" }, { value: "11", label: "Novembro" },{ value: "12", label: "Dezembro" },],[]);
+  const months = useMemo(() => [{ value: "1", label: "Janeiro" }, { value: "2", label: "Fevereiro" }, { value: "3", label: "Março" }, { value: "4", label: "Abril" }, { value: "5", label: "Maio" }, { value: "6", label: "Junho" }, { value: "7", label: "Julho" }, { value: "8", label: "Agosto" }, { value: "9", label: "Setembro" }, { value: "10", label: "Outubro" }, { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },], []);
 
-  const years = useMemo(() => {const y = new Date().getFullYear();return [y - 1, y, y + 1];}, []);
-  const getSelectedMonthName = () => {const found = months.find((m) => m.value === String(selectedMonth));return found ? found.label : String(selectedMonth);};
+  const years = useMemo(() => { const y = new Date().getFullYear(); return [y - 1, y, y + 1]; }, []);
+  const getSelectedMonthName = () => { const found = months.find((m) => m.value === String(selectedMonth)); return found ? found.label : String(selectedMonth); };
   const formatCurrency = (v) => {
     const n = Number(v ?? 0);
     if (isNaN(n) || !isFinite(n)) return 'R$ 0,00';
@@ -239,8 +249,8 @@ export default function FinancasMatriz() {
       .filter(acc => {
         const status = acc.status || acc.statusPagamento || '';
         const hasPaymentDate = acc.dataPagamento || acc.paymentDate;
-        return (!hasPaymentDate && (status === 'PENDENTE' || status === 'pending' || status === '')) || 
-               (!hasPaymentDate && status !== 'PAGA' && status !== 'paid');
+        return (!hasPaymentDate && (status === 'PENDENTE' || status === 'pending' || status === '')) ||
+          (!hasPaymentDate && status !== 'PAGA' && status !== 'paid');
       })
       .reduce((sum, acc) => sum + (Number(acc.valor || acc.amount || 0)), 0);
 
@@ -256,8 +266,8 @@ export default function FinancasMatriz() {
     const payablePendingCount = payableInMonth.filter(acc => {
       const status = acc.status || acc.statusPagamento || '';
       const hasPaymentDate = acc.dataPagamento || acc.paymentDate;
-      return (!hasPaymentDate && (status === 'PENDENTE' || status === 'pending' || status === '')) || 
-             (!hasPaymentDate && status !== 'PAGA' && status !== 'paid');
+      return (!hasPaymentDate && (status === 'PENDENTE' || status === 'pending' || status === '')) ||
+        (!hasPaymentDate && status !== 'PAGA' && status !== 'paid');
     }).length;
 
     const payablePaidCount = payableInMonth.filter(acc => {
@@ -303,9 +313,9 @@ export default function FinancasMatriz() {
       const url = `${API_URL}financeiro/dashboard/exportar/csv?${params.toString()}`;
       console.debug('[exportarDashboardCSV] URL:', url);
       console.debug('[exportarDashboardCSV] Token disponível:', !!accessToken);
-      
-      const response = await fetchWithAuth(url, { 
-        method: 'GET', 
+
+      const response = await fetchWithAuth(url, {
+        method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'text/csv, application/json',
@@ -327,7 +337,7 @@ export default function FinancasMatriz() {
           errorText = `Erro HTTP ${response.status}`;
         }
         console.error('[exportarDashboardCSV] Erro:', response.status, errorText);
-        
+
         toast({
           title: "Erro ao exportar CSV",
           description: errorText || `Erro HTTP ${response.status}`,
@@ -339,25 +349,25 @@ export default function FinancasMatriz() {
       const blob = await response.blob();
       const link = document.createElement('a');
       const urlBlob = URL.createObjectURL(blob);
-      
+
       const contentDisposition = response.headers.get('Content-Disposition');
       const monthName = getSelectedMonthName().replace(/\s+/g, '-').toLowerCase().trim();
       let filename = `dashboard_financeiro_${monthName}_${selectedYear}_${new Date().getTime()}.csv`;
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
         if (filenameMatch) {
           filename = filenameMatch[1].trim();
         }
       }
-      
+
       link.setAttribute('href', urlBlob);
       link.setAttribute('download', filename);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast({
         title: "CSV exportado com sucesso",
         description: `Arquivo "${filename}" baixado com sucesso.`,
@@ -391,9 +401,9 @@ export default function FinancasMatriz() {
       const url = `${API_URL}financeiro/dashboard/exportar/pdf?${params.toString()}`;
       console.debug('[exportarDashboardPDF] URL:', url);
       console.debug('[exportarDashboardPDF] Token disponível:', !!accessToken);
-      
-      const response = await fetchWithAuth(url, { 
-        method: 'GET', 
+
+      const response = await fetchWithAuth(url, {
+        method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'application/pdf, application/json',
@@ -415,7 +425,7 @@ export default function FinancasMatriz() {
           errorText = `Erro HTTP ${response.status}`;
         }
         console.error('[exportarDashboardPDF] Erro:', response.status, errorText);
-        
+
         toast({
           title: "Erro ao exportar PDF",
           description: errorText || `Erro HTTP ${response.status}`,
@@ -427,25 +437,25 @@ export default function FinancasMatriz() {
       const blob = await response.blob();
       const link = document.createElement('a');
       const urlBlob = URL.createObjectURL(blob);
-      
+
       const contentDisposition = response.headers.get('Content-Disposition');
       const monthName = getSelectedMonthName().replace(/\s+/g, '-').toLowerCase().trim();
       let filename = `dashboard_financeiro_${monthName}_${selectedYear}_${new Date().getTime()}.pdf`;
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
         if (filenameMatch) {
           filename = filenameMatch[1].trim();
         }
       }
-      
+
       link.setAttribute('href', urlBlob);
       link.setAttribute('download', filename);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast({
         title: "PDF exportado com sucesso",
         description: `Arquivo "${filename}" baixado com sucesso.`,
@@ -472,19 +482,22 @@ export default function FinancasMatriz() {
       const response = await fetch(url, {
         method: "POST",
         credentials: "include",
-        headers: {"Content-Type": "application/json",Authorization: `Bearer ${localStorage.getItem("accessToken")}`,},
-        body: {unidadeId: Number(unidadeId),nome,tipo,descricao,},
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}`, },
+        body: { unidadeId: Number(unidadeId), nome, tipo, descricao, },
       });
       console.log("Resposta categorias:", response.status, response.statusText);
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Erro ao buscar categorias:", response.status, errorText);
+        toast({ title: "Erro ao buscar categorias", description: `Servidor respondeu ${response.status}`, variant: "destructive" });
         throw new Error(`Erro ao buscar categorias: ${response.status} - ${errorText}`);
       }
       const result = await response.json();
       console.log("Resultado categorias:", result);
+      toast({ title: "Categorias carregadas", description: "Categorias recuperadas com sucesso.", variant: "default" });
     } catch (error) {
-      console.error("Erro ao buscar categorias:", err);
+      console.error("Erro ao buscar categorias:", error);
+      toast({ title: "Erro ao buscar categorias", description: error?.message || String(error), variant: "destructive" });
       setError("Erro ao carregar categorias");
     }
   };
@@ -529,20 +542,24 @@ export default function FinancasMatriz() {
                     <strong>{getSelectedMonthName()} de {selectedYear}</strong>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2"
-                      onClick={exportarDashboardCSV}
-                    >
-                      <Download className="h-4 w-4" />Exportar CSV
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2"
-                      onClick={exportarDashboardPDF}
-                    >
-                      <FileText className="h-4 w-4" />Exportar PDF
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='outline' size='sm'>
+                          <DownloadIcon className='mr-2 h-4 w-4' />
+                          Exportar
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem onClick={exportarDashboardCSV}>
+                          <FileTextIcon className='mr-2 h-4 w-4' />
+                          Exportar CSV
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportarDashboardPDF}>
+                          <FileSpreadsheetIcon className='mr-2 h-4 w-4' />
+                          Exportar PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>
@@ -555,7 +572,7 @@ export default function FinancasMatriz() {
                   <TrendingDown className="h-4 w-4 text-red-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-red-600">{formatCurrency(calculatedStats.totalPayablePending)}</div>
+                  <div className="">{formatCurrency(calculatedStats.totalPayablePending)}</div>
                   <p className="text-xs text-muted-foreground">{calculatedStats.payablePendingCount} contas pendentes</p>
                 </CardContent>
               </Card>
@@ -565,7 +582,7 @@ export default function FinancasMatriz() {
                   <Wallet className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-green-600">{formatCurrency(calculatedStats.totalReceived)}</div>
+                  <div className="">{formatCurrency(calculatedStats.totalReceived)}</div>
                   <p className="text-xs text-muted-foreground">{calculatedStats.receivedCount} contas recebidas</p>
                 </CardContent>
               </Card>
@@ -575,7 +592,7 @@ export default function FinancasMatriz() {
                   <CreditCard className="h-4 w-4 text-red-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-red-600">{formatCurrency(calculatedStats.totalPaid)}</div>
+                  <div className="">{formatCurrency(calculatedStats.totalPaid)}</div>
                   <p className="text-xs text-muted-foreground">{calculatedStats.paidCount} contas pagas</p>
                 </CardContent>
               </Card>
@@ -591,7 +608,7 @@ export default function FinancasMatriz() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span>Categorias de Entrada</span>
-                      <Badge className="bg-green-100 text-green-800">{categories.filter((cat) => cat.type === "entrada") .length}</Badge>
+                      <Badge className="bg-green-100 text-green-800">{categories.filter((cat) => cat.type === "entrada").length}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Categorias de Saída</span>
@@ -613,11 +630,11 @@ export default function FinancasMatriz() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span>Total de Receitas</span>
-                      <span className="text-green-600">{formatCurrency(calculatedStats.totalReceitas)}</span>
+                      <span className="">{formatCurrency(calculatedStats.totalReceitas)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Total de Despesas</span>
-                      <span className="text-red-600">{formatCurrency(calculatedStats.totalDespesas)}</span>
+                      <span className="">{formatCurrency(calculatedStats.totalDespesas)}</span>
                     </div>
                     <hr />
                     <div className="flex justify-between items-center">
@@ -639,14 +656,14 @@ export default function FinancasMatriz() {
                     <div className="flex justify-between items-center">
                       <span>Pagas</span>
                       <div className="text-right">
-                        <div className="text-red-600">{formatCurrency(calculatedStats.totalPaid)}</div>
+                        <div className="">{formatCurrency(calculatedStats.totalPaid)}</div>
                         <div className="text-xs text-muted-foreground">{calculatedStats.paidCount} contas</div>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Pendentes</span>
                       <div className="text-right">
-                        <div className="text-orange-600">{formatCurrency(calculatedStats.totalPayablePending)}</div>
+                        <div className="">{formatCurrency(calculatedStats.totalPayablePending)}</div>
                         <div className="text-xs text-muted-foreground">{calculatedStats.payablePendingCount} contas</div>
                       </div>
                     </div>
@@ -654,7 +671,7 @@ export default function FinancasMatriz() {
                     <div className="flex justify-between items-center">
                       <span>Total do Período</span>
                       <div className="text-right">
-                        <div className="text-red-600">{formatCurrency(calculatedStats.totalPaid + calculatedStats.totalPayablePending)}</div>
+                        <div className="">{formatCurrency(calculatedStats.totalPaid + calculatedStats.totalPayablePending)}</div>
                         <div className="text-xs text-muted-foreground">{calculatedStats.paidCount + calculatedStats.payablePendingCount} contas</div>
                       </div>
                     </div>
@@ -666,23 +683,23 @@ export default function FinancasMatriz() {
           <TabsContent value="categories">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <Loader className="h-8 w-8 animate-spin" /><span className="ml-2">Carregando categorias...</span>
+                <span className="ml-2">Carregando categorias...</span>
               </div>
-            ) : (<CategoryManager categories={categories} onCategoriesChange={handleCategoriesChange} fetchWithAuth={fetchWithAuth} API_URL="" onRefresh={fetchCategorias}/>)}
+            ) : (<CategoryManager categories={categories} onCategoriesChange={handleCategoriesChange} fetchWithAuth={fetchWithAuth} API_URL="" onRefresh={fetchCategorias} />)}
           </TabsContent>
           <TabsContent value="payable">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <Loader className="h-8 w-8 animate-spin" /><span className="ml-2">Carregando contas a pagar...</span>
+                <span className="ml-2">Carregando contas a pagar...</span>
               </div>
-            ) : (<AccountsPayable accounts={accountsPayable} categories={categories} onAccountsChange={handleAccountsPayableChange} fetchWithAuth={fetchWithAuth} API_URL={API_URL} onRefresh={fetchContas}/>)}
+            ) : (<AccountsPayable accounts={accountsPayable} categories={categories} onAccountsChange={handleAccountsPayableChange} fetchWithAuth={fetchWithAuth} API_URL={API_URL} onRefresh={fetchContas} />)}
           </TabsContent>
           <TabsContent value="receivable">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <Loader className="h-8 w-8 animate-spin" /><span className="ml-2">Carregando contas a receber...</span>
+                <span className="ml-2">Carregando contas a receber...</span>
               </div>
-            ) : (<AccountsReceivable accounts={accountsReceivable} categories={categories} onAccountsChange={handleAccountsReceivableChange} fetchWithAuth={fetchWithAuth} API_URL={API_URL} onRefresh={fetchContas}/>)}
+            ) : (<AccountsReceivable accounts={accountsReceivable} categories={categories} onAccountsChange={handleAccountsReceivableChange} fetchWithAuth={fetchWithAuth} API_URL={API_URL} onRefresh={fetchContas} />)}
           </TabsContent>
         </Tabs>
       </div>

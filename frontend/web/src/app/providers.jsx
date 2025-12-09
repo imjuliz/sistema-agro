@@ -7,7 +7,7 @@ import { TranslationProvider } from "@/hooks/useTranslation";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
 import { AppearanceProvider } from "@/contexts/AppearanceContext";
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/toast';
 
 
 export function ClientProviders({ children }) {

@@ -66,6 +66,20 @@ export async function getFazendas() {
       }
     });
 
+    // Preencher gerente quando unidade.gerente estiver null
+    const missingGerenteIds = fazendas.filter(f => !f.gerente).map(f => f.id);
+    if (missingGerenteIds.length > 0) {
+      const gerentes = await prisma.usuario.findMany({
+        where: { unidadeId: { in: missingGerenteIds }, perfil: { funcao: 'GERENTE_FAZENDA' } },
+        select: { nome: true, unidadeId: true }
+      });
+      const mapGerente = new Map();
+      for (const g of gerentes) mapGerente.set(g.unidadeId, { nome: g.nome });
+      for (const f of fazendas) {
+        if (!f.gerente && mapGerente.has(f.id)) f.gerente = mapGerente.get(f.id);
+      }
+    }
+
     return { sucesso: true, unidades: fazendas };
   }
   catch (error) {
@@ -188,6 +202,20 @@ export async function getFazendasFiltered({ q = null, cidade = null, estado = nu
       }),
     ]);
 
+    // Preencher gerente quando unidade.gerente estiver null
+    const missingIds = unidades.filter(u => !u.gerente).map(u => u.id);
+    if (missingIds.length > 0) {
+      const gerentes = await prisma.usuario.findMany({
+        where: { unidadeId: { in: missingIds }, perfil: { funcao: 'GERENTE_FAZENDA' } },
+        select: { nome: true, unidadeId: true }
+      });
+      const mapGerente = new Map();
+      for (const g of gerentes) mapGerente.set(g.unidadeId, { nome: g.nome });
+      for (const u of unidades) {
+        if (!u.gerente && mapGerente.has(u.id)) u.gerente = mapGerente.get(u.id);
+      }
+    }
+
     return { sucesso: true, unidades, total, page: pageNum, perPage: per };
   } catch (error) {
     console.error('[getFazendasFiltered] erro:', error);
@@ -273,6 +301,20 @@ export async function getLoja() {
         }
       }
     });
+    // Preencher gerente quando unidade.gerente estiver null (buscar por usuário com perfil GERENTE_LOJA)
+    const missingGerenteIds = lojas.filter(l => !l.gerente).map(l => l.id);
+    if (missingGerenteIds.length > 0) {
+      const gerentes = await prisma.usuario.findMany({
+        where: { unidadeId: { in: missingGerenteIds }, perfil: { funcao: 'GERENTE_LOJA' } },
+        select: { nome: true, unidadeId: true }
+      });
+      const mapGerente = new Map();
+      for (const g of gerentes) mapGerente.set(g.unidadeId, { nome: g.nome });
+      for (const l of lojas) {
+        if (!l.gerente && mapGerente.has(l.id)) l.gerente = mapGerente.get(l.id);
+      }
+    }
+
     return { sucesso: true, unidades: lojas, message: "Loja listadas com sucesso." };
   }
   catch (error) {return { sucesso: false, erro: "Erro ao listar loja.", detalhes: error.message };}
@@ -363,6 +405,20 @@ export async function getLojasFiltered({ q = null, cidade = null, estado = null,
         },
       }),
     ]);
+
+    // Preencher gerente quando unidade.gerente estiver null (buscar por usuário com perfil GERENTE_LOJA)
+    const missing = unidades.filter(u => !u.gerente).map(u => u.id);
+    if (missing.length > 0) {
+      const gerentes = await prisma.usuario.findMany({
+        where: { unidadeId: { in: missing }, perfil: { funcao: 'GERENTE_LOJA' } },
+        select: { nome: true, unidadeId: true }
+      });
+      const mapGerente = new Map();
+      for (const g of gerentes) mapGerente.set(g.unidadeId, { nome: g.nome });
+      for (const u of unidades) {
+        if (!u.gerente && mapGerente.has(u.id)) u.gerente = mapGerente.get(u.id);
+      }
+    }
 
     return { sucesso: true, unidades, total, page: pageNum, perPage: per };
   } catch (error) {

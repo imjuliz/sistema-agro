@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { User, CreditCard, Image as ImageIcon, Bell, Monitor, AlertTriangle, Copy } from "lucide-react";
+import { User, CreditCard, Image as ImageIcon, Bell, Monitor, AlertTriangle, Copy, Phone, Mail } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from '@/components/ui/use-toast';
 import { API_URL } from '@/lib/api';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -21,6 +22,7 @@ export default function Matriz() {
     usePerfilProtegido("GERENTE_MATRIZ");
 
     const { user, loading, initialized, fetchWithAuth } = useAuth();
+    const { toast } = useToast();
 
     const [profileEditing, setProfileEditing] = useState(false);
     const [companyEditing, setCompanyEditing] = useState(false);
@@ -103,7 +105,7 @@ export default function Matriz() {
         // Copia estados permanentes para estados temporários
         setEditCompanyName(companyName);
         setEditCompanyAvatarUrl(companyAvatarUrl);
-        setEditTelefone(telefone);
+        setEditTelefone(formatPhone(telefone));
         setEditEmail(email);
         setEditCnpj(cnpj);
         setEditCidade(cidade);
@@ -213,6 +215,7 @@ export default function Matriz() {
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 console.error('Erro ao salvar unidade:', err);
+                try { toast({ title: 'Erro', description: err?.erro || 'Falha ao salvar unidade.', variant: 'destructive' }); } catch (e) {}
                 return;
             }
 
@@ -233,8 +236,10 @@ export default function Matriz() {
             }
 
             setCompanyEditing(false);
+            try { toast({ title: 'Sucesso', description: result.mensagem || 'Unidade atualizada.' }); } catch (e) {}
         } catch (err) {
             console.error('Erro ao salvar unidade:', err);
+            try { toast({ title: 'Erro', description: 'Erro ao salvar unidade.', variant: 'destructive' }); } catch (e) {}
         }
     }
 
@@ -286,6 +291,18 @@ export default function Matriz() {
         // em seguida sempre requisita por `/api/uploads/<filename>`
         const cleaned = String(imagemUrl).replace(/^\/+/, "").replace(/^uploads\/*/, "");
         return `${API_URL}uploads/${cleaned}`;
+    }
+
+    function getInitials(name) {
+        if (!name || typeof name !== 'string') return '';
+        const parts = name.trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return '';
+        const first = parts[0];
+        if (parts.length === 1) {
+            return first.slice(0, 2).toUpperCase();
+        }
+        const second = parts[1];
+        return (String(first[0] || '') + String(second[0] || '')).toUpperCase();
     }
 
     // CEP, CNPJ and phone state handlers to maintain formatted display
@@ -460,9 +477,8 @@ export default function Matriz() {
         }
     }
     return (
-
         <>
-            <main className="container mx-auto py-8">
+            <main className="min-h-screen px-18 py-10 bg-surface-50">
                 <h2 className="text-lg font-semibold mb-4"><Transl>Empresa</Transl></h2>
                 {/* Conteúdo principal */}
                 <div className="flex gap-6">
@@ -479,10 +495,10 @@ export default function Matriz() {
                                             <div className="flex flex-col w-full items-start gap-2">
                                                 <Avatar className="h-16 w-16 cursor-pointer border-2 border-muted">
                                                     {companyAvatarUrl ? (
-                                                        <>
-                                                            <AvatarImage src={companyAvatarUrl} alt="Avatar" />
-                                                        </>
-                                                    ) : (<AvatarFallback />)}
+                                                        <AvatarImage src={companyAvatarUrl} alt="Avatar" />
+                                                    ) : (
+                                                        <AvatarFallback>{getInitials(companyName)}</AvatarFallback>
+                                                    )}
                                                 </Avatar>
                                                 <input
                                                     ref={fileInputRef}
@@ -533,7 +549,7 @@ export default function Matriz() {
                                                         <p className="text-sm text-muted-foreground mb-2">
                                                             <Transl>Nome visível da Matriz ou da Unidade.</Transl>
                                                         </p>
-                                                        <Input type="text" value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} className="flex-1 w-full" />
+                                                        <Input type="text" value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} className="w-full" />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Máximo de 100 caracteres.</Transl>
                                                         </p>
@@ -553,7 +569,7 @@ export default function Matriz() {
                                                         <p className="text-sm text-muted-foreground mb-2">
                                                             <Transl>Formato: 00.000.000/0000-00</Transl>
                                                         </p>
-                                                        <Input type="text" value={editCnpj} onChange={handleCnpjChange} className="flex-1 w-full" />
+                                                        <Input type="text" value={editCnpj} onChange={handleCnpjChange} className="w-full" />
                                                     </>
                                                 ) : (<p className="text-sm text-foreground">{cnpj || 'CNPJ não informado'}</p>)}
                                             </div>
@@ -597,8 +613,18 @@ export default function Matriz() {
                                             </div>
                                         ) : (
                                             <div className="space-y-1">
-                                                <p className="text-sm text-foreground">{telefone || 'Telefone não informado'}</p>
-                                                <p className="text-sm text-foreground">{email || 'E-mail não informado'}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <Phone className="w-4 h-4 text-muted-foreground" />
+                                                    <p className="text-sm text-foreground">{telefone ? formatPhone(telefone) : 'Telefone não informado'}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="w-4 h-4 text-muted-foreground" />
+                                                    {email ? (
+                                                        <a className="text-sm text-foreground hover:underline" href={`mailto:${email}`}>{email}</a>
+                                                    ) : (
+                                                        <p className="text-sm text-foreground">E-mail não informado</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -615,38 +641,50 @@ export default function Matriz() {
                                         {companyEditing ? (
                                             <>
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full">
-                                                    <Input
-                                                        placeholder="Endereço"
-                                                        value={editEndereco}
-                                                        onChange={e => setEditEndereco(e.target.value)}
-                                                        disabled={loadingCep}
-                                                    />
-                                                    <Input
-                                                        placeholder="CEP"
-                                                        value={editCep}
-                                                        onChange={handleCepChange}
-                                                        disabled={loadingCep}
-                                                    />
+                                                    <div>
+                                                        <Label className="pb-2 font-medium"><Transl>Endereço</Transl></Label>
+                                                        <Input
+                                                            placeholder="Endereço"
+                                                            value={editEndereco}
+                                                            onChange={e => setEditEndereco(e.target.value)}
+                                                            disabled={loadingCep}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="pb-2 font-medium"><Transl>CEP</Transl></Label>
+                                                        <Input
+                                                            placeholder="CEP"
+                                                            value={editCep}
+                                                            onChange={handleCepChange}
+                                                            disabled={loadingCep}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full">
-                                                    <Input
-                                                        placeholder="Cidade"
-                                                        value={editCidade}
-                                                        onChange={e => setEditCidade(e.target.value)}
-                                                        disabled={loadingCep}
-                                                    />
-                                                    <Select value={editEstado} onValueChange={setEditEstado} disabled={loadingCep}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Selecione o Estado" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {estadosBrasil.map((est) => (
-                                                                <SelectItem key={est.sigla} value={est.sigla}>
-                                                                    {est.nome} ({est.sigla})
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <div>
+                                                        <Label className="pb-2 font-medium"><Transl>Cidade</Transl></Label>
+                                                        <Input
+                                                            placeholder="Cidade"
+                                                            value={editCidade}
+                                                            onChange={e => setEditCidade(e.target.value)}
+                                                            disabled={loadingCep}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="pb-2 font-medium"><Transl>Estado</Transl></Label>
+                                                        <Select value={editEstado} onValueChange={setEditEstado} disabled={loadingCep}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Selecione o Estado" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {estadosBrasil.map((est) => (
+                                                                    <SelectItem key={est.sigla} value={est.sigla}>
+                                                                        {est.nome} ({est.sigla})
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
                                                 </div>
                                             </>
                                         ) : (
@@ -681,8 +719,9 @@ export default function Matriz() {
                             </div>
                             <Separator className="my-4" /> */}
 
-                            {/* Apagar empresa */}
-                            <div>
+                            {/* Apagar empresa (apenas em modo de edição) */}
+                            {companyEditing && (
+                                <div>
                                 <Label className={"pb-3 font-bold"}>
                                     <Transl>Deletar empresa</Transl>
                                 </Label>
@@ -730,7 +769,8 @@ export default function Matriz() {
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
-                            </div>
+                                </div>
+                            )}
 
                             <div className="pt-3">
                                 {companyEditing ? (

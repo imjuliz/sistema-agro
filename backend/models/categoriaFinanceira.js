@@ -4,17 +4,18 @@ import prisma from '../prisma/client.js';
 
 export const criarCategoria = async (unidadeId, nome, tipo, descricao = null) => {
   try {
-    // Verificar se já existe uma categoria com o mesmo nome para a mesma unidade
+    // Verificar se já existe uma categoria com o mesmo nome e mesmo tipo para a mesma unidade
     const categoriaExistente = await prisma.categoria.findFirst({
       where: {
         unidadeId: Number(unidadeId),
         nome: nome.trim(),
+        tipo,
         ativa: true
       }
     });
 
     if (categoriaExistente) {
-      throw new Error(`Já existe uma categoria com o nome "${nome}" para esta unidade.`);
+      throw new Error(`Já existe uma categoria do tipo "${tipo}" com o nome "${nome}" para esta unidade.`);
     }
 
     const categoria = await prisma.categoria.create({

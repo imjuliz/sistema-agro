@@ -761,7 +761,7 @@ model Categoria {
   financeiros   Financeiro[]
   unidade       Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
 
-  @@unique([unidadeId, nome])
+  @@unique([unidadeId, nome, tipo])
   @@index([unidadeId])
   @@index([tipo])
   @@index([ativa])

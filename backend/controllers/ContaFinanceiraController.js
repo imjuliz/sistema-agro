@@ -637,8 +637,10 @@ export const exportarDashboardPDFController = async (req, res) => {
     doc.text('Valor', colWidths.valor, yPos, { width: 65, ellipsis: true });
     doc.text('Categoria', colWidths.categoria, yPos, { width: 165, ellipsis: true });
     doc.text('Status', colWidths.status, yPos, { width: 50, ellipsis: true });
-    doc.moveTo(50, yPos + 5).lineTo(530, yPos + 5).stroke();
-    doc.moveDown(0.5);
+    // draw a separator line a bit lower to leave clear space under the headers
+    doc.moveTo(50, yPos + 10).lineTo(530, yPos + 10).stroke();
+    // move the cursor down to leave space between the line and the first row
+    doc.moveDown(1);
 
     doc.fontSize(8).font('Helvetica');
     contasPagar.slice(0, 25).forEach((conta, index) => {
@@ -686,8 +688,19 @@ export const exportarDashboardPDFController = async (req, res) => {
     doc.moveDown(1);
 
     // Contas a Receber
-    doc.addPage();
-    doc.fontSize(12).font('Helvetica-Bold').text('Receitas', { align: 'left' });
+    // Avoid forcing a page break: only add a new page if there isn't enough space.
+    // Otherwise leave extra vertical space so the section is visually separated.
+    const requiredSpaceForReceitas = 180; // estimate header + a few rows
+    const pageBottom = doc.page.height - (doc.page.margins?.bottom ?? 50);
+    if (doc.y + requiredSpaceForReceitas > pageBottom) {
+      doc.addPage();
+    } else {
+      // leave extra space between despesas and receitas when staying on same page
+      doc.moveDown(2);
+    }
+    // Write the title explicitly at the left margin to avoid accidental right alignment
+    const leftX = doc.page.margins?.left ?? 50;
+    doc.fontSize(12).font('Helvetica-Bold').text('Receitas', leftX, doc.y);
     doc.moveDown(0.5);
     doc.fontSize(8).font('Helvetica-Bold');
     
@@ -702,8 +715,9 @@ export const exportarDashboardPDFController = async (req, res) => {
     doc.text('Valor', colWidthsReceber.valor, yPos, { width: 75, ellipsis: true });
     doc.text('Categoria', colWidthsReceber.categoria, yPos, { width: 250, ellipsis: true });
     doc.moveDown(0.2);
-    doc.moveTo(50, yPos + 5).lineTo(530, yPos + 5).stroke();
-    doc.moveDown(0.5);
+    // draw separator line slightly lower to avoid overlapping the header text
+    doc.moveTo(50, yPos + 10).lineTo(530, yPos + 10).stroke();
+    doc.moveDown(1);
 
     doc.fontSize(8).font('Helvetica');
     contasReceber.slice(0, 35).forEach((conta, index) => {
@@ -737,11 +751,13 @@ export const exportarDashboardPDFController = async (req, res) => {
       doc.text(`... e mais ${contasReceber.length - 35} contas`, { align: 'left' });
     }
 
-    // Rodapé
-    doc.fontSize(8).font('Helvetica').text(
-      `Gerado em ${dataFormatada} - RuralTech Sistema Agro`,
-      { align: 'center' }
-    );
+    // Rodapé: escrever em cinza claro no final da página
+    const footerText = `Gerado em ${dataFormatada} - RuralTech Sistema Agro`;
+    const footerY = doc.page.height - (doc.page.margins?.bottom ?? 50) - 20;
+    // usar cor cinza clara
+    doc.fillColor('#9CA3AF').fontSize(8).font('Helvetica').text(footerText, 50, footerY, { width: doc.page.width - 100, align: 'center' });
+    // restaurar cor padrão
+    doc.fillColor('black');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="dashboard_financeiro_${periodo.replace(/\//g, '_')}_${new Date().getTime()}.pdf"`);
