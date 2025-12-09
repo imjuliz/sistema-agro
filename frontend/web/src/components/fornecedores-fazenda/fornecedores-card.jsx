@@ -12,7 +12,6 @@ import { API_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-
 export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();
@@ -22,6 +21,9 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     const [removedIds, setRemovedIds] = useState(new Set());
     const [selectedContrato, setSelectedContrato] = useState(null);
     const [showCatalogModal, setShowCatalogModal] = useState(false);
+    const [selectedContratoDetalhes, setSelectedContratoDetalhes] = useState(null);
+    const [showContratoDetalhesModal, setShowContratoDetalhesModal] = useState(false);
+    const [loadingContratoDetalhes, setLoadingContratoDetalhes] = useState(false);
 
     const isUserGerenteMatriz = (() => {
         if (!user) return false;
@@ -86,6 +88,26 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
             return alert('Erro ao excluir fornecedor: ' + (err?.message || err));
         }
     };
+
+    const handleVerDetalhesContrato = async (contratoId) => {
+        setLoadingContratoDetalhes(true);
+        try {
+            const res = await fetchWithAuth(`${API_URL}verInfosContrato/${contratoId}`);
+            const body = await res.json();
+            if (res.ok && body.data) {
+                setSelectedContratoDetalhes(body.data);
+                setShowContratoDetalhesModal(true);
+            } else {
+                alert('Erro ao carregar detalhes do contrato');
+            }
+        } catch (err) {
+            console.error('Erro fetching contract details:', err);
+            alert('Erro ao carregar detalhes do contrato');
+        } finally {
+            setLoadingContratoDetalhes(false);
+        }
+    };
+
     // Normalize incoming suppliers into a predictable shape
     const suppliers = (fornecedores || []).map(s => ({
         id: s?.id ?? s?.ID ?? s?.raw?.id ?? null,
@@ -461,12 +483,10 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
 
                                 <Button
                                     className="mt-8 w-full bg-[#99BF0F]/80 hover:bg-[#99BF0F] text-white"
-                                    onClick={() => {
-                                        setSelectedContrato(c);
-                                        setShowCatalogModal(true);
-                                    }}
+                                    onClick={() => handleVerDetalhesContrato(c.id)}
+                                    disabled={loadingContratoDetalhes}
                                 >
-                                    <ShoppingCart className="w-4 h-4 mr-2" /> Ver catálogo
+                                    <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
                                 </Button>
                             </CardContent>
                         </Card>
@@ -565,6 +585,129 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         );
     };
 
+    const ContratoDetalhesModal = () => {
+        if (!selectedContratoDetalhes) return null;
+
+        const nomeUnidade =
+            selectedContratoDetalhes?.fornecedorUnidade?.nome ??
+            selectedContratoDetalhes?.unidade?.nome ??
+            selectedContratoDetalhes?.unidadeOrigem?.nome ??
+            selectedContratoDetalhes?.origemUnidade?.nome ??
+            selectedContratoDetalhes?.fornecedorInterno?.nome ??
+            selectedContratoDetalhes?.nomeUnidade ??
+            '—';
+
+        const nomeFornecedor =
+            selectedContratoDetalhes?.fornecedorExterno?.nomeEmpresa ??
+            selectedContratoDetalhes?.fornecedor?.nome ??
+            selectedContratoDetalhes?.nomeFornecedor ??
+            '—';
+
+        return (
+            <Dialog open={showContratoDetalhesModal} onOpenChange={setShowContratoDetalhesModal}>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>
+                            Detalhes do Contrato
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    {loadingContratoDetalhes ? (
+                        <div className="flex items-center justify-center py-12">
+                            <p className="text-muted-foreground">Carregando detalhes...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Informações Básicas */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Unidade/Fazenda</p>
+                                    <p className="font-semibold">{nomeUnidade}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Fornecedor</p>
+                                    <p className="font-semibold">{nomeFornecedor}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Status</p>
+                                    <Badge variant={selectedContratoDetalhes.status === 'ATIVO' ? 'default' : 'secondary'}>
+                                        {selectedContratoDetalhes.status || '—'}
+                                    </Badge>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Valor Total</p>
+                                    <p className="font-semibold">{formatCurrency(selectedContratoDetalhes.valorTotal ?? selectedContratoDetalhes.valor_total)}</p>
+                                </div>
+                            </div>
+
+                            {/* Datas */}
+                            <div className="border-t pt-4">
+                                <h4 className="font-semibold mb-3">Datas</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Data Início</p>
+                                        <p>{formatDate(selectedContratoDetalhes.dataInicio)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Data Fim</p>
+                                        <p>{formatDate(selectedContratoDetalhes.dataFim)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Data Envio</p>
+                                        <p>{formatDate(selectedContratoDetalhes.dataEnvio)}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Detalhes de Entrega e Pagamento */}
+                            <div className="border-t pt-4">
+                                <h4 className="font-semibold mb-3">Entrega e Pagamento</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Frequência de Entregas</p>
+                                        <p>{selectedContratoDetalhes.frequenciaEntregas ?? selectedContratoDetalhes.frequencia_entregas ?? '—'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Dia de Pagamento</p>
+                                        <p>{selectedContratoDetalhes.diaPagamento ?? selectedContratoDetalhes.dia_pagamento ?? '—'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Forma de Pagamento</p>
+                                        <p>{selectedContratoDetalhes.formaPagamento ?? selectedContratoDetalhes.forma_pagamento ?? '—'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Descrição */}
+                            {selectedContratoDetalhes.descricao && (
+                                <div className="border-t pt-4">
+                                    <h4 className="font-semibold mb-2">Descrição</h4>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedContratoDetalhes.descricao}</p>
+                                </div>
+                            )}
+
+                            {/* Itens do Contrato */}
+                            {selectedContratoDetalhes.itens && selectedContratoDetalhes.itens.length > 0 && (
+                                <div className="border-t pt-4">
+                                    <h4 className="font-semibold mb-3">Itens do Contrato</h4>
+                                    <div className="space-y-2">
+                                        {selectedContratoDetalhes.itens.map((item, idx) => (
+                                            <div key={idx} className="p-3 border rounded-lg bg-muted/50">
+                                                <p className="font-medium">{item.nome || item.descricao || `Item ${idx + 1}`}</p>
+                                                {item.quantidade && <p className="text-sm text-muted-foreground">Quantidade: {item.quantidade}</p>}
+                                                {item.preco && <p className="text-sm text-muted-foreground">Preço: {formatCurrency(item.preco)}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+        );
+    };
+
 
 
 
@@ -579,6 +722,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
             </div>
 
             <CatalogModal />
+            <ContratoDetalhesModal />
         </div>
     );
 }

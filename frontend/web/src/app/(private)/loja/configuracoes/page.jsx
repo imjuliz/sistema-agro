@@ -46,6 +46,9 @@ export default function SettingsPage() {
     const [localTheme, setLocalTheme] = useState(globalTheme); 
     const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
 
+    // Indica se o usuário alterou alguma preferência em relação ao valor global
+    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize;
+
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [profileEditing, setProfileEditing] = useState(false);
     const [companyEditing, setCompanyEditing] = useState(false);
@@ -419,7 +422,9 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="pt-2">
-                                        <Button onClick={savePreferences}><Transl>Salvar preferências</Transl></Button> 
+                                        <Button onClick={savePreferences} disabled={!isPreferencesDirty} aria-disabled={!isPreferencesDirty}>
+                                            <Transl>Salvar preferências</Transl>
+                                        </Button>
                                     </div>
                                 </div>
                             </>

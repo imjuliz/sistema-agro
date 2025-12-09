@@ -8,6 +8,7 @@ import { InventoryProvider, useInventory } from '@/contexts/InventoryContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from '@/components/ui/textarea'
@@ -23,6 +24,7 @@ export function EstoqueTab({ fazenda }) {
 }
 
 function EstoqueTabContent({ fazenda }) {
+  const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalItem, setModalItem] = useState(null);
   const [movimentoTipo, setMovimentoTipo] = useState('ENTRADA');
@@ -49,7 +51,7 @@ function EstoqueTabContent({ fazenda }) {
     if (!modalItem) return;
     const quantidade = Number(movimentoQuantidade);
     if (isNaN(quantidade) || quantidade <= 0) {
-      alert('Informe uma quantidade válida maior que zero.');
+      toast({ title: 'Quantidade inválida', description: 'Informe um número maior que zero.', variant: 'destructive' });
       return;
     }
 
@@ -79,9 +81,10 @@ function EstoqueTabContent({ fazenda }) {
       // success -> refresh inventory to show updated quantities
       await refresh();
       closeMovimentoModal();
+      toast({ title: 'Movimentação registrada', description: 'Estoque atualizado com sucesso.' });
     } catch (err) {
       console.error('Erro ao registrar movimentação', err);
-      alert(String(err?.message ?? err));
+      toast({ title: 'Erro ao registrar movimentação', description: String(err?.message ?? 'Erro ao registrar movimentação'), variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }

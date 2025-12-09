@@ -4,34 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Plus, Edit, Check, X } from 'lucide-react';
+import { Trash2, Plus, Edit, Check, X, AlertCircle, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
-// export interface Category {
-//   id: string;
-//   name: string;
-//   type: 'entrada' | 'saida';
-//   subcategories: Subcategory[];
-// }
-
-// export interface Subcategory {
-//   id: string;
-//   name: string;
-//   categoryId: string;
-// }
-
-// interface CategoryManagerProps {
-//   categories: Category[];
-//   onCategoriesChange: (categories: Category[]) => void;
-// }
+import { useToast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth, API_URL, onRefresh }) {
+  const { toast } = useToast();
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryType, setNewCategoryType] = useState('entrada');
+  const [nameValidationMessage, setNameValidationMessage] = useState('');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddSubcategoryOpen, setIsAddSubcategoryOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
   
   // Estados para edição
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -41,6 +29,36 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
 
   const addCategory = async () => {
     if (!newCategoryName.trim()) return;
+
+    // If validation message exists, block immediately
+    if (nameValidationMessage) {
+      toast({ title: 'Validação', description: nameValidationMessage, variant: 'destructive' });
+      return;
+    }
+
+    // helper: normalize string (remove diacritics, lowercase, trim)
+    const normalizeName = (s) => String(s || '').normalize ? String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '') : String(s || '');
+    const normalizeAndClean = (s) => normalizeName(s).toLowerCase().trim();
+    const normalizeType = (t) => {
+      if (!t) return '';
+      const s = String(t).toLowerCase();
+      if (s.includes('entrada')) return 'entrada';
+      if (s.includes('saida') || s.includes('saída')) return 'saida';
+      return s;
+    };
+
+    // double-check duplicate before sending (accent-insensitive)
+    const nameClean = normalizeAndClean(newCategoryName);
+    const isDuplicate = Array.isArray(categories) && categories.some(cat => {
+      const catName = normalizeAndClean(cat.name || cat.nome || '');
+      return catName === nameClean && normalizeType(cat.type || cat.tipo) === normalizeType(newCategoryType);
+    });
+    if (isDuplicate) {
+      const msg = `Já existe uma categoria do tipo "${newCategoryType}" com este nome.`;
+      setNameValidationMessage(msg);
+      toast({ title: 'Categoria duplicada', description: msg, variant: 'destructive' });
+      return;
+    }
     
     try {
       const categoriaData = {
@@ -49,7 +67,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/categorias` : '/api/categorias';
+      const url = API_URL ? `${API_URL}categorias` : '/api/categorias';
       const response = await fetchWithAuth(url, {
         method: 'POST',
         headers: {
@@ -58,12 +76,28 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(categoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao criar categoria');
+        // Tenta obter a mensagem de erro específica do backend
+        const errorMessage = result.erro || result.detalhes || 'Erro ao criar categoria';
+        // Se for conflito de duplicidade (409), mostre a mensagem de validação no input
+        if (response.status === 409 || (typeof errorMessage === 'string' && errorMessage.includes('Já existe uma categoria'))) {
+          const msg = typeof errorMessage === 'string' ? errorMessage : `Já existe uma categoria com este nome deste tipo.`;
+          setNameValidationMessage(msg);
+          toast({ title: 'Categoria duplicada', description: msg, variant: 'destructive' });
+          return;
+        }
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
       if (result.sucesso) {
+        toast({
+          title: "Sucesso!",
+          description: "Categoria criada com sucesso.",
+          variant: "default",
+        });
+        
         if (onRefresh) {
           await onRefresh();
         } else {
@@ -71,17 +105,24 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
             id: result.dados.id.toString(),
             name: newCategoryName,
             type: newCategoryType,
-            subcategories: []
+            subcategories: [],
+            pendingAccounts: []
           };
           
           onCategoriesChange([...categories, newCategory]);
         }
         setNewCategoryName('');
+        setNameValidationMessage('');
         setIsAddCategoryOpen(false);
       }
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
-      alert('Erro ao criar categoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao criar categoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -94,7 +135,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/categorias/${selectedCategoryId}/subcategorias` : `/api/categorias/${selectedCategoryId}/subcategorias`;
+      const url = API_URL ? `${API_URL}categorias/${selectedCategoryId}/subcategorias` : `/api/categorias/${selectedCategoryId}/subcategorias`;
       const response = await fetchWithAuth(url, {
         method: 'POST',
         headers: {
@@ -103,12 +144,21 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(subcategoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao criar subcategoria');
+        // Tenta obter a mensagem de erro específica do backend
+        const errorMessage = result.erro || result.detalhes || 'Erro ao criar subcategoria';
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
       if (result.sucesso) {
+        toast({
+          title: "Sucesso!",
+          description: "Subcategoria criada com sucesso.",
+          variant: "default",
+        });
+        
         if (onRefresh) {
           await onRefresh();
         } else {
@@ -137,13 +187,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao criar subcategoria:', error);
-      alert('Erro ao criar subcategoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao criar subcategoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
   const deleteCategory = async (categoryId) => {
     try {
-      const url = API_URL ? `${API_URL}/api/categorias/${categoryId}` : `/api/categorias/${categoryId}`;
+      const url = API_URL ? `${API_URL}categorias/${categoryId}` : `/api/categorias/${categoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
         headers: {
@@ -152,8 +207,16 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar categoria');
+        const result = await response.json().catch(() => ({}));
+        const errorMessage = result.erro || result.detalhes || 'Erro ao deletar categoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Categoria deletada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -162,13 +225,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao deletar categoria:', error);
-      alert('Erro ao deletar categoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao deletar categoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
   const deleteSubcategory = async (categoryId, subcategoryId) => {
     try {
-      const url = API_URL ? `${API_URL}/api/subcategorias/${subcategoryId}` : `/api/subcategorias/${subcategoryId}`;
+      const url = API_URL ? `${API_URL}subcategorias/${subcategoryId}` : `/api/subcategorias/${subcategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
         headers: {
@@ -177,8 +245,16 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar subcategoria');
+        const result = await response.json().catch(() => ({}));
+        const errorMessage = result.erro || result.detalhes || 'Erro ao deletar subcategoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Subcategoria deletada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -196,7 +272,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       }
     } catch (error) {
       console.error('Erro ao deletar subcategoria:', error);
-      alert('Erro ao deletar subcategoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao deletar subcategoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -219,7 +300,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/categorias/${editingCategoryId}` : `/api/categorias/${editingCategoryId}`;
+      const url = API_URL ? `${API_URL}categorias/${editingCategoryId}` : `/api/categorias/${editingCategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'PUT',
         headers: {
@@ -228,9 +309,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(categoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao atualizar categoria');
+        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar categoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Categoria atualizada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -248,7 +338,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       setEditCategoryName('');
     } catch (error) {
       console.error('Erro ao atualizar categoria:', error);
-      alert('Erro ao atualizar categoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao atualizar categoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -261,7 +356,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         descricao: ''
       };
 
-      const url = API_URL ? `${API_URL}/api/subcategorias/${editingSubcategoryId}` : `/api/subcategorias/${editingSubcategoryId}`;
+      const url = API_URL ? `${API_URL}subcategorias/${editingSubcategoryId}` : `/api/subcategorias/${editingSubcategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'PUT',
         headers: {
@@ -270,9 +365,18 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         body: JSON.stringify(subcategoriaData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao atualizar subcategoria');
+        const errorMessage = result.erro || result.detalhes || 'Erro ao atualizar subcategoria';
+        throw new Error(errorMessage);
       }
+
+      toast({
+        title: "Sucesso!",
+        description: "Subcategoria atualizada com sucesso.",
+        variant: "default",
+      });
 
       if (onRefresh) {
         await onRefresh();
@@ -292,7 +396,12 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       setEditSubcategoryName('');
     } catch (error) {
       console.error('Erro ao atualizar subcategoria:', error);
-      alert('Erro ao atualizar subcategoria. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao atualizar subcategoria. Tente novamente.';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -303,12 +412,55 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
     setEditSubcategoryName('');
   };
 
+  // Funções auxiliares
+  const formatCurrency = (value) => {
+    const num = Number(value ?? 0);
+    if (isNaN(num) || !isFinite(num)) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(num);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    } catch {
+      return '-';
+    }
+  };
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  // Função para obter contas pendentes de uma categoria
+  const getPendingAccounts = (category) => {
+    if (!category.financeiros || !Array.isArray(category.financeiros)) {
+      return [];
+    }
+    return category.financeiros.filter(conta => conta.status === 'PENDENTE');
+  };
+
+  // Função para calcular total pendente de uma categoria
+  const getTotalPending = (category) => {
+    const pending = getPendingAccounts(category);
+    return pending.reduce((sum, conta) => {
+      const valor = Number(conta.valor) || 0;
+      return sum + (isNaN(valor) ? 0 : valor);
+    }, 0);
+  };
+
   const entradas = categories.filter(cat => cat.type === 'entrada');
   const saidas = categories.filter(cat => cat.type === 'saida');
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
+      <div className="flex gap-4 ">
         <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -316,7 +468,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
               Nova Categoria
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Adicionar Nova Categoria</DialogTitle>
               <DialogDescription>
@@ -325,17 +477,61 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="category-name">Nome da Categoria</Label>
+                <Label htmlFor="category-name" className={"pb-3"}>Nome da Categoria</Label>
                 <Input
                   id="category-name"
                   value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      // call addCategory which will re-check validation
+                      addCategory();
+                    }
+                  }}
+                  onChange={(e) => {
+                    setNewCategoryName(e.target.value);
+                    // validate live: only duplicate if same name and same type
+                    const normalizeType = (t) => {
+                      if (!t) return '';
+                      const s = String(t).toLowerCase();
+                      if (s.includes('entrada')) return 'entrada';
+                      if (s.includes('saida') || s.includes('saída')) return 'saida';
+                      return s;
+                    };
+                    const nameClean = (String(e.target.value || '').normalize ? String(e.target.value || '').normalize('NFD').replace(/\p{Diacritic}/gu, '') : String(e.target.value || '')).toLowerCase().trim();
+                    if (!nameClean) { setNameValidationMessage(''); return; }
+                    const dup = Array.isArray(categories) && categories.some(cat => {
+                      const catName = (String(cat.name || cat.nome || '').normalize ? String(cat.name || cat.nome || '').normalize('NFD').replace(/\p{Diacritic}/gu, '') : String(cat.name || cat.nome || '')).toLowerCase().trim();
+                      return catName === nameClean && normalizeType(cat.type || cat.tipo) === normalizeType(newCategoryType);
+                    });
+                    setNameValidationMessage(dup ? `Já existe uma categoria do tipo "${newCategoryType}" com este nome.` : '');
+                  }}
                   placeholder="Digite o nome da categoria"
                 />
+                {nameValidationMessage && (
+                  <p className="text-sm text-destructive mt-2">{nameValidationMessage}</p>
+                )}
               </div>
               <div>
-                <Label htmlFor="category-type">Tipo</Label>
-                <Select value={newCategoryType} onValueChange={(value) => setNewCategoryType(value)}>
+                <Label htmlFor="category-type" className={"pb-3"}>Tipo</Label>
+                <Select value={newCategoryType} onValueChange={(value) => {
+                    setNewCategoryType(value);
+                    // re-validate name against new type
+                    const normalizeType = (t) => {
+                      if (!t) return '';
+                      const s = String(t).toLowerCase();
+                      if (s.includes('entrada')) return 'entrada';
+                      if (s.includes('saida') || s.includes('saída')) return 'saida';
+                      return s;
+                    };
+                    const nameClean = String(newCategoryName || '').trim().toLowerCase();
+                    if (!nameClean) { setNameValidationMessage(''); return; }
+                    const dup = Array.isArray(categories) && categories.some(cat => {
+                      const catName = String(cat.name || cat.nome || '').trim().toLowerCase();
+                      return catName === nameClean && normalizeType(cat.type || cat.tipo) === normalizeType(value);
+                    });
+                    setNameValidationMessage(dup ? `Já existe uma categoria do tipo "${value}" com este nome.` : '');
+                }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -345,7 +541,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={addCategory} className="w-full">
+              <Button onClick={addCategory} className="w-full" disabled={!!nameValidationMessage || !newCategoryName.trim()}>
                 Adicionar Categoria
               </Button>
             </div>
@@ -359,7 +555,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
               Nova Subcategoria
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Adicionar Nova Subcategoria</DialogTitle>
               <DialogDescription>
@@ -375,8 +571,8 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name} ({category.type})
+                      <SelectItem key={category.id} value={String(category.id || '')}>
+                        {category.name || 'Sem nome'} ({category.type || 'sem tipo'})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -402,7 +598,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-green-600">Categorias de Entrada</CardTitle>
+            <CardTitle className="">Categorias de Entrada</CardTitle>
             <CardDescription>Categorias para receitas e ganhos</CardDescription>
           </CardHeader>
           <CardContent>
@@ -425,7 +621,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                           variant="ghost"
                           size="sm"
                           onClick={saveEditCategory}
-                          className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                          className="hover:text-green-700 h-8 w-8 p-0"
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -440,13 +636,15 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </div>
                     ) : (
                       <>
-                        <h4 className="text-green-700">{category.name}</h4>
+                        <div className="flex items-center gap-2 flex-1">
+                          <h4 className="font-semibold">{category.name}</h4>
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => startEditCategory(category)}
-                            className="text-blue-500 hover:text-blue-700 h-8 w-8 p-0"
+                            className="h-8 w-8 p-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -462,6 +660,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </>
                     )}
                   </div>
+                  
                   <div className="space-y-1 ml-4">
                     {category.subcategories.map(subcategory => (
                       <div key={subcategory.id} className="flex items-center justify-between text-sm">
@@ -481,7 +680,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                               variant="ghost"
                               size="sm"
                               onClick={saveEditSubcategory}
-                              className="text-green-600 hover:text-green-700 h-6 w-6 p-0"
+                              className="h-6 w-6 p-0"
                             >
                               <Check className="h-3 w-3" />
                             </Button>
@@ -502,7 +701,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => startEditSubcategory(subcategory)}
-                                className="text-blue-400 hover:text-blue-600 h-6 w-6 p-0"
+                                className="h-6 w-6 p-0"
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
@@ -528,7 +727,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-600">Categorias de Saída</CardTitle>
+            <CardTitle className="">Categorias de Saída</CardTitle>
             <CardDescription>Categorias para despesas e gastos</CardDescription>
           </CardHeader>
           <CardContent>
@@ -551,7 +750,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                           variant="ghost"
                           size="sm"
                           onClick={saveEditCategory}
-                          className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                          className="h-8 w-8 p-0"
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -566,13 +765,20 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </div>
                     ) : (
                       <>
-                        <h4 className="text-red-700">{category.name}</h4>
+                        <div className="flex items-center gap-2 flex-1">
+                          <h4 className="">{category.name}</h4>
+                          {getPendingAccounts(category).length > 0 && (
+                            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                              {getPendingAccounts(category).length} pendente{getPendingAccounts(category).length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => startEditCategory(category)}
-                            className="text-blue-500 hover:text-blue-700 h-8 w-8 p-0"
+                            className="h-8 w-8 p-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -580,7 +786,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                             variant="ghost"
                             size="sm"
                             onClick={() => deleteCategory(category.id)}
-                            className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                            className="h-8 w-8 p-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -588,6 +794,62 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                       </>
                     )}
                   </div>
+                  
+                  {/* Exibir contas pendentes */}
+                  {getPendingAccounts(category).length > 0 && (
+                    <Collapsible 
+                      open={expandedCategories[category.id]} 
+                      onOpenChange={() => toggleCategory(category.id)}
+                      className="mt-2"
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
+                          <span className="flex items-center gap-2">
+                            <AlertCircle className="h-3 w-3 text-orange-600" />
+                            {getPendingAccounts(category).length} conta{getPendingAccounts(category).length > 1 ? 's' : ''} pendente{getPendingAccounts(category).length > 1 ? 's' : ''} 
+                            ({formatCurrency(getTotalPending(category))})
+                          </span>
+                          <span className="text-muted-foreground">
+                            {expandedCategories[category.id] ? 'Ocultar' : 'Ver'}
+                          </span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2 space-y-2">
+                        <div className="ml-4 border-l-2 border-orange-200 pl-3 space-y-2">
+                          {getPendingAccounts(category).map((conta) => (
+                            <div
+                              key={conta.id}
+                              className="rounded p-2 text-xs bg-white/50 dark:bg-transparent border border-orange-100 dark:border-orange-900/20"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="font-medium text-orange-900 dark:text-orange-100">
+                                    {conta.descricao || 'Sem descrição'}
+                                  </div>
+                                  {conta.subcategoria && (
+                                    <div className="text-orange-700 dark:text-orange-300 text-xs mt-1">
+                                      Subcategoria: {conta.subcategoria.nome}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-3 mt-1 text-orange-600 dark:text-orange-300">
+                                    <span className="flex items-center gap-1">
+                                      <DollarSign className="h-3 w-3" />
+                                      {formatCurrency(conta.valor)}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Vence: {formatDate(conta.vencimento)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                  
                   <div className="space-y-1 ml-4">
                     {category.subcategories.map(subcategory => (
                       <div key={subcategory.id} className="flex items-center justify-between text-sm">
@@ -607,7 +869,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                               variant="ghost"
                               size="sm"
                               onClick={saveEditSubcategory}
-                              className="text-green-600 hover:text-green-700 h-6 w-6 p-0"
+                              className="h-6 w-6 p-0"
                             >
                               <Check className="h-3 w-3" />
                             </Button>
@@ -628,7 +890,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => startEditSubcategory(subcategory)}
-                                className="text-blue-400 hover:text-blue-600 h-6 w-6 p-0"
+                                className="h-6 w-6 p-0"
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>

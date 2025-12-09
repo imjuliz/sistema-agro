@@ -11,36 +11,6 @@ import { AccountPayable } from './AccountsPayable';
 import { AccountReceivable } from './AccountsReceivable';
 import useLocalStorage from '../../hooks/useLocalStorage';
 
-// interface CashFlowProps {
-//   categories: Category[];
-//   accountsPayable: AccountPayable[];
-//   accountsReceivable: AccountReceivable[];
-// }
-
-// interface MonthlyFlowData { forecasted: number; actual: number;}
-
-// interface CategoryFlowData { [subcategoryId: string]: MonthlyFlowData;}
-
-// interface MonthlyData {
-//   month: string;
-//   previousBalance: MonthlyFlowData;
-//   totalIncome: MonthlyFlowData;
-//   totalExpenses: MonthlyFlowData;
-//   netGeneration: MonthlyFlowData;
-//   finalBalance: MonthlyFlowData;
-//   incomeByCategory: { [categoryId: string]: CategoryFlowData };
-//   expensesByCategory: { [categoryId: string]: CategoryFlowData };
-// }
-
-// interface YearSummary {
-//   totalIncome: MonthlyFlowData;
-//   totalExpenses: MonthlyFlowData;
-//   netGeneration: MonthlyFlowData;
-//   finalBalance: MonthlyFlowData;
-//   incomeByCategory: { [categoryId: string]: CategoryFlowData };
-//   expensesByCategory: { [categoryId: string]: CategoryFlowData };
-// }
-
 export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
@@ -143,24 +113,6 @@ export function CashFlow({ categories, accountsPayable, accountsReceivable }) {
         }
       });
 
-      // Calcular despesas por categoria
-      // const expensesByCategory: { [categoryId: string]: CategoryFlowData } = {};
-      // let totalForecastedExpenses = 0;
-      // let totalActualExpenses = 0;
-
-      // // DESPESAS PREVISTAS
-      // forecastedAccountsPayable.forEach(acc => {
-      //   const subcategory = categories
-      //     .flatMap(cat => cat.subcategories.map(sub => ({ ...sub, categoryId: cat.id })))
-      //     .find(sub => sub.id === acc.subcategoryId);
-
-      //   if (subcategory) {
-      //     if (!expensesByCategory[subcategory.categoryId]) { expensesByCategory[subcategory.categoryId] = {}; }
-      //     if (!expensesByCategory[subcategory.categoryId][subcategory.id]) { expensesByCategory[subcategory.categoryId][subcategory.id] = { forecasted: 0, actual: 0 };}
-      //     expensesByCategory[subcategory.categoryId][subcategory.id].forecasted += acc.amount;
-      //     totalForecastedExpenses += acc.amount;
-      //   }
-      // });
       const expensesByCategory = {};
       let totalForecastedExpenses = 0;
       let totalActualExpenses = 0;

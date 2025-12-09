@@ -22,57 +22,6 @@ export const listarSaidas = async (unidadeId) => {//tem controller
     }
 }
 
-export const getDashboardStats = async (unidadeId) => {
-
-  const totalReceivable = await prisma.financeiro.aggregate({
-    where: { tipoMovimento: "ENTRADA", unidadeId },
-    _sum: { valor: true },
-  });
-
-  const totalPayable = await prisma.financeiro.aggregate({
-    where: { tipoMovimento: "SAIDA", unidadeId },
-    _sum: { valor: true },
-  });
-
-  const totalReceived = await prisma.financeiro.aggregate({
-    where: { tipoMovimento: "ENTRADA", status: "PAGA", unidadeId },
-    _sum: { valorPago: true },
-  });
-
-  const totalPaid = await prisma.financeiro.aggregate({
-    where: { tipoMovimento: "SAIDA", status: "PAGA", unidadeId },
-    _sum: { valorPago: true },
-  });
-
-  const receivablePendingCount = await prisma.financeiro.count({
-    where: { tipoMovimento: "ENTRADA", status: "PENDENTE", unidadeId },
-  });
-
-  const payablePendingCount = await prisma.financeiro.count({
-    where: { tipoMovimento: "SAIDA", status: "PENDENTE", unidadeId },
-  });
-
-  const receivedCount = await prisma.financeiro.count({
-    where: { tipoMovimento: "ENTRADA", status: "PAGA", unidadeId },
-  });
-
-  const paidCount = await prisma.financeiro.count({
-    where: { tipoMovimento: "SAIDA", status: "PAGA", unidadeId },
-  });
-
-  return {
-    totalReceivable: Number(totalReceivable._sum.valor || 0),
-    totalPayable: Number(totalPayable._sum.valor || 0),
-    totalReceived: Number(totalReceived._sum.valorPago || 0),
-    totalPaid: Number(totalPaid._sum.valorPago || 0),
-    receivablePendingCount,
-    payablePendingCount,
-    receivedCount,
-    paidCount,
-  };
-};
-
-
 export const buscarProdutoMaisVendido = async (unidadeId) => {
     try {
         const resultado = await prisma.itemVenda.groupBy({ // Agrupa os itens de venda por produto e soma a quantidade vendida
@@ -319,6 +268,50 @@ export const calcularLucroDoMes = async (unidadeId) => { //TESTAR
     return { total_vendas: 0, total_saidas: 0, lucro: 0 };
   }
 }
+
+// Resumo simples para o dashboard financeiro
+export const getDashboardStats = async (unidadeId) => {
+  try {
+    const [payableAgg, receivedAgg, paidAgg] = await Promise.all([
+      prisma.financeiro.aggregate({
+        _sum: { valor: true },
+        where: {
+          unidadeId: Number(unidadeId),
+          tipoMovimento: 'SAIDA',
+          status: 'PENDENTE',
+          deletadoEm: null,
+        },
+      }),
+      prisma.financeiro.aggregate({
+        _sum: { valor: true },
+        where: {
+          unidadeId: Number(unidadeId),
+          tipoMovimento: 'ENTRADA',
+          status: 'PAGA',
+          deletadoEm: null,
+        },
+      }),
+      prisma.financeiro.aggregate({
+        _sum: { valor: true },
+        where: {
+          unidadeId: Number(unidadeId),
+          tipoMovimento: 'SAIDA',
+          status: 'PAGA',
+          deletadoEm: null,
+        },
+      }),
+    ]);
+
+    return {
+      totalPayable: Number(payableAgg._sum.valor ?? 0),
+      totalReceived: Number(receivedAgg._sum.valor ?? 0),
+      totalPaid: Number(paidAgg._sum.valor ?? 0),
+    };
+  } catch (error) {
+    console.error('[getDashboardStats] erro:', error);
+    return { totalPayable: 0, totalReceived: 0, totalPaid: 0, erro: error.message };
+  }
+};
 
 export const listarVendas = async (unidadeId) => { //FUNCIONA 
     try {

@@ -28,6 +28,17 @@ export function NavUser() {
 
   const currentUser = user ?? null;
 
+  function getInitials(fullNameOrEmail) {
+    if (!fullNameOrEmail) return 'NI';
+    const s = String(fullNameOrEmail).trim();
+    if (!s) return 'NI';
+    const candidate = s.includes('@') ? s.split('@')[0] : s;
+    const parts = candidate.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    if (parts[0].length >= 2) return (parts[0][0] + parts[0][1]).toUpperCase();
+    return parts[0][0].toUpperCase();
+  }
+
   // useEffect sempre no topo (ordem de hooks preservada)
   useEffect(() => {
     // quando carregou (não loading) e não há usuário, redireciona
@@ -69,12 +80,12 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={buildImageUrl(user.avatar)} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.nome?.[0]?.toUpperCase() ?? "N/I"}</AvatarFallback>
+                <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} style={{ objectFit: 'cover' }} />
+                  <AvatarFallback className="rounded-lg">{getInitials(user.nome || user.email)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.nome}</span>
+                <span className="truncate font-medium">{user.nome}</span>
+                <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -83,8 +94,8 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={buildImageUrl(user.avatar)} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.nome?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} style={{ objectFit: 'cover' }} />
+                  <AvatarFallback className="rounded-lg">{getInitials(user.nome || user.email)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.nome}</span>

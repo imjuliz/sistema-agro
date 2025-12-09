@@ -90,6 +90,10 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [newFornecedorNome, setNewFornecedorNome] = useState("");
   const [newFornecedorDocumento, setNewFornecedorDocumento] = useState("");
   const [newFornecedorContato, setNewFornecedorContato] = useState("");
+  const [step1ActiveTab, setStep1ActiveTab] = useState('externo'); // 'externo' ou 'interno'
+  const [internalContractDraft, setInternalContractDraft] = useState({});
+  const [internalContractFormErrors, setInternalContractFormErrors] = useState({});
+  const [existingLojas, setExistingLojas] = useState([]);
 
   // Step 3 (equipe)
   const [teamInvites, setTeamInvites] = useState([]);
@@ -103,6 +107,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   const [errors, setErrors] = useState({});
   // mensagem de erro geral por step (ex: "adicione pelo menos um contrato")
   const [formError, setFormError] = useState("");
+  // erros específicos para itens do contrato: { contractIndex: { field: 'mensagem' } }
+  const [itemErrors, setItemErrors] = useState({});
 
   // CEP specific
   const [cepLoading, setCepLoading] = useState(false);
@@ -175,11 +181,44 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       default: return null;
     }
     // return yyyy-mm-dd
-    return out.toISOString().slice(0,10);
+    return out.toISOString().slice(0, 10);
+  }
+
+  // --- Função para comprimir imagem ---
+  function compressImage(file, maxWidth = 800, quality = 0.7) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Redimensionar se necessário
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Converter para base64 com qualidade reduzida
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   // --- Handle upload de imagem ---
-  function handleImageUpload(e) {
+  async function handleImageUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -196,12 +235,19 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
     setImagemFile(file);
 
-    // Criar preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImagemPreview(event.target?.result);
-    };
-    reader.readAsDataURL(file);
+    // Comprimir imagem antes de criar preview
+    try {
+      const compressedBase64 = await compressImage(file);
+      setImagemPreview(compressedBase64);
+    } catch (err) {
+      console.error('Erro ao comprimir imagem:', err);
+      // Fallback: usar imagem original se compressão falhar
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagemPreview(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   // --- CEP lookup using fetchWithAuth ---
@@ -266,7 +312,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (!email.trim()) e.email = "Email é obrigatório.";
     if (!cnpj.trim()) e.cnpj = "CNPJ é obrigatório.";
     if (!focoProdutivo.trim()) e.focoProdutivo = "Foco produtivo é obrigatório.";
-    // validação do número do endereço (opcional, mas se preenchido validar comprimento)
+    // validação do número do endereço (obrigatório)
+    if (!enderecoNumero || !enderecoNumero.trim()) e.enderecoNumero = "Número do endereço é obrigatório.";
     if (enderecoNumero && enderecoNumero.trim().length > 20) e.enderecoNumero = "Número do endereço inválido.";
     // validação simples de e-mail (se preenchido)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Email inválido.";
@@ -280,8 +327,26 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   }
 
   function validateStep1Fields() {
-    // Fornecedores/contratos não são mais obrigatórios
-    return {};
+    const e = {};
+    // Validar mínimo 1 fornecedor
+    if (fornecedores.length === 0) {
+      e.fornecedores = "É obrigatório adicionar pelo menos 1 fornecedor.";
+    }
+    // Validar mínimo 1 contrato
+    if (contracts.length === 0) {
+      e.contracts = "É obrigatório adicionar pelo menos 1 contrato.";
+    }
+    // Validar cada contrato tem campos obrigatórios
+    contracts.forEach((c, idx) => {
+      if (!c.dataInicio) e[`contract_${idx}_dataInicio`] = "Data de início é obrigatória.";
+      if (!c.dataEnvio) e[`contract_${idx}_dataEnvio`] = "Dia de envio é obrigatório.";
+      if (!c.isFornecedora && !c.duration) e[`contract_${idx}_duration`] = "Duração do contrato é obrigatória.";
+      if (!c.isFornecedora && !c.dataFim) e[`contract_${idx}_dataFim`] = "Data de fim é obrigatória.";
+      if (!c.diaPagamento) e[`contract_${idx}_diaPagamento`] = "Dia de pagamento é obrigatório.";
+      if (!c.formaPagamento) e[`contract_${idx}_formaPagamento`] = "Forma de pagamento é obrigatória.";
+      if (!c.frequenciaEntregas) e[`contract_${idx}_frequenciaEntregas`] = "Frequência de entregas é obrigatória.";
+    });
+    return e;
   }
 
   // --- Handlers de navegação com validação inline ---
@@ -313,113 +378,190 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
   function handleBack() { if (step > 0) setStep(step - 1); }
 
   // --- Funções de adição de fornecedor ---
-async function addFornecedor() {
-  // Não criar fornecedor no backend aqui. Apenas validar e criar um fornecedor LOCAL
-  // que será persistido no backend somente durante a criação final da fazenda (handleSubmitAll).
-  setFormError("");
-  setNewFornecedorErrors({});
+  async function addFornecedor() {
+    // Não criar fornecedor no backend aqui. Apenas validar e criar um fornecedor LOCAL
+    // que será persistido no backend somente durante a criação final da fazenda (handleSubmitAll).
+    setFormError("");
+    setNewFornecedorErrors({});
 
-  const errors = {};
-  if (!newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
-  if (!newFornecedorData.descricaoEmpresa.trim()) errors.descricaoEmpresa = "Descrição é obrigatória.";
-  const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf || "");
-  if (newFornecedorData.cnpjCpf && cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ inválido.";
-  if (!onlyDigits(newFornecedorData.telefone || "")) errors.telefone = "Telefone é obrigatório.";
-  if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
+    const errors = {};
+    if (!newFornecedorData.nomeEmpresa.trim()) errors.nomeEmpresa = "Nome da empresa é obrigatório.";
+    // Descrição é opcional agora
+    const cnpjDigits = onlyDigits(newFornecedorData.cnpjCpf || "");
+    if (!newFornecedorData.cnpjCpf || !cnpjDigits || cnpjDigits.length !== 14) errors.cnpjCpf = "CNPJ é obrigatório e deve conter 14 dígitos.";
+    if (!onlyDigits(newFornecedorData.telefone || "")) errors.telefone = "Telefone é obrigatório.";
+    if (newFornecedorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newFornecedorData.email)) errors.email = "Email inválido.";
 
-  if (Object.keys(errors).length > 0) {
-    setNewFornecedorErrors(errors);
-    return;
-  }
-
-  // Criar fornecedor local (temporário). Será criado no backend apenas em handleSubmitAll.
-  const tempId = `temp_fornecedor_${Date.now()}`;
-  const localFornecedor = {
-    id: tempId,
-    isNew: true,
-    nome: newFornecedorData.nomeEmpresa.trim(),
-    nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
-    descricaoEmpresa: newFornecedorData.descricaoEmpresa.trim(),
-    cnpjCpf: newFornecedorData.cnpjCpf ? onlyDigits(newFornecedorData.cnpjCpf) : null,
-    email: newFornecedorData.email || null,
-    telefone: onlyDigits(newFornecedorData.telefone),
-    endereco: newFornecedorData.endereco || null
-  };
-
-  setFornecedores(prev => ([...prev, localFornecedor]));
-  setSelectedFornecedorId(String(tempId));
-  setIsCreatingNewFornecedor(false);
-  setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
-  setNewFornecedorErrors({});
-}
-
-function addContract() {
-  setErrors(prev => {
-    const copy = { ...prev };
-    delete copy.contracts;
-    return copy;
-  });
-  setFormError("");
-
-  // Seleção inválida: sem seleção
-  if (!selectedFornecedorId || selectedFornecedorId === "new") {
-    setErrors(prev => ({ ...prev, contracts: 'Selecione um fornecedor existente para criar contrato.' }));
-    setFormError('Selecione um fornecedor existente.');
-    return;
-  }
-
-  const fornecedorId = String(selectedFornecedorId);
-
-  // verificar duplicata por fornecedorId
-  const alreadyHas = contracts.some(c => String(c.fornecedorId) === fornecedorId);
-  if (alreadyHas) {
-    setFormError('Já existe um contrato para este fornecedor.');
-    return;
-  }
-
-  // preparar cópias
-  const fornecedoresCopy = [...fornecedores];
-  let fornecedorIndex = fornecedoresCopy.findIndex(f => String(f.id) === fornecedorId);
-
-  if (fornecedorIndex === -1) {
-    const ext = existingFornecedores.find(f => String(f.id) === fornecedorId);
-    if (!ext) {
-      setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
-      setFormError('Fornecedor inválido.');
+    if (Object.keys(errors).length > 0) {
+      setNewFornecedorErrors(errors);
       return;
     }
-    const fornecedorObj = {
-      id: ext.id,
-      nome: ext.nomeEmpresa || ext.nome,
-      nomeEmpresa: ext.nomeEmpresa || ext.nome,
-      documento: ext.cnpjCpf || null,
-      contato: ext.telefone || ext.contato || null,
-      email: ext.email || null
+
+    // Criar fornecedor local (temporário). Será criado no backend apenas em handleSubmitAll.
+    const tempId = `temp_fornecedor_${Date.now()}`;
+    const localFornecedor = {
+      id: tempId,
+      isNew: true,
+      nome: newFornecedorData.nomeEmpresa.trim(),
+      nomeEmpresa: newFornecedorData.nomeEmpresa.trim(),
+      descricaoEmpresa: newFornecedorData.descricaoEmpresa?.trim() || null,
+      cnpjCpf: onlyDigits(newFornecedorData.cnpjCpf),
+      email: newFornecedorData.email || null,
+      telefone: onlyDigits(newFornecedorData.telefone),
+      endereco: newFornecedorData.endereco || null
     };
-    fornecedoresCopy.push(fornecedorObj);
-    fornecedorIndex = fornecedoresCopy.length - 1;
+
+    // Criar contrato automaticamente para o novo fornecedor ANTES de atualizar o estado
+    const fornecedorIndex = fornecedores.length; // índice será após adicionar
+    const novoContrato = {
+      fornecedorIndex,
+      fornecedorId: tempId,
+      nomeContrato: `Contrato com ${localFornecedor.nomeEmpresa}`,
+      descricao: '',
+      itens: [],
+      dataInicio: new Date().toISOString().slice(0, 10),
+      dataEnvio: '',
+      dataFim: null,
+      frequenciaEntregas: null,
+      diaPagamento: '',
+      formaPagamento: null,
+      status: 'ATIVO',
+      duration: '',
+      // indica se a fazenda será fornecedora (envia produtos) neste contrato
+      isFornecedora: false,
+      fornecedorUnidadeId: null
+    };
+
+    setFornecedores(prev => ([...prev, localFornecedor]));
+    setContracts(prev => ([...prev, novoContrato]));
+    setSelectedFornecedorId(String(tempId));
+    setIsCreatingNewFornecedor(false);
+    setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+    setNewFornecedorErrors({});
   }
 
-  const novoContrato = {
-    fornecedorIndex,
-    fornecedorId,
-    nomeContrato: `Contrato com ${fornecedoresCopy[fornecedorIndex].nomeEmpresa || fornecedoresCopy[fornecedorIndex].nome}`,
-    descricao: '',
-    itens: [],
-    dataInicio: new Date().toISOString().slice(0,10),
-    dataEnvio: new Date().toISOString().slice(0,10),
-    dataFim: null,
-    frequenciaEntregas: null,
-    diaPagamento: '',
-    formaPagamento: null,
-    status: 'ATIVO',
-    duration: ''
-  };
+  function addContract() {
+    setErrors(prev => {
+      const copy = { ...prev };
+      delete copy.contracts;
+      return copy;
+    });
+    setFormError("");
 
-  setFornecedores(fornecedoresCopy);
-  setContracts(prev => ([...prev, novoContrato]));
-  setSelectedFornecedorId(fornecedorId);
-}
+    // Seleção inválida: sem seleção
+    if (!selectedFornecedorId || selectedFornecedorId === "new") {
+      setErrors(prev => ({ ...prev, contracts: 'Selecione um fornecedor existente para criar contrato.' }));
+      setFormError('Selecione um fornecedor existente.');
+      return;
+    }
+
+    const fornecedorId = String(selectedFornecedorId);
+
+    // verificar duplicata por fornecedorId
+    const alreadyHas = contracts.some(c => String(c.fornecedorId) === fornecedorId);
+    if (alreadyHas) {
+      setFormError('Já existe um contrato para este fornecedor.');
+      return;
+    }
+
+    // preparar cópias
+    const fornecedoresCopy = [...fornecedores];
+    let fornecedorIndex = fornecedoresCopy.findIndex(f => String(f.id) === fornecedorId);
+
+    if (fornecedorIndex === -1) {
+      const ext = existingFornecedores.find(f => String(f.id) === fornecedorId);
+      if (!ext) {
+        setErrors(prev => ({ ...prev, contracts: 'Fornecedor inválido.' }));
+        setFormError('Fornecedor inválido.');
+        return;
+      }
+      const fornecedorObj = {
+        id: ext.id,
+        nome: ext.nomeEmpresa || ext.nome,
+        nomeEmpresa: ext.nomeEmpresa || ext.nome,
+        documento: ext.cnpjCpf || null,
+        contato: ext.telefone || ext.contato || null,
+        email: ext.email || null
+      };
+      fornecedoresCopy.push(fornecedorObj);
+      fornecedorIndex = fornecedoresCopy.length - 1;
+    }
+
+    const novoContrato = {
+      fornecedorIndex,
+      fornecedorId,
+      nomeContrato: `Contrato com ${fornecedoresCopy[fornecedorIndex].nomeEmpresa || fornecedoresCopy[fornecedorIndex].nome}`,
+      descricao: '',
+      itens: [],
+      dataInicio: new Date().toISOString().slice(0, 10),
+      dataEnvio: new Date().toISOString().slice(0, 10),
+      dataFim: null,
+      frequenciaEntregas: null,
+      diaPagamento: '',
+      formaPagamento: null,
+      status: 'ATIVO',
+      duration: '',
+      isFornecedora: false,
+      fornecedorUnidadeId: null
+    };
+
+    setFornecedores(fornecedoresCopy);
+    setContracts(prev => ([...prev, novoContrato]));
+    setSelectedFornecedorId(fornecedorId);
+  }
+
+  function createInternalContract() {
+    const errors_new = {};
+    
+    if (!internalContractDraft.selectedLojaId) {
+      errors_new.selectedLojaId = 'Selecione uma loja';
+    }
+    if (!internalContractDraft.dataInicio) {
+      errors_new.dataInicio = 'Data de início é obrigatória';
+    }
+    if (!internalContractDraft.dataFim) {
+      errors_new.dataFim = 'Data de fim é obrigatória';
+    }
+    if (!internalContractDraft.dataEnvio) {
+      errors_new.dataEnvio = 'Dia de envio é obrigatório';
+    }
+    if (!internalContractDraft.frequenciaEntregas) {
+      errors_new.frequenciaEntregas = 'Frequência é obrigatória';
+    }
+    if (!internalContractDraft.diaPagamento) {
+      errors_new.diaPagamento = 'Dia de pagamento é obrigatório';
+    }
+    
+    if (Object.keys(errors_new).length > 0) {
+      setInternalContractFormErrors(errors_new);
+      return;
+    }
+    
+    const nomeLoja = existingLojas.find(l => String(l.id) === internalContractDraft.selectedLojaId)?.nomeEmpresa || 
+                     existingLojas.find(l => String(l.id) === internalContractDraft.selectedLojaId)?.nome || 'Loja';
+    
+    const novoContratoInterno = {
+      nomeContrato: `Contrato com ${nomeLoja}`,
+      descricao: internalContractDraft.descricao || '',
+      dataInicio: internalContractDraft.dataInicio,
+      dataFim: internalContractDraft.dataFim,
+      dataEnvio: internalContractDraft.dataEnvio,
+      frequenciaEntregas: internalContractDraft.frequenciaEntregas,
+      diaPagamento: internalContractDraft.diaPagamento,
+      formaPagamento: internalContractDraft.formaPagamento || '',
+      status: internalContractDraft.status || 'ativo',
+      itens: [],
+      isFornecedora: true,
+      unidadeLojaId: internalContractDraft.selectedLojaId,
+      fornecedorUnidadeId: null
+    };
+    
+    setContracts(prev => [...prev, novoContratoInterno]);
+    setInternalContractDraft({});
+    setInternalContractFormErrors({});
+    setFormError('Contrato interno adicionado com sucesso!');
+    setTimeout(() => setFormError(''), 3000);
+  }
 
   // --- Funções de adição de equipe ---
   async function addTeamInvite(type) {
@@ -440,17 +582,15 @@ function addContract() {
         errors.confirmaSenha = "As senhas não correspondem.";
       }
 
-      // Validar se email já existe em teamInvites ou em gerentes existentes
-      const emailJaExiste = teamInvites.some(u => u.email.toLowerCase() === newGerenteData.email.toLowerCase()) ||
-                           existingGerentes.some(g => g.email && g.email.toLowerCase() === newGerenteData.email.toLowerCase());
+      // Validar se email já existe em teamInvites
+      const emailJaExiste = teamInvites.some(u => u.email.toLowerCase() === newGerenteData.email.toLowerCase());
       if (emailJaExiste) {
         errors.email = "Este email já está cadastrado.";
       }
 
-      // Validar se telefone já existe em teamInvites ou em gerentes existentes
+      // Validar se telefone já existe em teamInvites
       const telefoneDigitos = onlyDigits(newGerenteData.telefone);
-      const telefoneJaExiste = teamInvites.some(u => onlyDigits(u.telefone) === telefoneDigitos) ||
-                              existingGerentes.some(g => g.telefone && onlyDigits(g.telefone) === telefoneDigitos);
+      const telefoneJaExiste = teamInvites.some(u => onlyDigits(u.telefone) === telefoneDigitos);
       if (telefoneJaExiste) {
         errors.telefone = "Este telefone já está cadastrado.";
       }
@@ -596,40 +736,36 @@ function addContract() {
     fetchContratoMeta();
   }, [open, accessToken, fetchWithAuth]);
 
-  // Novo useEffect para buscar gerentes disponíveis
+  // useEffect para buscar lojas para contratos internos
   useEffect(() => {
-    if (!(open && step === 2 && accessToken)) {
-      if (!open) {
-        setExistingGerentes([]);
-        setSelectedGerenteId("");
-        setIsCreatingNewGerente(false);
-        setNewGerenteData({ nome: "", email: "", telefone: "", senha: "" });
-        setNewGerenteErrors({});
-      }
+    if (!(open && accessToken)) {
+      setExistingLojas([]);
       return;
     }
 
-    async function fetchExistingGerentes() {
+    async function fetchLojas() {
       try {
-        // monta base sem barra final para evitar // na URL
         const base = String(API_URL || '').replace(/\/$/, '');
-        const url = `${base}/usuarios/gerentes-disponiveis`;
-
-        const res = await fetchWithAuth(url, { method: "GET" });
-        if (res.ok) {
-          const json = await res.json();
-          // o controller retorna { sucesso: true, gerentes }
-          setExistingGerentes(json.gerentes || []);
-        } else {
-          console.error("Falha ao carregar gerentes disponíveis:", res.status);
+        const res = await fetchWithAuth(`${base}/listarTodasAsLojas`, { method: 'GET' });
+        if (!res.ok) return console.warn('Falha ao carregar lojas:', res.status);
+        const json = await res.json();
+        if (Array.isArray(json?.sucesso)) {
+          setExistingLojas(json.sucesso);
+        } else if (Array.isArray(json?.lojas)) {
+          setExistingLojas(json.lojas);
+        } else if (Array.isArray(json)) {
+          setExistingLojas(json);
         }
       } catch (err) {
-        console.error("Erro ao buscar gerentes disponíveis:", err);
+        console.error('Erro buscando lojas:', err);
+        setExistingLojas([]);
       }
     }
 
-    fetchExistingGerentes();
-  }, [open, step, accessToken, fetchWithAuth, API_URL]);
+    fetchLojas();
+  }, [open, accessToken, fetchWithAuth]);
+
+  // Removido: não buscamos mais gerentes existentes, apenas criamos novos
 
   async function handleSubmitAll() {
     setErrors({});
@@ -645,38 +781,69 @@ function addContract() {
 
     // monta payload unidade
     const enderecoCompleto = endereco.trim() + (enderecoNumero && enderecoNumero.trim() ? `, nº ${enderecoNumero.trim()}` : '');
-      // build payload without sending `null` for optional fields (Zod expects omitted fields instead)
-      
-      // Determinar status da fazenda: ATIVA apenas se tiver AMBOS os tipos de contrato
-      // 1. Contrato como consumidora (recebe de fornecedor externo)
-      // 2. Contrato como fornecedora (envia para lojas via fornecedorUnidadeId)
-      const temContratoComoConsumidora = contracts?.some(c => c.fornecedorExternoId);
-      const temContratoComoFornecedora = contracts?.some(c => c.fornecedorUnidadeId);
-      const fazeindaStatus = (temContratoComoConsumidora && temContratoComoFornecedora) ? 'ATIVA' : 'INATIVA';
-      
-      const payload = {
-        nome: nome.trim(),
-        endereco: enderecoCompleto,
-        cep: onlyDigits(cep).trim(),
-        cidade: cidade.trim(),
-        estado: estado.trim(),
-        tipo: 'FAZENDA',
-        status: fazeindaStatus
-      };
+    
+    // Se não temos latitude/longitude mas temos endereço completo, buscar coordenadas
+    if ((latitude === null || longitude === null) && enderecoCompleto && cidade && estado) {
+      try {
+        const enderecoParaGeocode = `${enderecoCompleto}, ${cidade}, ${estado}, Brasil`;
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoParaGeocode)}&limit=1`;
+        const geoResponse = await fetch(nominatimUrl, {
+          headers: { 'User-Agent': 'SistemaAgro/1.0 (node.js)' }
+        });
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          if (geoData && geoData.length > 0) {
+            setLatitude(parseFloat(geoData[0].lat));
+            setLongitude(parseFloat(geoData[0].lon));
+          }
+        }
+      } catch (geoErr) {
+        console.warn("[handleSubmitAll] Erro ao buscar coordenadas:", geoErr.message);
+      }
+    }
+    
+    // build payload without sending `null` for optional fields (Zod expects omitted fields instead)
 
-      if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim();
-      if (email && email.trim()) payload.email = email.trim();
-      if (telefone && onlyDigits(telefone).trim()) payload.telefone = onlyDigits(telefone).trim();
-      if (imagemPreview) payload.imagemBase64 = imagemPreview;
-      if (areaTotal !== '' && !Number.isNaN(Number(areaTotal))) payload.areaTotal = Number(areaTotal);
-      if (areaProdutiva !== '' && !Number.isNaN(Number(areaProdutiva))) payload.areaProdutiva = Number(areaProdutiva);
-      if (latitude !== null && latitude !== undefined) payload.latitude = latitude;
-      if (longitude !== null && longitude !== undefined) payload.longitude = longitude;
-      if (cultura) payload.cultura = cultura;
-      if (horarioAbertura) payload.horarioAbertura = horarioAbertura;
-      if (horarioFechamento) payload.horarioFechamento = horarioFechamento;
-      if (descricaoCurta) payload.descricaoCurta = descricaoCurta;
-      if (focoProdutivo && focoProdutivo.trim()) payload.focoProdutivo = focoProdutivo.trim();
+    // Determinar status da fazenda: ATIVA apenas se tiver AMBOS os tipos de contrato
+    // 1. Contrato como consumidora (recebe de fornecedor externo)
+    // 2. Contrato como fornecedora (envia para lojas via fornecedorUnidadeId ou marcado como isFornecedora)
+    const temContratoComoConsumidora = contracts?.some(c => c.fornecedorExternoId);
+    const temContratoComoFornecedora = contracts?.some(c => !!c.fornecedorUnidadeId || !!c.isFornecedora);
+    const fazeindaStatus = (temContratoComoConsumidora && temContratoComoFornecedora) ? 'ATIVA' : 'INATIVA';
+
+    // Truncar campos para respeitar limites do banco
+    const payload = {
+      nome: nome.trim().substring(0, 100), // limite: 100 caracteres
+      endereco: enderecoCompleto.substring(0, 500), // limite: 500 caracteres
+      cep: onlyDigits(cep).trim().substring(0, 20), // limite: 20 caracteres
+      cidade: cidade.trim().substring(0, 100), // limite: 100 caracteres
+      estado: estado.trim().substring(0, 100), // limite: 100 caracteres
+      tipo: 'FAZENDA',
+      status: fazeindaStatus
+    };
+
+    if (cnpj && onlyDigits(cnpj).trim()) payload.cnpj = onlyDigits(cnpj).trim().substring(0, 20); // limite: 20 caracteres
+    if (email && email.trim()) payload.email = email.trim().substring(0, 255); // limite: 255 caracteres
+    if (telefone && onlyDigits(telefone).trim()) payload.telefone = onlyDigits(telefone).trim().substring(0, 20); // limite: 20 caracteres
+    // Adicionar imagem apenas se não for muito grande (limite de 1000 caracteres no banco)
+    if (imagemPreview) {
+      // Verificar tamanho da string base64 diretamente (limite do banco: 1000 caracteres)
+      if (imagemPreview.length <= 1000) {
+        payload.imagemBase64 = imagemPreview;
+      } else {
+        console.warn('Imagem muito grande para salvar no banco, removendo do payload. Tamanho:', imagemPreview.length, 'caracteres (limite: 1000)');
+        // Em produção, aqui você faria upload da imagem para um serviço de storage
+      }
+    }
+    if (areaTotal !== '' && !Number.isNaN(Number(areaTotal))) payload.areaTotal = Number(areaTotal);
+    if (areaProdutiva !== '' && !Number.isNaN(Number(areaProdutiva))) payload.areaProdutiva = Number(areaProdutiva);
+    if (latitude !== null && latitude !== undefined) payload.latitude = latitude;
+    if (longitude !== null && longitude !== undefined) payload.longitude = longitude;
+    if (cultura) payload.cultura = cultura;
+    if (horarioAbertura) payload.horarioAbertura = horarioAbertura;
+    if (horarioFechamento) payload.horarioFechamento = horarioFechamento;
+    if (descricaoCurta) payload.descricaoCurta = descricaoCurta;
+    if (focoProdutivo && focoProdutivo.trim()) payload.focoProdutivo = focoProdutivo.trim().substring(0, 50); // limite: 50 caracteres
 
     setLoading(true);
 
@@ -748,9 +915,9 @@ function addContract() {
 
         const contractPayload = {
           fornecedorExternoId: fornecedorExternoId || null,
-          dataInicio: c.dataInicio || new Date().toISOString().slice(0,10),
+          dataInicio: c.dataInicio || new Date().toISOString().slice(0, 10),
           dataFim: c.dataFim || null,
-          dataEnvio: c.dataEnvio || c.dataInicio || new Date().toISOString().slice(0,10),
+          diaEnvio: c.dataEnvio || null, // Agora é um número (dia de 1 a 31)
           status: c.status || 'ATIVO',
           frequenciaEntregas: c.frequenciaEntregas || null,
           diaPagamento: c.diaPagamento || '',
@@ -821,24 +988,24 @@ function addContract() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ unidadeId: unidade.unidade?.id || unidade.id })
             });
-            if (!updateResp.ok) {console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status);}
+            if (!updateResp.ok) { console.warn(`Falha ao associar usuário ${u.nome}:`, updateResp.status); }
           }
-          catch (err) {console.warn(`Erro associando usuário ${u.nome}:`, err);}
+          catch (err) { console.warn(`Erro associando usuário ${u.nome}:`, err); }
         }
       }
 
-  if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
-  toast.success('Fazenda criada com sucesso!');
+      if (typeof onCreated === 'function') onCreated({ unidade, fornecedores: createdFornecedores, contratos: createdContracts, usuarios: createdUsers });
+      toast.success('Fazenda criada com sucesso!');
       resetAll();
       onOpenChange(false);
     } catch (err) {
       console.error(err);
       setFormError(err.message || 'Erro durante criação da fazenda. Veja console.');
     }
-    finally {setLoading(false);}
+    finally { setLoading(false); }
   }
 
-const [newItems, setNewItems] = useState({});
+  const [newItems, setNewItems] = useState({});
 
   // Helper para garantir que newItems[contractIndex] sempre existe
   const getNewItem = (contractIndex) => {
@@ -866,81 +1033,115 @@ const [newItems, setNewItems] = useState({});
     fetchUnidadesMedida();
   }, [open, accessToken, fetchWithAuth]);
 
-function updateNewItem(contractIndex, field, value) {
-  setNewItems(prev => ({
-    ...prev,
-    [contractIndex]: {
-      ...(prev[contractIndex] || {}),
-      [field]: value
-    }
-  }));
-}
+  function updateNewItem(contractIndex, field, value) {
+    setNewItems(prev => ({
+      ...prev,
+      [contractIndex]: {
+        ...(prev[contractIndex] || {}),
+        [field]: value
+      }
+    }));
+  }
 
   function addItemToContract(contractIndex) {
     const item = newItems[contractIndex];
-    
-    // Validar que temos um nome de item
+
+    // Limpar erros anteriores deste contrato
+    setItemErrors(prev => {
+      const copy = { ...prev };
+      delete copy[contractIndex];
+      return copy;
+    });
+
+    // Validar campos obrigatórios e criar objeto de erros específicos
+    const fieldErrors = {};
     if (!item || !item.nome || !item.nome.trim()) {
-      setFormError('Nome do item é obrigatório.');
+      fieldErrors.nome = 'Nome do item é obrigatório.';
+    }
+    if (!item || !item.quantidade || Number(item.quantidade) <= 0) {
+      fieldErrors.quantidade = 'Quantidade é obrigatória.';
+    }
+    if (!item || !item.unidadeMedida) {
+      fieldErrors.unidadeMedida = 'Unidade de medida é obrigatória.';
+    }
+    if (!item || !item.precoUnitario || Number(item.precoUnitario) <= 0) {
+      fieldErrors.precoUnitario = 'Preço unitário é obrigatório.';
+    }
+    if (!item || !item.pesoUnidade || Number(item.pesoUnidade) <= 0) {
+      fieldErrors.pesoUnidade = 'Peso por unidade (em KG) é obrigatório.';
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setItemErrors(prev => ({
+        ...prev,
+        [contractIndex]: fieldErrors
+      }));
       return;
     }
 
-    // Verificar se o item já existe NA LISTA ATUAL DE CONTRACTS (state atual)
-    const nomeItemNorm = item.nome.trim().toLowerCase();
-    const itensAtuais = contracts[contractIndex]?.itens || [];
-    
-    const jaExiste = itensAtuais.some(i => 
-      (i.nome || '').trim().toLowerCase() === nomeItemNorm
-    );
-
-    if (jaExiste) {
-      setFormError('Este item já foi adicionado ao contrato.');
-      return;
-    }
-
-    // Se passou nas validações, adicionar o item
+    // Usar função de callback para garantir que estamos usando o estado mais recente
     setContracts(prev => {
       const copy = [...prev];
-      
+
       // Garantir que itens existe
       if (!copy[contractIndex].itens) {
         copy[contractIndex].itens = [];
       }
 
+      // Verificar se o item já existe usando o estado atualizado
+      const nomeItemNorm = item.nome.trim().toLowerCase();
+      const jaExiste = copy[contractIndex].itens.some(i =>
+        (i.nome || '').trim().toLowerCase() === nomeItemNorm
+      );
+
+      if (jaExiste) {
+        setItemErrors(prev => ({
+          ...prev,
+          [contractIndex]: { nome: 'Este item já foi adicionado ao contrato.' }
+        }));
+        return copy; // Retorna sem modificar
+      }
+
+      // Adicionar o item
       copy[contractIndex].itens.push({
         nome: item.nome.trim(),
-        quantidade: item.quantidade ? Number(item.quantidade) : undefined,
-        unidadeMedida: item.unidadeMedida || undefined,
-        precoUnitario: item.precoUnitario ? Number(item.precoUnitario) : undefined,
-        pesoUnidade: item.pesoUnidade ? Number(item.pesoUnidade) : undefined,
+        quantidade: Number(item.quantidade),
+        unidadeMedida: item.unidadeMedida,
+        precoUnitario: Number(item.precoUnitario),
+        pesoUnidade: Number(item.pesoUnidade),
         raca: item.raca || undefined
       });
-      
+
       return copy;
     });
 
-    // Limpar o formulário do novo item
+    // Limpar o formulário do novo item APENAS se não houver erro
     setNewItems(prev => ({
       ...prev,
       [contractIndex]: {}
     }));
-    
-    setFormError('');
-  }function removeItem(contractIndex, itemIndex) {
-  setContracts(prev => {
-    const copy = [...prev];
-    copy[contractIndex].itens = copy[contractIndex].itens.filter((_, idx) => idx !== itemIndex);
-    return copy;
-  });
-}
 
-function updateContractField(contractIndex, field, value) {
-  setContracts(prev => {
-    const copy = [...prev];
-    copy[contractIndex][field] = value;
-    return copy;
-  });
-}
+    // Limpar erros deste contrato após adicionar com sucesso
+    setItemErrors(prev => {
+      const copy = { ...prev };
+      delete copy[contractIndex];
+      return copy;
+    });
+  } function removeItem(contractIndex, itemIndex) {
+    setContracts(prev => {
+      const copy = [...prev];
+      copy[contractIndex].itens = copy[contractIndex].itens.filter((_, idx) => idx !== itemIndex);
+      return copy;
+    });
+  }
+
+  function updateContractField(contractIndex, field, value) {
+    setContracts(prev => {
+      const copy = [...prev];
+      copy[contractIndex][field] = value;
+      return copy;
+    });
+  }
 
   // --- JSX render ---
   return (
@@ -971,12 +1172,6 @@ function updateContractField(contractIndex, field, value) {
               <h2 className="text-2xl font-semibold">Criar Nova Fazenda</h2>
               <div className="flex gap-2" />
             </header>
-            {/* mensagem de erro geral do step */}
-            {formError && (
-              <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700">
-                {formError}
-              </div>
-            )}
 
             {/* Steps content */}
             {step === 0 && (
@@ -984,13 +1179,13 @@ function updateContractField(contractIndex, field, value) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome *</Label>
-                    <Input id="nome" value={nome} onChange={(e) => { setNome(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.nome; return c; }); }} placeholder="Nome da fazenda" aria-invalid={!!errors.nome} aria-describedby={errors.nome ? "error-nome" : undefined} className={cn(errors.nome && "border-red-500 ring-1 ring-red-500")}/>
+                    <Input id="nome" value={nome} onChange={(e) => { setNome(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.nome; return c; }); }} placeholder="Nome da fazenda" aria-invalid={!!errors.nome} aria-describedby={errors.nome ? "error-nome" : undefined} className={cn(errors.nome && "border-red-500 ring-1 ring-red-500")} />
                     {errors.nome && <p id="error-nome" className="text-sm text-red-600 mt-1">{errors.nome}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input id="cnpj" value={cnpj} onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.cnpj; return c; }); }} placeholder="00.000.000/0000-00" aria-invalid={!!errors.cnpj} aria-describedby={errors.cnpj ? "error-cnpj" : undefined} className={cn(errors.cnpj && "border-red-500 ring-1 ring-red-500")}/>
+                    <Input id="cnpj" value={cnpj} onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.cnpj; return c; }); }} placeholder="00.000.000/0000-00" aria-invalid={!!errors.cnpj} aria-describedby={errors.cnpj ? "error-cnpj" : undefined} className={cn(errors.cnpj && "border-red-500 ring-1 ring-red-500")} />
                     {errors.cnpj && <p id="error-cnpj" className="text-sm text-red-600 mt-1">{errors.cnpj}</p>}
                   </div>
 
@@ -1065,13 +1260,13 @@ function updateContractField(contractIndex, field, value) {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2 space-y-2">
                     <Label htmlFor="endereco">Endereço *</Label>
-                    <Textarea id="endereco" value={endereco} onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }} className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")} aria-invalid={!!errors.endereco} aria-describedby={errors.endereco ? "error-endereco" : undefined}/>
+                    <Textarea id="endereco" value={endereco} onChange={(e) => { setEndereco(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.endereco; return c; }); }} className={cn("min-h-[80px]", errors.endereco && "border-red-500 ring-1 ring-red-500")} aria-invalid={!!errors.endereco} aria-describedby={errors.endereco ? "error-endereco" : undefined} />
                     {errors.endereco && <p id="error-endereco" className="text-sm text-red-600 mt-1">{errors.endereco}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="enderecoNumero">Número</Label>
-                    <Input id="enderecoNumero" value={enderecoNumero} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, ''); setEnderecoNumero(cleaned); setErrors(prev => { const c = { ...prev }; delete c.enderecoNumero; return c; }); }} placeholder="Nº" />
+                    <Label htmlFor="enderecoNumero">Número *</Label>
+                    <Input id="enderecoNumero" value={enderecoNumero} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, ''); setEnderecoNumero(cleaned); setErrors(prev => { const c = { ...prev }; delete c.enderecoNumero; return c; }); }} placeholder="Nº" className={cn(errors.enderecoNumero && "border-red-500 ring-1 ring-red-500")} />
                     {errors.enderecoNumero && <p id="error-enderecoNumero" className="text-sm text-red-600 mt-1">{errors.enderecoNumero}</p>}
                   </div>
                 </div>
@@ -1079,13 +1274,13 @@ function updateContractField(contractIndex, field, value) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone *</Label>
-                    <Input id="telefone" value={telefone} onChange={(e) => { setTelefone(formatTelefone(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.telefone; return c; }); }} placeholder="(00) 90000-0000" aria-invalid={!!errors.telefone} aria-describedby={errors.telefone ? "error-telefone" : undefined} className={cn(errors.telefone && "border-red-500 ring-1 ring-red-500")}/>
+                    <Input id="telefone" value={telefone} onChange={(e) => { setTelefone(formatTelefone(e.target.value)); setErrors(prev => { const c = { ...prev }; delete c.telefone; return c; }); }} placeholder="(00) 90000-0000" aria-invalid={!!errors.telefone} aria-describedby={errors.telefone ? "error-telefone" : undefined} className={cn(errors.telefone && "border-red-500 ring-1 ring-red-500")} />
                     {errors.telefone && <p id="error-telefone" className="text-sm text-red-600 mt-1">{errors.telefone}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }} aria-invalid={!!errors.email} aria-describedby={errors.email ? "error-email" : undefined} className={cn(errors.email && "border-red-500 ring-1 ring-red-500")}/>
+                    <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(prev => { const c = { ...prev }; delete c.email; return c; }); }} aria-invalid={!!errors.email} aria-describedby={errors.email ? "error-email" : undefined} className={cn(errors.email && "border-red-500 ring-1 ring-red-500")} />
                     {errors.email && <p id="error-email" className="text-sm text-red-600 mt-1">{errors.email}</p>}
                   </div>
                 </div>
@@ -1118,12 +1313,12 @@ function updateContractField(contractIndex, field, value) {
 
                   <div className="space-y-2">
                     <Label htmlFor="areaTotal">Área Total (ha)</Label>
-                    <Input id="areaTotal" value={areaTotal} onChange={(e) => { setAreaTotal(formatArea(e.target.value)); }} placeholder="Ex: 123.45"/>
+                    <Input id="areaTotal" value={areaTotal} onChange={(e) => { setAreaTotal(formatArea(e.target.value)); }} placeholder="Ex: 123.45" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="areaProdutiva">Área Produtiva (ha)</Label>
-                    <Input id="areaProdutiva" value={areaProdutiva} onChange={(e) => { setAreaProdutiva(formatArea(e.target.value))}} placeholder="Ex: 100.00"/>
+                    <Input id="areaProdutiva" value={areaProdutiva} onChange={(e) => { setAreaProdutiva(formatArea(e.target.value)) }} placeholder="Ex: 100.00" />
                   </div>
                 </div>
 
@@ -1154,394 +1349,391 @@ function updateContractField(contractIndex, field, value) {
 
             {step === 1 && (
               <section className="space-y-6">
-                <h3 className="text-lg font-semibold">Fornecedores</h3>
+                <h3 className="text-lg font-semibold">Fornecedores e Contratos</h3>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="flex flex-row gap-2">
-                    {/* Campo de seleção/criação de fornecedor */}
-                    <div className="space-y-2">
-                      <Label htmlFor="select-fornecedor">Fornecedor *</Label>
-                      <Select value={selectedFornecedorId} onValueChange={(value) => {
-                          setSelectedFornecedorId(value);
-                          // setIsCreatingNewFornecedor(value === "new");
-                          setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
-                        }}>
-                        <SelectTrigger id="select-fornecedor">
-                          <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[1001]">
-                          {/* <SelectItem value="new">Criar Novo Fornecedor</SelectItem> */}
-                          {existingFornecedores.map((f) => (
-                            <SelectItem key={f.id} value={String(f.id)}>
-                              {f.nomeEmpresa} {f.cnpjCpf ? `(${f.cnpjCpf})` : ""}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                    </div>
-                    <div className="flex items-end gap-6">
-                      <Button onClick={addContract}><Plus /></Button>
-                      <Button variant="outline" onClick={addFornecedor}>Criar fornecedor</Button>
-                    </div>
-                  </div>
-                  {isCreatingNewFornecedor && (
-                    <div className="space-y-4 p-4 border rounded-md bg-muted/20">
-                      <h4 className="font-semibold">Dados do Novo Fornecedor</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-nomeEmpresa">Nome da Empresa *</Label>
-                          <Input
-                            id="novo-nomeEmpresa"
-                            value={newFornecedorData.nomeEmpresa}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, nomeEmpresa: e.target.value }))}
-                            className={cn(newFornecedorErrors.nomeEmpresa && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-cnpjCpf">CNPJ</Label>
-                          <Input
-                            id="novo-cnpjCpf"
-                            value={newFornecedorData.cnpjCpf}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
-                            className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="novo-descricaoEmpresa">Descrição da Empresa *</Label>
-                        <Textarea
-                          id="novo-descricaoEmpresa"
-                          value={newFornecedorData.descricaoEmpresa}
-                          onChange={(e) => setNewFornecedorData(prev => ({ ...prev, descricaoEmpresa: e.target.value }))}
-                          className={cn("min-h-[80px]", newFornecedorErrors.descricaoEmpresa && "border-red-500 ring-1 ring-red-500")}
-                        />
-                        {newFornecedorErrors.descricaoEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.descricaoEmpresa}</p>}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-email">Email *</Label>
-                          <Input
-                            id="novo-email"
-                            type="email"
-                            value={newFornecedorData.email}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, email: e.target.value }))}
-                            className={cn(newFornecedorErrors.email && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.email && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.email}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-telefone">Telefone *</Label>
-                          <Input
-                            id="novo-telefone"
-                            value={newFornecedorData.telefone}
-                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
-                            className={cn(newFornecedorErrors.telefone && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newFornecedorErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.telefone}</p>}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="novo-endereco">Endereço</Label>
-                        <Textarea
-                          id="novo-endereco"
-                          value={newFornecedorData.endereco}
-                          onChange={(e) => setNewFornecedorData(prev => ({ ...prev, endereco: e.target.value }))}
-                          className={cn("min-h-[80px]", newFornecedorErrors.endereco && "border-red-500 ring-1 ring-red-500")}
-                        />
-                        {newFornecedorErrors.endereco && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.endereco}</p>}
-                      </div>
-                    </div>
-                  )}
+                {/* TAB BUTTONS */}
+                <div className="flex gap-2 border-b">
+                  <Button
+                    variant={step1ActiveTab === 'externo' ? 'default' : 'ghost'}
+                    onClick={() => setStep1ActiveTab('externo')}
+                    className="rounded-b-none"
+                  >
+                    Fornecedor Externo
+                  </Button>
+                  <Button
+                    variant={step1ActiveTab === 'interno' ? 'default' : 'ghost'}
+                    onClick={() => setStep1ActiveTab('interno')}
+                    className="rounded-b-none"
+                  >
+                    Fornecedor Interno (Loja)
+                  </Button>
                 </div>
 
-                {errors.contracts && <p className="text-sm text-red-600">{errors.contracts}</p>}
+                {/* TAB 1: FORNECEDOR EXTERNO */}
+                {step1ActiveTab === 'externo' && (
+                  <div className="space-y-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-200">Fornecedor Externo</h4>
+                      
+                      <div className="flex flex-row gap-2">
+                        {/* Campo de seleção de fornecedor */}
+                        <div className="space-y-2 flex-1">
+                          <Label htmlFor="select-fornecedor-ext">Fornecedor *</Label>
+                          <Select value={selectedFornecedorId} onValueChange={(value) => {
+                            setSelectedFornecedorId(value);
+                            setNewFornecedorErrors({});
+                          }}>
+                            <SelectTrigger id="select-fornecedor-ext">
+                              <SelectValue placeholder="Selecionar fornecedor existente" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[1001]">
+                              {existingFornecedores.map((f) => (
+                                <SelectItem key={f.id} value={String(f.id)}>
+                                  {f.nomeEmpresa}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end gap-2">
+                          <Button onClick={addContract}><Plus /> Contrato</Button>
+                          <Button variant="outline" onClick={() => setIsCreatingNewFornecedor(true)}>Novo Fornecedor</Button>
+                        </div>
+                      </div>
 
-                <div>
-                  <h4 className="font-medium">Lista de fornecedores</h4>
-                  <ul className="mt-2 space-y-2">
-                    {fornecedores.map((f, i) => (
-                      <li key={i} className="py-2 px-4 border rounded-sm">
-                        <div className="flex justify-between">
+                      {/* Formulário para criar novo fornecedor EXTERNO */}
+                      {isCreatingNewFornecedor && (
+                        <div className="space-y-4 p-3 border rounded-md bg-white dark:bg-slate-800">
+                          <h5 className="font-semibold text-sm">Dados do Novo Fornecedor Externo</h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-nomeEmpresa" className="text-sm">Nome da Empresa *</Label>
+                              <Input
+                                id="novo-nomeEmpresa"
+                                value={newFornecedorData.nomeEmpresa}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, nomeEmpresa: e.target.value }))}
+                                className={cn(newFornecedorErrors.nomeEmpresa && "border-red-500 ring-1 ring-red-500")}
+                                placeholder="Nome"
+                              />
+                              {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-cnpjCpf" className="text-sm">CNPJ *</Label>
+                              <Input
+                                id="novo-cnpjCpf"
+                                value={formatCNPJ(newFornecedorData.cnpjCpf)}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
+                                placeholder="00.000.000/0000-00"
+                                className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
+                              />
+                              {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-email" className="text-sm">Email</Label>
+                              <Input
+                                id="novo-email"
+                                type="email"
+                                value={newFornecedorData.email}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, email: e.target.value }))}
+                                className={cn(newFornecedorErrors.email && "border-red-500 ring-1 ring-red-500")}
+                                placeholder="email@exemplo.com"
+                              />
+                              {newFornecedorErrors.email && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.email}</p>}
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="novo-telefone" className="text-sm">Telefone *</Label>
+                              <Input
+                                id="novo-telefone"
+                                value={newFornecedorData.telefone}
+                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
+                                className={cn(newFornecedorErrors.telefone && "border-red-500 ring-1 ring-red-500")}
+                                placeholder="(00) 90000-0000"
+                              />
+                              {newFornecedorErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.telefone}</p>}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button onClick={addFornecedor} className="text-sm">Adicionar Fornecedor</Button>
+                            <Button variant="outline" className="text-sm" onClick={() => {
+                              setIsCreatingNewFornecedor(false);
+                              setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+                              setNewFornecedorErrors({});
+                            }}>Cancelar</Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Formulário compacto para contrato EXTERNO */}
+                      <div className="space-y-3 p-3 border rounded-md bg-white dark:bg-slate-800">
+                        <h5 className="font-semibold text-sm">Criar Contrato Externo</h5>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Início *</Label>
+                            <Input
+                              type="date"
+                              placeholder="Data"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Envio *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Duração *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Meses" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="6m">6 meses</SelectItem>
+                                <SelectItem value="1y">1 ano</SelectItem>
+                                <SelectItem value="2y">2 anos</SelectItem>
+                                <SelectItem value="5y">5 anos</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Fim *</Label>
+                            <Input
+                              type="date"
+                              disabled
+                              readOnly
+                              className="text-sm bg-gray-100"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Frequência *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Semanal" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
+                                <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                                <SelectItem value="MENSALMENTE">Mensal</SelectItem>
+                                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Pagamento *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2 col-span-2">
+                            <Label className="text-xs">Forma Pagamento *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                                <SelectItem value="CARTAO">Cartão</SelectItem>
+                                <SelectItem value="PIX">PIX</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: FORNECEDOR INTERNO (LOJA) */}
+                {step1ActiveTab === 'interno' && (
+                  <div className="space-y-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-green-900 dark:text-green-200">Fornecedor Interno (Loja)</h4>
+                      
+                      <div className="flex flex-row gap-2">
+                        {/* Campo de seleção de loja */}
+                        <div className="space-y-2 flex-1">
+                          <Label htmlFor="select-loja">Loja *</Label>
+                          <Select>
+                            <SelectTrigger id="select-loja">
+                              <SelectValue placeholder="Selecionar loja existente" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[1001]">
+                              <SelectItem value="loja1">Loja 1</SelectItem>
+                              <SelectItem value="loja2">Loja 2</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end">
+                          <Button><Plus /> Contrato Interno</Button>
+                        </div>
+                      </div>
+
+                      {/* Formulário compacto para contrato INTERNO */}
+                      <div className="space-y-3 p-3 border rounded-md bg-white dark:bg-slate-800">
+                        <h5 className="font-semibold text-sm">Criar Contrato Interno</h5>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Início *</Label>
+                            <Input
+                              type="date"
+                              placeholder="Data"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Data Fim *</Label>
+                            <Input
+                              type="date"
+                              placeholder="Data"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Envio *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Frequência *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Semanal" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
+                                <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                                <SelectItem value="MENSALMENTE">Mensal</SelectItem>
+                                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Dia Pagamento *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Forma Pagamento *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                                <SelectItem value="CARTAO">Cartão</SelectItem>
+                                <SelectItem value="PIX">PIX</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Status *</Label>
+                            <Select>
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Ativo" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="ATIVO">Ativo</SelectItem>
+                                <SelectItem value="INATIVO">Inativo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* FORA DAS ABAS: Lista de fornecedores, contratos e botões */}
+                <div className="border-t pt-6 space-y-4">
+                  {/* Lista compacta de fornecedores */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Fornecedores Adicionados</h4>
+                    <ul className="space-y-1">
+                      {fornecedores.map((f, i) => {
+                        const documentoFormatado = f.documento || f.cnpjCpf ? formatCNPJ(String(f.documento || f.cnpjCpf || '')) : '-';
+                        return (
+                          <li key={i} className="py-2 px-3 border rounded text-sm flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">{f.nome || f.nomeEmpresa}</span>
+                              <span className="text-xs text-muted-foreground ml-2">{documentoFormatado}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const fornecedorId = String(f.id);
+                                setFornecedores(prev => prev.filter((_, idx) => idx !== i));
+                                setContracts(prev => prev.filter(c => String(c.fornecedorId) !== fornecedorId));
+                              }}
+                            >
+                              Remover
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  {/* Lista compacta de contratos */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Contratos Adicionados</h4>
+                    <ul className="space-y-1">
+                      {contracts.map((c, i) => (
+                        <li key={i} className="py-2 px-3 border rounded text-sm flex justify-between items-center">
                           <div>
-                            <div className="font-semibold">{f.nome}</div>
-                            <div className="text-sm text-muted-foreground">{f.documento || '-'} • {f.contato || '-'}</div>
+                            <span className="font-medium">{c.nomeContrato}</span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {c.dataInicio} até {c.dataFim} ({c.status || 'Ativo'})
+                            </span>
                           </div>
-                          <div className="flex gap-2 items-center">
-                            <Button variant="ghost" onClick={() => setFornecedores(prev => prev.filter((_, idx) => idx !== i))}>Remover</Button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const fornecedorId = String(c.fornecedorId);
+                              setContracts(prev => prev.filter((_, idx) => idx !== i));
+                              setFornecedores(prev => prev.filter(f => String(f.id) !== fornecedorId));
+                            }}
+                          >
+                            Remover
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-               <div>
-  <h4 className="font-medium">Contratos</h4>
-
-  <ul className="mt-2 space-y-4">
-    {contracts.map((c, i) => (
-      <li key={i} className="p-3 border rounded-lg space-y-4 bg-muted/30">
-
-        {/* CABEÇALHO DO CONTRATO */}
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="font-semibold text-lg">{c.nomeContrato}</div>
-            {/* <div className="text-sm text-muted-foreground">
-              Fornecedor: {fornecedores[c.fornecedorIndex]?.nomeEmpresa || '—'}
-            </div> */}
-          </div>
-
-          <Button
-            variant="ghost"
-            onClick={() =>
-              setContracts(prev => prev.filter((_, idx) => idx !== i))
-            }
-          >
-            Remover
-          </Button>
-        </div>
-
-        {/* CAMPOS OBRIGATÓRIOS DO SCHEMA */}
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="text-sm">Data de Início</label>
-            <Input
-              type="date"
-              value={c.dataInicio || ""}
-              disabled
-              readOnly
-            />
-          </div>
-
-          <div>
-            <label className="text-sm">Data de Envio</label>
-            <Input
-              type="date"
-              value={c.dataEnvio || ""}
-              onChange={(e) =>
-                updateContractField(i, "dataEnvio", e.target.value)
-              }
-            />
-          </div>
-
-          <div>
-            <label className="text-sm">Duração do Contrato</label>
-            <Select
-              value={c.duration || ""}
-              onValueChange={(v) => {
-                updateContractField(i, 'duration', v);
-                const start = c.dataInicio || new Date().toISOString().slice(0,10);
-                const end = computeContractEndDate(start, v);
-                updateContractField(i, 'dataFim', end);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-                <SelectContent className="z-[1001]">
-                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
-                <SelectItem value="6m">6 meses</SelectItem>
-                <SelectItem value="1y">1 ano</SelectItem>
-                <SelectItem value="2y">2 anos</SelectItem>
-                <SelectItem value="5y">5 anos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="mt-2">
-              <label className="text-sm">Data de Fim</label>
-              <Input className="w-full " type="date" value={c.dataFim || ""} disabled readOnly />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm">Frequência de Entregas</label>
-            <Select
-              value={c.frequenciaEntregas || ""}
-              onValueChange={(v) => updateContractField(i, 'frequenciaEntregas', v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent className="z-[1001]">
-                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
-                {frequenciaOptions.length > 0 ? (
-                  frequenciaOptions.map(opt => (
-                    <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
-                  ))
-                ) : (
-                  <>
-                    <SelectItem value="SEMANALMENTE">Semanalmente</SelectItem>
-                    <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
-                    <SelectItem value="MENSALMENTE">Mensalmente</SelectItem>
-                    <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
-                    <SelectItem value="SEMESTRAL">Semestral</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm">Dia do Pagamento</label>
-            <Input
-              className="w-full"
-              type="number"
-              min={1}
-              max={31}
-              placeholder="1 a 31"
-              value={c.diaPagamento || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                const cleaned = val.replace(/\D/g, '');
-                const num = cleaned ? parseInt(cleaned, 10) : '';
-                if (num === '' || (num >= 1 && num <= 31)) {
-                  updateContractField(i, "diaPagamento", String(num));
-                }
-              }}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm">Forma de Pagamento</label>
-            <Select
-              value={c.formaPagamento || ""}
-              onValueChange={(v) => updateContractField(i, 'formaPagamento', v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent className="z-[1001] ">
-                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
-                {formaPagamentoOptions.length > 0 ? (
-                  formaPagamentoOptions.map(opt => (
-                    <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
-                  ))
-                ) : (
-                  <>
-                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                    <SelectItem value="CARTAO">Cartão</SelectItem>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* -------- ITENS DO CONTRATO ---------- */}
-        <div className="pt-3 border-t">
-          <h5 className="font-medium mb-2">Itens do Contrato</h5>
-
-          {/* LISTA DE ITENS EXISTENTES */}
-          <ul className="space-y-2">
-            {c.itens?.map((item, idx) => (
-              <li
-                key={idx}
-                className="border rounded p-2 flex justify-between items-center"
-              >
-                <div>
-                  <div className="font-semibold">{item.nome}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {item.quantidade} {item.unidadeMedida} —
-                    R$ {item.precoUnitario}
+                  {/* Botões de navegação */}
+                  <div className="flex gap-2 justify-end pt-4">
+                    <Button variant="outline" onClick={handleBack}>Voltar</Button>
+                    <Button onClick={handleNext}>Próximo</Button>
                   </div>
                 </div>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => removeItem(i, idx)}
-                >
-                  Remover
-                </Button>
-              </li>
-            ))}
-          </ul>
-
-          {/* FORM PARA NOVO ITEM */}
-          <div className="grid grid-cols-3 gap-3 mt-3 p-3 rounded border">
-            <Input
-              placeholder="Nome do item"
-              value={getNewItem(i).nome || ""}
-              onChange={(e) => updateNewItem(i, "nome", e.target.value)}
-            />
-
-            <Input
-              placeholder="Qtd"
-              value={getNewItem(i).quantidade || ""}
-              onChange={(e) => updateNewItem(i, "quantidade", e.target.value.replace(/\D/g, ''))}
-            />
-
-            <Select
-              value={getNewItem(i).unidadeMedida || ""}
-              onValueChange={(v) => updateNewItem(i, "unidadeMedida", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Unid" />
-              </SelectTrigger>
-              <SelectContent className="z-[1002]">
-                {unidadesMedidaOptions && unidadesMedidaOptions.length > 0 ? (
-                  unidadesMedidaOptions.map((opcao) => (
-                    <SelectItem key={opcao.valor || opcao.label} value={opcao.valor}>
-                      {opcao.label}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <>
-                    <SelectItem value="KG">KG</SelectItem>
-                    <SelectItem value="G">G</SelectItem>
-                    <SelectItem value="UNIDADE">UNIDADE</SelectItem>
-                    <SelectItem value="LITRO">LITRO</SelectItem>
-                    <SelectItem value="TONELADA">TONELADA</SelectItem>
-                    <SelectItem value="METRO">METRO</SelectItem>
-                    <SelectItem value="METRO_QUADRADO">METRO²</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="Preço Unitário"
-              value={getNewItem(i).precoUnitario || ""}
-              onChange={(e) => updateNewItem(i, "precoUnitario", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'))}
-            />
-
-            <Input
-              placeholder="Peso por unidade"
-              value={getNewItem(i).pesoUnidade || ""}
-              onChange={(e) => updateNewItem(i, "pesoUnidade", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'))}
-            />
-
-            <Input
-              placeholder="Raça (opcional)"
-              value={getNewItem(i).raca || ""}
-              onChange={(e) => updateNewItem(i, "raca", e.target.value)}
-            />
-
-            <Button
-              className="col-span-3"
-              onClick={() => addItemToContract(i)}
-            >
-              Adicionar Item
-            </Button>
-          </div>
-        </div>
-      </li>
-    ))}
-  </ul>
-</div>
-
-
-                {/* <div className="flex items-center justify-between pt-4"> */}
-                {/* <Button variant="outline" onClick={handleBack}>Voltar</Button> */}
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleBack}>Voltar</Button>
-                  {/* <Button variant="ghost" onClick={() => { resetAll(); onOpenChange(false); }}>Cancelar</Button> */}
-                  <Button onClick={handleNext}>Próximo</Button>
-                </div>
-                {/* </div> */}
               </section>
             )}
 
@@ -1556,86 +1748,86 @@ function updateContractField(contractIndex, field, value) {
                     </div>
                   </div>
 
-                    <div className="space-y-4 p-4 border rounded-md bg-muted/20">
-                      <h4 className="font-semibold">Dados do Novo Gerente</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-gerente-nome">Nome *</Label>
-                          <Input
-                            id="novo-gerente-nome"
-                            value={newGerenteData.nome || ""}
-                            onChange={(e) => setNewGerenteData(prev => ({ ...prev, nome: e.target.value }))}
-                            className={cn(newGerenteErrors.nome && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newGerenteErrors.nome && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.nome}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-gerente-email">Email *</Label>
-                          <Input
-                            id="novo-gerente-email"
-                            type="email"
-                            value={newGerenteData.email || ""}
-                            onChange={(e) => setNewGerenteData(prev => ({ ...prev, email: e.target.value }))}
-                            className={cn(newGerenteErrors.email && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newGerenteErrors.email && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.email}</p>}
-                        </div>
+                  <div className="space-y-4 p-4 border rounded-md bg-muted/20">
+                    <h4 className="font-semibold">Dados do Novo Gerente</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-gerente-nome">Nome *</Label>
+                        <Input
+                          id="novo-gerente-nome"
+                          value={newGerenteData.nome || ""}
+                          onChange={(e) => setNewGerenteData(prev => ({ ...prev, nome: e.target.value }))}
+                          className={cn(newGerenteErrors.nome && "border-red-500 ring-1 ring-red-500")}
+                        />
+                        {newGerenteErrors.nome && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.nome}</p>}
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-gerente-telefone">Telefone *</Label>
-                          <Input
-                            id="novo-gerente-telefone"
-                            value={newGerenteData.telefone || ""}
-                            onChange={(e) => setNewGerenteData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
-                            className={cn(newGerenteErrors.telefone && "border-red-500 ring-1 ring-red-500")}
-                          />
-                          {newGerenteErrors.telefone && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.telefone}</p>}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-gerente-senha">Senha *</Label>
-                          <div className="relative">
-                            <Input
-                              id="novo-gerente-senha"
-                              type={showGerenteSenha ? "text" : "password"}
-                              value={newGerenteData.senha || ""}
-                              onChange={(e) => setNewGerenteData(prev => ({ ...prev, senha: e.target.value }))}
-                              className={cn(newGerenteErrors.senha && "border-red-500 ring-1 ring-red-500", "pr-10")}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowGerenteSenha(!showGerenteSenha)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                            >
-                              {showGerenteSenha ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                          </div>
-                          {newGerenteErrors.senha && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.senha}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novo-gerente-confirma-senha">Confirmar Senha *</Label>
-                          <div className="relative">
-                            <Input
-                              id="novo-gerente-confirma-senha"
-                              type={showGerenteConfirmaSenha ? "text" : "password"}
-                              value={newGerenteData.confirmaSenha || ""}
-                              onChange={(e) => setNewGerenteData(prev => ({ ...prev, confirmaSenha: e.target.value }))}
-                              className={cn(newGerenteErrors.confirmaSenha && "border-red-500 ring-1 ring-red-500", "pr-10")}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowGerenteConfirmaSenha(!showGerenteConfirmaSenha)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                            >
-                              {showGerenteConfirmaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                          </div>
-                          {newGerenteErrors.confirmaSenha && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.confirmaSenha}</p>}
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-gerente-email">Email *</Label>
+                        <Input
+                          id="novo-gerente-email"
+                          type="email"
+                          value={newGerenteData.email || ""}
+                          onChange={(e) => setNewGerenteData(prev => ({ ...prev, email: e.target.value }))}
+                          className={cn(newGerenteErrors.email && "border-red-500 ring-1 ring-red-500")}
+                        />
+                        {newGerenteErrors.email && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.email}</p>}
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-gerente-telefone">Telefone *</Label>
+                        <Input
+                          id="novo-gerente-telefone"
+                          value={newGerenteData.telefone || ""}
+                          onChange={(e) => setNewGerenteData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
+                          className={cn(newGerenteErrors.telefone && "border-red-500 ring-1 ring-red-500")}
+                        />
+                        {newGerenteErrors.telefone && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.telefone}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-gerente-senha">Senha *</Label>
+                        <div className="relative">
+                          <Input
+                            id="novo-gerente-senha"
+                            type={showGerenteSenha ? "text" : "password"}
+                            value={newGerenteData.senha || ""}
+                            onChange={(e) => setNewGerenteData(prev => ({ ...prev, senha: e.target.value }))}
+                            className={cn(newGerenteErrors.senha && "border-red-500 ring-1 ring-red-500", "pr-10")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowGerenteSenha(!showGerenteSenha)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showGerenteSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                        {newGerenteErrors.senha && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.senha}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-gerente-confirma-senha">Confirmar Senha *</Label>
+                        <div className="relative">
+                          <Input
+                            id="novo-gerente-confirma-senha"
+                            type={showGerenteConfirmaSenha ? "text" : "password"}
+                            value={newGerenteData.confirmaSenha || ""}
+                            onChange={(e) => setNewGerenteData(prev => ({ ...prev, confirmaSenha: e.target.value }))}
+                            className={cn(newGerenteErrors.confirmaSenha && "border-red-500 ring-1 ring-red-500", "pr-10")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowGerenteConfirmaSenha(!showGerenteConfirmaSenha)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showGerenteConfirmaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                        {newGerenteErrors.confirmaSenha && <p className="text-sm text-red-600 mt-1">{newGerenteErrors.confirmaSenha}</p>}
+                      </div>
+                    </div>
+                  </div>
 
                   <Button onClick={() => addTeamInvite("gerente")} disabled={loading}>Adicionar Gerente</Button>
 

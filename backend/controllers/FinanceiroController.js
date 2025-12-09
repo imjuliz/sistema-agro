@@ -1,4 +1,4 @@
-import { listarSaidas, getDashboardStats, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas, abrirCaixa } from '../models/Financeiro.js';
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas, abrirCaixa } from '../models/Financeiro.js';
 import fs from "fs";
 
 // ABRIR CAIXA
@@ -30,25 +30,6 @@ export const abrirCaixaController = async (req, res) => {
     });
   }
 };
-
-export async function getDashboardFinanceiroController(req, res) {
-  try {
-    console.log("📌 Dashboard financeiro sem filtros de mês/ano");
-
-    const unidadeId = req.user?.unidadeId || null;
-    if (!unidadeId) {return res.status(400).json({ sucesso: false, erro: "Unidade não encontrada" });}
-
-    const dados = await getDashboardStats(unidadeId);
-
-    return res.json({sucesso: true,dados,});
-
-  } catch (error) {
-    console.error("❌ Erro ao gerar dashboard financeiro:", error);
-    return res.status(500).json({
-      sucesso: false,erro: "Erro ao carregar dashboard financeiro",});
-  }
-};
-
 
 // MOSTRAR SALDO FINAL DO CAIXA DE HOJE -- rota feita
 export const mostrarSaldoFController = async (req, res) => {

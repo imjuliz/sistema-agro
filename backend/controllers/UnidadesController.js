@@ -1,4 +1,4 @@
-import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getFazendasFiltered, getCityStateSuggestions, getLoja, getMatriz, FazendaService, LojaService, updateUnidade, getUsuariosPorUnidade, getUsuarioPorId, countUsuariosPorUnidade, atualizarFotoUnidade, removerFotoUnidade } from "../models/Unidades.js";
+import { deleteUnidade, getUnidadePorId, getUnidades, updateStatusUnidade, createUnidade, getFazendas, getFazendasFiltered, getCityStateSuggestions, getLoja, getLojasFiltered, getMatriz, FazendaService, LojaService, updateUnidade, getUsuariosPorUnidade, getUsuarioPorId, countUsuariosPorUnidade, atualizarFotoUnidade, removerFotoUnidade } from "../models/Unidades.js";
 import { unidadeSchema } from "../schemas/unidadeSchema.js";
 
 // BUSCA ---------------------------------------------------------------------------
@@ -82,10 +82,18 @@ export async function getCitySuggestionsController(req, res) {
 
 export async function getLojaController(req, res) {
   try {
-    const resultado = await getLoja();
-    if (!resultado.sucesso) {
-      return res.status(500).json(resultado);
-    }
+    const q = req.query?.q ?? null;
+    const cidade = req.query?.cidade ?? req.query?.localidade ?? null;
+    const estado = req.query?.estado ?? null;
+    const tipos = req.query?.tipos ?? req.query?.types ?? req.query?.type ?? null;
+    const status = req.query?.status ?? null;
+    const responsible = req.query?.responsible ?? req.query?.responsavel ?? null;
+    const page = req.query?.page ?? 1;
+    const perPage = req.query?.perPage ?? 25;
+    const orderBy = req.query?.orderBy ?? 'nome_asc';
+
+    const resultado = await getLojasFiltered({ q, cidade, estado, tipos, status, responsible, page, perPage, orderBy });
+    if (!resultado.sucesso) return res.status(500).json(resultado);
     return res.json(resultado);
   } catch (error) {
     return res.status(500).json({
@@ -151,17 +159,50 @@ export async function createUnidadeController(req, res) {
       data.tipo = String(data.tipo).toUpperCase();
     }
 
+    // Truncar campos de string para respeitar limites do banco ANTES da validação
+    if (data.nome && data.nome.length > 100) {
+      data.nome = data.nome.substring(0, 100);
+    }
+    if (data.endereco && data.endereco.length > 500) {
+      data.endereco = data.endereco.substring(0, 500);
+    }
+    if (data.cidade && data.cidade.length > 100) {
+      data.cidade = data.cidade.substring(0, 100);
+    }
+    if (data.estado && data.estado.length > 100) {
+      data.estado = data.estado.substring(0, 100);
+    }
+    if (data.cep && data.cep.length > 20) {
+      data.cep = data.cep.substring(0, 20);
+    }
+    if (data.focoProdutivo && data.focoProdutivo.length > 50) {
+      data.focoProdutivo = data.focoProdutivo.substring(0, 50);
+    }
+    if (data.cnpj && data.cnpj.length > 20) {
+      data.cnpj = data.cnpj.substring(0, 20);
+    }
+    if (data.email && data.email.length > 255) {
+      data.email = data.email.substring(0, 255);
+    }
+    
+    // Normalizar telefone: remover formatação e limitar a 20 caracteres
+    if (data.telefone) {
+      data.telefone = String(data.telefone).replace(/\D/g, '').substring(0, 20);
+    }
+
     // Se imagemBase64 foi enviada, processar ela
     if (data.imagemBase64 && data.imagemBase64.startsWith('data:image')) {
-      // Aqui você pode:
-      // 1. Converter base64 para arquivo e salvar em storage (AWS S3, Cloudinary, etc)
-      // 2. Ou salvar a string base64 diretamente no banco (não recomendado para produção)
-      // 3. Ou enviar para um serviço de CDN
-      
-      // Por agora, vamos manter a base64 como imagemUrl (ajustar conforme sua infraestrutura)
-      // Em produção, recomendo usar um serviço como Cloudinary ou AWS S3
-      data.imagemUrl = data.imagemBase64;
-      delete data.imagemBase64; // remover campo indesejado
+      // Verificar se a imagem base64 excede o limite de 1000 caracteres
+      if (data.imagemBase64.length > 1000) {
+        console.warn('[createUnidadeController] Imagem base64 muito grande, removendo do payload. Tamanho:', data.imagemBase64.length);
+        // Não salvar imagem se for muito grande - em produção, usar upload de arquivo
+        delete data.imagemBase64;
+      } else {
+        // Por agora, vamos manter a base64 como imagemUrl (ajustar conforme sua infraestrutura)
+        // Em produção, recomendo usar um serviço como Cloudinary ou AWS S3
+        data.imagemUrl = data.imagemBase64;
+        delete data.imagemBase64; // remover campo indesejado
+      }
     }
 
     // Validar dados com schema
@@ -192,6 +233,16 @@ export async function createUnidadeController(req, res) {
     return res.status(201).json(resultado); // 201 Created
   } catch (error) {
     console.error("[createUnidadeController] erro:", error);
+    
+    // Verificar se é erro de tamanho de coluna do Prisma
+    if (error.message && error.message.includes("too long for the column")) {
+      return res.status(400).json({ 
+        sucesso: false, 
+        erro: "Um ou mais campos excedem o tamanho máximo permitido. Verifique: nome (100), endereço (500), cidade (100), estado (100), CEP (20), CNPJ (20), telefone (20), email (255), foco produtivo (50), imagem (1000 caracteres).",
+        detalhes: error.message 
+      });
+    }
+    
     if (error.name === "ZodError") {
       return res.status(400).json({ sucesso: false, erro: "Dados de validação inválidos.", detalhes: error.errors });
     }

@@ -8,7 +8,7 @@ const tabs = [
   // { id: 'atividades', label: 'Atividades', count: null },
   { id: 'financeiro', label: 'Financeiro', count: null },
   { id: 'fornecedores', label: 'Fornecedores', count: null },
-  { id: 'comunicados', label: 'Comunicados', count: 47 },
+  // { id: 'comunicados', label: 'Comunicados', count: 47 },
 ];
 
 const lojasTab = [

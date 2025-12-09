@@ -1,21 +1,23 @@
-// import express from "express";
-// const router = express.Router();
-// // middlewares 
-// import { auth } from '../middlewares/authMiddleware.js'
+import express from "express";
+import { auth } from "../middlewares/authMiddleware.js";
+import {
+  getResumoVendasController,
+  getTopFazendasProducaoController,
+  exportDashboardPdfController,
+  getDashboardKpisController,
+  getResumoFinanceiroMatrizController,
+} from "../controllers/MatrizController.js";
 
-// import { getUnidadesController, getUnidadePorIdController, getFazendasController, getLojaController, contarFazendasController, createUnidadeController, updateUnidadeController, deleteUnidadeController, updateStatusUnidadeController, getMatrizController, contarLojasController } from '../controllers/MatrizController.js'
+const router = express.Router();
 
-// router.get('/unidades', auth(), getUnidadesController);
-// router.get('/unidades/:id', auth(), getUnidadePorIdController);
+router.get("/dashboard/vendas", auth(), getResumoVendasController);
+router.get("/dashboard/producao", auth(), getTopFazendasProducaoController);
+router.get("/dashboard/pdf", auth(), exportDashboardPdfController);
+router.get("/dashboard/kpis", auth(), getDashboardKpisController);
+router.get("/dashboard/financeiro", auth(), getResumoFinanceiroMatrizController);
+
+export default router;
 
 
-// router.get('/fazendas', auth(), getFazendasController);
-// router.get('/contar-fazendas', contarFazendasController);
 
 
-// router.get('/lojas', auth(), getLojaController);
-// router.get('/contar-lojas', contarLojasController);
-
-// router.get('/matrizes', auth(), getMatrizController)
-
-// export default router;

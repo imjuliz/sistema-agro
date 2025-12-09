@@ -1,9 +1,11 @@
+"use client";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
-
 import { Button } from "@/components/ui/button";
 import Glow from "@/components/ui/glow";
 import { Section } from "@/components/ui/section";
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 export default function CTA(props) {
   const {
@@ -11,19 +13,32 @@ export default function CTA(props) {
     buttons = [
       {
         href: '/login',
-        text: "Veja nossas lojas",
+        text: <Transl>"Veja nossas lojas"</Transl>,
         variant: "default",
       },
     ],
     className,
   } = props;
+  const { lang, changeLang } = useTranslation();
+  const languageOptions = [
+    { value: 'pt-BR', label: 'Português (BR)' },
+    { value: 'en', label: 'English' },
+    { value: 'es', label: 'Español' },
+    { value: 'fr', label: 'Français' }
+  ];
+  const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+  useEffect(() => {
+    setLocalTheme(globalTheme);
+    setLocalSelectedFontSize(globalSelectedFontSize);
+    setLocalLang(lang);
+  }, [globalTheme, globalSelectedFontSize, lang]);
 
   return (
     <Section className={cn("group relative overflow-hidden", className)}>
       <div className="max-w-container relative z-10 mx-auto flex flex-col items-center gap-6 text-center sm:gap-8">
-        <h2 className="max-w-[640px] text-3xl leading-tight font-semibold sm:text-5xl sm:leading-tight">
+        <Transl className="max-w-[640px] text-3xl leading-tight font-semibold sm:text-5xl sm:leading-tight">
           {title}
-        </h2>
+        </Transl>
         {buttons !== false && buttons.length > 0 && (
           <div className="flex justify-center gap-4">
             {buttons.map((button, index) => (

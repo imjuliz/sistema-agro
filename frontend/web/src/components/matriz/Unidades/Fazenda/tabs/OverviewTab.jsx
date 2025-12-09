@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,124 +8,20 @@ import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import buildImageUrl from '@/lib/image';
-import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, ArrowUpDown, MoreHorizontal, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable, VisibilityState, } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
-
-// --------------------------------------------------------------------------------
-// tabela de dados gerais da fazenda 
-// --------------------------------------------------------------------------------
-const data = [
-  {
-    id: "m5gr84i9",
-    observacao: "Divisão de manejo",
-    dado: "Talhões",
-    valor: "8",
-  },
-  {
-    id: "3u1reuv4",
-    observacao: "Impacta produtividade",
-    dado: "Tipo de solo",
-    valor: "Argiloso / Arenoso",
-  },
-  {
-    id: "derv1ws0",
-    observacao: "Afeta irrigação",
-    dado: "Topografia",
-    valor: "Plana / Ondulada",
-  },
-  {
-    id: "5kma53ae",
-    observacao: "Planejamento",
-    dado: "Clima",
-    valor: "Tropical úmido",
-  },
-  {
-    id: "bhqecj4p",
-    observacao: "Exibir no mapa",
-    dado: "Coordenadas",
-    valor: "-22.908, -47.064",
-  },
-]
-
-export const columns = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <></>
-    ),
-    cell: ({ row }) => (
-      <></>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "dado",
-    header: "Dado",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("dado")}</div>
-    ),
-  },
-  {
-    accessorKey: "valor",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Valor
-          <ArrowUpDown />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("valor")}</div>,
-  },
-  {
-    accessorKey: "observacao",
-    header: () => <div className="">Observação</div>,
-    cell: ({ row }) => (<div className="capitalize">{row.getValue("observacao")}</div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/use-toast';
 
 // --------------------------------------------------------------------------------
 // grafico de Uso do Solo e Cultivo
@@ -149,14 +45,28 @@ const cultivosConfig = {
 }
 
 export function OverviewTab({ fazendaId }) {
-  const { fetchWithAuth } = useAuth()
+  const { fetchWithAuth, user } = useAuth()
+  const { toast } = useToast();
   const [dadosFazenda, setDadosFazenda] = useState(null)
   const [contatosPrincipais, setContatosPrincipais] = useState([])
   const [carregando, setCarregando] = useState(true)
-  const [sorting, setSorting] = useState([])
-  const [columnFilters, setColumnFilters] = useState([])
-  const [columnVisibility, setColumnVisibility] = useState({})
-  const [rowSelection, setRowSelection] = useState({})
+  const [dadosGerais, setDadosGerais] = useState([])
+  const [dadosLoading, setDadosLoading] = useState(false)
+  const [dadosErro, setDadosErro] = useState(null)
+  const [formNovo, setFormNovo] = useState({ dado: "", valor: "", descricao: "" })
+  const [editingId, setEditingId] = useState(null)
+  const [formEdit, setFormEdit] = useState({ dado: "", valor: "", descricao: "" })
+  const [openNovo, setOpenNovo] = useState(false)
+  const [openEditInfo, setOpenEditInfo] = useState(false)
+  const [openEditLocal, setOpenEditLocal] = useState(false)
+  const [formInfo, setFormInfo] = useState({ focoProdutivo: "", quantidadeFuncionarios: "", cnpj: "" })
+  const [formLocal, setFormLocal] = useState({ endereco: "", cidade: "", estado: "", cep: "", latitude: "", longitude: "" })
+
+  const isGerenteMatriz = useMemo(() => {
+    const perfil = user?.perfil;
+    const val = typeof perfil === "string" ? perfil : (perfil?.funcao ?? perfil?.nome);
+    return String(val || "").toUpperCase() === "GERENTE_MATRIZ";
+  }, [user]);
 
   // Carregar dados da fazenda ao montar o componente
   useEffect(() => {
@@ -169,22 +79,27 @@ export function OverviewTab({ fazendaId }) {
         }
 
         const response = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`)
-        
+
         if (!response.ok) {
           console.error("Erro ao carregar dados da fazenda: status", response.status)
+          toast({ title: "Erro ao carregar dados da fazenda", description: `Status ${response.status}`, variant: "destructive" });
           return
         }
 
         const body = await response.json()
         const unidade = body?.unidade ?? body
-        
+
         if (unidade) {
           setDadosFazenda(unidade)
+          // sinalizar carregamento bem-sucedido (silencioso) — opcional
+          // toast.success('Dados da fazenda carregados');
         } else {
           console.error("Erro ao carregar dados da fazenda:", body)
+          toast({ title: "Erro ao carregar dados da fazenda", variant: "destructive" });
         }
       } catch (error) {
         console.error("Erro ao buscar dados da fazenda:", error)
+        toast({ title: "Erro ao buscar dados da fazenda", description: "Verifique a sua conexão.", variant: "destructive" });
       } finally {
         setCarregando(false)
       }
@@ -210,6 +125,195 @@ export function OverviewTab({ fazendaId }) {
     }
   }, []);
 
+  // Dados gerais da unidade (CRUD)
+  useEffect(() => {
+    let mounted = true;
+    async function carregarDadosGerais() {
+      if (!fazendaId) return;
+      setDadosLoading(true);
+      setDadosErro(null);
+      try {
+        const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais`, { method: "GET", credentials: "include" });
+        const body = await res.json().catch(() => null);
+        const lista = body?.dados ?? body ?? [];
+        if (mounted) setDadosGerais(Array.isArray(lista) ? lista : []);
+      } catch (err) {
+        console.error("[dados-gerais] erro ao listar", err);
+        toast({ title: "Erro ao carregar dados gerais", variant: "destructive" });
+        if (mounted) setDadosErro("Erro ao carregar dados gerais");
+      } finally {
+        if (mounted) setDadosLoading(false);
+      }
+    }
+    carregarDadosGerais();
+    return () => { mounted = false; };
+  }, [fazendaId, fetchWithAuth]);
+
+  async function handleCriarDado(e) {
+    e.preventDefault();
+    if (!formNovo.dado || !formNovo.valor) {
+      setDadosErro("Preencha 'dado' e 'valor'.");
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formNovo),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) {
+        throw new Error(body?.erro || `HTTP ${res.status}`);
+      }
+      const novo = body?.dado ?? body;
+      setDadosGerais(prev => [novo, ...prev]);
+      setFormNovo({ dado: "", valor: "", descricao: "" });
+      setDadosErro(null);
+      setOpenNovo(false);
+      toast({ title: "Dado criado com sucesso" });
+    } catch (err) {
+      console.error("[dados-gerais] criar", err);
+      setDadosErro("Erro ao criar dado");
+      toast({ title: "Erro ao criar dado", variant: "destructive" });
+    }
+  }
+
+  function startEdit(item) {
+    setEditingId(item.id);
+    setFormEdit({ dado: item.dado || "", valor: item.valor || "", descricao: item.descricao || "" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setFormEdit({ dado: "", valor: "", descricao: "" });
+  }
+
+  async function handleSalvarEdicao(id) {
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formEdit),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
+      const atualizado = body?.dado ?? body;
+      setDadosGerais(prev => prev.map(d => d.id === id ? atualizado : d));
+      cancelEdit();
+      setDadosErro(null);
+      toast({ title: "Dado atualizado" });
+    } catch (err) {
+      console.error("[dados-gerais] atualizar", err);
+      setDadosErro("Erro ao atualizar dado");
+      toast({ title: "Erro ao atualizar dado", variant: "destructive" });
+    }
+  }
+
+  async function handleExcluir(id) {
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}/dados-gerais/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.erro || `HTTP ${res.status}`);
+      }
+      setDadosGerais(prev => prev.filter(d => d.id !== id));
+      toast({ title: "Dado excluído" });
+    } catch (err) {
+      console.error("[dados-gerais] excluir", err);
+      setDadosErro("Erro ao excluir dado");
+      toast({ title: "Erro ao excluir dado", variant: "destructive" });
+    }
+  }
+
+  function formatCnpjInput(value) {
+    const digits = String(value || "").replace(/\D/g, "").slice(0, 14);
+    if (!digits) return "";
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return digits.replace(/(\d{2})(\d+)/, "$1.$2");
+    if (digits.length <= 8) return digits.replace(/(\d{2})(\d{3})(\d+)/, "$1.$2.$3");
+    if (digits.length <= 12) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, "$1.$2.$3/$4");
+    return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, "$1.$2.$3/$4-$5");
+  }
+
+  function hydrateFormsFromDados(unidade) {
+    setFormInfo({
+      focoProdutivo: Array.isArray(unidade?.focoProdutivo) ? unidade.focoProdutivo.join(", ") : (unidade?.focoProdutivo ?? ""),
+      quantidadeFuncionarios: unidade?.quantidadeFuncionarios ?? "",
+      cnpj: formatCnpjInput(unidade?.cnpj ?? ""),
+    });
+    setFormLocal({
+      endereco: unidade?.endereco ?? "",
+      cidade: unidade?.cidade ?? "",
+      estado: unidade?.estado ?? "",
+      cep: unidade?.cep ?? "",
+      latitude: unidade?.latitude ?? "",
+      longitude: unidade?.longitude ?? "",
+    });
+  }
+
+  useEffect(() => {
+    if (dadosFazenda) hydrateFormsFromDados(dadosFazenda);
+  }, [dadosFazenda]);
+
+  async function salvarInfo() {
+    try {
+      const payload = {
+        focoProdutivo: formInfo.focoProdutivo,
+        cnpj: formInfo.cnpj ? formInfo.cnpj.replace(/\D/g, "") : null,
+      };
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
+      const unidadeAtualizada = body?.unidade ?? body;
+      setDadosFazenda(prev => ({ ...prev, ...unidadeAtualizada }));
+      hydrateFormsFromDados(unidadeAtualizada);
+      setOpenEditInfo(false);
+      toast({ title: "Informações atualizadas" });
+    } catch (err) {
+      console.error("[unidade] atualizar info", err);
+      toast({ title: "Erro ao salvar informações da unidade", variant: "destructive" });
+    }
+  }
+
+  async function salvarLocal() {
+    try {
+      const payload = {
+        endereco: formLocal.endereco,
+        cidade: formLocal.cidade,
+        estado: formLocal.estado,
+        cep: formLocal.cep,
+        latitude: formLocal.latitude ? Number(formLocal.latitude) : null,
+        longitude: formLocal.longitude ? Number(formLocal.longitude) : null,
+      };
+      const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.sucesso === false) throw new Error(body?.erro || `HTTP ${res.status}`);
+      const unidadeAtualizada = body?.unidade ?? body;
+      setDadosFazenda(prev => ({ ...prev, ...unidadeAtualizada }));
+      hydrateFormsFromDados(unidadeAtualizada);
+      setOpenEditLocal(false);
+      toast({ title: "Localização atualizada" });
+    } catch (err) {
+      console.error("[unidade] atualizar localização", err);
+      toast({ title: "Erro ao salvar localização", variant: "destructive" });
+    }
+  }
+
   // formatter: CNPJ (00.000.000/0000-00)
   function formatCNPJ(value) {
     if (!value) return '-';
@@ -217,6 +321,24 @@ export function OverviewTab({ fazendaId }) {
     if (digits.length === 0) return '-';
     const padded = digits.padEnd(14, '0').slice(0, 14);
     return padded.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+
+  // formatter: CEP (00000-000)
+  function formatCEP(value) {
+    if (!value) return '-';
+    const digits = String(value).replace(/\D/g, '');
+    if (!digits) return '-';
+    if (digits.length <= 5) return digits;
+    const d = digits.slice(0, 8).padEnd(8, '0');
+    return d.replace(/(\d{5})(\d{3})/, '$1-$2');
+  }
+
+  function formatCoords(lat, lng) {
+    if (lat === null || lat === undefined || lng === null || lng === undefined) return '-';
+    const la = Number(lat);
+    const lo = Number(lng);
+    if (Number.isNaN(la) || Number.isNaN(lo)) return '-';
+    return `${la.toFixed(6)}, ${lo.toFixed(6)}`;
   }
 
   // small phone formatter (brasileiro-ish)
@@ -286,33 +408,19 @@ export function OverviewTab({ fazendaId }) {
     return () => { mounted = false; };
   }, [fazendaId, fetchWithAuth]);
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  })
-
-
   return (
+    <>
     <div className="flex gap-6 ">
       <div className="w-80 space-y-6">
         {/* Company Details */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex items-center justify-between">
             <CardTitle className="text-base">Informações da unidade</CardTitle>
+            {isGerenteMatriz && (
+              <Button variant="outline" size="sm" onClick={() => setOpenEditInfo(true)}>
+                Editar
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
@@ -488,236 +596,298 @@ export function OverviewTab({ fazendaId }) {
         </div>
         {/* tabela */}
         <div className="w-full">
-          <div className="flex items-center py-4">
-            <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  Colunas <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) =>
-                          column.toggleVisibility(!!value)
-                        }
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    )
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex flex-row justify-between">
+            <div className="flex flex-col gap-2">
+              <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
+              <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
+            </div>
+
+            {isGerenteMatriz && (
+              <Button size="sm" onClick={() => setOpenNovo(true)}><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+            )}
           </div>
+
+          <div className="flex justify-between items-center py-2">
+            <Dialog open={openNovo} onOpenChange={setOpenNovo}>
+              {/* <DialogTrigger asChild>
+                <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+              </DialogTrigger> */}
+            <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                  <DialogTitle>Novo dado</DialogTitle>
+                </DialogHeader>
+                <form className="space-y-3" onSubmit={handleCriarDado}>
+                  <Input
+                    placeholder="Dado*"
+                    value={formNovo.dado}
+                    onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
+                    required
+                  />
+                  <Input
+                    placeholder="Valor*"
+                    value={formNovo.valor}
+                    onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
+                    required
+                  />
+                  <Input
+                    placeholder="Descrição (opcional)"
+                    value={formNovo.descricao}
+                    onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
+                  />
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
+                    <Button type="submit">Salvar</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+          {dadosErro && <div className="text-sm text-red-500 mb-2">{dadosErro}</div>}
+
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                        </TableHead>
-                      )
-                    })}
-                  </TableRow>
-                ))}
+                <TableRow>
+                  <TableHead className="max-w-[200px]">Dado</TableHead>
+                  <TableHead className="max-w-[220px]">Valor</TableHead>
+                  <TableHead className="max-w-[260px]">Descrição</TableHead>
+                  <TableHead className="w-[180px]">Ações</TableHead>
+                </TableRow>
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
+                {dadosLoading && (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      Nenhum resultado.
-                    </TableCell>
+                    <TableCell colSpan={4} className="text-center">Carregando...</TableCell>
                   </TableRow>
                 )}
+                {!dadosLoading && dadosGerais.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">Nenhum dado cadastrado.</TableCell>
+                  </TableRow>
+                )}
+                {!dadosLoading && dadosGerais.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="max-w-[200px] whitespace-nowrap text-ellipsis overflow-hidden">
+                      {editingId === item.id ? (
+                        <Input value={formEdit.dado} onChange={(e) => setFormEdit(f => ({ ...f, dado: e.target.value }))} />
+                      ) : (
+                        item.dado
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[220px] whitespace-nowrap text-ellipsis overflow-hidden">
+                      {editingId === item.id ? (
+                        <Input value={formEdit.valor} onChange={(e) => setFormEdit(f => ({ ...f, valor: e.target.value }))} />
+                      ) : (
+                        item.valor
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[260px] break-words whitespace-pre-wrap">
+                      {editingId === item.id ? (
+                        <Input value={formEdit.descricao ?? ""} onChange={(e) => setFormEdit(f => ({ ...f, descricao: e.target.value }))} />
+                      ) : (
+                        item.descricao || "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="space-x-2">
+                      {isGerenteMatriz ? (
+                        editingId === item.id ? (
+                          <>
+                            <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
+                            <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Editar</Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleExcluir(item.id)}>Excluir</Button>
+                          </>
+                        )
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Somente leitura</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
         </div>
 
-        
-
-        {/* Uso do Solo e Cultivo */}
         <div className="flex gap-8">
-          {/* Gráfico de pizza (área por cultura) */}
-          <Card className="flex flex-col flex-1 min-w-0">
-            <CardHeader className="items-center pb-0">
-              <CardTitle>Área por cultura</CardTitle>
-              <CardDescription>January - June 2024</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 pb-0">
-              <ChartContainer
-                config={cultivosConfig}
-                className="mx-auto aspect-square max-h-[300px]"
-              >
-                <PieChart>
-                  <ChartTooltip
-                    content={<ChartTooltipContent nameKey="cultura" hideLabel />}
-                  />
-                  <Pie data={cultivos} dataKey="area" />
-                  <ChartLegend
-                    content={<ChartLegendContent nameKey="cultura" />}
-                    className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
-                  />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col gap-6 flex-1 min-w-0">
+          <div className="flex flex-col gap-6 basis-[70%] min-w-0">
             {/* mapa */}
-        <div className='h-full'>
-          <Card className='h-full'>
-            <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
-              <CardContent className='h-full'>
-                {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
-                  <div className='h-full rounded-md overflow-hidden'>
-                    <MapContainer
-                      style={{ height: '100%', width: '100%' }}
-                      center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
-                      zoom={12}
-                      scrollWheelZoom={false}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
-                        <Popup>
-                          <div className="min-w-[160px]">
-                            <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
-                            <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    </MapContainer>
-                  </div>
-                ) : (
-                  <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
-                    <div>Coordenadas não disponíveis para esta unidade.</div>
-                  </div>
-                )}
-              </CardContent>
-          </Card>
-        </div>
-
-            
-
+            <div className='h-full'>
+              <Card className='h-full'>
+                <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
+                <CardContent className='h-full'>
+                  {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
+                    <div className='h-full rounded-md overflow-hidden'>
+                  <MapContainer
+                    style={{ height: '100%', width: '100%', zIndex: 0 }}
+                        center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
+                        zoom={12}
+                        scrollWheelZoom={false}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
+                          <Popup>
+                            <div className="min-w-[160px]">
+                              <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
+                              <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
+                    </div>
+                  ) : (
+                    <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
+                      <div>Coordenadas não disponíveis para esta unidade.</div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
+          <div className="basis-[30%]">
+            <Card>
+              <CardHeader className="flex items-center justify-between">
+                <CardTitle className="text-base">Localização</CardTitle>
+                {isGerenteMatriz && (
+                  <Button variant="outline" size="sm" onClick={() => setOpenEditLocal(true)}>
+                    Editar
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Briefcase className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.endereco || '—')}</div>
+                    <div className="text-sm text-muted-foreground">Endereço</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Users className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.cidade || '—')}</div>
+                    <div className="text-sm text-muted-foreground">Cidade</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Calendar className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.estado || '—')}</div>
+                    <div className="text-sm text-muted-foreground">Estado</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <ScrollText className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCEP(dadosFazenda?.cep || dadosFazenda?.cep)}</div>
+                    <div className="text-sm text-muted-foreground">CEP</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <ScrollText className="size-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCoords(dadosFazenda?.latitude, dadosFazenda?.longitude)}</div>
+                    <div className="text-sm text-muted-foreground">Coordenadas</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
         </div>
-
-        {/* Produção e Produtividade */}
-
-        {/* Estrutura e Infraestrutura */}
-
-        {/* Indicadores Ambientais e Legais */}
-
-        {/* Job Progress */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Job Progress Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {jobMetrics.map((job, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{job.title}</span>
-                      <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
-                        {job.status}
-                      </Badge>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {job.applications} applications
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Shortlisted</div>
-                      <div className="font-medium">{job.shortlisted}</div>
-                      <Progress value={(job.shortlisted / job.applications) * 100} className="h-1 mt-1" />
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Interviewed</div>
-                      <div className="font-medium">{job.interviewed}</div>
-                      <Progress value={(job.interviewed / job.shortlisted) * 100} className="h-1 mt-1" />
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Offered</div>
-                      <div className="font-medium">1</div>
-                      <Progress value={33} className="h-1 mt-1" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card> */}
-
-        {/* Recent Activity */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <Avatar className="size-8">
-                    <AvatarImage src={`/api/placeholder/32/32`} />
-                    <AvatarFallback>{activity.user.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="text-sm">{activity.description}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {activity.user} • {activity.time}
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {activity.type}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card> */}
 
       </div>
     </div>
+
+    {/* Dialog editar informações principais */}
+    <Dialog open={openEditInfo} onOpenChange={setOpenEditInfo}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar informações da unidade</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Culturas atuais (separe por vírgula)</Label>
+            <Input
+              value={formInfo.focoProdutivo}
+              onChange={(e) => setFormInfo((f) => ({ ...f, focoProdutivo: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Quantidade de funcionários</Label>
+            <Input
+              type="number"
+              value={formInfo.quantidadeFuncionarios}
+              onChange={(e) => setFormInfo((f) => ({ ...f, quantidadeFuncionarios: f.quantidadeFuncionarios }))}
+              disabled
+              readOnly
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>CNPJ</Label>
+            <Input
+              value={formInfo.cnpj}
+              onChange={(e) => setFormInfo((f) => ({ ...f, cnpj: formatCnpjInput(e.target.value) }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpenEditInfo(false)}>Cancelar</Button>
+          <Button onClick={salvarInfo}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Dialog editar localização */}
+    <Dialog open={openEditLocal} onOpenChange={setOpenEditLocal}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar localização</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Endereço</Label>
+            <Input value={formLocal.endereco} onChange={(e) => setFormLocal(f => ({ ...f, endereco: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Cidade</Label>
+            <Input value={formLocal.cidade} onChange={(e) => setFormLocal(f => ({ ...f, cidade: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Estado</Label>
+            <Input value={formLocal.estado} onChange={(e) => setFormLocal(f => ({ ...f, estado: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>CEP</Label>
+            <Input value={formLocal.cep} onChange={(e) => setFormLocal(f => ({ ...f, cep: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label>Latitude</Label>
+              <Input value={formLocal.latitude} onChange={(e) => setFormLocal(f => ({ ...f, latitude: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Longitude</Label>
+              <Input value={formLocal.longitude} onChange={(e) => setFormLocal(f => ({ ...f, longitude: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpenEditLocal(false)}>Cancelar</Button>
+          <Button onClick={salvarLocal}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

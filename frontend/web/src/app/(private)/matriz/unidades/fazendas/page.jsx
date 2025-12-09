@@ -8,6 +8,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -52,6 +60,7 @@ export default function FazendasPage() {
     const [metrics, setMetrics] = useState({ total: 0, active: 0, inactive: 0 });
     const [orderBy, setOrderBy] = useState('nome_asc');
     const [totalResults, setTotalResults] = useState(0);
+    const [mapUnits, setMapUnits] = useState([]);
 
     // filtros avançados: tipos e status e local
     const [typeFilters, setTypeFilters] = useState({ Matriz: true, Fazenda: true, Loja: true }); // rascunho
@@ -145,6 +154,26 @@ export default function FazendasPage() {
         fetchFazendas();
         return () => { mounted = false; };
     }, [fetchWithAuth, appliedFilters, page, perPage, query, orderBy]);
+
+    // lista completa para o mapa (não afetada por filtros de busca/ordenar)
+    useEffect(() => {
+        let mounted = true;
+        async function fetchMapUnits() {
+            try {
+                const res = await fetchWithAuth(`${API_URL}unidades/fazendas`, { method: "GET", credentials: "include" });
+                if (!res.ok) return;
+                const body = await res.json().catch(() => null);
+                const unidades = body?.unidades ?? body ?? [];
+                if (mounted && Array.isArray(unidades)) {
+                    setMapUnits(unidades.map(normalizeUnit));
+                }
+            } catch (err) {
+                console.warn("[fetchMapUnits] erro", err);
+            }
+        }
+        fetchMapUnits();
+        return () => { mounted = false; };
+    }, [fetchWithAuth]);
 
     // Buscar métricas de fazendas (total, ativas, inativas, etc)
     useEffect(() => {
@@ -259,6 +288,12 @@ export default function FazendasPage() {
         return filtered.slice(start, start + perPage);
     }, [filtered, page, perPage]);
 
+    // If backend provides `totalResults` then `units` is expected to contain
+    // only the current page (server-side pagination). In that case render
+    // `units` directly; otherwise render client-side paged results.
+    const isServerPaged = !!(totalResults && totalResults > 0);
+    const displayed = isServerPaged ? units : paged;
+
     function toggleSelect(id) {setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);}
 
     function toggleStatus(status) {
@@ -293,7 +328,7 @@ export default function FazendasPage() {
     }
 
     function selectAllOnPage() {
-        const ids = paged.map(u => u.id);
+        const ids = displayed.map(u => u.id);
         const all = ids.every(id => selected.includes(id));
         setSelected(s => all ? s.filter(x => !ids.includes(x)) : [...new Set([...s, ...ids])]);
     }
@@ -411,7 +446,7 @@ export default function FazendasPage() {
         return null;
     }
 
-    const totalPages = Math.max(1, Math.ceil(units.length / perPage));
+    const totalPages = Math.max(1, Math.ceil((totalResults && totalResults > 0 ? totalResults : filtered.length) / perPage));
     useEffect(() => {
         // sempre garante que a página atual seja válida quando filtros / perPage mudarem
         setPage(p => Math.min(Math.max(1, p), totalPages));
@@ -466,7 +501,7 @@ export default function FazendasPage() {
                                         {/* header com ações rápidas */}
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="font-semibold">Filtros Avançados</div>
-                                            <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
+                                            <div className="text-sm text-neutral-400">{(totalResults && totalResults > 0) ? totalResults : filtered.length} resultados</div>
                                         </div>
 
                                         <div className="space-y-3">
@@ -593,7 +628,7 @@ export default function FazendasPage() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <div className="flex items-center gap-2 ml-3">
+                                {/* <div className="flex items-center gap-2 ml-3">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant='outline' size='sm'>
@@ -612,7 +647,7 @@ export default function FazendasPage() {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                </div>
+                                </div> */}
                                 <Button variant="" size="sm" className="flex items-center gap-1" onClick={() => setOpenAddFazenda(true)}>
                                     <span className="flex flex-row gap-3 items-center text-sm"><Plus />Adicionar fazenda</span>
                                 </Button>
@@ -630,13 +665,25 @@ export default function FazendasPage() {
                         ) : ( <div>
                                 {/* Grid of cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-                                    {units.map(u => (
+                                    {displayed.map(u => (
                                         <Link key={u.id} href={`/matriz/unidades/fazendas/${u.id}`} onMouseEnter={() => prefetchFazenda(u.id)}>
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex flex-col items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar><AvatarFallback>F</AvatarFallback></Avatar>
-                                                        <div>
+                                                                    <Avatar>
+                                                                        {u.raw?.imagemUrl || u.imagemUrl ? (
+                                                                            <AvatarImage src={u.raw?.imagemUrl || u.imagemUrl} alt={u.name} />
+                                                                        ) : (
+                                                                            <AvatarFallback>{(() => {
+                                                                                const parts = String(u.name || '').split(' ').filter(Boolean);
+                                                                                const a = parts[0]?.[0] ?? '';
+                                                                                const b = parts[1]?.[0] ?? '';
+                                                                                const initials = (a + b).toUpperCase() || (String(u.name || '').slice(0,2).toUpperCase() || 'F');
+                                                                                return initials;
+                                                                            })()}</AvatarFallback>
+                                                                        )}
+                                                                    </Avatar>
+                                                                    <div>
                                                             <div className="font-bold text-lg">{u.name}</div>
                                                             <div className="text-sm text-muted-foreground">{u.location}</div>
                                                         </div>
@@ -645,7 +692,7 @@ export default function FazendasPage() {
                                                         <div className="text-base font-medium">Área: </div><div className="text-base font-normal">{u.areaHa} ha</div>
                                                     </div>
                                                     <div className="flex flex-row gap-3 ">
-                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.areaHa} ha</div>
+                                                        <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.manager || "—"}</div>
                                                     </div>
                                                 </div>
                                                 {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
@@ -655,62 +702,53 @@ export default function FazendasPage() {
                                 </div>
 
                                 {/* Empty state */}
-                                {units.length === 0 && !loading && (
+                                {displayed.length === 0 && !loading && (
                                     <div className="py-8 flex flex-col items-center gap-4 text-center text-muted-foreground">
                                         <Tractor size={50} />
                                         <p className="font-medium">Nenhuma fazenda encontrada.</p>
                                     </div>
                                 )}
 
-                                {/* Pagination controls */}
-                                {units.length > 0 && (
-                                    <div className="mt-6 flex items-center justify-between">
-                                        <div className="text-sm text-muted-foreground">
-                                            Página <span className="font-semibold">{page}</span> de{' '}
-                                            <span className="font-semibold">{Math.ceil(totalResults / perPage) || 1}</span>
-                                            {' '} ({totalResults} resultado{totalResults !== 1 ? 's' : ''})
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                                                <ChevronLeft className="h-4 w-4" />
-                                                Anterior
-                                            </Button>
-                                            <div className="flex items-center gap-1">
-                                                {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, i) => {
-                                                    const totalPages = Math.ceil(totalResults / perPage);
-                                                    let pageNum;
-                                                    if (totalPages <= 5) {pageNum = i + 1;}
-                                                    else if (page <= 3) {pageNum = i + 1;}
-                                                    else if (page >= totalPages - 2) {pageNum = totalPages - 4 + i;}
-                                                    else {pageNum = page - 2 + i;}
-                                                    return (
-                                                        <Button key={pageNum} variant={pageNum === page ? "default" : "outline"} size="sm" onClick={() => setPage(pageNum)}>
-                                                            {pageNum}
-                                                        </Button>
-                                                    );
-                                                })}
-                                            </div>
-                                            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(Math.ceil(totalResults / perPage), p + 1))} disabled={page >= Math.ceil(totalResults / perPage)}>
-                                                Próximo
-                                                <ChevronRight className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-muted-foreground">Por página:</span>
-                                            <select value={perPage}
-                                                onChange={(e) => {setPerPage(Number(e.target.value));setPage(1);}}
-                                                className="px-2 py-1 border rounded text-sm dark:bg-neutral-900 dark:border-neutral-700">
-                                                <option value="8">8</option>
-                                                <option value="16">16</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
+                            
                             </div>
                         )}
                     </CardContent>
+                    <CardFooter className="flex items-center justify-between border-t dark:border-neutral-800 border-neutral-200">
+                        <div className="flex items-center gap-3">
+                            <Label className="text-sm font-medium">Linhas por pág.</Label>
+                            <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                                <SelectTrigger className="w-[80px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="4">4</SelectItem>
+                                    <SelectItem value="8">8</SelectItem>
+                                    <SelectItem value="12">12</SelectItem>
+                                    <SelectItem value="16">16</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filtered.length / perPage) || 1)}</div>
+
+                            <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
+                                <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
                 </Card>
                 <div className='mb-8'>
                     <Card>
@@ -722,7 +760,7 @@ export default function FazendasPage() {
                                     <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
 
                                     { /* marcadores para unidades que possuam coordenadas válidas */}
-                                    {units.filter(u => u.latitude != null && u.longitude != null).map(u => (
+                                    {mapUnits.filter(u => u.latitude != null && u.longitude != null).map(u => (
                                         <Marker key={u.id} position={[Number(u.latitude), Number(u.longitude)]}>
                                             <Popup>
                                                 <div className="min-w-[200px]">
@@ -735,16 +773,15 @@ export default function FazendasPage() {
                                         </Marker>
                                     ))}
 
-                                    <FitBounds markers={units.filter(u => u.latitude != null && u.longitude != null)} />
+                                    <FitBounds markers={mapUnits.filter(u => u.latitude != null && u.longitude != null)} />
                                 </MapContainer>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="flex flex-row gap-8">
+                {/* <div className="flex flex-row gap-8">
                     <div className="w-full">
-                        {/* FAZENDA */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Fazendas mais produtivas</CardTitle>
@@ -799,7 +836,7 @@ export default function FazendasPage() {
                             </CardFooter>
                         </Card>
                     </div>
-                </div>
+                </div> */}
 
             </div>
 
