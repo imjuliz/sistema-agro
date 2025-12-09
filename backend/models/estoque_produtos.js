@@ -323,3 +323,56 @@ export const atualizarQntdMin = async (estoqueProdutoId, qntdMin) => {
         };
     }
 };
+
+export async function adicionarProdutoAoEstoque(unidadeId, dadosProduto) {
+  // 1. Verifica se a unidade possui estoque
+  const estoque = await prisma.estoque.findUnique({
+    where: { unidadeId: Number(unidadeId) },
+  });
+
+  if (!estoque) {
+    throw new Error("Estoque não encontrado para esta unidade.");
+  }
+
+  // 2. Tenta criar o produto no estoque
+  try {
+    const novoProduto = await prisma.estoqueProduto.create({
+      data: {
+        estoqueId: estoque.id,
+        nome: dadosProduto.nome,
+        sku: dadosProduto.sku ?? null,
+        marca: dadosProduto.marca ?? null,
+
+        qntdAtual: dadosProduto.qntdAtual ?? 0,
+        qntdMin: dadosProduto.qntdMin ?? 0,
+
+        // Campos comentados — não são enviados:
+        // produtoId: dadosProduto.produtoId,
+        // loteId: dadosProduto.loteId,
+        // producaoId: dadosProduto.producaoId,
+
+        precoUnitario: dadosProduto.precoUnitario ?? null,
+
+        // pesoUnidade: dadosProduto.pesoUnidade,
+        validade: dadosProduto.validade ? new Date(dadosProduto.validade) : null,
+
+        unidadeBase: dadosProduto.unidadeBase, // obrigatório
+
+        // fornecedorUnidadeId: dadosProduto.fornecedorUnidadeId,
+        fornecedorExternoId: dadosProduto.fornecedorExternoId ?? null,
+
+        dataEntrada: new Date(),
+      },
+    });
+
+    return novoProduto;
+  } catch (err) {
+    // Trata erro de duplicidade baseado no índice único (estoqueId + produtoId)
+    if (err.code === "P2002") {
+      throw new Error("Este produto já está cadastrado neste estoque.");
+    }
+
+    console.error("Erro ao adicionar produto ao estoque:", err);
+    throw new Error("Erro ao registrar produto no estoque.");
+  }
+}

@@ -6,12 +6,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useInventory } from '@/contexts/InventoryContext';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Plus } from 'lucide-react'
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from '@/components/ui/textarea'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from "@/lib/api";
+
+const UNIDADES_DE_MEDIDA = [
+  { value: 'KG', label: 'Quilograma (kg)' },
+  { value: 'G', label: 'Grama (g)' },
+  { value: 'T', label: 'Tonelada (t)' },
+  { value: 'LOTE', label: 'Lote' },
+  { value: 'UNIDADE', label: 'Unidade' },
+  { value: 'SACA', label: 'Saca' },
+  { value: 'CABECA', label: 'Cabeça' },
+  { value: 'ARROBA', label: 'Arroba' },
+  { value: 'LITRO', label: 'Litro (L)' },
+  { value: 'ML', label: 'Mililitro (mL)' },
+];
 
 function getStockStatus(current, minimum) {
   const difference = current - minimum;
@@ -22,12 +37,31 @@ function getStockStatus(current, minimum) {
 
 export function StoreLevelView({ onOpenMovimento }) {
   const { getStoreItems, storeMapping, refresh, atualizarMinimumStockRemote, isGerenteMatriz, isGerenteFazenda, isGerenteLoja } = useInventory();
+  const { fetchWithAuth } = useAuth();
+  
   const [isMinModalOpen, setIsMinModalOpen] = useState(false);
   const [minModalItem, setMinModalItem] = useState(null);
   const [minInputValue, setMinInputValue] = useState('');
   const [isSavingMin, setIsSavingMin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
+
+  // Estados para o modal de adicionar produto
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [fornecedoresExternos, setFornecedoresExternos] = useState([]);
+  const [loadingFornecedores, setLoadingFornecedores] = useState(false);
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: '',
+    sku: '',
+    marca: '',
+    qntdAtual: '0',
+    qntdMin: '0',
+    precoUnitario: '',
+    validade: '',
+    unidadeBase: '',
+    fornecedorExternoId: '',
+  });
 
 
   // paginacao
@@ -36,7 +70,130 @@ export function StoreLevelView({ onOpenMovimento }) {
 
   // dados
   const allStoreItems = useMemo(() => getStoreItems() || [], [getStoreItems]);
-  const stores = useMemo(() => Object.values(storeMapping || {}), [storeMapping]);
+  // stores: transformar map { id: nome } em array [{ id, nome }]
+  const stores = useMemo(() => Object.entries(storeMapping || {}).map(([id, nome]) => ({ id: Number(id) || id, nome })), [storeMapping]);
+
+  // Carregar fornecedores externos quando modal abrir
+  useEffect(() => {
+    if (isAddProductModalOpen && stores.length > 0) {
+      const currentStore = stores[0];
+      const unidadeId = currentStore?.id;
+      
+      if (unidadeId) {
+        loadFornecedoresExternos(unidadeId);
+      }
+    }
+  }, [isAddProductModalOpen, stores]);
+
+  async function loadFornecedoresExternos(unidadeId) {
+    setLoadingFornecedores(true);
+    try {
+      const url = `${API_URL}listarFornecedoresExternos/${unidadeId}`;
+      console.log('[StoreLevelView] Carregando fornecedores de:', url);
+      const res = await fetchWithAuth(url);
+      
+      if (!res.ok) {
+        console.error('[StoreLevelView] Erro na resposta:', res.status, res.statusText);
+        throw new Error('Erro ao carregar fornecedores');
+      }
+      
+      const data = await res.json();
+      console.log('[StoreLevelView] Resposta recebida:', data);
+      
+      // A resposta pode vir como { sucesso, fornecedores, message }
+      let fornecedoresList = [];
+      if (data.sucesso && Array.isArray(data.fornecedores)) {
+        fornecedoresList = data.fornecedores;
+      } else if (Array.isArray(data.fornecedores)) {
+        fornecedoresList = data.fornecedores;
+      } else if (Array.isArray(data)) {
+        fornecedoresList = data;
+      }
+      
+      console.log('[StoreLevelView] Fornecedores carregados:', fornecedoresList);
+      setFornecedoresExternos(fornecedoresList);
+    } catch (err) {
+      console.error('Erro ao carregar fornecedores externos:', err);
+      setFornecedoresExternos([]);
+    } finally {
+      setLoadingFornecedores(false);
+    }
+  }
+
+  function openAddProductModal() {
+    setFormData({
+      nome: '',
+      sku: '',
+      marca: '',
+      qntdAtual: '0',
+      qntdMin: '0',
+      precoUnitario: '',
+      validade: '',
+      unidadeBase: '',
+      fornecedorExternoId: '',
+    });
+    setIsAddProductModalOpen(true);
+  }
+
+  function closeAddProductModal() {
+    setIsAddProductModalOpen(false);
+  }
+
+  async function submitAddProduct() {
+    if (!formData.nome.trim()) {
+      alert('Nome do produto é obrigatório');
+      return;
+    }
+    
+    if (!formData.unidadeBase) {
+      alert('Unidade de medida é obrigatória');
+      return;
+    }
+
+    setIsSubmittingProduct(true);
+    try {
+      const currentStore = stores[0];
+      const unidadeId = currentStore?.id;
+      
+      if (!unidadeId) {
+        throw new Error('Unidade não identificada');
+      }
+
+      const body = {
+        nome: formData.nome,
+        sku: formData.sku || null,
+        marca: formData.marca || null,
+        qntdAtual: Number(formData.qntdAtual || 0),
+        qntdMin: Number(formData.qntdMin || 0),
+        precoUnitario: formData.precoUnitario ? Number(formData.precoUnitario) : null,
+        validade: formData.validade || null,
+        unidadeBase: formData.unidadeBase,
+        fornecedorExternoId: formData.fornecedorExternoId ? Number(formData.fornecedorExternoId) : null,
+      };
+
+      const url = `${API_URL}adicionarProdutoEstoque/${unidadeId}`;
+      const res = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => null);
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+
+      // Sucesso: fechar modal e atualizar tabela
+      closeAddProductModal();
+      await refresh();
+      alert('Produto adicionado ao estoque com sucesso!');
+    } catch (err) {
+      console.error('Erro ao adicionar produto:', err);
+      alert(`Erro: ${err.message || 'Falha ao adicionar produto'}`);
+    } finally {
+      setIsSubmittingProduct(false);
+    }
+  }
 
   // helper para extrair o nome do fornecedor/origem do item (robusto para diferentes formatos)
   const resolveSupplierName = (item) => {
@@ -343,6 +500,15 @@ export function StoreLevelView({ onOpenMovimento }) {
           </CardFooter>
         </CardContent>
       </Card>
+
+      {/* Botão para adicionar produto */}
+      <div className="flex justify-end">
+        <Button onClick={openAddProductModal} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Adicionar Produto ao Estoque
+        </Button>
+      </div>
+
       {/* Movimentação modal is handled by parent (page) via onOpenMovimento prop */}
 
       {/* Modal para editar quantidade mínima */}
@@ -365,6 +531,160 @@ export function StoreLevelView({ onOpenMovimento }) {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => { setIsMinModalOpen(false); setMinModalItem(null); }}>Fechar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmUpdateMinimum} disabled={isSavingMin}>{isSavingMin ? 'Guardando...' : 'Salvar'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal para adicionar novo produto ao estoque */}
+      <AlertDialog open={isAddProductModalOpen} onOpenChange={(open) => { if (!open) closeAddProductModal(); else setIsAddProductModalOpen(open); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Adicionar Produto ao Estoque</AlertDialogTitle>
+            <AlertDialogDescription>
+              Preencha as informações do produto que deseja adicionar ao estoque.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-4 py-4">
+            {/* Nome */}
+            <div>
+              <Label htmlFor="nome">Nome do Produto *</Label>
+              <Input
+                id="nome"
+                placeholder="Ex: Milho em grão"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              />
+            </div>
+
+            {/* SKU */}
+            <div>
+              <Label htmlFor="sku">SKU</Label>
+              <Input
+                id="sku"
+                placeholder="Ex: MILHO001"
+                value={formData.sku}
+                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+              />
+            </div>
+
+            {/* Marca */}
+            <div>
+              <Label htmlFor="marca">Marca</Label>
+              <Input
+                id="marca"
+                placeholder="Ex: Marca XYZ"
+                value={formData.marca}
+                onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
+              />
+            </div>
+
+            {/* Quantidade Atual */}
+            <div>
+              <Label htmlFor="qntdAtual">Quantidade Atual</Label>
+              <Input
+                id="qntdAtual"
+                type="number"
+                placeholder="0"
+                value={formData.qntdAtual}
+                onChange={(e) => setFormData({ ...formData, qntdAtual: e.target.value })}
+              />
+            </div>
+
+            {/* Quantidade Mínima */}
+            <div>
+              <Label htmlFor="qntdMin">Quantidade Mínima</Label>
+              <Input
+                id="qntdMin"
+                type="number"
+                placeholder="0"
+                value={formData.qntdMin}
+                onChange={(e) => setFormData({ ...formData, qntdMin: e.target.value })}
+              />
+            </div>
+
+            {/* Preço Unitário */}
+            <div>
+              <Label htmlFor="precoUnitario">Preço Unitário (R$)</Label>
+              <Input
+                id="precoUnitario"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.precoUnitario}
+                onChange={(e) => setFormData({ ...formData, precoUnitario: e.target.value })}
+              />
+            </div>
+
+            {/* Unidade de Medida */}
+            <div>
+              <Label htmlFor="unidadeBase">Unidade de Medida *</Label>
+              <Select value={formData.unidadeBase} onValueChange={(value) => setFormData({ ...formData, unidadeBase: value })}>
+                <SelectTrigger id="unidadeBase">
+                  <SelectValue placeholder="Selecione uma unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIDADES_DE_MEDIDA.map(unidade => (
+                    <SelectItem key={unidade.value} value={unidade.value}>
+                      {unidade.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Fornecedor Externo */}
+            <div>
+              <Label htmlFor="fornecedorExternoId">Fornecedor Externo</Label>
+              {loadingFornecedores ? (
+                <div className="w-full h-10 flex items-center text-sm text-muted-foreground">
+                  Carregando fornecedores...
+                </div>
+              ) : (
+                <Select 
+                  value={formData.fornecedorExternoId} 
+                  onValueChange={(value) => setFormData({ ...formData, fornecedorExternoId: value })}
+                >
+                  <SelectTrigger id="fornecedorExternoId">
+                    <SelectValue placeholder="Selecione um fornecedor ou deixe em branco" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fornecedoresExternos.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        Nenhum fornecedor disponível
+                      </div>
+                    ) : (
+                      fornecedoresExternos.map(fornecedor => (
+                        <SelectItem 
+                          key={fornecedor.id} 
+                          value={String(fornecedor.id)}
+                        >
+                          {fornecedor.nomeEmpresa || fornecedor.nome || `ID: ${fornecedor.id}`}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Validade */}
+            <div>
+              <Label htmlFor="validade">Data de Validade</Label>
+              <Input
+                id="validade"
+                type="date"
+                value={formData.validade}
+                onChange={(e) => setFormData({ ...formData, validade: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={closeAddProductModal}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={submitAddProduct} disabled={isSubmittingProduct}>
+              {isSubmittingProduct ? 'Adicionando...' : 'Adicionar Produto'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

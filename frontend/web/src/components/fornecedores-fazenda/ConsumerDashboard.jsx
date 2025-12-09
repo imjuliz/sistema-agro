@@ -96,8 +96,41 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
 
       console.log('[ConsumerDashboard] Fornecedores extraídos dos contratos:', fornecedoresFromContratos.length, fornecedoresFromContratos);
 
-      // 4) Normaliza fornecedores para o formato esperado pelo FornecedoresCard
-      let normalized = (fornecedoresFromContratos || []).map(f => ({
+      // 4) Tentar obter fornecedores diretamente vinculados à unidade (lista completa), e mesclar com fornecedores vindos dos contratos
+      let mergedFornecedores = (fornecedoresFromContratos || []).map(f => ({ ...f }));
+
+      try {
+        const listRes = await fetchWithAuth(`${API_URL}listarFornecedoresExternos/${unidadeId}`, { method: 'GET', credentials: 'include' });
+        if (listRes.ok) {
+          const listBody = await listRes.json().catch(() => ({}));
+          const list = Array.isArray(listBody.fornecedores) ? listBody.fornecedores : (Array.isArray(listBody) ? listBody : []);
+          // mesclar mantendo únicos por id
+          for (const f of (list || [])) {
+            if (!mergedFornecedores.some(x => x && x.id === f.id)) mergedFornecedores.push(f);
+          }
+        } else {
+          console.warn('[ConsumerDashboard] listarFornecedoresExternos retornou status', listRes.status);
+        }
+      } catch (e) {
+        console.warn('[ConsumerDashboard] erro ao chamar listarFornecedoresExternos:', e);
+      }
+
+      // Se ainda não houver fornecedores (caso raro), tentar fallback global
+      if (mergedFornecedores.length === 0) {
+        try {
+          const allRes = await fetchWithAuth(`${API_URL}fornecedores/externos`, { method: 'GET' });
+          if (allRes.ok) {
+            const allBody = await allRes.json().catch(() => ({}));
+            const all = Array.isArray(allBody.fornecedores) ? allBody.fornecedores : allBody;
+            mergedFornecedores = Array.isArray(all) ? all : [];
+          }
+        } catch (e) {
+          console.warn('[ConsumerDashboard] erro tentando fallback de fornecedores externos:', e);
+        }
+      }
+
+      // 5) Normaliza fornecedores para o formato esperado pelo FornecedoresCard
+      let normalized = (mergedFornecedores || []).map(f => ({
         ...f,
         id: f.id ?? f.ID ?? null,
         name: f.nomeEmpresa || f.nome || `Fornecedor ${f.id}`,
@@ -105,20 +138,6 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         products: f.produtosCount ?? f.produtos ?? 0,
         category: f.categoria || f.tipo || 'Geral'
       }));
-
-      // fallback: se não há fornecedores nos contratos, tentar endpoint específico
-      if (normalized.length === 0) {
-        try {
-          const allRes = await fetchWithAuth(`${API_URL}fornecedores/externos`, { method: 'GET' });
-          if (allRes.ok) {
-            const allBody = await allRes.json().catch(() => ({}));
-            const all = Array.isArray(allBody.fornecedores) ? allBody.fornecedores : allBody;
-            normalized = (Array.isArray(all) ? all : []).map(f => ({ id: f.id, name: f.nomeEmpresa || f.nome, status: f.status || 'ATIVO', products: 0, category: f.categoria || 'Geral' }));
-          }
-        } catch (e) {
-          console.warn('[ConsumerDashboard] erro tentando fallback de fornecedores externos:', e);
-        }
-      }
 
       console.log('[ConsumerDashboard] Fornecedores normalizados:', normalized.length, normalized);
       setFornecedoresExternos(normalized);
@@ -156,6 +175,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
     setCreatingFornecedor(true);
     try {
       const payload = {
+         unidadeId: unidadeId,
         nomeEmpresa: novoNomeEmpresa,
         descricaoEmpresa: novoDescricaoEmpresa,
         cnpjCpf: novoCnpjCpf,
@@ -164,7 +184,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         endereco: novoEndereco || null,
         status: novoStatus || 'ATIVO'
       };
-      const res = await fetchWithAuth(`${API_URL}fornecedores/externos`, {
+      const res = await fetchWithAuth(`${API_URL}fornecedoresExternos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

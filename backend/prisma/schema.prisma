@@ -65,6 +65,7 @@ model Unidade {
   vendas                  Venda[]
   categoria               Categoria[]
   dadosGerais             DadoGeralUnidade[]
+  fornecedoresExternos   FornecedorExterno[]  @relation("FornecedorExterno")
 
   @@index([matrizId])
   @@index([gerenteId])
@@ -281,6 +282,7 @@ model EstoqueMovimento {
 
 model FornecedorExterno {
   id               Int              @id @default(autoincrement())
+  unidadeId      Int?             @map("unidade_id")
   nomeEmpresa      String           @map("nome_empresa") @db.VarChar(200)
   descricaoEmpresa String           @map("descricao_empresa")
   cnpjCpf          String?          @unique @map("cnpj_cpf") @db.VarChar(20)
@@ -293,6 +295,7 @@ model FornecedorExterno {
   contratos        Contrato[]       @relation("ContratoFornecedorExterno")
   estoqueProdutos  EstoqueProduto[] @relation("EstoqueProduto_fornecedorExterno")
   pedidos          Pedido[]
+  unidade          Unidade?         @relation("FornecedorExterno", fields: [unidadeId], references: [id])
   // produtosRecebidos Produto[]        @relation("FornecedorProdutosRecebidos")
 
   @@map("fornecedor_externo")

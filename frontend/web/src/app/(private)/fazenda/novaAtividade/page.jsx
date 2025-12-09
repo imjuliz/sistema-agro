@@ -92,12 +92,12 @@ export default function Page() {
             if (tipoContrato === "INTERNO") {
                 setCarregandoLojas(true)
                 try {
-                    const r1 = await fetchFn(`${base}/listarLojasParceiras/${unidadeId}`)
+                    const r1 = await fetchFn(`${base}/listarTodasAsLojas`)
                     const d1 = await r1.json().catch(() => ({}))
                     const lojasArray = d1?.lojas || d1?.data || (Array.isArray(d1) ? d1 : [])
                     setLojas(Array.isArray(lojasArray) ? lojasArray : [])
                 } catch (err) {
-                    console.error('Erro carregando lojas atendidas:', err)
+                    console.error('Erro carregando lojas:', err)
                     setLojas([])
                 } finally {
                     setCarregandoLojas(false)
@@ -520,10 +520,10 @@ export default function Page() {
             const unidadeId = user?.unidadeId ?? user?.unidade?.id
 
             const payload = {
+                descricao: descricaoContrato || null,
                 dataInicio: dataInicioContrato,
                 dataFim: dataFimContrato || null,
                 dataEnvio: dataEnvioContrato,
-                descricao: descricaoContrato || null,
                 status: statusContrato,
                 frequenciaEntregas: frequenciaEntregasContrato,
                 diaPagamento: diaPagamentoContrato,
@@ -554,7 +554,7 @@ export default function Page() {
                 setDataInicioContrato("")
                 setDataFimContrato("")
                 setDataEnvioContrato("")
-                    setDescricaoContrato("")
+                setDescricaoContrato("")
                 setFrequenciaEntregasContrato("MENSALMENTE")
                 setDiaPagamentoContrato("")
                 setFormaPagamentoContrato("PIX")
@@ -998,8 +998,8 @@ export default function Page() {
                         </div>
 
                         <div>
-                            <Label>Descrição do Contrato</Label>
-                            <textarea value={descricaoContrato} onChange={(e) => setDescricaoContrato(e.target.value)} rows={4} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900" />
+                            <Label>Descrição</Label>
+                            <Input type="text" value={descricaoContrato} onChange={(e) => setDescricaoContrato(e.target.value)} />
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">

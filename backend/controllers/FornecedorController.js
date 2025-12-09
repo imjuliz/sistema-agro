@@ -1,4 +1,4 @@
-import { calcularFornecedores,  listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts } from "../models/Fornecedores.js";
+import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService } from "../models/Fornecedores.js";
 import { fornecedorSchema } from "../schemas/fornecedorSchema.js";
 
 // Retorna metadados úteis para o frontend (enums / opções)
@@ -22,6 +22,29 @@ export const listarMetaContratosController = async (req, res) => {
   } catch (error) {
     console.error('Erro ao listar metadados de contratos:', error);
     return res.status(500).json({ sucesso: false, erro: 'Erro interno ao obter metadados.' });
+  }
+};
+
+export const listarTodasAsLojasController = async (req, res) => {
+  try {
+    const resultado = await listarTodasAsLojas();
+
+    if (!resultado.sucesso) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: resultado.erro || "Erro ao listar lojas.",
+        detalhes: resultado.detalhes,
+      });
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao listar lojas:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao listar lojas.",
+      detalhes: error.message,
+    });
   }
 };
 
@@ -268,6 +291,23 @@ export const verContratosComFazendasAsFornecedorController = async (req, res) =>
   }
 }
 
+export async function buscarContratoPorIdController(req, res) {
+  const id = req.params.id;
+
+  try {
+    const contrato = await buscarContratoPorIdService(id);
+
+    return res.status(200).json({
+      message: "Contrato encontrado com sucesso.",
+      data: contrato,
+    });
+  } catch (error) {
+    return res.status(404).json({
+      message: error.message,
+    });
+  }
+}
+
 export async function updateFornecedorController(req, res) {
     const { id } = req.params;
     try {
@@ -425,6 +465,7 @@ export const listarTodosFornecedoresExternosController = async (req, res) => {
 
 export const criarFornecedorExternoController = async (req, res) => {
   try {
+   console.log('[criarFornecedorExternoController] Recebida requisição com body:', req.body);
     const resultado = await criarFornecedorExterno(req.body);
     if (!resultado.sucesso) {
       return res.status(400).json({
@@ -433,10 +474,15 @@ export const criarFornecedorExternoController = async (req, res) => {
         field: resultado.field || null
       });
     }
-    return res.status(201).json(resultado);
+   console.log('[criarFornecedorExternoController] Fornecedor criado com sucesso:', resultado.fornecedorExterno);
+    return res.status(201).json({
+      sucesso: true,
+      fornecedorExterno: resultado.fornecedorExterno,
+      message: resultado.message || 'Fornecedor externo criado com sucesso!'
+    });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ sucesso:false, erro: "Erro interno." });
+    console.error('[criarFornecedorExternoController] Erro:', err);
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno ao criar fornecedor externo.' });
   }
 };
 
