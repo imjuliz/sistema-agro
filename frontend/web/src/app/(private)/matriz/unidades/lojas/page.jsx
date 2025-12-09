@@ -371,11 +371,32 @@ export default function LojasPage() {
     function formatTime(timeValue) {
         if (!timeValue) return '—';
         try {
-            // Se for string no formato HH:mm ou HH:mm:ss
+            // Se for string
             if (typeof timeValue === 'string') {
-                const parts = timeValue.split(':');
+                const trimmed = timeValue.trim();
+                if (!trimmed) return '—';
+                
+                // Se for string ISO (ex: "1970-01-01T10:00" ou "1970-01-01T10:00:00.000Z")
+                if (trimmed.includes('T')) {
+                    const timePart = trimmed.split('T')[1];
+                    if (timePart) {
+                        // Remove timezone e milissegundos se existirem
+                        const timeOnly = timePart.split('.')[0].split('Z')[0].split('+')[0];
+                        const parts = timeOnly.split(':');
+                        if (parts.length >= 2) {
+                            const hours = parts[0].padStart(2, '0');
+                            const minutes = parts[1].padStart(2, '0');
+                            return `${hours}:${minutes}`;
+                        }
+                    }
+                }
+                
+                // Se for string no formato HH:mm ou HH:mm:ss
+                const parts = trimmed.split(':');
                 if (parts.length >= 2) {
-                    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+                    const hours = parts[0].padStart(2, '0');
+                    const minutes = parts[1].padStart(2, '0');
+                    return `${hours}:${minutes}`;
                 }
             }
             // Se for Date/DateTime
@@ -390,6 +411,40 @@ export default function LojasPage() {
             console.warn('Erro ao formatar horário:', e);
         }
         return '—';
+    }
+
+    function formatDate(dateValue) {
+        if (!dateValue) return '—';
+        try {
+            const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+            if (isNaN(date.getTime())) return '—';
+            return date.toLocaleDateString('pt-BR', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        } catch (e) {
+            console.warn('Erro ao formatar data:', e);
+            return '—';
+        }
+    }
+
+    function formatDateTime(dateValue) {
+        if (!dateValue) return '—';
+        try {
+            const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+            if (isNaN(date.getTime())) return '—';
+            return date.toLocaleString('pt-BR', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            console.warn('Erro ao formatar data/hora:', e);
+            return '—';
+        }
     }
 
     function normalizeUnit(u) {
@@ -411,6 +466,7 @@ export default function LojasPage() {
             manager: (u.gerente?.nome ?? u.gerente ?? u.manager ?? "—"),
             status,
             sync: u.atualizadoEm ?? u.criadoEm ?? new Date().toISOString(),
+            syncFormatado: formatDateTime(u.atualizadoEm ?? u.criadoEm),
             horarioAbertura: u.horarioAbertura ?? u.horario_abertura ?? null,
             horarioFechamento: u.horarioFechamento ?? u.horario_fechamento ?? null,
             horarioAberturaFormatado: formatTime(u.horarioAbertura ?? u.horario_abertura),
@@ -756,7 +812,9 @@ export default function LojasPage() {
                                                         <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.manager || "—"}</div>
                                                     </div>
                                                 </div>
-                                                {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {new Date(u.sync).toLocaleString()}</div> */}
+                                                {u.syncFormatado && u.syncFormatado !== '—' && (
+                                                    <div className="mt-3 text-sm text-muted-foreground">Última sync: {u.syncFormatado}</div>
+                                                )}
                                             </div>
                                         </Link>
                                     ))}
@@ -901,9 +959,9 @@ export default function LojasPage() {
                 </div> */}
 
             </div>
-        </div>
 
-        <AddLojaModal open={addLojaModalOpen} onOpenChange={setAddLojaModalOpen} onCreated={handleCreated} />
+            <AddLojaModal open={addLojaModalOpen} onOpenChange={setAddLojaModalOpen} onCreated={handleCreated} />
+        </div>
     );
 }
 

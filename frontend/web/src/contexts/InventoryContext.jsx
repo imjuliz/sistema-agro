@@ -74,7 +74,11 @@ export function InventoryProvider({ children, initialData = [], useMockIfFail = 
           bodyText = parsed?.mensagem ?? parsed?.erro ?? parsed?.message ?? bodyText;
         } catch (e) { /* ignore */ }
         console.warn("[Inventory] resposta não OK", res.status, bodyText);
-        throw new Error(bodyText || `HTTP ${res.status}`);
+        // Não lança erro, apenas define mensagem de erro e retorna lista vazia
+        setError(bodyText || `HTTP ${res.status}`);
+        setItems([]);
+        setLoading(false);
+        return;
       }
 
       const body = await res.json().catch(() => null);
