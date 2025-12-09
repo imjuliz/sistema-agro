@@ -6,12 +6,12 @@ import prisma from "./client.js";
 import * as pkg from "./generated/client.js";
 
 // Extrai enums
-const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote, ContaStatus } = pkg;
+const { TipoPerfil, TipoUnidade, TipoLote, TipoRegistroSanitario, TipoPagamento, TipoSaida, AtividadesEnum, StatusContrato, FrequenciaEnum, UnidadesDeMedida, tipoTransporte, StatusUnidade, StatusFornecedor, StatusQualidade, TipoMovimento, TipoAtvd, TipoAnimais, StatusVenda, StatusAtvdAnimalia, TipoAnimalia, StatusPedido, StatusProducao, StatusPlantacao, CategoriaInsumo, StatusLote, ContaStatus, TipoFormaAquisicao, EspecieAnimal, SexoAnimal } = pkg;
 
 // Fallbacks para enums
 const TP = TipoPerfil ?? { GERENTE_MATRIZ: "GERENTE_MATRIZ", GERENTE_FAZENDA: "GERENTE_FAZENDA", GERENTE_LOJA: "GERENTE_LOJA", FUNCIONARIO_LOJA: "FUNCIONARIO_LOJA", FUNCIONARIO_FAZENDA: "FUNCIONARIO_FAZENDA" };
 const TU = TipoUnidade ?? { MATRIZ: "MATRIZ", FAZENDA: "FAZENDA", LOJA: "LOJA" };
-const TL = TipoLote ?? { GADO: "GADO", SOJA: "SOJA", LEITE: "LEITE", OUTRO: "OUTRO", PLANTIO: "PLANTIO" };
+const TL = TipoLote ?? { SOJA: "SOJA", LEITE: "LEITE", BOVINOS: "BOVINOS", SUINOS: "SUINOS", OVINOS: "OVINOS", AVES: "AVES", EQUINO: "EQUINO", CAPRINOS: "CAPRINOS", OUTRO: "OUTRO", LEGUME: "LEGUME", FRUTA: "FRUTA", VERDURA: "VERDURA", GRAOS: "GRAOS", PLANTIO: "PLANTIO" };
 const TRS = TipoRegistroSanitario ?? { VACINA: "VACINA", MEDICACAO: "MEDICACAO", RACAO: "RACAO", OUTRO: "OUTRO" };
 const TPAG = TipoPagamento ?? { DINHEIRO: "DINHEIRO", CARTAO: "CARTAO", PIX: "PIX" };
 const TSAIDA = TipoSaida ?? { ALUGUEL: "ALUGUEL", AGUA: "AGUA", ENERGIA: "ENERGIA", MANUTENCAO: "MANUTENCAO", SALARIOS: "SALARIOS", ESTOQUE: "ESTOQUE" };
@@ -33,8 +33,11 @@ const TANIMALIA = TipoAnimalia ?? { VACINACAO: "VACINACAO", VERMIFUGACAO: "VERMI
 const SPEDIDO = StatusPedido ?? { PENDENTE: "PENDENTE", ENVIADO: "ENVIADO", EM_TRANSITO: "EM_TRANSITO", ENTREGUE: "ENTREGUE", CANCELADO: "CANCELADO" };
 const SPROD = StatusProducao ?? { PLANEJADA: "PLANEJADA", EM_ANDAMENTO: "EM_ANDAMENTO", FINALIZADA: "FINALIZADA", CANCELADA: "CANCELADA", EM_ANALISE: "EM_ANALISE" };
 const CtgInsumo = CategoriaInsumo ?? { SEMENTE: "SEMENTE", FERTILIZANTE: "FERTILIZANTE", DEFENSIVO: "DEFENSIVO", RACAO: "RACAO", MEDICAMENTO: "MEDICAMENTO", SUPLEMENTO: "SUPLEMENTO", VACINA: "VACINA", OUTROS: "OUTROS", LATICINIOS: "LATICINIOS" };
-const SLOTE = StatusLote ?? { PENDENTE: "PENDENTE", PRONTO: "PRONTO", ENVIADO: "ENVIADO" }
+const SLOTE = StatusLote ?? { SEMEADO: "SEMEADO", CRESCIMENTO: "CRESCIMENTO", COLHEITA: "COLHEITA", COLHIDO: "COLHIDO", RECEBIDO: "RECEBIDO", EM_QUARENTENA: "EM_QUARENTENA", AVALIACAO_SANITARIA: "AVALIACAO_SANITARIA", EM_CRESCIMENTO: "EM_CRESCIMENTO", EM_ENGORDA: "EM_ENGORDA", EM_REPRODUCAO: "EM_REPRODUCAO", LACTACAO: "LACTACAO", ABATE: "ABATE", PENDENTE: "PENDENTE", PRONTO: "PRONTO", BLOQUEADO: "BLOQUEADO", VENDIDO: "VENDIDO" }
 const SCONTA = ContaStatus ?? { PENDENTE: "PENDENTE", PAGA: "PAGA", VENCIDA: "VENCIDA", CANCELADA: "CANCELADA" }
+const ESPANIMAL = EspecieAnimal ?? { BOVINO: "BOVINO", BUBALINO: "BUBALINO", CAPRINO: "CAPRINO", OVINO: "OVINO", SUINO: "SUINO", EQUINO: "EQUINO", MUAR: "MUAR", AVE: "AVE", GALINHA: "GALINHA", PERU: "PERU", PATO: "PATO", MARRECO: "MARRECO", GANSO: "GANSO", CODORNA: "CODORNA", COELHO: "COELHO", PEIXE: "PEIXE", CAMARAO: "CAMARAO", ABELHA: "ABELHA", OUTRO: "OUTRO" }
+const TAQUISICAO = TipoFormaAquisicao ?? { COMPRA: "COMPRA", TRANSFERENCIA: "TRANSFERENCIA", DOACAO: "DOACAO", NATURAL: "NATURAL", OUTRO: "OUTRO" }
+const SXANIMAL = SexoAnimal ?? { MACHO: "MACHO", FEMEA: "FEMEA" }
 
 async function main() {
     try {
@@ -2910,58 +2913,178 @@ async function main() {
         await seedEstoqueProdutosFromDeliveredPedidos(prisma);
 
         const animals = [
-            // Fazenda Beta: 4 vacas Holandesas (agreguei 4 registros repetidos em 1)
+            // Fazenda Beta — vacas Holandesas (5 registros individuais)
             {
-                animal: "Vaca reprodutora Holandesa",
+                especie: ESPANIMAL.BOVINO,
                 raca: "Holandês",
-                sku: "ANM-FAZ8-HOL-0001",
-                dataEntrada: new Date("2025-09-05T00:00:00.000Z"),
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ8-HOL-0001-01",
+                dataNasc: new Date("2025-09-05T00:00:00.000Z"),
                 fornecedorId: null,
-                quantidade: 5,
-                tipo: TAN.REPRODUCAO,    // ver nota sobre enums
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 2400.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Holandês",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ8-HOL-0001-02",
+                dataNasc: new Date("2025-09-05T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 2400.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Holandês",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ8-HOL-0001-03",
+                dataNasc: new Date("2025-09-05T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 2400.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Holandês",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ8-HOL-0001-04",
+                dataNasc: new Date("2025-09-05T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 2400.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Holandês",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ8-HOL-0001-05",
+                dataNasc: new Date("2025-09-05T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
                 custo: 2400.00,
                 unidadeId: unidadeMap['Fazenda Beta'],
                 loteId: null
             },
 
-            // Fazenda Beta: (se houver um touro Holandês separado) ex.: 1 touro
-            // (se você não tinha o touro aqui, remova este bloco)
+            // Fazenda Beta — touros Holandeses (2 registros)
             {
-                animal: "Touro reprodutor Holandês",
+                especie: ESPANIMAL.BOVINO,
                 raca: "Holandês",
-                sku: "ANM-FAZ8-HOL-0002",
-                dataEntrada: new Date("2025-09-01T00:00:00.000Z"),
+                sexo: SXANIMAL.MACHO,
+                sku: "ANM-FAZ8-HOL-0002-01",
+                dataNasc: new Date("2025-09-01T00:00:00.000Z"),
                 fornecedorId: null,
-                quantidade: 2,
-                tipo: TAN.REPRODUCAO,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Beta'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Holandês",
+                sexo: SXANIMAL.MACHO,
+                sku: "ANM-FAZ8-HOL-0002-02",
+                dataNasc: new Date("2025-09-01T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
                 custo: 3200.00,
                 unidadeId: unidadeMap['Fazenda Beta'],
                 loteId: null
             },
 
-            // Fazenda Teste: 1 touro Angus (carne bovina )
+            // Fazenda Teste — touro Angus (1 registro)
             {
-                animal: "Touro reprodutor Angus (adulto, PO)",
+                especie: ESPANIMAL.BOVINO,
                 raca: "Angus",
-                sku: "ANM-FAZ10-ANG-0001",
-                dataEntrada: new Date("2025-09-07T00:00:00.000Z"),
+                sexo: SXANIMAL.MACHO,
+                sku: "ANM-FAZ10-ANG-0001-01",
+                dataNasc: new Date("2025-09-07T00:00:00.000Z"),
                 fornecedorId: null,
-                quantidade: 1,
-                tipo: TAN.ABATE,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
                 custo: 5500.00,
                 unidadeId: unidadeMap['Fazenda Teste'],
                 loteId: null
             },
 
-            // Fazenda Teste: 5 vacas Angus (agreguei os 5 registros idênticos) (leite e queijo)
+            // Fazenda Teste — vacas Angus (5 registros)
             {
-                animal: "Vaca reprodutora Angus (multipar, PO)",
+                especie: ESPANIMAL.BOVINO,
                 raca: "Angus",
-                sku: "ANM-FAZ10-ANG-0002",
-                dataEntrada: new Date("2025-09-08T00:00:00.000Z"),
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ10-ANG-0002-01",
+                dataNasc: new Date("2025-09-08T00:00:00.000Z"),
                 fornecedorId: null,
-                quantidade: 5,
-                tipo: TAN.REPRODUCAO,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Teste'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Angus",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ10-ANG-0002-02",
+                dataNasc: new Date("2025-09-08T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Teste'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Angus",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ10-ANG-0002-03",
+                dataNasc: new Date("2025-09-08T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Teste'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Angus",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ10-ANG-0002-04",
+                dataNasc: new Date("2025-09-08T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
+                custo: 3200.00,
+                unidadeId: unidadeMap['Fazenda Teste'],
+                loteId: null
+            },
+            {
+                especie: ESPANIMAL.BOVINO,
+                raca: "Angus",
+                sexo: SXANIMAL.FEMEA,
+                sku: "ANM-FAZ10-ANG-0002-05",
+                dataNasc: new Date("2025-09-08T00:00:00.000Z"),
+                fornecedorId: null,
+                peso: null,
+                formaAquisicao: TAQUISICAO.COMPRA,
                 custo: 3200.00,
                 unidadeId: unidadeMap['Fazenda Teste'],
                 loteId: null
@@ -2969,879 +3092,6 @@ async function main() {
         ];
 
         await prisma.animal.createMany({ data: animals, skipDuplicates: true });
-
-
-        // // criar lote
-        // // --- 1) Fazenda Beta -> contrato "Sabor do Campo Laticínios - Fazenda Beta" ---
-        // const contratoBetaKey = "Sabor do Campo Laticínios - Fazenda Beta";
-        // const contratoBetaId = contratoMap[contratoBetaKey];
-        // if (!contratoBetaId) throw new Error(`contratoMap faltando: ${contratoBetaKey}`);
-
-        // // buscar todos itens do contrato Beta para mapear por nome (lowercase)
-        // const itensContratoBeta = await prisma.contratoItens.findMany({ where: { contratoId: contratoBetaId } });
-        // const mapItensBeta = {};
-        // itensContratoBeta.forEach(i => { mapItensBeta[(i.nome || "").toLowerCase()] = i; });
-
-        // const produtosBeta = [
-        //     { nome: "Leite cru tipo A (L)", quantidadeEsperada: 200, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite cru tipo B (L)", quantidadeEsperada: 80, unidadeMedida: UMED.LITRO },
-        //     { nome: "Nata / creme do leite (kg)", quantidadeEsperada: 12, unidadeMedida: UMED.KG },
-        //     { nome: "Soro de leite (L)", quantidadeEsperada: 48, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite pasteurizado 1L", quantidadeEsperada: 140, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite pasteurizado 2L", quantidadeEsperada: 48, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite UHT 1L", quantidadeEsperada: 80, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite integral 1L", quantidadeEsperada: 72, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite desnatado 1L", quantidadeEsperada: 36, unidadeMedida: UMED.LITRO },
-        //     { nome: "Leite sem lactose 1L", quantidadeEsperada: 16, unidadeMedida: UMED.LITRO },
-        //     { nome: "Creme de leite 200ml", quantidadeEsperada: 36, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Manteiga 200g", quantidadeEsperada: 28, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Manteiga 500g", quantidadeEsperada: 12, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Ricota fresca (kg)", quantidadeEsperada: 6, unidadeMedida: UMED.KG },
-        //     { nome: "Minas padrão (kg)", quantidadeEsperada: 12, unidadeMedida: UMED.KG },
-        //     { nome: "Queijo mussarela (peça 3kg)", quantidadeEsperada: 4, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Queijo mussarela (barra 1kg)", quantidadeEsperada: 11, unidadeMedida: UMED.KG },
-        //     { nome: "Queijo parmesão (peça 1kg)", quantidadeEsperada: 3, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Iogurte natural 170g", quantidadeEsperada: 64, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Iogurte sabor morango 170g", quantidadeEsperada: 48, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Iogurte sabor coco 170g", quantidadeEsperada: 32, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Iogurte garrafa 1L", quantidadeEsperada: 16, unidadeMedida: UMED.LITRO },
-        //     { nome: "Requeijão cremoso 200g", quantidadeEsperada: 36, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Doce de leite pastoso 400g", quantidadeEsperada: 17, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Doce de leite em barra 300g", quantidadeEsperada: 10, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Kefir líquido 1L", quantidadeEsperada: 9, unidadeMedida: UMED.LITRO },
-        //     { nome: "Coalhada fresca (kg)", quantidadeEsperada: 6, unidadeMedida: UMED.KG }
-        // ];
-
-        // const itensEsperadosBeta = produtosBeta.map(p => {
-        //     const encontrado = mapItensBeta[(p.nome || "").toLowerCase()];
-        //     return {
-        //         contratoItemId: encontrado ? encontrado.id : null,
-        //         contratoItemNome: p.nome,
-        //         produtoId: encontrado && encontrado.produtoId ? encontrado.produtoId : null,
-        //         quantidadeEsperada: p.quantidadeEsperada,
-        //         unidadeMedida: p.unidadeMedida,
-        //         dataEnvioReferencia: "2025-05-06T07:30:00.000Z"
-        //     };
-        // });
-
-        // const loteBeta = await prisma.lote.create({
-        //     data: {
-        //         unidadeId: unidadeMap["Fazenda Beta"],
-        //         responsavelId: usuarioMap["Richard Souza"] || usuarioMap["Admin"] || 1,
-        //         nome: "Lote Completo - Sabor do Campo - 2025-05-06",
-        //         tipo: TL.LEITE,
-        //         qntdItens: produtosBeta.length,
-        //         preco: 0,
-        //         unidadeMedida: UMED.UNIDADE,
-        //         observacoes: "Lote completo com todos os produtos combinados no contrato Sabor do Campo - Fazenda Beta",
-        //         status: SLOTE.PENDENTE,
-        //         contratoId: contratoBetaId,
-        //         dataEnvioReferencia: new Date("2025-05-06T07:30:00.000Z"),
-        //         itensEsperados: itensEsperadosBeta
-        //     }
-        // });
-
-        // console.log("Lote criado (Fazenda Beta):", loteBeta.id);
-
-        // // --- 2) Fazenda Teste -> contrato "Loja Teste - Fazenda Teste" ---
-        // const contratoLojaKey = "Loja Teste - Fazenda Teste";
-        // const contratoLojaId = contratoMap[contratoLojaKey];
-        // if (!contratoLojaId) throw new Error(`contratoMap faltando: ${contratoLojaKey}`);
-
-        // const itensContratoLoja = await prisma.contratoItens.findMany({ where: { contratoId: contratoLojaId } });
-        // const mapItensLoja = {};
-        // itensContratoLoja.forEach(i => { mapItensLoja[(i.nome || "").toLowerCase()] = i; });
-
-        // const produtosLoja = [
-        //     { nome: "Leite pasteurizado 1L (teste)", quantidadeEsperada: 20, unidadeMedida: UMED.LITRO },
-        //     { nome: "Queijo fresco 500g (teste)", quantidadeEsperada: 4, unidadeMedida: UMED.UNIDADE },
-        //     { nome: "Carne bovina corte dianteiro (teste)", quantidadeEsperada: 10, unidadeMedida: UMED.KG },
-        //     { nome: "Carne bovina corte traseiro (teste)", quantidadeEsperada: 8, unidadeMedida: UMED.KG }
-        // ];
-
-        // const itensEsperadosLoja = produtosLoja.map(p => {
-        //     const encontrado = mapItensLoja[(p.nome || "").toLowerCase()];
-        //     return {
-        //         contratoItemId: encontrado ? encontrado.id : null,
-        //         contratoItemNome: p.nome,
-        //         produtoId: encontrado && encontrado.produtoId ? encontrado.produtoId : null,
-        //         quantidadeEsperada: p.quantidadeEsperada,
-        //         unidadeMedida: p.unidadeMedida,
-        //         dataEnvioReferencia: "2025-06-03T10:00:00.000Z"
-        //     };
-        // });
-
-        // const loteLoja = await prisma.lote.create({
-        //     data: {
-        //         unidadeId: unidadeMap["Fazenda Teste"],
-        //         responsavelId: usuarioMap["Usuario Ficticio"] || 1,
-        //         nome: "Lote Completo - Loja Teste - 2025-06-03",
-        //         tipo: TL.OUTRO,
-        //         qntdItens: produtosLoja.length,
-        //         preco: 0,
-        //         unidadeMedida: UMED.UNIDADE,
-        //         observacoes: "Lote completo com itens combinados no contrato Loja Teste - Fazenda Teste",
-        //         status: SLOTE.PENDENTE,
-        //         contratoId: contratoLojaId,
-        //         dataEnvioReferencia: new Date("2025-06-03T10:00:00.000Z"),
-        //         itensEsperados: itensEsperadosLoja
-        //     }
-        // });
-
-        // console.log("Lote criado (Fazenda Teste - Loja Teste):", loteLoja.id);
-
-        // // --- 3) Fazenda Teste -> contrato "Casa Útil Mercado - Fazenda Teste" (sem produtos listados) ---
-        // const contratoCasaKey = "Casa Útil Mercado - Fazenda Teste";
-        // const contratoCasaId = contratoMap[contratoCasaKey];
-
-        // if (contratoCasaId) {
-        //     const loteCasa = await prisma.lote.create({
-        //         data: {
-        //             unidadeId: unidadeMap["Fazenda Teste"],
-        //             responsavelId: usuarioMap["Usuario Ficticio"],
-        //             nome: "Lote - Casa Útil Mercado - 2025-03-02",
-        //             tipo: TL.OUTRO,
-        //             qntdItens: 0,
-        //             preco: 0,
-        //             unidadeMedida: UMED.UNIDADE,
-        //             observacoes: "Lote criado (sem itens explícitos no seed) para contrato Casa Útil Mercado - preencha itensEsperados se desejar",
-        //             status: SLOTE.PENDENTE,
-        //             contratoId: contratoCasaId,
-        //             dataEnvioReferencia: new Date("2025-03-02T09:00:00.000Z"),
-        //             itensEsperados: []
-        //         }
-        //     });
-        //     console.log("Lote criado (Fazenda Teste - Casa Útil Mercado):", loteCasa.id);
-        // } else {
-        //     console.log("Contrato Casa Útil Mercado - Fazenda Teste não encontrado no contratoMap; pulei criação do lote correspondente.");
-        // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // // ===== CRIAR LOTES DE ANIMAIS AUTOMATICAMENTE =====
-        // console.log("Criando lotes automáticos de animais recebidos...");
-
-        // // Buscar todos os animais criados
-        // const animaisCriados = await prisma.animal.findMany({
-        //     include: { unidade: true }
-        // });
-
-        // // Agrupar animais por: unidadeId + dataEntrada + raça
-        // const gruposAnimais = {};
-
-        // animaisCriados.forEach(animal => {
-        //     // Normalizar data (apenas dia, sem hora)
-        //     const dataKey = animal.dataEntrada
-        //         ? new Date(animal.dataEntrada).toISOString().split('T')[0]
-        //         : 'sem-data';
-
-        //     const chave = `${animal.unidadeId}-${dataKey}-${animal.raca}`;
-
-        //     if (!gruposAnimais[chave]) {
-        //         gruposAnimais[chave] = {
-        //             unidadeId: animal.unidadeId,
-        //             dataEntrada: animal.dataEntrada,
-        //             raca: animal.raca,
-        //             animais: [],
-        //             tipo: animal.tipo
-        //         };
-        //     }
-
-        //     gruposAnimais[chave].animais.push(animal);
-        // });
-
-        // // Criar um lote para cada grupo
-        // const lotesAnimaisCriados = [];
-
-        // for (const [chave, grupo] of Object.entries(gruposAnimais)) {
-        //     // Buscar responsável da unidade (gerente ou primeiro usuário)
-        //     const responsavel = await prisma.usuario.findFirst({
-        //         where: {
-        //             unidadeId: grupo.unidadeId,
-        //             OR: [
-        //                 { perfilId: perfilMap["GERENTE_FAZENDA"] },
-        //                 { unidadeId: grupo.unidadeId }
-        //             ]
-        //         }
-        //     });
-
-        //     if (!responsavel) {
-        //         console.warn(`Responsável não encontrado para unidade ${grupo.unidadeId}`);
-        //         continue;
-        //     }
-
-        //     // Buscar contrato onde esta fazenda é fornecedora
-        //     const contratoRelacionado = await prisma.contrato.findFirst({
-        //         where: {
-        //             fornecedorUnidadeId: grupo.unidadeId,
-        //             status: SCON.ATIVO
-        //         },
-        //         include: { unidade: true }
-        //     });
-
-        //     const dataFormatada = grupo.dataEntrada
-        //         ? new Date(grupo.dataEntrada).toLocaleDateString('pt-BR')
-        //         : 'Data não definida';
-
-        //     const lote = await prisma.lote.create({
-        //         data: {
-        //             unidadeId: grupo.unidadeId,
-        //             responsavelId: responsavel.id,
-        //             nome: `Lote ${grupo.raca} - Recebimento ${dataFormatada}`,
-        //             tipo: TL.GADO, // Ajustar conforme necessário
-        //             qntdItens: grupo.animais.reduce((sum, a) => sum + a.quantidade, 0),
-        //             preco: grupo.animais.reduce((sum, a) => sum + (a.custo * a.quantidade), 0),
-        //             unidadeMedida: UMED.CABECA,
-        //             observacoes: `Lote automático criado com ${grupo.animais.length} registros de animais da raça ${grupo.raca}. ${contratoRelacionado ? `Destinado ao contrato com ${contratoRelacionado.unidade.nome}` : 'Sem contrato vinculado.'}`,
-        //             statusQualidade: SQ.PROPRIO,
-        //             status: SLOTE.PRONTO,
-        //             contratoId: contratoRelacionado?.id || null,
-        //             dataEnvioReferencia: contratoRelacionado?.dataEnvio || null,
-        //             itensEsperados: grupo.animais.map(a => ({
-        //                 animalId: a.id,
-        //                 raca: a.raca,
-        //                 quantidade: a.quantidade,
-        //                 custo: a.custo
-        //             }))
-        //         }
-        //     });
-
-        //     lotesAnimaisCriados.push(lote);
-
-        //     // Atualizar animais com o loteId
-        //     for (const animal of grupo.animais) {
-        //         await prisma.animal.update({
-        //             where: { id: animal.id },
-        //             data: { loteId: lote.id }
-        //         });
-        //     }
-
-        //     console.log(`✓ Lote criado: ${lote.nome} (${lote.qntdItens} cabeças)`);
-        // }
-
-        // console.log(`Total de lotes de animais criados: ${lotesAnimaisCriados.length}`);
-
-        // // ===== CRIAR PLANTIOS NAS FAZENDAS =====
-        // console.log("\nCriando plantios nas fazendas...");
-
-        // const plantiosData = [
-        //     // Fazenda Gamma - Grãos e cereais
-        //     {
-        //         categoria: "Soja",
-        //         areaHectares: 200,
-        //         dataPlantio: new Date("2024-10-01"),
-        //         dataColheitaEstimativa: new Date("2025-02-15"),
-        //         custo: 50000,
-        //         unidadeId: unidadeMap["Fazenda Gamma"]
-        //     },
-        //     {
-        //         categoria: "Milho",
-        //         areaHectares: 150,
-        //         dataPlantio: new Date("2024-09-15"),
-        //         dataColheitaEstimativa: new Date("2025-01-30"),
-        //         custo: 35000,
-        //         unidadeId: unidadeMap["Fazenda Gamma"]
-        //     },
-        //     {
-        //         categoria: "Trigo",
-        //         areaHectares: 100,
-        //         dataPlantio: new Date("2024-11-01"),
-        //         dataColheitaEstimativa: new Date("2025-03-20"),
-        //         custo: 28000,
-        //         unidadeId: unidadeMap["Fazenda Gamma"]
-        //     },
-
-        //     // Fazenda Delta - Hortaliças e vegetais
-        //     {
-        //         categoria: "Alface",
-        //         areaHectares: 5,
-        //         dataPlantio: new Date("2025-01-10"),
-        //         dataColheitaEstimativa: new Date("2025-03-01"),
-        //         custo: 3000,
-        //         unidadeId: unidadeMap["Fazenda Delta"]
-        //     },
-        //     {
-        //         categoria: "Tomate",
-        //         areaHectares: 10,
-        //         dataPlantio: new Date("2024-12-01"),
-        //         dataColheitaEstimativa: new Date("2025-04-15"),
-        //         custo: 8000,
-        //         unidadeId: unidadeMap["Fazenda Delta"]
-        //     },
-        //     {
-        //         categoria: "Cenoura",
-        //         areaHectares: 8,
-        //         dataPlantio: new Date("2024-11-15"),
-        //         dataColheitaEstimativa: new Date("2025-03-10"),
-        //         custo: 5000,
-        //         unidadeId: unidadeMap["Fazenda Delta"]
-        //     },
-        //     {
-        //         categoria: "Pepino",
-        //         areaHectares: 6,
-        //         dataPlantio: new Date("2025-01-05"),
-        //         dataColheitaEstimativa: new Date("2025-03-25"),
-        //         custo: 4500,
-        //         unidadeId: unidadeMap["Fazenda Delta"]
-        //     }
-        // ];
-
-        // await prisma.plantio.createMany({
-        //     data: plantiosData,
-        //     skipDuplicates: true
-        // });
-
-        // console.log(`✓ ${plantiosData.length} plantios criados`);
-
-        // // ===== CRIAR LOTES DE PLANTIOS =====
-        // console.log("\nCriando lotes de plantios...");
-
-        // const plantiosCriados = await prisma.plantio.findMany({
-        //     include: { unidade: true }
-        // });
-
-        // const lotesPlantiosCriados = [];
-
-        // for (const plantio of plantiosCriados) {
-        //     // Buscar responsável da unidade
-        //     const responsavel = await prisma.usuario.findFirst({
-        //         where: {
-        //             unidadeId: plantio.unidadeId,
-        //             OR: [
-        //                 { perfilId: perfilMap["GERENTE_FAZENDA"] },
-        //                 { unidadeId: plantio.unidadeId }
-        //             ]
-        //         }
-        //     });
-
-        //     if (!responsavel) continue;
-
-        //     // Buscar contrato relacionado
-        //     const contratoRelacionado = await prisma.contrato.findFirst({
-        //         where: {
-        //             fornecedorUnidadeId: plantio.unidadeId,
-        //             status: SCON.ATIVO
-        //         },
-        //         include: { unidade: true }
-        //     });
-
-        //     // Determinar tipo de lote baseado na categoria
-        //     let tipoLote = TL.PLANTIO;
-        //     if (['Soja', 'Milho', 'Trigo'].includes(plantio.categoria)) {
-        //         tipoLote = TL.SOJA; // Ou criar um tipo específico para grãos
-        //     }
-
-        //     const dataPlantioFormatada = plantio.dataPlantio
-        //         ? new Date(plantio.dataPlantio).toLocaleDateString('pt-BR')
-        //         : 'Data não definida';
-
-        //     const lote = await prisma.lote.create({
-        //         data: {
-        //             unidadeId: plantio.unidadeId,
-        //             responsavelId: responsavel.id,
-        //             nome: `Lote ${plantio.categoria} - Plantio ${dataPlantioFormatada}`,
-        //             tipo: tipoLote,
-        //             qntdItens: 1, // 1 talhão/área de plantio
-        //             preco: plantio.custo || 0,
-        //             unidadeMedida: UMED.SACA, // Ajustar conforme produto final
-        //             observacoes: `Lote de plantio de ${plantio.categoria} em ${plantio.areaHectares} hectares. Colheita prevista: ${plantio.dataColheitaEstimativa?.toLocaleDateString('pt-BR') || 'Não definida'}. ${contratoRelacionado ? `Destinado ao contrato com ${contratoRelacionado.unidade.nome}` : ''}`,
-        //             statusQualidade: SQ.PROPRIO,
-        //             status: SLOTE.PENDENTE, // Aguardando colheita
-        //             contratoId: contratoRelacionado?.id || null,
-        //             dataEnvioReferencia: plantio.dataColheitaEstimativa || null,
-        //             itensEsperados: [{
-        //                 plantioId: plantio.id,
-        //                 categoria: plantio.categoria,
-        //                 areaHectares: plantio.areaHectares,
-        //                 dataColheitaEstimativa: plantio.dataColheitaEstimativa
-        //             }]
-        //         }
-        //     });
-
-        //     lotesPlantiosCriados.push(lote);
-
-        //     // Atualizar plantio com loteId
-        //     await prisma.plantio.update({
-        //         where: { id: plantio.id },
-        //         data: { loteId: lote.id }
-        //     });
-
-        //     console.log(`✓ Lote de plantio criado: ${lote.nome}`);
-        // }
-
-        // console.log(`Total de lotes de plantios criados: ${lotesPlantiosCriados.length}`);
-        // console.log(`\n📦 Resumo: ${lotesAnimaisCriados.length} lotes de animais + ${lotesPlantiosCriados.length} lotes de plantios = ${lotesAnimaisCriados.length + lotesPlantiosCriados.length} lotes totais\n`);
-
-        // // ===== CRIAR ATIVIDADES PARA ANIMAIS (AtvdAnimalia) =====
-        // console.log("\n🐄 Criando atividades de manejo animal...");
-
-        // const tiposAnimais = [
-        //     TL.GADO,
-        //     TL.BOVINOS,
-        //     TL.SUINOS,
-        //     TL.OVINOS,
-        //     TL.AVES,
-        //     TL.EQUINO,
-        //     TL.CAPRINOS
-        // ].filter(Boolean); // remove todos os undefined automaticamente
-
-        // const lotesAnimais = await prisma.lote.findMany({
-        //     where: {
-        //         tipo: { in: tiposAnimais }
-        //     },
-        //     include: {
-        //         animals: true,
-        //         responsavel: true
-        //     }
-        // });
-
-        // const atividadesAnimaisCriadas = [];
-
-        // for (const lote of lotesAnimais) {
-        //     if (!lote.animals || lote.animals.length === 0) continue;
-
-        //     for (const animal of lote.animals) {
-        //         const atividadesParaAnimal = [
-        //             {
-        //                 tipo: TANIMALIA.RECEBIMENTO,
-        //                 descricao: `Recebimento e registro de ${animal.animal} ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada || new Date("2025-09-01"),
-        //                 dataFim: animal.dataEntrada || new Date("2025-09-01"),
-        //                 status: SATVDA.CONCLUIDA
-        //             },
-        //             {
-        //                 tipo: TANIMALIA.VACINACAO,
-        //                 descricao: `Vacinação inicial contra doenças comuns - ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 2 * 24 * 60 * 60 * 1000) : new Date("2025-09-03"),
-        //                 dataFim: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 2 * 24 * 60 * 60 * 1000) : new Date("2025-09-03"),
-        //                 status: SATVDA.CONCLUIDA
-        //             },
-        //             {
-        //                 tipo: TANIMALIA.VERMIFUGACAO,
-        //                 descricao: `Vermifugação de rotina - ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 7 * 24 * 60 * 60 * 1000) : new Date("2025-09-08"),
-        //                 dataFim: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 7 * 24 * 60 * 60 * 1000) : new Date("2025-09-08"),
-        //                 status: SATVDA.CONCLUIDA
-        //             },
-        //             {
-        //                 tipo: TANIMALIA.MANEJO_PESAGEM,
-        //                 descricao: `Pesagem e avaliação de ganho de peso - ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 15 * 24 * 60 * 60 * 1000) : new Date("2025-09-16"),
-        //                 dataFim: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 15 * 24 * 60 * 60 * 1000) : new Date("2025-09-16"),
-        //                 status: SATVDA.CONCLUIDA
-        //             },
-        //             {
-        //                 tipo: TANIMALIA.NUTRICAO,
-        //                 descricao: `Ajuste de dieta nutricional - ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 20 * 24 * 60 * 60 * 1000) : new Date("2025-09-21"),
-        //                 dataFim: null,
-        //                 status: SATVDA.ATIVA
-        //             }
-        //         ];
-
-        //         if (animal.tipo === TAN.ORDENHA) {
-        //             atividadesParaAnimal.push({
-        //                 tipo: TANIMALIA.ORDENHA_DIARIA,
-        //                 descricao: `Ordenha diária - ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 10 * 24 * 60 * 60 * 1000) : new Date("2025-09-11"),
-        //                 dataFim: null,
-        //                 status: SATVDA.ATIVA
-        //             });
-        //         }
-
-        //         if (animal.tipo === TAN.REPRODUCAO) {
-        //             atividadesParaAnimal.push({
-        //                 tipo: TANIMALIA.MONITORAMENTO_CIO,
-        //                 descricao: `Monitoramento de cio - ${animal.raca}`,
-        //                 dataInicio: animal.dataEntrada ? new Date(new Date(animal.dataEntrada).getTime() + 30 * 24 * 60 * 60 * 1000) : new Date("2025-10-01"),
-        //                 dataFim: null,
-        //                 status: SATVDA.ATIVA
-        //             });
-        //         }
-
-        //         for (const atvd of atividadesParaAnimal) {
-        //             const atividade = await prisma.atvdAnimalia.create({
-        //                 data: {
-        //                     animalId: animal.id,
-        //                     loteId: lote.id,
-        //                     responsavelId: lote.responsavelId,
-        //                     descricao: atvd.descricao,
-        //                     tipo: atvd.tipo,
-        //                     dataInicio: atvd.dataInicio,
-        //                     dataFim: atvd.dataFim,
-        //                     status: atvd.status,
-        //                     anexos: null
-        //                 }
-        //             });
-        //             atividadesAnimaisCriadas.push(atividade);
-        //         }
-        //     }
-        // }
-
-        // console.log(`✓ ${atividadesAnimaisCriadas.length} atividades de manejo animal criadas`);
-
-        // // ===== CRIAR ATIVIDADES AGRÍCOLAS (AtvdAgricola) =====
-        // console.log("\n🌾 Criando atividades agrícolas...");
-
-        // const lotesPlantios = await prisma.lote.findMany({
-        //     where: {
-        //         tipo: { in: [TL.PLANTIO, TL.SOJA] }
-        //     },
-        //     include: {
-        //         plantios: true,
-        //         responsavel: true
-        //     }
-        // });
-
-        // const atividadesAgricolasCriadas = [];
-
-        // for (const lote of lotesPlantios) {
-        //     if (!lote.plantios || lote.plantios.length === 0) continue;
-
-        //     for (const plantio of lote.plantios) {
-        //         const dataPlantio = plantio.dataPlantio || new Date("2024-10-01");
-        //         const dataColheita = plantio.dataColheitaEstimativa || new Date("2025-02-01");
-
-        //         const atividadesParaPlantio = [
-        //             {
-        //                 tipo: TATV.PLANTIO,
-        //                 descricao: `Plantio de ${plantio.categoria} - ${plantio.areaHectares} hectares`,
-        //                 dataInicio: dataPlantio,
-        //                 dataFim: new Date(dataPlantio.getTime() + 2 * 24 * 60 * 60 * 1000),
-        //                 status: SPLANT.COLHIDO
-        //             },
-        //             {
-        //                 tipo: TATV.IRRIGACAO,
-        //                 descricao: `Sistema de irrigação - ${plantio.categoria}`,
-        //                 dataInicio: new Date(dataPlantio.getTime() + 5 * 24 * 60 * 60 * 1000),
-        //                 dataFim: new Date(dataPlantio.getTime() + 60 * 24 * 60 * 60 * 1000),
-        //                 status: SPLANT.COLHIDO
-        //             },
-        //             {
-        //                 tipo: TATV.ADUBACAO,
-        //                 descricao: `Adubação de cobertura - ${plantio.categoria}`,
-        //                 dataInicio: new Date(dataPlantio.getTime() + 30 * 24 * 60 * 60 * 1000),
-        //                 dataFim: new Date(dataPlantio.getTime() + 32 * 24 * 60 * 60 * 1000),
-        //                 status: SPLANT.COLHIDO
-        //             },
-        //             {
-        //                 tipo: TATV.USO_AGROTOXICO,
-        //                 descricao: `Aplicação de defensivos agrícolas - ${plantio.categoria}`,
-        //                 dataInicio: new Date(dataPlantio.getTime() + 45 * 24 * 60 * 60 * 1000),
-        //                 dataFim: new Date(dataPlantio.getTime() + 45 * 24 * 60 * 60 * 1000),
-        //                 status: SPLANT.COLHIDO
-        //             },
-        //             {
-        //                 tipo: TATV.COLHEITA,
-        //                 descricao: `Colheita de ${plantio.categoria}`,
-        //                 dataInicio: new Date(dataColheita.getTime() - 5 * 24 * 60 * 60 * 1000),
-        //                 dataFim: dataColheita,
-        //                 status: plantio.dataColheitaEstimativa < new Date() ? SPLANT.COLHIDO : SPLANT.EM_DESENVOLVIMENTO
-        //             }
-        //         ];
-
-        //         for (const atvd of atividadesParaPlantio) {
-        //             const atividade = await prisma.atvdAgricola.create({
-        //                 data: {
-        //                     loteId: lote.id,
-        //                     responsavelId: lote.responsavelId,
-        //                     descricao: atvd.descricao,
-        //                     tipo: atvd.tipo,
-        //                     dataInicio: atvd.dataInicio,
-        //                     dataFim: atvd.dataFim,
-        //                     status: atvd.status
-        //                 }
-        //             });
-        //             atividadesAgricolasCriadas.push(atividade);
-        //         }
-        //     }
-        // }
-
-        // console.log(`✓ ${atividadesAgricolasCriadas.length} atividades agrícolas criadas`);
-
-        // // ===== CRIAR PRODUÇÕES BASEADAS NOS CONTRATOS COM LOJAS =====
-        // console.log("\n📊 Criando produções baseadas nos contratos...");
-
-        // const producoesGeradas = [];
-
-        // // === FAZENDA BETA -> SABOR DO CAMPO LATICÍNIOS ===
-        // console.log("Processando: Fazenda Beta -> Sabor do Campo Laticínios");
-
-        // const contratoBetaSabor = await prisma.contrato.findFirst({
-        //     where: {
-        //         fornecedorUnidadeId: unidadeMap["Fazenda Beta"],
-        //         unidadeId: unidadeMap["Sabor do Campo Laticínios"]
-        //     },
-        //     include: {
-        //         itens: true
-        //     }
-        // });
-
-        // if (contratoBetaSabor) {
-        //     const loteBeta = await prisma.lote.findFirst({
-        //         where: {
-        //             unidadeId: unidadeMap["Fazenda Beta"],
-        //             contratoId: contratoBetaSabor.id
-        //         },
-        //         include: { responsavel: true, animals: true }
-        //     });
-
-        //     if (loteBeta) {
-        //         // Para cada item do contrato, criar uma produção
-        //         for (const itemContrato of contratoBetaSabor.itens) {
-        //             const quantidadeContratada = Number(itemContrato.quantidade);
-        //             const precoUnit = Number(itemContrato.precoUnitario);
-
-        //             const producao = await prisma.producao.create({
-        //                 data: {
-        //                     loteId: loteBeta.id,
-        //                     animalId: loteBeta.animals[0]?.id || null,
-        //                     tipoProduto: itemContrato.nome,
-        //                     quantidadeBruta: quantidadeContratada * 1.05, // 5% a mais na produção bruta
-        //                     quantidadeLiquida: quantidadeContratada,
-        //                     unidadeMedida: itemContrato.unidadeMedida,
-        //                     perdaPercent: 5.0,
-        //                     custoMaoObra: quantidadeContratada * precoUnit * 0.15,
-        //                     outrosCustos: quantidadeContratada * precoUnit * 0.10,
-        //                     custoTotal: quantidadeContratada * precoUnit * 0.75, // 75% do preço de venda
-        //                     custoUnitario: precoUnit * 0.75,
-        //                     dataInicio: new Date("2025-05-01"),
-        //                     dataFim: new Date("2025-05-05"),
-        //                     dataColheita: new Date("2025-05-05"),
-        //                     dataRegistro: new Date(),
-        //                     status: SPROD.FINALIZADA,
-        //                     responsavelId: loteBeta.responsavelId,
-        //                     destinoUnidadeId: unidadeMap["Sabor do Campo Laticínios"],
-        //                     observacoes: `Produção de ${itemContrato.nome} para contrato com Sabor do Campo Laticínios`
-        //                 }
-        //             });
-        //             producoesGeradas.push(producao);
-        //         }
-        //     }
-        // }
-
-        // // === FAZENDA TESTE -> LOJA TESTE ===
-        // console.log("Processando: Fazenda Teste -> Loja Teste");
-
-        // const contratoTesteLoja = await prisma.contrato.findFirst({
-        //     where: {
-        //         fornecedorUnidadeId: unidadeMap["Fazenda Teste"],
-        //         unidadeId: unidadeMap["Loja Teste"]
-        //     },
-        //     include: {
-        //         itens: true
-        //     }
-        // });
-
-        // if (contratoTesteLoja) {
-        //     const loteTeste = await prisma.lote.findFirst({
-        //         where: {
-        //             unidadeId: unidadeMap["Fazenda Teste"],
-        //             contratoId: contratoTesteLoja.id
-        //         },
-        //         include: { responsavel: true, animals: true }
-        //     });
-
-        //     if (loteTeste) {
-        //         for (const itemContrato of contratoTesteLoja.itens) {
-        //             const quantidadeContratada = Number(itemContrato.quantidade);
-        //             const precoUnit = Number(itemContrato.precoUnitario);
-
-        //             const producao = await prisma.producao.create({
-        //                 data: {
-        //                     loteId: loteTeste.id,
-        //                     animalId: loteTeste.animals[0]?.id || null,
-        //                     tipoProduto: itemContrato.nome,
-        //                     quantidadeBruta: quantidadeContratada * 1.08,
-        //                     quantidadeLiquida: quantidadeContratada,
-        //                     unidadeMedida: itemContrato.unidadeMedida,
-        //                     perdaPercent: 8.0,
-        //                     custoMaoObra: quantidadeContratada * precoUnit * 0.20,
-        //                     outrosCustos: quantidadeContratada * precoUnit * 0.12,
-        //                     custoTotal: quantidadeContratada * precoUnit * 0.70,
-        //                     custoUnitario: precoUnit * 0.70,
-        //                     dataInicio: new Date("2025-06-01"),
-        //                     dataFim: new Date("2025-06-02"),
-        //                     dataColheita: new Date("2025-06-02"),
-        //                     dataRegistro: new Date(),
-        //                     status: SPROD.FINALIZADA,
-        //                     responsavelId: loteTeste.responsavelId,
-        //                     destinoUnidadeId: unidadeMap["Loja Teste"],
-        //                     observacoes: `Produção de ${itemContrato.nome} para contrato com Loja Teste`
-        //                 }
-        //             });
-        //             producoesGeradas.push(producao);
-        //         }
-        //     }
-        // }
-
-        // // === FAZENDA GAMMA -> CASA ÚTIL MERCADO ===
-        // console.log("Processando: Fazenda Gamma -> Casa Útil Mercado");
-
-        // const contratoGammaCasa = await prisma.contrato.findFirst({
-        //     where: {
-        //         fornecedorUnidadeId: unidadeMap["Fazenda Gamma"],
-        //         unidadeId: unidadeMap["Casa Útil Mercado"]
-        //     },
-        //     include: {
-        //         itens: true
-        //     }
-        // });
-
-        // if (contratoGammaCasa) {
-        //     const loteGamma = await prisma.lote.findFirst({
-        //         where: {
-        //             unidadeId: unidadeMap["Fazenda Gamma"],
-        //             contratoId: contratoGammaCasa.id
-        //         },
-        //         include: { responsavel: true, plantios: true }
-        //     });
-
-        //     if (loteGamma) {
-        //         for (const itemContrato of contratoGammaCasa.itens) {
-        //             const quantidadeContratada = Number(itemContrato.quantidade);
-        //             const precoUnit = Number(itemContrato.precoUnitario);
-
-        //             const producao = await prisma.producao.create({
-        //                 data: {
-        //                     loteId: loteGamma.id,
-        //                     plantioId: loteGamma.plantios[0]?.id || null,
-        //                     tipoProduto: itemContrato.nome,
-        //                     quantidadeBruta: quantidadeContratada * 1.10,
-        //                     quantidadeLiquida: quantidadeContratada,
-        //                     unidadeMedida: itemContrato.unidadeMedida,
-        //                     perdaPercent: 10.0,
-        //                     rendimentoPorHa: 3000, // exemplo: soja
-        //                     custoMaoObra: quantidadeContratada * precoUnit * 0.25,
-        //                     outrosCustos: quantidadeContratada * precoUnit * 0.15,
-        //                     custoTotal: quantidadeContratada * precoUnit * 0.65,
-        //                     custoUnitario: precoUnit * 0.65,
-        //                     dataInicio: new Date("2025-04-10"),
-        //                     dataFim: new Date("2025-04-17"),
-        //                     dataColheita: new Date("2025-04-17"),
-        //                     dataRegistro: new Date(),
-        //                     status: SPROD.FINALIZADA,
-        //                     metodo: "MECANIZADA",
-        //                     responsavelId: loteGamma.responsavelId,
-        //                     destinoUnidadeId: unidadeMap["Casa Útil Mercado"],
-        //                     observacoes: `Produção de ${itemContrato.nome} para contrato com Casa Útil Mercado`
-        //                 }
-        //             });
-        //             producoesGeradas.push(producao);
-        //         }
-        //     }
-        // }
-
-        // // === FAZENDA DELTA -> VERDEFRESCO HORTALIÇAS ===
-        // console.log("Processando: Fazenda Delta -> VerdeFresco Hortaliças");
-
-        // const contratoDeltaVerde = await prisma.contrato.findFirst({
-        //     where: {
-        //         fornecedorUnidadeId: unidadeMap["Fazenda Delta"],
-        //         unidadeId: unidadeMap["VerdeFresco Hortaliças"]
-        //     },
-        //     include: {
-        //         itens: true
-        //     }
-        // });
-
-        // if (contratoDeltaVerde) {
-        //     const loteDelta = await prisma.lote.findFirst({
-        //         where: {
-        //             unidadeId: unidadeMap["Fazenda Delta"],
-        //             contratoId: contratoDeltaVerde.id
-        //         },
-        //         include: { responsavel: true, plantios: true }
-        //     });
-
-        //     if (loteDelta) {
-        //         for (const itemContrato of contratoDeltaVerde.itens) {
-        //             const quantidadeContratada = Number(itemContrato.quantidade);
-        //             const precoUnit = Number(itemContrato.precoUnitario);
-
-        //             const producao = await prisma.producao.create({
-        //                 data: {
-        //                     loteId: loteDelta.id,
-        //                     plantioId: loteDelta.plantios[0]?.id || null,
-        //                     tipoProduto: itemContrato.nome,
-        //                     quantidadeBruta: quantidadeContratada * 1.12,
-        //                     quantidadeLiquida: quantidadeContratada,
-        //                     unidadeMedida: itemContrato.unidadeMedida,
-        //                     perdaPercent: 12.0,
-        //                     rendimentoPorHa: 15000, // hortaliças
-        //                     custoMaoObra: quantidadeContratada * precoUnit * 0.30,
-        //                     outrosCustos: quantidadeContratada * precoUnit * 0.18,
-        //                     custoTotal: quantidadeContratada * precoUnit * 0.60,
-        //                     custoUnitario: precoUnit * 0.60,
-        //                     dataInicio: new Date("2025-05-01"),
-        //                     dataFim: new Date("2025-05-02"),
-        //                     dataColheita: new Date("2025-05-02"),
-        //                     dataRegistro: new Date(),
-        //                     status: SPROD.FINALIZADA,
-        //                     metodo: "MANUAL",
-        //                     responsavelId: loteDelta.responsavelId,
-        //                     destinoUnidadeId: unidadeMap["VerdeFresco Hortaliças"],
-        //                     observacoes: `Produção de ${itemContrato.nome} para contrato com VerdeFresco Hortaliças`
-        //                 }
-        //             });
-        //             producoesGeradas.push(producao);
-        //         }
-        //     }
-        // }
-
-        // console.log(`✓ ${producoesGeradas.length} produções criadas baseadas nos contratos com lojas`);
-        // console.log(`\n📦 Resumo completo:`);
-        // console.log(`   - ${atividadesAnimaisCriadas.length} atividades animais`);
-        // console.log(`   - ${atividadesAgricolasCriadas.length} atividades agrícolas`);
-        // console.log(`   - ${producoesGeradas.length} produções finalizadas\n`);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         // ===== CRIAR LOTES BASEADOS NOS CONTRATOS COM LOJAS =====
         console.log("\n📦 Criando lotes baseados nos contratos com lojas...");
@@ -3857,10 +3107,7 @@ async function main() {
                 unidadeId: unidadeMap["Sabor do Campo Laticínios"],
                 status: SCON.ATIVO
             },
-            include: {
-                itens: true,
-                fornecedorInterno: true
-            }
+            include: { itens: true, fornecedorInterno: true }
         });
 
         if (contratoBetaSabor) {
@@ -3886,11 +3133,11 @@ async function main() {
             const loteBeta = await prisma.lote.create({
                 data: {
                     unidadeId: unidadeMap["Fazenda Beta"],
-                    responsavelId: responsavelBeta.id,
+                    responsavelId: (responsavelBeta && responsavelBeta.id) || usuarioMap["Julia Alves"],
                     nome: `Lote Laticínios - Sabor do Campo - ${new Date().toLocaleDateString('pt-BR')}`,
                     tipo: TL.LEITE,
-                    qntdItens: contratoBetaSabor.itens.length,
-                    preco: totalPreco,
+                    quantidade: contratoBetaSabor.itens.length,            // <- corrigido
+                    preco: Number(totalPreco.toFixed(2)),                  // <- number com 2 casas
                     unidadeMedida: UMED.LITRO,
                     observacoes: `Lote com ${contratoBetaSabor.itens.length} produtos lácteos para Sabor do Campo Laticínios`,
                     statusQualidade: SQ.PROPRIO,
@@ -3901,7 +3148,7 @@ async function main() {
                 }
             });
             lotesGerados.push(loteBeta);
-            console.log(`✓ Lote criado: ${loteBeta.nome} (${loteBeta.qntdItens} itens)`);
+            console.log(`✓ Lote criado: ${loteBeta.nome} (${loteBeta.quantidade} itens)`);
         }
 
         // === FAZENDA TESTE -> CASA ÚTIL MERCADO ===
@@ -3913,18 +3160,12 @@ async function main() {
                 unidadeId: unidadeMap["Casa Útil Mercado"],
                 status: SCON.ATIVO
             },
-            include: {
-                itens: true,
-                fornecedorInterno: true
-            }
+            include: { itens: true, fornecedorInterno: true }
         });
 
         if (contratoTesteCasa) {
             const responsavelTeste = await prisma.usuario.findFirst({
-                where: {
-                    unidadeId: unidadeMap["Fazenda Teste"],
-                    perfilId: perfilMap["GERENTE_FAZENDA"]
-                }
+                where: { unidadeId: unidadeMap["Fazenda Teste"], perfilId: perfilMap["GERENTE_FAZENDA"] }
             });
 
             const itensEsperadosTesteCasa = contratoTesteCasa.itens.map(item => ({
@@ -3942,11 +3183,11 @@ async function main() {
             const loteTesteCasa = await prisma.lote.create({
                 data: {
                     unidadeId: unidadeMap["Fazenda Teste"],
-                    responsavelId: responsavelTeste.id,
+                    responsavelId: (responsavelTeste && responsavelTeste.id) || usuarioMap["Julia Alves"],
                     nome: `Lote Mix - Casa Útil Mercado - ${new Date().toLocaleDateString('pt-BR')}`,
                     tipo: TL.OUTRO,
-                    qntdItens: contratoTesteCasa.itens.length,
-                    preco: totalPrecoTesteCasa,
+                    quantidade: contratoTesteCasa.itens.length,
+                    preco: Number(totalPrecoTesteCasa.toFixed(2)),
                     unidadeMedida: UMED.UNIDADE,
                     observacoes: `Lote com ${contratoTesteCasa.itens.length} produtos diversos para Casa Útil Mercado`,
                     statusQualidade: SQ.PROPRIO,
@@ -3957,7 +3198,7 @@ async function main() {
                 }
             });
             lotesGerados.push(loteTesteCasa);
-            console.log(`✓ Lote criado: ${loteTesteCasa.nome} (${loteTesteCasa.qntdItens} itens)`);
+            console.log(`✓ Lote criado: ${loteTesteCasa.nome} (${loteTesteCasa.quantidade} itens)`);
         }
 
         // === FAZENDA TESTE -> LOJA TESTE ===
@@ -3969,18 +3210,12 @@ async function main() {
                 unidadeId: unidadeMap["Loja Teste"],
                 status: SCON.ATIVO
             },
-            include: {
-                itens: true,
-                fornecedorInterno: true
-            }
+            include: { itens: true, fornecedorInterno: true }
         });
 
         if (contratoTesteLoja) {
             const responsavelTeste = await prisma.usuario.findFirst({
-                where: {
-                    unidadeId: unidadeMap["Fazenda Teste"],
-                    perfilId: perfilMap["GERENTE_FAZENDA"]
-                }
+                where: { unidadeId: unidadeMap["Fazenda Teste"], perfilId: perfilMap["GERENTE_FAZENDA"] }
             });
 
             const itensEsperadosTesteLoja = contratoTesteLoja.itens.map(item => ({
@@ -3998,11 +3233,11 @@ async function main() {
             const loteTesteLoja = await prisma.lote.create({
                 data: {
                     unidadeId: unidadeMap["Fazenda Teste"],
-                    responsavelId: responsavelTeste.id,
+                    responsavelId: (responsavelTeste && responsavelTeste.id) || usuarioMap["Julia Alves"],
                     nome: `Lote Laticínios e Carnes - Loja Teste - ${new Date().toLocaleDateString('pt-BR')}`,
                     tipo: TL.LEITE,
-                    qntdItens: contratoTesteLoja.itens.length,
-                    preco: totalPrecoTesteLoja,
+                    quantidade: contratoTesteLoja.itens.length,
+                    preco: Number(totalPrecoTesteLoja.toFixed(2)),
                     unidadeMedida: UMED.UNIDADE,
                     observacoes: `Lote com ${contratoTesteLoja.itens.length} produtos (laticínios e carnes) para Loja Teste`,
                     statusQualidade: SQ.PROPRIO,
@@ -4013,7 +3248,7 @@ async function main() {
                 }
             });
             lotesGerados.push(loteTesteLoja);
-            console.log(`✓ Lote criado: ${loteTesteLoja.nome} (${loteTesteLoja.qntdItens} itens)`);
+            console.log(`✓ Lote criado: ${loteTesteLoja.nome} (${loteTesteLoja.quantidade} itens)`);
         }
 
         // === FAZENDA ALPHA -> AGROBOI ===
@@ -4025,18 +3260,12 @@ async function main() {
                 unidadeId: unidadeMap["AgroBoi"],
                 status: SCON.ATIVO
             },
-            include: {
-                itens: true,
-                fornecedorInterno: true
-            }
+            include: { itens: true, fornecedorInterno: true }
         });
 
         if (contratoAlphaAgro) {
             const responsavelAlpha = await prisma.usuario.findFirst({
-                where: {
-                    unidadeId: unidadeMap["Fazenda Alpha"],
-                    perfilId: perfilMap["GERENTE_FAZENDA"]
-                }
+                where: { unidadeId: unidadeMap["Fazenda Alpha"], perfilId: perfilMap["GERENTE_FAZENDA"] }
             });
 
             const itensEsperadosAlphaAgro = contratoAlphaAgro.itens.map(item => ({
@@ -4054,11 +3283,11 @@ async function main() {
             const loteAlphaAgro = await prisma.lote.create({
                 data: {
                     unidadeId: unidadeMap["Fazenda Alpha"],
-                    responsavelId: responsavelAlpha.id,
+                    responsavelId: (responsavelAlpha && responsavelAlpha.id) || usuarioMap["Julia Alves"],
                     nome: `Lote Bovinos - AgroBoi - ${new Date().toLocaleDateString('pt-BR')}`,
-                    tipo: TL.GADO,
-                    qntdItens: contratoAlphaAgro.itens.length,
-                    preco: totalPrecoAlphaAgro,
+                    tipo: TL.BOVINOS,                                 // <- corrigido
+                    quantidade: contratoAlphaAgro.itens.length,
+                    preco: Number(totalPrecoAlphaAgro.toFixed(2)),
                     unidadeMedida: UMED.KG,
                     observacoes: `Lote com ${contratoAlphaAgro.itens.length} produtos bovinos (carne e derivados) para AgroBoi`,
                     statusQualidade: SQ.PROPRIO,
@@ -4069,7 +3298,7 @@ async function main() {
                 }
             });
             lotesGerados.push(loteAlphaAgro);
-            console.log(`✓ Lote criado: ${loteAlphaAgro.nome} (${loteAlphaAgro.qntdItens} itens)`);
+            console.log(`✓ Lote criado: ${loteAlphaAgro.nome} (${loteAlphaAgro.quantidade} itens)`);
         }
 
         // === FAZENDA ALPHA -> CASA ÚTIL MERCADO ===
@@ -4081,18 +3310,12 @@ async function main() {
                 unidadeId: unidadeMap["Casa Útil Mercado"],
                 status: SCON.ATIVO
             },
-            include: {
-                itens: true,
-                fornecedorInterno: true
-            }
+            include: { itens: true, fornecedorInterno: true }
         });
 
         if (contratoAlphaCasa && contratoAlphaCasa.itens.length > 0) {
             const responsavelAlpha = await prisma.usuario.findFirst({
-                where: {
-                    unidadeId: unidadeMap["Fazenda Alpha"],
-                    perfilId: perfilMap["GERENTE_FAZENDA"]
-                }
+                where: { unidadeId: unidadeMap["Fazenda Alpha"], perfilId: perfilMap["GERENTE_FAZENDA"] }
             });
 
             const itensEsperadosAlphaCasa = contratoAlphaCasa.itens.map(item => ({
@@ -4110,11 +3333,11 @@ async function main() {
             const loteAlphaCasa = await prisma.lote.create({
                 data: {
                     unidadeId: unidadeMap["Fazenda Alpha"],
-                    responsavelId: responsavelAlpha.id,
+                    responsavelId: (responsavelAlpha && responsavelAlpha.id) || usuarioMap["Julia Alves"],
                     nome: `Lote Bovinos - Casa Útil - ${new Date().toLocaleDateString('pt-BR')}`,
-                    tipo: TL.GADO,
-                    qntdItens: contratoAlphaCasa.itens.length,
-                    preco: totalPrecoAlphaCasa,
+                    tipo: TL.BOVINOS,
+                    quantidade: contratoAlphaCasa.itens.length,
+                    preco: Number(totalPrecoAlphaCasa.toFixed(2)),
                     unidadeMedida: UMED.KG,
                     observacoes: `Lote com ${contratoAlphaCasa.itens.length} produtos bovinos para Casa Útil Mercado`,
                     statusQualidade: SQ.PROPRIO,
@@ -4125,10 +3348,11 @@ async function main() {
                 }
             });
             lotesGerados.push(loteAlphaCasa);
-            console.log(`✓ Lote criado: ${loteAlphaCasa.nome} (${loteAlphaCasa.qntdItens} itens)`);
+            console.log(`✓ Lote criado: ${loteAlphaCasa.nome} (${loteAlphaCasa.quantidade} itens)`);
         }
 
         console.log(`\n✅ Total de ${lotesGerados.length} lotes criados para contratos com lojas`);
+
 
         // ===== CRIAR PRODUÇÕES BASEADAS NOS LOTES =====
         console.log("\n🏭 Criando produções baseadas nos lotes...");
@@ -4670,117 +3894,6 @@ async function main() {
             }
         }
 
-        // venda
-
-        // itens venda
-        // ===== CRIAR VENDAS E ITENS DE VENDA =====
-        // console.log("\n💰 Criando vendas nas lojas...");
-
-        // const vendasCriadas = [];
-
-        // // Buscar todos os caixas abertos
-        // const caixasAbertas = await prisma.caixa.findMany({
-        //     where: { status: true },
-        //     include: { unidade: true, usuario: true }
-        // });
-
-        // for (const caixa of caixasAbertas) {
-        //     // Buscar produtos disponíveis para venda nesta loja
-        //     const produtosDisponiveis = await prisma.produto.findMany({
-        //         where: {
-        //             unidadeId: caixa.unidadeId,
-        //             isForSale: true
-        //         },
-        //         take: 50 // Limitar para performance
-        //     });
-
-        //     if (produtosDisponiveis.length === 0) {
-        //         console.log(`⚠️  Nenhum produto disponível para ${caixa.unidade.nome}`);
-        //         continue;
-        //     }
-
-        //     // Criar entre 5 e 15 vendas por loja
-        //     const numVendas = Math.floor(Math.random() * 11) + 5;
-
-        //     for (let i = 0; i < numVendas; i++) {
-        //         // Selecionar entre 1 e 5 produtos aleatórios
-        //         const numItens = Math.floor(Math.random() * 5) + 1;
-        //         const produtosSelecionados = [];
-
-        //         for (let j = 0; j < numItens; j++) {
-        //             const produtoAleatorio = produtosDisponiveis[Math.floor(Math.random() * produtosDisponiveis.length)];
-        //             produtosSelecionados.push(produtoAleatorio);
-        //         }
-
-        //         // Calcular total da venda
-        //         let totalVenda = 0;
-        //         const itensVenda = [];
-
-        //         for (const produto of produtosSelecionados) {
-        //             const quantidade = Math.floor(Math.random() * 3) + 1; // 1 a 3 unidades
-        //             const precoUnitario = Number(produto.preco);
-        //             const desconto = Math.random() < 0.3 ? (precoUnitario * 0.05 * quantidade) : 0; // 30% chance de 5% desconto
-        //             const subtotal = (precoUnitario * quantidade) - desconto;
-
-        //             totalVenda += subtotal;
-
-        //             itensVenda.push({
-        //                 produtoId: produto.id,
-        //                 quantidade: quantidade,
-        //                 precoUnitario: precoUnitario,
-        //                 desconto: desconto,
-        //                 subtotal: subtotal
-        //             });
-        //         }
-
-        //         // Definir forma de pagamento aleatória
-        //         const formasPagamento = [TPAG.DINHEIRO, TPAG.CARTAO, TPAG.PIX];
-        //         const formaPagamento = formasPagamento[Math.floor(Math.random() * formasPagamento.length)];
-
-        //         // Data da venda (últimos 30 dias)
-        //         const dataVenda = new Date();
-        //         // dataVenda.setDate(dataVenda.getDate() - Math.floor(Math.random() * 30));
-
-        //         // Criar a venda
-        //         const venda = await prisma.venda.create({
-        //             data: {
-        //                 caixaId: caixa.id,
-        //                 usuarioId: caixa.usuarioId,
-        //                 unidadeId: caixa.unidadeId,
-        //                 total: totalVenda,
-        //                 pagamento: formaPagamento,
-        //                 status: TS.OK,
-        //                 criadoEm: dataVenda,
-        //                 itens: {
-        //                     create: itensVenda
-        //                 }
-        //             },
-        //             include: {
-        //                 itens: true
-        //             }
-        //         });
-
-        //         vendasCriadas.push(venda);
-        //     }
-
-        //     console.log(`✓ ${numVendas} vendas criadas para ${caixa.unidade.nome}`);
-        // }
-
-        // console.log(`\n✅ Total de ${vendasCriadas.length} vendas criadas com sucesso!`);
-
-        // // Estatísticas de vendas por loja
-        // console.log("\n📊 Vendas por loja:");
-        // for (const caixa of caixasAbertas) {
-        //     const vendasDaLoja = vendasCriadas.filter(v => v.unidadeId === caixa.unidadeId);
-        //     const totalVendido = vendasDaLoja.reduce((sum, v) => sum + Number(v.total), 0);
-        //     const totalItens = vendasDaLoja.reduce((sum, v) => sum + v.itens.length, 0);
-
-        //     console.log(`   - ${caixa.unidade.nome}:`);
-        //     console.log(`      • ${vendasDaLoja.length} vendas`);
-        //     console.log(`      • ${totalItens} itens vendidos`);
-        //     console.log(`      • R$ ${totalVendido.toFixed(2)} em vendas`);
-        // }
-        // console.log("");
         // ===== CRIAR VENDAS E ITENS DE VENDA PARA HOJE =====
         console.log("\n💰 Criando vendas de hoje nas lojas específicas...");
 

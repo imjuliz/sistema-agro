@@ -17,56 +17,57 @@ model Perfil {
 }
 
 model Unidade {
-  id                      Int                @id @default(autoincrement())
-  matrizId                Int?               @map("matriz_id")
-  gerenteId               Int?               @map("gerente_id")
-  nome                    String             @db.VarChar(100)
+  id                      Int                 @id @default(autoincrement())
+  matrizId                Int?                @map("matriz_id")
+  gerenteId               Int?                @map("gerente_id")
+  nome                    String              @db.VarChar(100)
   endereco                String
-  cnpj                    String             @db.VarChar(20)
-  cidade                  String?            @db.VarChar(100)
-  estado                  String?            @db.VarChar(100)
-  cep                     String?            @db.VarChar(20)
-  focoProdutivo           String?            @db.VarChar(50)
-  imagemUrl               String?            @map("imagem_url") @db.VarChar(1000)
-  areaTotal               Decimal?           @map("area_total") @db.Decimal(12, 3)
-  areaProdutiva           Decimal?           @map("area_produtiva") @db.Decimal(12, 3)
+  cnpj                    String              @db.VarChar(20)
+  cidade                  String?             @db.VarChar(100)
+  estado                  String?             @db.VarChar(100)
+  cep                     String?             @db.VarChar(20)
+  focoProdutivo           String?             @db.VarChar(50)
+  imagemUrl               String?             @map("imagem_url") @db.VarChar(1000)
+  areaTotal               Decimal?            @map("area_total") @db.Decimal(12, 3)
+  areaProdutiva           Decimal?            @map("area_produtiva") @db.Decimal(12, 3)
   latitude                Float?
   longitude               Float?
-  descricaoCurta          String?            @map("descricao_curta")
+  descricaoCurta          String?             @map("descricao_curta")
   tipo                    TipoUnidade
-  horarioAbertura         DateTime?          @map("horario_abertura") @db.Time(0)
-  horarioFechamento       DateTime?          @map("horario_fechamento") @db.Time(0)
-  telefone                String             @db.VarChar(20)
-  email                   String?            @db.VarChar(255)
-  status                  StatusUnidade      @default(ATIVA)
-  criadoEm                DateTime           @default(now()) @map("criado_em")
-  atualizadoEm            DateTime           @default(now()) @updatedAt @map("atualizado_em")
+  horarioAbertura         DateTime?           @map("horario_abertura") @db.Time(0)
+  horarioFechamento       DateTime?           @map("horario_fechamento") @db.Time(0)
+  telefone                String              @db.VarChar(20)
+  email                   String?             @db.VarChar(255)
+  status                  StatusUnidade       @default(ATIVA)
+  criadoEm                DateTime            @default(now()) @map("criado_em")
+  atualizadoEm            DateTime            @default(now()) @updatedAt @map("atualizado_em")
   animais                 Animal[]
   caixas                  Caixa[]
-  contratosComoFornecedor Contrato[]         @relation("ContratoFornecedorInterno")
-  contratosComoLoja       Contrato[]         @relation("ContratoUnidade")
+  contratosComoFornecedor Contrato[]          @relation("ContratoFornecedorInterno")
+  contratosComoLoja       Contrato[]          @relation("ContratoUnidade")
   estoques                Estoque?
-  destinoMovimento        EstoqueMovimento[] @relation("DestinoMovimento")
-  origemMovimento         EstoqueMovimento[] @relation("OrigemMovimento")
-  estoqueProdutos         EstoqueProduto[]   @relation("EstoqueProduto_fornecedorUnidade")
+  destinoMovimento        EstoqueMovimento[]  @relation("DestinoMovimento")
+  origemMovimento         EstoqueMovimento[]  @relation("OrigemMovimento")
+  estoqueProdutos         EstoqueProduto[]    @relation("EstoqueProduto_fornecedorUnidade")
   financeiro              Financeiro[]
   lotes                   Lote[]
-  pedidosComoDestino      Pedido[]           @relation("PedidoDestino")
-  pedidosComoOrigem       Pedido[]           @relation("PedidoOrigem")
+  pedidosComoDestino      Pedido[]            @relation("PedidoDestino")
+  pedidosComoOrigem       Pedido[]            @relation("PedidoOrigem")
   plantio                 Plantio[]
-  producaoDestino         Producao[]         @relation("ProducaoDestino")
+  producaoDestino         Producao[]          @relation("ProducaoDestino")
   producaoOrigem          Producao[]
-  produtoOrigem           Produto[]          @relation("ProdutoOrigem")
-  produtoUnidade          Produto[]          @relation("ProdutoUnidade")
-  gerente                 Usuario?           @relation("GerenteUnidade", fields: [gerenteId], references: [id])
-  matriz                  Unidade?           @relation("UnidadeMatriz", fields: [matrizId], references: [id])
-  filiais                 Unidade[]          @relation("UnidadeMatriz")
-  usuarios                Usuario[]          @relation("UsuarioUnidade")
+  produtoOrigem           Produto[]           @relation("ProdutoOrigem")
+  produtoUnidade          Produto[]           @relation("ProdutoUnidade")
+  gerente                 Usuario?            @relation("GerenteUnidade", fields: [gerenteId], references: [id])
+  matriz                  Unidade?            @relation("UnidadeMatriz", fields: [matrizId], references: [id])
+  filiais                 Unidade[]           @relation("UnidadeMatriz")
+  usuarios                Usuario[]           @relation("UsuarioUnidade")
   vendas                  Venda[]
   categoria               Categoria[]
   dadosGerais             DadoGeralUnidade[]
-  fornecedoresExternos   FornecedorExterno[]  @relation("FornecedorExterno")
-envioLotes             EnvioLote[]
+  fornecedoresExternos    FornecedorExterno[] @relation("FornecedorExterno")
+  envioLotes              EnvioLote[]
+
   @@index([matrizId])
   @@index([gerenteId])
   @@index([tipo])
@@ -173,7 +174,7 @@ model Produto {
   dataFabricacao  DateTime          @map("data_fabricacao")
   dataValidade    DateTime          @map("data_validade")
   criadoEm        DateTime          @default(now()) @map("criado_em")
-  atualizadoEm    DateTime?          @default(now()) @updatedAt @map("atualizado_em")
+  atualizadoEm    DateTime?         @default(now()) @updatedAt @map("atualizado_em")
   unidadeMedida   UnidadesDeMedida? @map("unidade_medida")
   codigoBarras    String?           @map("codigo_barras")
   ncm             String?           @map("ncm")
@@ -184,7 +185,7 @@ model Produto {
   estoqueProdutos EstoqueProduto[]
   // itensVendas     ItemVenda[]
   pedidoItems     PedidoItem[]
-  contratosItens   ContratoItens[]
+  contratosItens  ContratoItens[]
   producao        Producao[]
   criadoPor       Usuario?          @relation("ProdutoCriador", fields: [criadoPorId], references: [id])
   // fornecedor      FornecedorExterno? @relation("FornecedorProdutosRecebidos", fields: [fornecedorId], references: [id])
@@ -282,7 +283,7 @@ model EstoqueMovimento {
 
 model FornecedorExterno {
   id               Int              @id @default(autoincrement())
-  unidadeId      Int?             @map("unidade_id")
+  unidadeId        Int?             @map("unidade_id")
   nomeEmpresa      String           @map("nome_empresa") @db.VarChar(200)
   descricaoEmpresa String           @map("descricao_empresa")
   cnpjCpf          String?          @unique @map("cnpj_cpf") @db.VarChar(20)
@@ -306,10 +307,10 @@ model Contrato {
   unidadeId           Int                @map("unidade_id")
   fornecedorUnidadeId Int?               @map("fornecedor_unidade_id")
   fornecedorExternoId Int?               @map("fornecedor_externo_id")
-  descricao          String?            @db.VarChar(500)
+  descricao           String?            @db.VarChar(500)
   dataInicio          DateTime           @map("data_inicio")
   dataFim             DateTime?          @map("data_fim")
-  dataEnvio           DateTime?           @map("data_envio")
+  dataEnvio           DateTime?          @map("data_envio")
   status              StatusContrato
   frequenciaEntregas  FrequenciaEnum     @map("frequencia_entregas")
   diaPagamento        String             @map("dia_pagamento") @db.VarChar(100)
@@ -321,7 +322,7 @@ model Contrato {
   itens               ContratoItens[]    @relation("ContratoItens")
   lotes               Lote[]
   pedidos             Pedido[]
-  enviosLote         EnvioLote[]
+  enviosLote          EnvioLote[]
 
   @@index([status])
   @@index([dataInicio])
@@ -335,24 +336,25 @@ model Contrato {
 model ContratoItens {
   id            Int               @id @default(autoincrement())
   contratoId    Int               @map("contrato_id")
-  produtoId     Int?               @map("produto_id")
+  produtoId     Int?              @map("produto_id")
   nome          String?           @db.VarChar(255)
-  quantidade    Int
-  raca          String?           
+  quantidade    Decimal?
+  raca          String?
   pesoUnidade   Decimal?          @map("peso_por_unidade")
   precoUnitario Decimal?          @map("preco_unitario")
   unidadeMedida UnidadesDeMedida?
+  categoria     Json?
+  ativo         Boolean?          @default(true)
+  criadoEm      DateTime?         @default(now())
 
-  contrato      Contrato          @relation("ContratoItens", fields: [contratoId], references: [id], onDelete: Cascade)
-  produto       Produto?           @relation(fields: [produtoId], references: [id])
+  contrato Contrato @relation("ContratoItens", fields: [contratoId], references: [id], onDelete: Cascade)
+  produto  Produto? @relation(fields: [produtoId], references: [id])
 
-  pedidoItems   PedidoItem[]
-
-  @@index([contratoId])
-  @@index([produtoId])
+  pedidoItems PedidoItem[]
 
   @@unique([contratoId, produtoId]) // evita duplicar o mesmo produto no mesmo contrato
-
+  @@index([contratoId])
+  @@index([produtoId])
   @@map("contrato_itens")
 }
 
@@ -420,18 +422,18 @@ model PedidoItem {
 }
 
 model EnvioLote {
-  id          Int          @id @default(autoincrement())
-  unidadeId   Int          @map("unidade_id")        // unidade que está enviando
-  contratoId  Int          @map("contrato_id")       // contrato associado
-  loteId      Int          @map("lote_id")           // lote que está sendo enviado
-  status      StatusEnvio  @default(PENDENTE)        // status do envio
-  dataEnvio   DateTime?    @map("data_envio")        // quando foi enviado
-  criadoEm    DateTime     @default(now()) @map("criado_em")
+  id           Int         @id @default(autoincrement())
+  unidadeId    Int         @map("unidade_id") // unidade que está enviando
+  contratoId   Int         @map("contrato_id") // contrato associado
+  loteId       Int         @map("lote_id") // lote que está sendo enviado
+  status       StatusEnvio @default(PENDENTE) // status do envio
+  dataEnvio    DateTime?   @map("data_envio") // quando foi enviado
+  criadoEm     DateTime    @default(now()) @map("criado_em")
   atualizadoEm DateTime    @default(now()) @updatedAt @map("atualizado_em")
 
-  contrato    Contrato     @relation(fields: [contratoId], references: [id])
-  lote        Lote         @relation(fields: [loteId], references: [id])
-  unidade     Unidade      @relation(fields: [unidadeId], references: [id])
+  contrato Contrato @relation(fields: [contratoId], references: [id])
+  lote     Lote     @relation(fields: [loteId], references: [id])
+  unidade  Unidade  @relation(fields: [unidadeId], references: [id])
 
   @@index([contratoId])
   @@index([loteId])
@@ -439,24 +441,24 @@ model EnvioLote {
 }
 
 model Animal {
-  id           Int            @id @default(autoincrement())
-  especie       EspecieAnimal
-  raca         String         @db.VarChar(100)
-  sexo        SexoAnimal?
-  sku          String         @unique @db.VarChar(50)
-  dataNasc  DateTime?
-  fornecedorId Int?
-  peso        String?
+  id             Int                 @id @default(autoincrement())
+  especie        EspecieAnimal
+  raca           String              @db.VarChar(100)
+  sexo           SexoAnimal?
+  sku            String              @unique @db.VarChar(50)
+  dataNasc       DateTime?
+  fornecedorId   Int?
+  peso           String?
   formaAquisicao TipoFormaAquisicao?
   // quantidade   Int
   // tipo         TipoAnimais
-  custo        Decimal?
-  unidadeId    Int
-  loteId       Int?          @map("lote_id")
-  lote         Lote?          @relation(fields: [loteId], references: [id])
-  unidade      Unidade        @relation(fields: [unidadeId], references: [id])
-  atvdAnimalia AtvdAnimalia[]
-  producaos    Producao[]
+  custo          Decimal?
+  unidadeId      Int
+  loteId         Int?                @map("lote_id")
+  lote           Lote?               @relation(fields: [loteId], references: [id])
+  unidade        Unidade             @relation(fields: [unidadeId], references: [id])
+  atvdAnimalia   AtvdAnimalia[]
+  producaos      Producao[]
 
   @@index([unidadeId])
   @@map("animal")
@@ -482,17 +484,17 @@ model Plantio {
 }
 
 model AtvdAgricola {
-  id            Int                @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   descricao     String
   tipo          TipoAtvd
   loteId        Int
-  dataInicio    DateTime           @map("data_inicio")
-  dataFim       DateTime?          @map("data_fim")
+  dataInicio    DateTime    @map("data_inicio")
+  dataFim       DateTime?   @map("data_fim")
   responsavelId Int
   // status        StatusPlantacao
   status        StatusAtvd?
-  lote          Lote               @relation(fields: [loteId], references: [id])
-  responsavel   Usuario            @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id])
+  lote          Lote        @relation(fields: [loteId], references: [id])
+  responsavel   Usuario     @relation("UsuarioAtvdPlantio", fields: [responsavelId], references: [id])
 
   @@index([loteId])
   @@index([responsavelId])
@@ -501,19 +503,19 @@ model AtvdAgricola {
 }
 
 model AtvdAnimalia {
-  id            Int                @id @default(autoincrement())
-  animalId      Int?                @map("animal_id")
+  id            Int                    @id @default(autoincrement())
+  animalId      Int?                   @map("animal_id")
   // insumoId      Int?               @map("insumo_id")
   descricao     String
   tipo          TipoAtividadeAnimalia?
-  loteId        Int?               @map("lote_id")
-  dataInicio    DateTime           @map("data_inicio")
-  dataFim       DateTime?          @map("data_fim")
-  responsavelId Int                @map("responsavel_id")
+  loteId        Int?                   @map("lote_id")
+  dataInicio    DateTime               @map("data_inicio")
+  dataFim       DateTime?              @map("data_fim")
+  responsavelId Int                    @map("responsavel_id")
   status        StatusAtvd?
-  animal        Animal?             @relation(fields: [animalId], references: [id])
-  lote          Lote?              @relation(fields: [loteId], references: [id])
-  responsavel   Usuario            @relation("UsuarioAtvdAnimalia", fields: [responsavelId], references: [id])
+  animal        Animal?                @relation(fields: [animalId], references: [id])
+  lote          Lote?                  @relation(fields: [loteId], references: [id])
+  responsavel   Usuario                @relation("UsuarioAtvdAnimalia", fields: [responsavelId], references: [id])
 
   @@index([loteId])
   @@index([animalId])
@@ -537,7 +539,7 @@ model Lote {
   statusQualidade        StatusQualidade       @default(PROPRIO) @map("status_qualidade")
   bloqueadoParaVenda     Boolean               @default(false) @map("bloqueado_para_venda")
   status                 StatusLote?           @map("status_lote")
-  dataCriacao           DateTime              @default(now()) @map("data_criacao")
+  dataCriacao            DateTime              @default(now()) @map("data_criacao")
   contratoId             Int?
   dataEnvioReferencia    DateTime?
   itensEsperados         Json?                 @map("itens_esperados")
@@ -876,7 +878,6 @@ enum TipoProduto {
 }
 
 enum TipoLote {
-  
   SOJA
   LEITE
   BOVINOS
@@ -889,7 +890,7 @@ enum TipoLote {
   LEGUME
   FRUTA
   VERDURA
-  GRÃOS
+  GRAOS
   PLANTIO
 
   @@map("tipo_lote")
@@ -968,10 +969,10 @@ enum StatusQualidade {
 }
 
 enum StatusEnvio {
-  PENDENTE   // registro criado, ainda não enviado
+  PENDENTE // registro criado, ainda não enviado
   EM_PREPARO // lote sendo preparado para envio
-  ENVIADO    // lote enviado para a loja
-  ENTREGUE   // lote recebido na loja
+  ENVIADO // lote enviado para a loja
+  ENTREGUE // lote recebido na loja
 }
 
 enum TipoAtividadeAnimalia {
@@ -1158,7 +1159,7 @@ enum StatusLote {
   EM_CRESCIMENTO // Animais em crescimento 
   EM_ENGORDA // Animais em fase de engorda
   EM_REPRODUCAO // Lote destinado para produção de novos animais.
-  LACTAÇÃO // Lote em fase de produção de leite
+  LACTACAO // Lote em fase de produção de leite
   ABATE // Lote em processo de abate ou envio
   //GERAL (serve pros dois)
   PENDENTE // Lote criado, aguardando início das operações
@@ -1166,7 +1167,7 @@ enum StatusLote {
   BLOQUEADO // Lote indisponível, bloqueado para operação ou venda
   VENDIDO // Animais vendidos ou enviados
   //vou apagar depois
-  
+
   ENVIADO
   EM_PREPARO
 }
