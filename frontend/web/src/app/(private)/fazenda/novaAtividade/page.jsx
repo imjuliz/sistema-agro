@@ -856,7 +856,7 @@ export default function Page() {
                         <div>
                             <Label>Tipo</Label>
                             <select value={tipoAnimaliaAtvd} onChange={(e) => setTipoAnimaliaAtvd(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
-                                <option value="ALIMENTACAO">ALIMENTACAO</option>
+                                <option value="NUTRICAO">NUTRIÇÃO</option>
                                 <option value="VACINACAO">VACINACAO</option>
                                 <option value="VERMIFUGACAO">VERMIFUGACAO</option>
                                 <option value="TRATAMENTO">TRATAMENTO</option>
