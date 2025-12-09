@@ -9,11 +9,11 @@ import Navbar from "@/components/Home/sections/navbar/default";
 import * as React from 'react';
 import { toast } from 'sonner';
 //icons-----
-import { Mail, Phone, Wrench, ArrowDownRight, Rocket, Lightbulb, Users, User, Send, Instagram } from "lucide-react";
+import { Mail, Phone, ArrowDownRight, Rocket, Lightbulb, User, Send, Instagram } from "lucide-react";
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import { Checkbox } from "@/components/ui/checkbox";
-import Link from "next/link";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 const defaultFeatures = [
     {
@@ -25,16 +25,10 @@ const defaultFeatures = [
         icon: Lightbulb,
         title: "Gestão Integrada de Unidades",
         description: "A matriz acompanha em tempo real o desempenho de todas as fazendas e lojas, com relatórios consolidados de produção, estoque e finanças.",
-    },
-    // {
-    //     icon: Users,
-    //     title: "Inovação com IoT",
-    //     description: "Integramos sensores e dispositivos físicos para monitorar colheitas e insumos, transformando dados agrícolas em decisões inteligentes.",
-    // },
+    }
 ];
 
 export default function sobreNos({
-    // Hero section - inline defaults for simple strings
     badgeText = "Sobre a RuralTech",
     title = "Uma história construída ",
     titleHighlight = "no campo",
@@ -67,16 +61,27 @@ export default function sobreNos({
     ctaImageSrc = "/img/mulher-tablet.jpg",
     ctaImageAlt = "Agricultor utilizando tablet no campo",
     ctaImageOverlayText = "RuralTech — Produção Agropecuária",
-    ctaImageOverlaySubtext = "Qualidade, origem e responsabilidade",
-
-    // Stats section
-    // stats = defaultStats,
+    ctaImageOverlaySubtext = "Qualidade, origem e responsabilidade"
 }) {
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text)
             .then(() => toast.success(`Copiado: ${text}`))
             .catch(() => toast.error("Falha ao copiar. Tente novamente."));
     };
+    const { lang, changeLang } = useTranslation();
+    const languageOptions = [
+        { value: 'pt-BR', label: 'Português (BR)' },
+        { value: 'en', label: 'English' },
+        { value: 'es', label: 'Español' },
+        { value: 'fr', label: 'Français' }
+    ];
+    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+    useEffect(() => {
+        setLocalTheme(globalTheme);
+        setLocalSelectedFontSize(globalSelectedFontSize);
+        setLocalLang(lang);
+    }, [globalTheme, globalSelectedFontSize, lang]);
+
 
     const cards = [
         {
@@ -101,7 +106,7 @@ export default function sobreNos({
             description: "Confira nosso guia de início rápido para desenvolvedores.",
             linkText: "Contatar vendas",
             linkHref: "#",
-            highlight: false, 
+            highlight: false,
         },
     ];
 
@@ -124,14 +129,12 @@ export default function sobreNos({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         try {
             const apiUrl = `${API_URL}/contato`;
             const response = await fetch(apiUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json", },
                 body: JSON.stringify(formData),
             });
 
@@ -143,7 +146,7 @@ export default function sobreNos({
             }
 
             toast.success(data.mensagem || "Mensagem enviada com sucesso!");
-            
+
             // Reset form
             setFormData({
                 firstName: "",
@@ -161,9 +164,7 @@ export default function sobreNos({
 
     const handleChange = (field, value) => {
         // Aplicar formatação de telefone se for o campo phone
-        if (field === "phone") {
-            value = formatPhoneNumber(value);
-        }
+        if (field === "phone") { value = formatPhoneNumber(value); }
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -176,11 +177,11 @@ export default function sobreNos({
                         {badgeText}
                         <ArrowDownRight className="ml-2 size-4" />
                     </Badge>
-                    <h1 className="text-pretty text-4xl font-bold tracking-tight lg:text-6xl">
+                    <Transl className="text-pretty text-4xl font-bold tracking-tight lg:text-6xl">
                         {title}{" "}
                         <span className="relative text-primary">{titleHighlight}</span>
-                    </h1>
-                    <p className="text-lg text-muted-foreground">{description}</p>
+                    </Transl>
+                    <Transl className="text-lg text-muted-foreground">{description}</Transl>
                 </div>
                 <div className="grid gap-8 md:grid-cols-2">
                     <div className="group flex flex-col justify-between gap-6 rounded-lg bg-muted p-6 shadow-sm transition-all duration-300 hover:shadow-md md:p-8">
@@ -189,7 +190,7 @@ export default function sobreNos({
                         </div>
                         <div className="space-y-3">
                             <Badge variant="outline" className="font-medium">{visionBadge}</Badge>
-                            <p className="text-xl font-medium">{visionText}</p>
+                            <Transl className="text-xl font-medium">{visionText}</Transl>
                         </div>
                     </div>
                     <div className="relative overflow-hidden rounded-lg shadow-sm">
@@ -199,7 +200,7 @@ export default function sobreNos({
                                 <Badge variant="outline" className="mb-3 border-white/20 bg-white/10 text-white">
                                     {missionBadge}
                                 </Badge>
-                                <p className="text-xl font-medium">{missionText}</p>
+                                <Transl className="text-xl font-medium">{missionText}</Transl>
                             </div>
                         </div>
                     </div>
@@ -210,9 +211,9 @@ export default function sobreNos({
                             {approachBadge}{" "}
                             <ArrowDownRight className="size-4 transition-transform group-hover:translate-x-1" />
                         </Badge>
-                        <h2 className="mb-3 mt-6 text-3xl font-bold md:text-4xl">
+                        <Transl className="mb-3 mt-6 text-3xl font-bold md:text-4xl">
                             {approachTitle}
-                        </h2>
+                        </Transl>
                         <p className="text-muted-foreground">{approachDescription}</p>
                     </div>
                     <div className="grid gap-8 md:grid-cols-2 md:gap-10">
@@ -221,8 +222,8 @@ export default function sobreNos({
                                 <div className="mb-4 flex size-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 group-hover:bg-[#99BF0F]/10 dark:group-hover:bg-[#99BF0F]/30 transition-all group-hover:border-[#99BF0F]">
                                     <item.icon className="size-5 text-primary md:size-6 group-hover:stroke-[#99BF0F]" />
                                 </div>
-                                <h3 className="mb-2 text-xl font-semibold">{item.title}</h3>
-                                <p className="mb-4 text-muted-foreground">{item.description}</p>
+                                <Transl className="mb-2 text-xl font-semibold">{item.title}</Transl>
+                                <Transl className="mb-4 text-muted-foreground">{item.description}</Transl>
                             </div>
                         ))}
                     </div>
@@ -231,25 +232,22 @@ export default function sobreNos({
                     <div className="grid items-center gap-8 md:grid-cols-2 md:gap-10">
                         <div>
                             <Badge className="mb-6">{ctaBadge}</Badge>
-                            <h2 className="mb-3 text-3xl font-bold md:text-4xl">
-                                {ctaTitle}
-                            </h2>
-                            <p className="mb-6 text-muted-foreground">{ctaDescription}</p>
+                            <Transl className="mb-3 text-3xl font-bold md:text-4xl">{ctaTitle}</Transl>
+                            <Transl className="mb-6 text-muted-foreground">{ctaDescription}</Transl>
                             <div className="flex flex-wrap gap-3">
                                 <Button size="lg" className="w-full sm:w-max">
                                     {ctaButton1Text}
                                 </Button>
-                                 
                             </div>
                         </div>
                         <div className="relative">
                             <div className="relative">
                                 <img src={ctaImageSrc} alt={ctaImageAlt} width={500} height={300} className="aspect-video w-full rounded-lg object-cover shadow-lg" />
                                 <div className="absolute bottom-4 left-4 rounded-lg bg-background p-4 shadow-md backdrop-blur-sm">
-                                    <p className="font-semibold">{ctaImageOverlayText}</p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <Transl className="font-semibold">{ctaImageOverlayText}</Transl>
+                                    <Transl className="text-sm text-muted-foreground">
                                         {ctaImageOverlaySubtext}
-                                    </p>
+                                    </Transl>
                                 </div>
                             </div>
                         </div>
@@ -262,8 +260,8 @@ export default function sobreNos({
                         <div className="grid items-start gap-16 lg:grid-cols-2">
                             <div className="space-y-8">
                                 <div className="space-y-4">
-                                    <h1 className="text-foreground text-3xl leading-tight font-bold lg:text-4xl">Fale com a RuralTech</h1>
-                                    <p className="text-muted-foreground leading-relaxed">Entre em contato para saber mais sobre nossos produtos, nossas fazendas, criação de animais e unidades de distribuição. Nossa equipe está pronta para responder suas dúvidas e fornecer informações detalhadas sobre nossa produção.</p>
+                                    <Transl className="text-foreground text-3xl leading-tight font-bold lg:text-4xl">Fale com a RuralTech</Transl>
+                                    <Transl className="text-muted-foreground leading-relaxed">Entre em contato para saber mais sobre nossos produtos, nossas fazendas, criação de animais e unidades de distribuição. Nossa equipe está pronta para responder suas dúvidas e fornecer informações detalhadas sobre nossa produção.</Transl>
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -292,25 +290,15 @@ export default function sobreNos({
                                         <Textarea placeholder="Sua mensagem" value={formData.message} onChange={(e) => handleChange("message", e.target.value)} className="border-border bg-card min-h-32 resize-none" required />
                                     </div>
 
-                                    {/* <div className="flex items-center space-x-3">
-                                        <Checkbox id="privacy" checked={formData.agreedToPrivacy} onCheckedChange={(checked) => handleChange("agreedToPrivacy", checked)} />
-                                        <label htmlFor="privacy" className="text-muted-foreground text-sm leading-relaxed">
-                                            Eu li e concordo com a{" "}
-                                            <Link href="#" className="underline">
-                                                política de privacidade
-                                            </Link>
-                                        </label>
-                                    </div> */}
                                     <Button type="submit" size="lg">
-                                        Enviar<Send />
+                                        <Transl>Enviar</Transl><Send />
                                     </Button>
                                 </form>
                             </div>
                             {/* Right Column - Hero Image */}
                             <div className="relative h-full">
                                 <div className="overflow-hidden h-full rounded-2xl shadow-lg">
-                                    <iframe title="Localização" width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086302231854!2d-122.40107092459283!3d37.77665667198132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858088d35df8e9%3A0xc8b2b3c0b48a0b49!2s123%20Market%20St%2C%20San%20Francisco%2C%20CA%2094103!5e0!3m2!1spt-BR!2sbr!4v1680293848340!5m2!1spt-BR!2sbr"
-                                    ></iframe>
+                                    <iframe title="Localização" width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086302231854!2d-122.40107092459283!3d37.77665667198132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858088d35df8e9%3A0xc8b2b3c0b48a0b49!2s123%20Market%20St%2C%20San%20Francisco%2C%20CA%2094103!5e0!3m2!1spt-BR!2sbr!4v1680293848340!5m2!1spt-BR!2sbr"></iframe>
                                 </div>
                             </div>
                         </div>
@@ -319,7 +307,7 @@ export default function sobreNos({
                                 {cards.map((card, index) => (
                                     <div key={index} className={`flex flex-row gap-4 items-center text-center p-4 rounded-xl border transition-colors ${card.highlight ? "bg-neutral-50 dark:bg-neutral-800" : "bg-white dark:bg-neutral-900"} hover:bg-neutral-100 dark:hover:bg-neutral-800`}>
                                         {card.icon}
-                                        <a href={card.linkHref} className="text-sm font-semibold text-neutral-900 dark:text-white hover:underline">{card.title}</a>
+                                        <a href={card.linkHref} className="text-sm font-semibold text-neutral-900 dark:text-white hover:underline"><Transl>{card.title}</Transl></a>
                                     </div>
                                 ))}
                             </div>
