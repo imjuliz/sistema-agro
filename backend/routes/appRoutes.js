@@ -52,7 +52,7 @@ import {
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
 import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController} from "../controllers/LoteController.js";
-import { adicionarProdutoEstoqueController } from "../controllers/EstoqueController.js";
+// import { adicionarProdutoEstoqueController } from "../controllers/EstoqueController.js";
 
 // tradução
 router.post("/translate", translateText);
