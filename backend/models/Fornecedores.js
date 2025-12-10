@@ -633,6 +633,9 @@ export const listarLojasAtendidas = async (unidadeId) => { //função para a faz
 
 export const criarContratoInterno = async (fazendaId, dadosContrato) => {
   try {
+    console.log('[criarContratoInterno] fazendaId:', fazendaId);
+    console.log('[criarContratoInterno] dadosContrato recebido:', JSON.stringify(dadosContrato, null, 2));
+
     const {
       unidadeId, // loja
       dataInicio,
@@ -647,6 +650,16 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
       itens = []
     } = dadosContrato;
 
+    console.log('[criarContratoInterno] Valores extraídos:');
+    console.log('  - unidadeId:', unidadeId);
+    console.log('  - dataInicio:', dataInicio);
+    console.log('  - dataFim:', dataFim);
+    console.log('  - dataEnvio:', dataEnvio);
+    console.log('  - status:', status);
+    console.log('  - frequenciaEntregas:', frequenciaEntregas);
+    console.log('  - diaPagamento:', diaPagamento);
+    console.log('  - formaPagamento:', formaPagamento);
+
     if (!fazendaId) {
       return { sucesso: false, erro: "ID da fazenda (fornecedorExterno interno) é obrigatório." };
     }
@@ -656,7 +669,13 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
     }
 
     if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
-      return { sucesso: false, erro: "Campos obrigatórios ausentes." };
+      const missingFields = [];
+      if (!dataInicio) missingFields.push('dataInicio');
+      if (!dataEnvio) missingFields.push('dataEnvio');
+      if (!frequenciaEntregas) missingFields.push('frequenciaEntregas');
+      if (!diaPagamento) missingFields.push('diaPagamento');
+      if (!formaPagamento) missingFields.push('formaPagamento');
+      return { sucesso: false, erro: `Campos obrigatórios ausentes: ${missingFields.join(', ')}` };
     }
 
     const contrato = await prisma.contrato.create({
