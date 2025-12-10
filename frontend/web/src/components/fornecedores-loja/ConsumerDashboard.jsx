@@ -296,7 +296,7 @@ function ContratosComoConsumidor({
   // This tab receives pre-fetched data from the parent `ConsumerDashboard` via props.
   return (
     <div className="space-y-6 flex flex-col gap-12">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
+     {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos Ativos</CardDescription>
@@ -318,7 +318,7 @@ function ContratosComoConsumidor({
             <CardAction><CheckCircle /></CardAction>
           </CardHeader>
         </Card>
-      </div>
+      </div>  */}
 
       <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
 

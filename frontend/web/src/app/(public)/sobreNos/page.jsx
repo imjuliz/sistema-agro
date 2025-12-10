@@ -15,7 +15,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
 
-import React from "react";
 const defaultFeatures = [
     {
         icon: Rocket,
