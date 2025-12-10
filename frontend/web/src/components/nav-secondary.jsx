@@ -18,7 +18,7 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.url || (typeof item.title === 'string' ? item.title : undefined)}>
               <SidebarMenuButton asChild>
                 <a href={item.url}>
                   <item.icon />

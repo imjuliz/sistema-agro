@@ -50,18 +50,18 @@ export function EquipeTab({ fazendaId }) {
 
         const response = await fetchWithAuth(url)
 
-        if (!response.ok) {
+          if (!response.ok) {
           const status = response.status;
           if (status === 401) {
             setErroEquipe('Sessão expirada. Faça login novamente.');
-            toast({ title: 'Sessão expirada', description: 'Faça login novamente.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'Sessão expirada. Faça login novamente.', variant: 'destructive' });
             await logout()
           } else if (status === 403) {
             setErroEquipe('Você não tem permissão para ver a equipe desta unidade.');
-            toast({ title: 'Sem permissão', description: 'Você não pode ver a equipe desta unidade.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'Você não tem permissão para ver a equipe desta unidade.', variant: 'destructive' });
           } else {
             setErroEquipe(`Erro ao carregar equipe (${status}).`);
-            toast({ title: 'Erro ao carregar equipe', description: `Status ${status}`, variant: 'destructive' });
+            toast({ title: 'Erro', description: `Erro ao carregar equipe (${status}).`, variant: 'destructive' });
           }
           return
         }
@@ -109,7 +109,7 @@ export function EquipeTab({ fazendaId }) {
       } catch (error) {
         console.error("Erro ao buscar equipe:", error)
         setErroEquipe('Erro ao carregar a equipe. Tente novamente.')
-        toast({ title: 'Erro ao carregar equipe', description: 'Tente novamente.', variant: 'destructive' });
+        toast({ title: 'Erro', description: 'Erro ao carregar a equipe. Tente novamente.', variant: 'destructive' });
       } finally {
         setCarregando(false)
       }
@@ -350,7 +350,7 @@ export function EquipeTab({ fazendaId }) {
               fetchWithAuth(url)
                 .then(res => res.ok ? res.json() : null)
                 .then(data => {
-                  if (data?.usuarios) {
+                    if (data?.usuarios) {
                     const usuarios = data.usuarios
                     const formatPhone = (raw) => {
                       if (!raw) return 'Não informado';
@@ -380,7 +380,7 @@ export function EquipeTab({ fazendaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
-                    toast({ title: 'Equipe atualizada' });
+                    toast({ title: 'Sucesso', description: 'Equipe atualizada.' });
                   }
                 })
                 .finally(() => setCarregando(false))
@@ -423,7 +423,7 @@ export function EquipeTab({ fazendaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
-                    toast({ title: 'Equipe atualizada' });
+                    toast({ title: 'Sucesso', description: 'Equipe atualizada.' });
                   }
                 })
             }}
@@ -465,7 +465,7 @@ export function EquipeTab({ fazendaId }) {
                       status: user.status ? 'Ativo' : 'Inativo'
                     }))
                     setEquipe(equipeFormatada)
-                    toast({ title: 'Equipe atualizada' });
+                    toast({ title: 'Sucesso', description: 'Equipe atualizada.' });
                   }
                 })
             }}

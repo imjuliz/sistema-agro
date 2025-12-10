@@ -51,7 +51,7 @@ function EstoqueTabContent({ fazenda }) {
     if (!modalItem) return;
     const quantidade = Number(movimentoQuantidade);
     if (isNaN(quantidade) || quantidade <= 0) {
-      toast({ title: 'Quantidade inválida', description: 'Informe um número maior que zero.', variant: 'destructive' });
+      toast({ title: 'Erro', description: 'Informe uma quantidade válida maior que zero.', variant: 'destructive' });
       return;
     }
 
@@ -81,10 +81,10 @@ function EstoqueTabContent({ fazenda }) {
       // success -> refresh inventory to show updated quantities
       await refresh();
       closeMovimentoModal();
-      toast({ title: 'Movimentação registrada', description: 'Estoque atualizado com sucesso.' });
+      toast({ title: 'Sucesso', description: 'Movimentação registrada com sucesso.' });
     } catch (err) {
       console.error('Erro ao registrar movimentação', err);
-      toast({ title: 'Erro ao registrar movimentação', description: String(err?.message ?? 'Erro ao registrar movimentação'), variant: 'destructive' });
+      toast({ title: 'Erro', description: String(err?.message ?? 'Erro ao registrar movimentação'), variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }

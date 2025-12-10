@@ -33,7 +33,7 @@ export function NavProjects({ projects, label = 'Unidades' }) {
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => (
-          <SidebarMenuItem key={item.name}>
+          <SidebarMenuItem key={item.url || (typeof item.name === 'string' ? item.name : undefined)}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
                 <item.icon />
