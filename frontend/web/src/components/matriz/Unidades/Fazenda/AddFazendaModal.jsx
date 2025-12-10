@@ -535,6 +535,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       return;
     }
     
+    console.log('[createInternalContract] Dados do contrato:', JSON.stringify(internalContractDraft, null, 2));
+
     const nomeLoja = existingLojas.find(l => String(l.id) === internalContractDraft.selectedLojaId)?.nomeEmpresa || 
                      existingLojas.find(l => String(l.id) === internalContractDraft.selectedLojaId)?.nome || 'Loja';
     
@@ -949,7 +951,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
       // helper: dataEnvio may be a day number (1-31) or a date string; try to construct an ISO using dataInicio month
       function dataEnvioToISO(dataEnvio, dataInicio) {
-        if (!dataEnvio) return undefined;
+        if (!dataEnvio && dataEnvio !== 0) return undefined;
         // if dataEnvio looks like a full date
         const maybe = new Date(dataEnvio);
         if (!Number.isNaN(maybe.getTime())) return maybe.toISOString();
@@ -980,7 +982,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
             descricao: c.descricao || '',
             status: c.status || 'ATIVO',
             frequenciaEntregas: c.frequenciaEntregas || null,
-            diaPagamento: c.diaPagamento || '',
+            diaPagamento: c.diaPagamento || null,
             formaPagamento: c.formaPagamento || null,
             valorTotal: c.valorTotal || null,
             itens: (c.itens || []).map(item => ({
@@ -992,6 +994,9 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
               pesoUnidade: item.pesoUnidade,
             }))
           };
+
+          console.log('[handleSubmitAll] Enviando contrato interno:', JSON.stringify(payloadContratoInterno, null, 2));
+          console.log('[handleSubmitAll] URL:', `${base}/criarContratoInterno/${createdUnidadeId}`);
 
           const rc = await fetchWithAuth(`${base}/criarContratoInterno/${createdUnidadeId}`, {
             method: 'POST',
@@ -1738,11 +1743,15 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               </SelectTrigger>
                               <SelectContent className="z-[1001]">
                                 {frequenciaOptions.length > 0 ? (
-                                  frequenciaOptions.map((opt, idx) => (
-                                    <SelectItem key={`freq-${idx}`} value={opt.value || opt}>
-                                      {opt.label || opt}
-                                    </SelectItem>
-                                  ))
+                                  frequenciaOptions.map((opt, idx) => {
+                                    const key = opt.key || opt.value || opt;
+                                    const label = opt.label || key;
+                                    return (
+                                      <SelectItem key={`freq-${idx}`} value={key}>
+                                        {label}
+                                      </SelectItem>
+                                    );
+                                  })
                                 ) : (
                                   <>
                                     <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
@@ -1778,11 +1787,15 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               </SelectTrigger>
                               <SelectContent className="z-[1001]">
                                 {formaPagamentoOptions.length > 0 ? (
-                                  formaPagamentoOptions.map((opt, idx) => (
-                                    <SelectItem key={`forma-${idx}`} value={opt.value || opt}>
-                                      {opt.label || opt}
-                                    </SelectItem>
-                                  ))
+                                  formaPagamentoOptions.map((opt, idx) => {
+                                    const key = opt.key || opt.value || opt;
+                                    const label = opt.label || key;
+                                    return (
+                                      <SelectItem key={`forma-${idx}`} value={key}>
+                                        {label}
+                                      </SelectItem>
+                                    );
+                                  })
                                 ) : (
                                   <>
                                     <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
