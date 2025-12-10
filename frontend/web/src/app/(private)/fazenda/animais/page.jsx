@@ -20,30 +20,39 @@ export default function AnimaisPage() {
 
   const [animais, setAnimais] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingLotes, setLoadingLotes] = useState(false);
   const [query, setQuery] = useState('');
   const [filterEspecie, setFilterEspecie] = useState('');
   const [isRegisterOpen, setRegisterOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [lotes, setLotes] = useState([]);
   const [newAnimal, setNewAnimal] = useState({
-    animal: '',
+    especie: '',
     raca: '',
     sku: '',
-    quantidade: null,
-    tipo: '',
-    custo: null,
-    loteId: null,
+    sexo: '',
+    dataNasc: '',
+    peso: '',
+    custo: '',
+    loteId: '',
+    formaAquisicao: '',
   });
 
   const especiesAnimal = [
     'BOVINO', 'BUBALINO', 'CAPRINO', 'OVINO', 'SUINO', 'EQUINO', 'MUAR',
-    'AVE', 'GALINHA', 'PERU', 'PATO', 'MARRECO', 'GANSO', 'CODORNA',
-    'COELHO', 'PEIXE', 'CAMARAO', 'ABELHA', 'OUTRO'
+    'AVE', 'GALINHA', 'PERU', 'PATO', 'GANSO', 'CODORNA',
+    'COELHO', 'PEIXE','ABELHA', 'OUTRO'
   ];
+
+  const sexosAnimal = ['MACHO', 'FEMEA'];
+
+  const formasAquisicao = ['COMPRA', 'TRANSFERENCIA', 'DOACAO', 'NATURAL', 'OUTRO'];
 
   useEffect(() => {
     if (!user?.unidadeId) return;
     fetchAnimais();
+    fetchLotes();
   }, [user?.unidadeId]);
 
   async function fetchAnimais() {
@@ -81,6 +90,34 @@ export default function AnimaisPage() {
     }
   }
 
+  async function fetchLotes() {
+    try {
+      setLoadingLotes(true);
+      const url = `${API_URL}loteAnimalia/${user?.unidadeId}`;
+      const res = await fetchWithAuth(url);
+      if (res.ok) {
+        const data = await res.json();
+        // Filtra apenas lotes com tipoProduto === 'ANIMALIA'
+        let lotesData = [];
+        if (Array.isArray(data)) {
+          lotesData = data;
+        } else if (data.lotes && Array.isArray(data.lotes)) {
+          lotesData = data.lotes;
+        }
+        const lotesFiltrados = lotesData.filter(l => l.tipoProduto === 'ANIMALIA');
+        setLotes(lotesFiltrados);
+      } else {
+        console.error('Erro ao buscar lotes:', res.status);
+        setLotes([]);
+      }
+    } catch (e) {
+      console.error('Erro ao buscar lotes:', e);
+      setLotes([]);
+    } finally {
+      setLoadingLotes(false);
+    }
+  }
+
   function filtered() {
     const q = query.trim().toLowerCase();
     return animais.filter(a => {
@@ -109,15 +146,17 @@ export default function AnimaisPage() {
   async function handleRegister(e) {
     e.preventDefault();
     try {
-      const url = `${API_URL}animais`;
+      const url = `${API_URL}animais/completo`;
       const payload = {
-        animal: newAnimal.animal,
+        especie: newAnimal.especie,
         raca: newAnimal.raca,
         sku: newAnimal.sku,
-        quantidade: newAnimal.quantidade ? Number(newAnimal.quantidade) : null,
-        tipo: newAnimal.tipo || null,
-        custo: newAnimal.custo != null ? Number(newAnimal.custo) : null,
+        sexo: newAnimal.sexo || null,
+        dataNasc: newAnimal.dataNasc || null,
+        peso: newAnimal.peso ? String(newAnimal.peso) : null,
+        custo: newAnimal.custo ? Number(newAnimal.custo) : null,
         loteId: newAnimal.loteId ? Number(newAnimal.loteId) : null,
+        formaAquisicao: newAnimal.formaAquisicao || null,
         unidadeId: user?.unidadeId,
       };
       const res = await fetchWithAuth(url, {
@@ -126,7 +165,17 @@ export default function AnimaisPage() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        setNewAnimal({ animal: '', raca: '', sku: '', quantidade: null, tipo: '', custo: null, loteId: null });
+        setNewAnimal({
+          especie: '',
+          raca: '',
+          sku: '',
+          sexo: '',
+          dataNasc: '',
+          peso: '',
+          custo: '',
+          loteId: '',
+          formaAquisicao: '',
+        });
         setRegisterOpen(false);
         await fetchAnimais();
       } else {
@@ -169,38 +218,135 @@ export default function AnimaisPage() {
                 <DialogTitle><Transl>Registrar Novo Animal</Transl></DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={handleRegister} className="space-y-3 py-2">
+              <form onSubmit={handleRegister} className="space-y-3 py-2 max-h-[600px] overflow-y-auto">
+                {/* Espécie */}
                 <div>
-                  <Label><Transl>Nome</Transl></Label>
-                  <Input value={newAnimal.animal} onChange={(e) => setNewAnimal({ ...newAnimal, animal: e.target.value })} />
-                </div>
-                <div>
-                  <Label><Transl>Raça</Transl></Label>
-                  <Input value={newAnimal.raca} onChange={(e) => setNewAnimal({ ...newAnimal, raca: e.target.value })} />
-                </div>
-                <div>
-                  <Label><Transl>SKU</Transl></Label>
-                  <Input value={newAnimal.sku} onChange={(e) => setNewAnimal({ ...newAnimal, sku: e.target.value })} />
-                </div>
-                <div>
-                  <Label><Transl>Quantidade</Transl></Label>
-                  <Input value={newAnimal.quantidade ?? ''} onChange={(e) => setNewAnimal({ ...newAnimal, quantidade: e.target.value })} />
-                </div>
-                <div>
-                  <Label><Transl>Tipo</Transl></Label>
-                  <Input value={newAnimal.tipo} onChange={(e) => setNewAnimal({ ...newAnimal, tipo: e.target.value })} />
-                </div>
-                <div>
-                  <Label><Transl>Custo (BRL)</Transl></Label>
-                  <Input value={newAnimal.custo ?? ''} onChange={(e) => setNewAnimal({ ...newAnimal, custo: e.target.value })} />
-                </div>
-                <div>
-                  <Label><Transl>Lote ID</Transl></Label>
-                  <Input value={newAnimal.loteId ?? ''} onChange={(e) => setNewAnimal({ ...newAnimal, loteId: e.target.value })} />
+                  <Label><Transl>Espécie</Transl> *</Label>
+                  <Select value={newAnimal.especie} onValueChange={(v) => setNewAnimal({ ...newAnimal, especie: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma espécie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {especiesAnimal.map((especie) => (
+                        <SelectItem key={especie} value={especie}>{especie}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="ghost" onClick={() => setRegisterOpen(false)}>Cancelar</Button>
+                {/* Raça */}
+                <div>
+                  <Label><Transl>Raça</Transl> *</Label>
+                  <Input 
+                    placeholder="Ex: Holandês, Angus, etc." 
+                    value={newAnimal.raca} 
+                    onChange={(e) => setNewAnimal({ ...newAnimal, raca: e.target.value })} 
+                  />
+                </div>
+
+                {/* SKU */}
+                <div>
+                  <Label><Transl>SKU</Transl> *</Label>
+                  <Input 
+                    placeholder="Código único" 
+                    value={newAnimal.sku} 
+                    onChange={(e) => setNewAnimal({ ...newAnimal, sku: e.target.value })} 
+                  />
+                </div>
+
+                {/* Sexo */}
+                <div>
+                  <Label><Transl>Sexo</Transl></Label>
+                  <Select value={newAnimal.sexo} onValueChange={(v) => setNewAnimal({ ...newAnimal, sexo: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o sexo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sexosAnimal.map((sexo) => (
+                        <SelectItem key={sexo} value={sexo}>{sexo}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Data de Nascimento */}
+                <div>
+                  <Label><Transl>Data de Nascimento</Transl></Label>
+                  <Input 
+                    type="date"
+                    value={newAnimal.dataNasc} 
+                    onChange={(e) => setNewAnimal({ ...newAnimal, dataNasc: e.target.value })} 
+                  />
+                </div>
+
+                {/* Peso */}
+                <div>
+                  <Label><Transl>Peso (kg)</Transl></Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 250.50" 
+                    value={newAnimal.peso} 
+                    onChange={(e) => setNewAnimal({ ...newAnimal, peso: e.target.value })} 
+                  />
+                </div>
+
+                {/* Custo */}
+                <div>
+                  <Label><Transl>Custo (BRL)</Transl></Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 1500.00" 
+                    value={newAnimal.custo} 
+                    onChange={(e) => setNewAnimal({ ...newAnimal, custo: e.target.value })} 
+                  />
+                </div>
+
+                {/* Forma de Aquisição */}
+                <div>
+                  <Label><Transl>Forma de Aquisição</Transl></Label>
+                  <Select value={newAnimal.formaAquisicao} onValueChange={(v) => setNewAnimal({ ...newAnimal, formaAquisicao: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a forma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formasAquisicao.map((forma) => (
+                        <SelectItem key={forma} value={forma}>{forma}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Lote */}
+                <div>
+                  <Label><Transl>Lote Animalia</Transl></Label>
+                  {loadingLotes ? (
+                    <div className="text-sm text-muted-foreground py-2">
+                      <Transl>Carregando lotes...</Transl>
+                    </div>
+                  ) : (
+                    <Select value={newAnimal.loteId} onValueChange={(v) => setNewAnimal({ ...newAnimal, loteId: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um lote (opcional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lotes.length > 0 ? (
+                          lotes.map((lote) => (
+                            <SelectItem key={lote.id} value={String(lote.id)}>
+                              {lote.nome} (ID: {lote.id})
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum lote disponível</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="ghost" onClick={() => setRegisterOpen(false)}><Transl>Cancelar</Transl></Button>
                   <Button type="submit"><Transl>Salvar</Transl></Button>
                 </div>
               </form>
@@ -230,7 +376,6 @@ export default function AnimaisPage() {
                     <TableHead><Transl>SKU</Transl></TableHead>
                     <TableHead><Transl>Peso</Transl></TableHead>
                     <TableHead><Transl>Lote ID</Transl></TableHead>
-                    <TableHead><Transl>Ações</Transl></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -245,7 +390,6 @@ export default function AnimaisPage() {
                         <TableCell>{animal.peso ?? '-'}</TableCell>
                         <TableCell className="font-mono text-sm">{animal.loteId ?? '-'}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => { /* abrir detalhes */ }}>Ver</Button>
                         </TableCell>
                       </TableRow>
                     ))

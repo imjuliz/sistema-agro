@@ -1,6 +1,6 @@
 "use client"
 import * as React from "react"
-import { AudioWaveform, Vegan, Rabbit, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, ShoppingCart, WalletCards, Tractor, Store, Building2, SquarePen, Container, Boxes, UserCog } from "lucide-react"
+import { AudioWaveform, Vegan, Rabbit, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, ShoppingCart, WalletCards, Tractor, Store, Building2, SquarePen, Container, Boxes, UserCog, SquarePlus, Dog, SquareChartGantt, Folder } from "lucide-react"
 import { NavMain } from "@/components/NavBar/nav-main"
 import { NavProjects } from "@/components/NavBar/nav-projects"
 import { NavUser } from "@/components/NavBar/nav-user"
@@ -84,9 +84,9 @@ function getMenuByPerfil(perfil) {
             icon: PieChart,
           },
           {
-            title: "Animais",
-            url: "/fazenda/animais",
-            icon: Rabbit,
+            title: "Animalia",
+            url: "/fazenda/animalia",
+            icon: Dog,
           },
           {
             title: "Plantações",
@@ -94,14 +94,24 @@ function getMenuByPerfil(perfil) {
             icon: Vegan,
           },
           {
+            title: "Registro de Animais",
+            url: "/fazenda/animais",
+            icon: Folder,
+          },
+          {
             title: "Lotes",
             url: "/fazenda/lotes",
             icon: SquarePen,
           },
           {
-            title: "Produções",
-            url: "/fazenda/producao",
-            icon: Container,
+            title: "Novo",
+            url: "/fazenda/novaAtividade",
+            icon: SquarePlus,
+          },
+          {
+            title: "Consultar Lote",
+            url: "/fazenda/consultarLote",
+            icon: SquareChartGantt,
           },
           {
             title: "Configurações",
