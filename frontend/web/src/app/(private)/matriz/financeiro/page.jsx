@@ -15,9 +15,6 @@ import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
-// para tradução
-import { useTranslation } from "@/hooks/useTranslation";
-import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
 
 export default function FinancasMatriz() {
   usePerfilProtegido("GERENTE_MATRIZ");
