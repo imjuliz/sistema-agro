@@ -798,23 +798,23 @@ export default function LojasPage() {
                                                             <div className="text-sm text-muted-foreground">{u.location}</div>
                                                         </div>
                                                     </div>
-                                                    {u.horarioAberturaFormatado && u.horarioAberturaFormatado !== '—' && (
+                                                    {u.horarioAberturaFormatado && u.horarioAberturaFormatado !== '—' && u.horarioFechamentoFormatado && u.horarioFechamentoFormatado !== '—' && (
                                                         <div className="flex flex-row gap-3 ">
-                                                            <div className="text-base font-medium">Abertura: </div><div className="text-base font-normal">{u.horarioAberturaFormatado}</div>
+                                                            <div className="text-base font-medium">Funcionamento: </div><div className="text-base font-normal">{u.horarioAberturaFormatado}h - {u.horarioFechamentoFormatado}h</div>
                                                         </div>
                                                     )}
-                                                    {u.horarioFechamentoFormatado && u.horarioFechamentoFormatado !== '—' && (
+                                                    {/* {u.horarioFechamentoFormatado && u.horarioFechamentoFormatado !== '—' && (
                                                         <div className="flex flex-row gap-3 ">
                                                             <div className="text-base font-medium">Fechamento: </div><div className="text-base font-normal">{u.horarioFechamentoFormatado}</div>
                                                         </div>
-                                                    )}
+                                                    )} */}
                                                     <div className="flex flex-row gap-3 ">
                                                         <div className="text-base font-medium">Gerente: </div><div className="text-base font-normal">{u.manager || "—"}</div>
                                                     </div>
                                                 </div>
-                                                {u.syncFormatado && u.syncFormatado !== '—' && (
+                                                {/* {u.syncFormatado && u.syncFormatado !== '—' && (
                                                     <div className="mt-3 text-sm text-muted-foreground">Última sync: {u.syncFormatado}</div>
-                                                )}
+                                                )} */}
                                             </div>
                                         </Link>
                                     ))}

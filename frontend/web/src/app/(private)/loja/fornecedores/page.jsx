@@ -186,7 +186,7 @@ export default function FornecedoresPage(){
   const [loja] = useState(null);
 
   return (
-    <div className="">
+    <div className="min-h-screen px-18 py-10 bg-surface-50">
       <main className="">
          <ConsumerDashboard unidadeId={loja?.id} />
       </main>

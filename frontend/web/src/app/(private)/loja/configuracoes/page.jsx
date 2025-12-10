@@ -218,7 +218,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="min-h-screen px-18 py-10 bg-surface-50">
             
             <div className="flex gap-6">
                 {/* Sidebar */}

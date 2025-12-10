@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/api";
 import { buildImageUrl } from '@/lib/image';
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 import React, { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -158,7 +159,7 @@ export default function FuncionariosFazenda() {
   // Abrir modal de edição
   const handleEditClick = (user) => {
     if (!isGerenteLoja) {
-      console.warn("Sem permissão para editar este funcionário");
+      toast.error("Você não tem permissão para editar este usuário.");
       return;
     }
     setSelectedUser(user);
@@ -178,15 +179,25 @@ export default function FuncionariosFazenda() {
 
     try {
       setSavingEdit(true);
+      const payload = {
+        nome: editingData.nome,
+        email: editingData.email,
+        telefone: editingData.telefone,
+        role: editingData.role,
+        unidadeId: user?.unidadeId,
+      };
+      if (editingData.senha && editingData.senha.trim()) {
+        payload.senha = editingData.senha.trim();
+      }
       const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingData),
+        body: JSON.stringify(payload),
       });
 
-      const response = await res.json();
+      const response = await res.json().catch(() => ({}));
 
-      if (response.sucesso) {
+      if (res.ok && (response.sucesso !== false)) {
         // Atualizar lista local
         setFuncionarios(prev => prev.map(f =>
           f.id === selectedUser.id
@@ -195,14 +206,15 @@ export default function FuncionariosFazenda() {
         ));
         setIsEditModalOpen(false);
         setSelectedUser(null);
+        toast.success('Usuário atualizado.');
       } else {
-        console.error("Erro na resposta:", response);
+        console.error("Erro na resposta:", res.status, response);
         const mensagemErro = response.erro || response.mensagem || "Erro ao salvar as edições";
-        alert(mensagemErro);
+        toast.error(mensagemErro);
       }
     } catch (error) {
       console.error("Erro ao salvar edições:", error);
-      alert("Erro ao salvar as edições");
+      toast.error("Erro ao salvar as edições");
     }
     finally { setSavingEdit(false); }
   };
@@ -218,23 +230,28 @@ export default function FuncionariosFazenda() {
     if (!selectedUser) return;
 
     try {
-      const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, { method: 'DELETE', });
+      const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unidadeId: user?.unidadeId }),
+      });
 
-      const response = await res.json();
+      const response = await res.json().catch(() => ({}));
 
-      if (response.sucesso) {
+      if (res.ok && (response.sucesso !== false)) {
         // Remover da lista local
         setFuncionarios(prev => prev.filter(f => f.id !== selectedUser.id));
         setIsDeleteModalOpen(false);
         setSelectedUser(null);
+        toast.success('Usuário removido.');
       } else {
-        console.error("Erro na resposta:", response);
+        console.error("Erro na resposta:", res.status, response);
         const mensagemErro = response.erro || response.mensagem || "Erro ao deletar funcionário";
-        alert(mensagemErro);
+        toast.error(mensagemErro);
       }
     } catch (error) {
       console.error("Erro ao deletar funcionário:", error);
-      alert("Erro ao deletar funcionário");
+      toast.error("Erro ao deletar funcionário");
     }
   };
 
@@ -245,7 +262,10 @@ export default function FuncionariosFazenda() {
   const handleInviteChange = (field, value) => { setInviteData(prev => ({ ...prev, [field]: value })); };
 
   const submitInvite = async () => {
-    if (!user || user.perfil?.funcao !== 'GERENTE_LOJA') return;
+    if (!user || user.perfil?.funcao?.toUpperCase() !== 'GERENTE_LOJA') {
+      toast.error('Você não tem permissão para convidar.');
+      return;
+    }
     setInviteSaving(true);
     try {
       const url = `${API_URL}/usuarios/criar`;
@@ -255,17 +275,22 @@ export default function FuncionariosFazenda() {
         telefone: inviteData.telefone,
         senha: inviteData.senha,
         role: inviteData.role,
+        unidadeId: user?.unidadeId,
       };
       const res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         console.error('[FuncionariosLoja] Erro ao convidar:', json);
+        toast.error(json?.erro || 'Erro ao convidar usuário.');
         return;
       }
       if (json.sucesso) {
         closeInviteModal();
         setInviteData({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
         await loadFuncionarios();
+        toast.success('Usuário convidado com sucesso.');
+      } else {
+        toast.error(json?.erro || 'Erro ao convidar usuário.');
       }
     } catch (err) { console.error('[FuncionariosLoja] submitInvite error', err); }
     finally { setInviteSaving(false); }
@@ -274,7 +299,7 @@ export default function FuncionariosFazenda() {
   // Verificar se é gerente da loja (tolerante a diferentes formatos)
   const _userRoleRaw = user?.perfil?.funcao ?? user?.perfil ?? user?.role ?? '';
   const _userRole = typeof _userRoleRaw === 'string' ? _userRoleRaw.toUpperCase() : '';
-  const isGerenteLoja = _userRole === 'GERENTE_LOJA' || _userRole === 'GERENTE_LOJA';
+  const isGerenteLoja = _userRole === 'GERENTE_LOJA';
 
    const { lang, changeLang } = useTranslation();
       const languageOptions = [
