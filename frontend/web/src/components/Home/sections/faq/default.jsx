@@ -1,7 +1,3 @@
-import Link from "next/link";
-
-import { siteConfig } from "@/config/site";
-
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Section } from "@/components/ui/section";
 
@@ -70,18 +66,6 @@ export default function FAQ(props) {
           </p>
         ),
       },
-      // {
-      //   question: "É possível acompanhar as finanças da empresa pelo sistema?",
-      //   answer: (
-      //     <p className="text-muted-foreground mb-4 max-w-[580px]">
-      //       Actually, yes! I'm always actively looking for beta testers of new features. If you are interested in exchanging feedback for a discount, please contact me via{" "}
-      //       <a href={siteConfig.links.email} className="underline underline-offset-2">
-      //         email
-      //       </a>
-      //       .
-      //     </p>
-      //   ),
-      // },
     ],
     className,
   } = props;

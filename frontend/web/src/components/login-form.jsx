@@ -82,7 +82,7 @@ export function LoginForm({ className, ...props }) {
           router.push("/matriz/dashboard");
           break;
         case "GERENTE_FAZENDA":
-          router.push("/fazenda/dashboard");
+          router.push("/fazenda/lotes");
           break;
         case "GERENTE_LOJA":
           router.push("/loja/dashboard");

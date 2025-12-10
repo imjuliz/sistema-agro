@@ -80,6 +80,27 @@ export async function getLotePorTipo(tipo) {
 //   }
 // }
 
+export const contarTotalLotes = async (unidadeId) => {
+  try {
+    const quantidade = await prisma.lote.count({
+      where: {
+        unidadeId: Number(unidadeId),
+      }
+    });
+    return {
+      sucesso: true,
+      quantidade,
+      message: "Quantidade de lotes obtida com sucesso!"
+    };
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao contar lotes!",
+      error: error.message
+    };
+  }
+};
+
 export const listarLotesPlantio = async (unidadeId) => {
   try {
     const loteVegetais = await prisma.lote.findMany({

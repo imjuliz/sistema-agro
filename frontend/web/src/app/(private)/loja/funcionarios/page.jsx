@@ -17,7 +17,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
-import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 // Função para formatar telefone
 const formatarTelefone = (telefone) => {
@@ -325,8 +324,8 @@ export default function FuncionariosFazenda() {
               </PopoverTrigger>
               <PopoverContent side="bottom" align="start" className="w-[320px] p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-semibold">Filtros Avançados</h2>
-                  <p className="text-sm text-neutral-400">{filtered.length} resultados</p>
+                  <div className="font-semibold">Filtros Avançados</div>
+                  <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
                 </div>
 
                 <div className="space-y-3">
@@ -356,7 +355,7 @@ export default function FuncionariosFazenda() {
                       {["Ativo", "Inativo"].map(s => (
                         <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:dark:bg-neutral-900 hover:bg-neutral-10 cursor-pointer">
                           <Checkbox checked={!!tempStatusFilters[s]} onCheckedChange={(checked) => setTempStatusFilters(prev => ({ ...prev, [s]: !!checked }))} />
-                          <p className="text-sm">{s}</p>
+                          <div className="text-sm">{s}</div>
                         </label>
                       ))}
                     </div>
@@ -377,9 +376,9 @@ export default function FuncionariosFazenda() {
 
         {/* Lista de funcionários */}
         {loadingFuncionarios ? (
-          <h1 className="text-center py-8 text-muted-foreground">Carregando funcionários...</h1>
+          <div className="text-center py-8 text-muted-foreground">Carregando funcionários...</div>
         ) : filtered.length === 0 ? (
-          <h1 className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado</h1>
+          <div className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado</div>
         ) : (
           filtered.map((func) => (
             <Card key={func.id} className="p-0">
@@ -394,13 +393,13 @@ export default function FuncionariosFazenda() {
                       <div className="flex items-center gap-3">
                         <h3 className="font-medium text-lg">{func.nome}</h3>
                         <Badge variant={func.perfil?.funcao === "GERENTE_LOJA" ? "default" : "secondary"}>
-                          {func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}
+                         {func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}
                         </Badge>
                         <Badge variant={func.status ? "outline" : "destructive"}>
-                          {func.status ? "Ativo" : "Inativo"}
+                        {func.status ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground mb-2 text-sm">{func.perfil?.descricao}</p>
+                      <div className="text-muted-foreground mb-2 text-sm">{func.perfil?.descricao}</div>
                     </div>
                   </div>
 
@@ -408,10 +407,10 @@ export default function FuncionariosFazenda() {
                   {isGerenteLoja && (
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEditClick(func)}>
-                        <Pen className="size-4 mr-2" /><h2>Editar</h2>
+                        <Pen className="size-4 mr-2" />Editar
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(func)}>
-                        <Trash className="size-4 mr-2" /><h2>Demitir</h2>
+                        <Trash className="size-4 mr-2" />Demitir
                       </Button>
                     </div>
                   )}
@@ -420,7 +419,7 @@ export default function FuncionariosFazenda() {
                 {/* Contatos */}
                 <div className="flex flex-wrap gap-6 mb-4">
                   <div>
-                    <h1 className="text-sm font-medium text-muted-foreground mb-2">Contatos</h1>
+                    <div className="text-sm font-medium text-muted-foreground mb-2">Contatos</div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="size-4 text-muted-foreground" />
@@ -436,7 +435,7 @@ export default function FuncionariosFazenda() {
                   </div>
                   {isGerenteLoja && (
                     <div>
-                      <h2 className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</h2>
+                      <div className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</div>
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm">
                           <Mail className="size-4 mr-2" />Email
@@ -445,7 +444,7 @@ export default function FuncionariosFazenda() {
                           <Phone className="size-4 mr-2" /> Ligar
                         </Button>
                         <Button variant="outline" size="sm">
-                          <MessageSquare className="size-4 mr-2" /> Mensagem
+                          <MessageSquare className="size-4 mr-2" />Mensagem
                         </Button>
                       </div>
                     </div>
@@ -514,13 +513,13 @@ export default function FuncionariosFazenda() {
             <DialogTitle>Confirmar Demissão</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <h2 className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               Tem certeza que deseja demitir <strong>{selectedUser?.nome}</strong>? Esta ação não pode ser desfeita.
-            </h2>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>Demitir </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>Demitir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
