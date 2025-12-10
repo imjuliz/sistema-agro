@@ -7,14 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { User, CreditCard, Image as ImageIcon, Bell, Monitor, AlertTriangle, Copy } from "lucide-react";
+import { User, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 import { API_URL } from '@/lib/api'
