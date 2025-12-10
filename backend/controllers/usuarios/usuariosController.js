@@ -145,19 +145,66 @@ export const updateUsuarioController = async (req, res) => {
       return res.status(400).json({ sucesso: false, erro: "ID do usuário é obrigatório." });
     }
 
-    // Autorização: gerente_matriz ou gerente_fazenda podem editar qualquer um, ou usuário pode editar a si mesmo
-    const isGerenteMatriz = Array.isArray(user?.roles) 
-      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_matriz"))
-      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_matriz");
-
-    const isGerenteFazenda = Array.isArray(user?.roles)
-      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_fazenda"))
-      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_fazenda");
-
+    // Verificar perfil do usuário autenticado
+    // O middleware auth coloca funcao dentro de perfil.nome, também pode estar em roles ou raw.perfil.funcao
+    const userPerfilFuncao = (
+      user?.perfil?.nome || 
+      user?.perfil?.funcao || 
+      user?.roles?.[0] || 
+      user?.raw?.perfil?.funcao || 
+      ''
+    ).toUpperCase();
+    const isGerenteMatriz = userPerfilFuncao === 'GERENTE_MATRIZ';
+    const isGerenteFazenda = userPerfilFuncao === 'GERENTE_FAZENDA';
+    const isGerenteLoja = userPerfilFuncao === 'GERENTE_LOJA';
     const editandoASiMesmo = Number(user?.id) === Number(id);
 
-    if (!isGerenteMatriz && !isGerenteFazenda && !editandoASiMesmo) {
-      return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para editar este usuário." });
+    // Debug temporário
+    console.log('[updateUsuarioController] Debug:', {
+      userId: user?.id,
+      editingUserId: id,
+      userPerfilFuncao,
+      isGerenteMatriz,
+      isGerenteFazenda,
+      isGerenteLoja,
+      editandoASiMesmo,
+      userUnidadeId: user?.unidadeId,
+      userPerfil: user?.perfil,
+      userRoles: user?.roles,
+      userRaw: user?.raw
+    });
+
+    // Autorização:
+    // - GERENTE_MATRIZ: pode editar qualquer usuário
+    // - GERENTE_FAZENDA e GERENTE_LOJA: podem editar apenas usuários da mesma unidade
+    // - Qualquer usuário pode editar a si mesmo
+    if (isGerenteMatriz || editandoASiMesmo) {
+      // Permitir edição
+    } else if (isGerenteFazenda || isGerenteLoja) {
+      // Verificar se o usuário sendo editado pertence à mesma unidade
+      const usuarioParaEditar = await prisma.usuario.findUnique({
+        where: { id: Number(id) },
+        select: { unidadeId: true }
+      });
+
+      if (!usuarioParaEditar) {
+        return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado." });
+      }
+
+      if (Number(usuarioParaEditar.unidadeId) !== Number(user?.unidadeId)) {
+        return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para editar este usuário." });
+      }
+    } else {
+      console.log('[updateUsuarioController] Acesso negado - perfil não autorizado:', {
+        userPerfilFuncao,
+        userId: user?.id,
+        editingUserId: id
+      });
+      return res.status(403).json({ 
+        sucesso: false, 
+        erro: "Você não tem permissão para editar este usuário.",
+        debug: { userPerfilFuncao, userId: user?.id, editingUserId: id }
+      });
     }
 
     // Se o body trouxer 'role' como nome da função (ex: GERENTE_LOJA), converte para perfilId
@@ -197,26 +244,41 @@ export const deletarUsuarioController = async (req, res) => {
       return res.status(400).json({ sucesso: false, erro: "ID do usuário é obrigatório." });
     }
 
-    // Autorização: gerente_matriz ou gerente_fazenda podem deletar
-    const isGerenteMatriz = Array.isArray(user?.roles) 
-      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_matriz"))
-      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_matriz");
+    // Verificar perfil do usuário autenticado
+    // O middleware auth coloca funcao dentro de perfil.nome, também pode estar em roles ou raw.perfil.funcao
+    const userPerfilFuncao = (
+      user?.perfil?.nome || 
+      user?.perfil?.funcao || 
+      user?.roles?.[0] || 
+      user?.raw?.perfil?.funcao || 
+      ''
+    ).toUpperCase();
+    const isGerenteMatriz = userPerfilFuncao === 'GERENTE_MATRIZ';
+    const isGerenteFazenda = userPerfilFuncao === 'GERENTE_FAZENDA';
+    const isGerenteLoja = userPerfilFuncao === 'GERENTE_LOJA';
 
-    const isGerenteFazenda = Array.isArray(user?.roles)
-      ? user.roles.some(r => String(r).toLowerCase().includes("gerente_fazenda"))
-      : String(user?.perfil?.nome ?? "").toLowerCase().includes("gerente_fazenda");
-
-    if (!isGerenteMatriz && !isGerenteFazenda) {
-      return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para deletar usuários." });
-    }
-
-    // Verifica se o usuário existe antes de deletar
-    const usuarioExiste = await prisma.usuario.findUnique({
-      where: { id: Number(id) }
+    // Verifica se o usuário existe antes de verificar permissões
+    const usuarioParaDeletar = await prisma.usuario.findUnique({
+      where: { id: Number(id) },
+      select: { unidadeId: true }
     });
 
-    if (!usuarioExiste) {
+    if (!usuarioParaDeletar) {
       return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado." });
+    }
+
+    // Autorização:
+    // - GERENTE_MATRIZ: pode deletar qualquer usuário
+    // - GERENTE_FAZENDA e GERENTE_LOJA: podem deletar apenas usuários da mesma unidade
+    if (isGerenteMatriz) {
+      // Permitir deleção
+    } else if (isGerenteFazenda || isGerenteLoja) {
+      // Verificar se o usuário sendo deletado pertence à mesma unidade
+      if (Number(usuarioParaDeletar.unidadeId) !== Number(user?.unidadeId)) {
+        return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para deletar este usuário." });
+      }
+    } else {
+      return res.status(403).json({ sucesso: false, erro: "Você não tem permissão para deletar usuários." });
     }
 
     // Deleta o usuário do banco de dados

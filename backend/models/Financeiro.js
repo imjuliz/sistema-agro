@@ -895,18 +895,96 @@ export const criarNotaFiscal = async (data) => {
     const addRow = ({ sku, nome, qtde, unit, total }) => {
       // Larguras que somam ao espaço disponível (incluindo gaps iguais)
       const widths = { sku: 90, nome: 210, qtde: 60, unit: 55, total: 55 };
-      let x = marginLeft;
-      const y = doc.y;
-      doc.text(String(sku || ''), x, y, { width: widths.sku });
-      x += widths.sku + columnGap;
-      doc.text(String(nome || ''), x, y, { width: widths.nome });
-      x += widths.nome + columnGap;
-      doc.text(String(qtde || ''), x, y, { width: widths.qtde, align: 'right' });
-      x += widths.qtde + columnGap;
-      doc.text(String(unit || ''), x, y, { width: widths.unit, align: 'right' });
-      x += widths.unit + columnGap;
-      doc.text(String(total || ''), x, y, { width: widths.total, align: 'right' });
-      doc.moveDown(0.2);
+      const fontSize = doc._fontSize || 10;
+      const lineHeight = fontSize * 1.15;
+      
+      // Preparar textos
+      const texts = {
+        sku: String(sku || ''),
+        nome: String(nome || ''),
+        qtde: String(qtde || ''),
+        unit: String(unit || ''),
+        total: String(total || '')
+      };
+      
+      // Função para quebrar texto em linhas que cabem na largura
+      const wrapText = (text, maxWidth) => {
+        if (!text) return [''];
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const testWidth = doc.widthOfString(testLine);
+          
+          if (testWidth <= maxWidth || currentLine === '') {
+            currentLine = testLine;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        
+        return lines.length > 0 ? lines : [''];
+      };
+      
+      // Quebrar cada texto em linhas
+      const lines = {
+        sku: wrapText(texts.sku, widths.sku),
+        nome: wrapText(texts.nome, widths.nome),
+        qtde: wrapText(texts.qtde, widths.qtde),
+        unit: wrapText(texts.unit, widths.unit),
+        total: wrapText(texts.total, widths.total)
+      };
+      
+      // Número máximo de linhas necessárias
+      const maxLines = Math.max(
+        lines.sku.length,
+        lines.nome.length,
+        lines.qtde.length,
+        lines.unit.length,
+        lines.total.length
+      );
+      
+      const startY = doc.y;
+      
+      // Renderizar linha por linha
+      for (let i = 0; i < maxLines; i++) {
+        const currentY = startY + (i * lineHeight);
+        let x = marginLeft;
+        
+        // SKU
+        const skuLine = lines.sku[i] || '';
+        doc.text(skuLine, x, currentY, { width: widths.sku });
+        x += widths.sku + columnGap;
+        
+        // Nome
+        const nomeLine = lines.nome[i] || '';
+        doc.text(nomeLine, x, currentY, { width: widths.nome });
+        x += widths.nome + columnGap;
+        
+        // Quantidade
+        const qtdeLine = lines.qtde[i] || '';
+        doc.text(qtdeLine, x, currentY, { width: widths.qtde, align: 'right' });
+        x += widths.qtde + columnGap;
+        
+        // Valor Unitário
+        const unitLine = lines.unit[i] || '';
+        doc.text(unitLine, x, currentY, { width: widths.unit, align: 'right' });
+        x += widths.unit + columnGap;
+        
+        // Valor Total
+        const totalLine = lines.total[i] || '';
+        doc.text(totalLine, x, currentY, { width: widths.total, align: 'right' });
+      }
+      
+      // Mover para a próxima linha baseado no número de linhas renderizadas
+      doc.y = startY + (maxLines * lineHeight) + 2;
     };
 
     // Cabeçalho estilo cupom NFC-e (limpo, alinhado)

@@ -573,9 +573,9 @@ export default function app() {
     verificarCaixaAberto();
   }, [fetchWithAuth, user]);
   return (
-    <div className="min-h-screen px-18 py-10 bg-surface-50">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
+    <div className="min-h-screen px-18 py-10 bg-surface-50 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
             <ShoppingCart className="size-4 text-muted-foreground" />
@@ -590,7 +590,7 @@ export default function app() {
               </>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Média por transação */}
         <Card>
