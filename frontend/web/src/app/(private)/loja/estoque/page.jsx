@@ -98,28 +98,28 @@ function ConteudoEstoque({ onOpenMovimento, isModalOpen, setIsModalOpen, modalIt
           {/* Company Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base"><Transl>Legenda do Status do Estoque</Transl></CardTitle>
+              <CardTitle className="text-base">Legenda do Status do Estoque</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 bg-green-500 rounded"></div>
                 <div>
-                  <Transl className="text-sm font-medium">Acima do Mínimo</Transl>
-                  <Transl className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</Transl>
+                  <div className="text-sm font-medium">Acima do Mínimo</div>
+                  <div className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 bg-yellow-500 rounded"></div>
                 <div>
-                  <Transl className="text-sm font-medium">No Mínimo / Perto do Mínimo</Transl>
-                  <Transl className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</Transl>
+                  <div className="text-sm font-medium">No Mínimo / Perto do Mínimo</div>
+                  <div className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 bg-red-500 rounded"></div>
                 <div>
-                  <Transl className="text-sm font-medium">Abaixo do Mínimo</Transl>
-                  <Transl className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</Transl>
+                  <div className="text-sm font-medium">Abaixo do Mínimo</div>
+                  <div className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</div>
                 </div>
               </div>
             </CardContent>
@@ -133,7 +133,7 @@ function ConteudoEstoque({ onOpenMovimento, isModalOpen, setIsModalOpen, modalIt
         <AlertDialog open={isModalOpen} onOpenChange={(open) => { if (!open) { setIsModalOpen(false); setModalItem(null); } else setIsModalOpen(open); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle><Transl>Registrar movimentação</Transl></AlertDialogTitle>
+              <AlertDialogTitle>Registrar movimentação</AlertDialogTitle>
               <AlertDialogDescription>
                 {modalItem ? `Item: ${modalItem.name} — Estoque atual: ${modalItem.currentStock}` : 'Selecionar item e informar os dados da movimentação.'}
               </AlertDialogDescription>
@@ -147,24 +147,24 @@ function ConteudoEstoque({ onOpenMovimento, isModalOpen, setIsModalOpen, modalIt
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ENTRADA"><Transl>Entrada</Transl></SelectItem>
-                    <SelectItem value="SAIDA"><Transl>Saída</Transl></SelectItem>
+                    <SelectItem value="ENTRADA">Entrada</SelectItem>
+                    <SelectItem value="SAIDA">Saída</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label><Transl>Quantidade</Transl></Label>
+                <Label>Quantidade</Label>
                 <Input value={movimentoQuantidade} onChange={(e) => setMovimentoQuantidade(e.target.value)} placeholder="Informe a quantidade" />
               </div>
 
               <div>
-                <Label><Transl>Observações (opcional)</Transl></Label>
+                <Label>Observações (opcional)</Label>
                 <Textarea value={movimentoObs} onChange={(e) => setMovimentoObs(e.target.value)} />
               </div>
             </div>
 
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null); }}><Transl>Fechar</Transl></AlertDialogCancel>
+              <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null); }}>Fechar</AlertDialogCancel>
               <AlertDialogAction onClick={() => submitMovimento(refresh)} disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Registrar'}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

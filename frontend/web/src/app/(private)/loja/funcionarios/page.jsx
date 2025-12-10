@@ -319,13 +319,13 @@ export default function FuncionariosFazenda() {
             }}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2 px-3">
-                  <Sliders className="h-4 w-4" /><Transl>Filtros</Transl>
+                  <Sliders className="h-4 w-4" />Filtros
                 </Button>
               </PopoverTrigger>
               <PopoverContent side="bottom" align="start" className="w-[320px] p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <Transl className="font-semibold">Filtros Avançados</Transl>
-                  <Transl className="text-sm text-neutral-400">{filtered.length} resultados</Transl>
+                  <div className="font-semibold">Filtros Avançados</div>
+                  <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
                 </div>
 
                 <div className="space-y-3">
@@ -355,7 +355,7 @@ export default function FuncionariosFazenda() {
                       {["Ativo", "Inativo"].map(s => (
                         <label key={s} className="flex items-center gap-2 px-2 py-1 rounded hover:dark:bg-neutral-900 hover:bg-neutral-10 cursor-pointer">
                           <Checkbox checked={!!tempStatusFilters[s]} onCheckedChange={(checked) => setTempStatusFilters(prev => ({ ...prev, [s]: !!checked }))} />
-                          <Transl className="text-sm">{s}</Transl>
+                          <div className="text-sm">{s}</div>
                         </label>
                       ))}
                     </div>
@@ -370,15 +370,15 @@ export default function FuncionariosFazenda() {
                 </div>
               </PopoverContent>
             </Popover>
-            <Button className='w-fit' size="sm" onClick={openInviteModal} disabled={!isGerenteLoja}><Plus className="w-4 h-4" /><Transl>Convidar</Transl></Button>
+            <Button className='w-fit' size="sm" onClick={openInviteModal} disabled={!isGerenteLoja}><Plus className="w-4 h-4" />Convidar</Button>
           </div>
         </div>
 
         {/* Lista de funcionários */}
         {loadingFuncionarios ? (
-          <Transl className="text-center py-8 text-muted-foreground">Carregando funcionários...</Transl>
+          <div className="text-center py-8 text-muted-foreground">Carregando funcionários...</div>
         ) : filtered.length === 0 ? (
-          <Transl className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado</Transl>
+          <div className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado</div>
         ) : (
           filtered.map((func) => (
             <Card key={func.id} className="p-0">
@@ -393,13 +393,13 @@ export default function FuncionariosFazenda() {
                       <div className="flex items-center gap-3">
                         <h3 className="font-medium text-lg">{func.nome}</h3>
                         <Badge variant={func.perfil?.funcao === "GERENTE_LOJA" ? "default" : "secondary"}>
-                          <Transl>{func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}</Transl>
+                         {func.perfil?.funcao === "GERENTE_LOJA" ? "Gerente" : "Funcionário"}
                         </Badge>
                         <Badge variant={func.status ? "outline" : "destructive"}>
-                          <Transl>{func.status ? "Ativo" : "Inativo"}</Transl>
+                        {func.status ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
-                      <Transl className="text-muted-foreground mb-2 text-sm">{func.perfil?.descricao}</Transl>
+                      <div className="text-muted-foreground mb-2 text-sm">{func.perfil?.descricao}</div>
                     </div>
                   </div>
 
@@ -407,10 +407,10 @@ export default function FuncionariosFazenda() {
                   {isGerenteLoja && (
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEditClick(func)}>
-                        <Pen className="size-4 mr-2" /><Transl>Editar</Transl>
+                        <Pen className="size-4 mr-2" />Editar
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(func)}>
-                        <Trash className="size-4 mr-2" /><Transl>Demitir</Transl>
+                        <Trash className="size-4 mr-2" />Demitir
                       </Button>
                     </div>
                   )}
@@ -419,7 +419,7 @@ export default function FuncionariosFazenda() {
                 {/* Contatos */}
                 <div className="flex flex-wrap gap-6 mb-4">
                   <div>
-                    <Transl className="text-sm font-medium text-muted-foreground mb-2">Contatos</Transl>
+                    <div className="text-sm font-medium text-muted-foreground mb-2">Contatos</div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="size-4 text-muted-foreground" />
@@ -435,16 +435,16 @@ export default function FuncionariosFazenda() {
                   </div>
                   {isGerenteLoja && (
                     <div>
-                      <Transl className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</Transl>
+                      <div className="text-sm font-medium text-muted-foreground mb-2">Ações Rápidas</div>
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm">
                           <Mail className="size-4 mr-2" />Email
                         </Button>
                         <Button variant="outline" size="sm">
-                          <Phone className="size-4 mr-2" /> <Transl>Ligar</Transl>
+                          <Phone className="size-4 mr-2" /> Ligar
                         </Button>
                         <Button variant="outline" size="sm">
-                          <MessageSquare className="size-4 mr-2" /><Transl>Mensagem</Transl>
+                          <MessageSquare className="size-4 mr-2" />Mensagem
                         </Button>
                       </div>
                     </div>
@@ -460,11 +460,11 @@ export default function FuncionariosFazenda() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle><Transl>Editar Funcionário</Transl></DialogTitle>
+            <DialogTitle>Editar Funcionário</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nome" className="text-right"><Transl>Nome</Transl></Label>
+              <Label htmlFor="nome" className="text-right">Nome</Label>
               <Input id="nome" value={editingData.nome} onChange={e => setEditingData({ ...editingData, nome: e.target.value })} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -472,11 +472,11 @@ export default function FuncionariosFazenda() {
               <Input id="email" type="email" value={editingData.email} onChange={e => setEditingData({ ...editingData, email: e.target.value })} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="telefone" className="text-right"><Transl>Telefone</Transl></Label>
+              <Label htmlFor="telefone" className="text-right">Telefone</Label>
               <Input id="telefone" value={editingData.telefone} onChange={e => setEditingData({ ...editingData, telefone: formatarTelefoneInput(e.target.value) })} className="col-span-3" placeholder="(XX) XXXXX-XXXX" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="senha" className="text-right"><Transl>Senha (opcional)</Transl></Label>
+              <Label htmlFor="senha" className="text-right">Senha (opcional)</Label>
               <div className="col-span-3 relative">
                 <Input id="senha" type={showEditPassword ? "text" : "password"} value={editingData.senha} onChange={e => setEditingData({ ...editingData, senha: e.target.value })} />
                 <button type="button" onClick={() => setShowEditPassword(!showEditPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -491,15 +491,15 @@ export default function FuncionariosFazenda() {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GERENTE_LOJA"><Transl>Gerente</Transl></SelectItem>
-                  <SelectItem value="FUNCIONARIO_LOJA"><Transl>Funcionário</Transl></SelectItem>
+                  <SelectItem value="GERENTE_LOJA">Gerente</SelectItem>
+                  <SelectItem value="FUNCIONARIO_LOJA">Funcionário</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-              <Transl>Cancelar</Transl>
+              Cancelar
             </Button>
             <Button onClick={handleSaveEdit} disabled={savingEdit}>{savingEdit ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
@@ -510,16 +510,16 @@ export default function FuncionariosFazenda() {
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle><Transl>Confirmar Demissão</Transl></DialogTitle>
+            <DialogTitle>Confirmar Demissão</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Transl className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               Tem certeza que deseja demitir <strong>{selectedUser?.nome}</strong>? Esta ação não pode ser desfeita.
-            </Transl>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}><Transl>Cancelar</Transl></Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}><Transl>Demitir</Transl> </Button>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>Demitir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -532,7 +532,7 @@ export default function FuncionariosFazenda() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-nome" className="text-right"><Transl>Nome</Transl></Label>
+              <Label htmlFor="invite-nome" className="text-right">Nome</Label>
               <Input id="invite-nome" value={inviteData.nome} onChange={e => handleInviteChange('nome', e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -540,11 +540,11 @@ export default function FuncionariosFazenda() {
               <Input id="invite-email" type="email" value={inviteData.email} onChange={e => handleInviteChange('email', e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-telefone" className="text-right"><Transl>Telefon</Transl>e</Label>
+              <Label htmlFor="invite-telefone" className="text-right">Telefone</Label>
               <Input id="invite-telefone" value={inviteData.telefone} onChange={e => handleInviteChange('telefone', formatarTelefoneInput(e.target.value))} className="col-span-3" placeholder="(XX) XXXXX-XXXX" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-senha" className="text-right"><Transl>Senha</Transl></Label>
+              <Label htmlFor="invite-senha" className="text-right">Senha</Label>
               <div className="col-span-3 relative">
                 <Input id="invite-senha" type={showInvitePassword ? "text" : "password"} value={inviteData.senha} onChange={e => handleInviteChange('senha', e.target.value)} />
                 <button type="button" onClick={() => setShowInvitePassword(!showInvitePassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -553,20 +553,20 @@ export default function FuncionariosFazenda() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invite-role" className="text-right"><Transl>Função</Transl></Label>
+              <Label htmlFor="invite-role" className="text-right">Função</Label>
               <Select value={inviteData.role} onValueChange={(v) => handleInviteChange('role', v)} className="col-span-3">
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GERENTE_LOJA"><Transl>Gerente</Transl></SelectItem>
-                  <SelectItem value="FUNCIONARIO_LOJA"><Transl>Funcionário</Transl></SelectItem>
+                  <SelectItem value="GERENTE_LOJA">Gerente</SelectItem>
+                  <SelectItem value="FUNCIONARIO_LOJA">Funcionário</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}><Transl>Cancelar</Transl></Button>
+            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>Cancelar</Button>
             <Button onClick={submitInvite} disabled={inviteSaving}>{inviteSaving ? 'Enviando...' : 'Convidar'}</Button>
           </DialogFooter>
         </DialogContent>
