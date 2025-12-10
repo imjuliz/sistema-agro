@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { User, CreditCard, Image as ImageIcon, Bell, Monitor, AlertTriangle, Copy, Phone, Mail } from "lucide-react";
+import { Image as ImageIcon, AlertTriangle, Phone, Mail } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
@@ -23,7 +21,6 @@ export default function Matriz() {
 
     const { user, loading, initialized, fetchWithAuth } = useAuth();
     const { toast } = useToast();
-
     const [profileEditing, setProfileEditing] = useState(false);
     const [companyEditing, setCompanyEditing] = useState(false);
 
@@ -52,46 +49,31 @@ export default function Matriz() {
     const [editEndereco, setEditEndereco] = useState("");
     const [editDescricaoCurta, setEditDescricaoCurta] = useState("");
     const [editCep, setEditCep] = useState("");
-
     const [loadingUnidade, setLoadingUnidade] = useState(false);
     const [loadingCep, setLoadingCep] = useState(false);
     const [uploadingFoto, setUploadingFoto] = useState(false);
     const fileInputRef = useRef(null);
-    // Delete confirmation state
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false); // first modal
-    const [isConfirmTypingOpen, setIsConfirmTypingOpen] = useState(false); // second modal where user types 'Excluir'
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false); 
+    const [isConfirmTypingOpen, setIsConfirmTypingOpen] = useState(false); 
     const [confirmInput, setConfirmInput] = useState('');
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState('');
 
     // Lista de estados brasileiros
     const estadosBrasil = [
-        { sigla: "AC", nome: "Acre" },
-        { sigla: "AL", nome: "Alagoas" },
-        { sigla: "AP", nome: "Amapá" },
-        { sigla: "AM", nome: "Amazonas" },
-        { sigla: "BA", nome: "Bahia" },
-        { sigla: "CE", nome: "Ceará" },
-        { sigla: "DF", nome: "Distrito Federal" },
-        { sigla: "ES", nome: "Espírito Santo" },
-        { sigla: "GO", nome: "Goiás" },
-        { sigla: "MA", nome: "Maranhão" },
-        { sigla: "MT", nome: "Mato Grosso" },
-        { sigla: "MS", nome: "Mato Grosso do Sul" },
-        { sigla: "MG", nome: "Minas Gerais" },
-        { sigla: "PA", nome: "Pará" },
-        { sigla: "PB", nome: "Paraíba" },
-        { sigla: "PR", nome: "Paraná" },
-        { sigla: "PE", nome: "Pernambuco" },
-        { sigla: "PI", nome: "Piauí" },
-        { sigla: "RJ", nome: "Rio de Janeiro" },
-        { sigla: "RN", nome: "Rio Grande do Norte" },
-        { sigla: "RS", nome: "Rio Grande do Sul" },
-        { sigla: "RO", nome: "Rondônia" },
-        { sigla: "RR", nome: "Roraima" },
-        { sigla: "SC", nome: "Santa Catarina" },
-        { sigla: "SP", nome: "São Paulo" },
-        { sigla: "SE", nome: "Sergipe" },
+        { sigla: "AC", nome: "Acre" },{ sigla: "AL", nome: "Alagoas" },
+        { sigla: "AP", nome: "Amapá" },{ sigla: "AM", nome: "Amazonas" },
+        { sigla: "BA", nome: "Bahia" },{ sigla: "CE", nome: "Ceará" },
+        { sigla: "DF", nome: "Distrito Federal" },{ sigla: "ES", nome: "Espírito Santo" },
+        { sigla: "GO", nome: "Goiás" },{ sigla: "MA", nome: "Maranhão" },
+        { sigla: "MT", nome: "Mato Grosso" },{ sigla: "MS", nome: "Mato Grosso do Sul" },
+        { sigla: "MG", nome: "Minas Gerais" },{ sigla: "PA", nome: "Pará" },
+        { sigla: "PB", nome: "Paraíba" },{ sigla: "PR", nome: "Paraná" },
+        { sigla: "PE", nome: "Pernambuco" },{ sigla: "PI", nome: "Piauí" },
+        { sigla: "RJ", nome: "Rio de Janeiro" },{ sigla: "RN", nome: "Rio Grande do Norte" },
+        { sigla: "RS", nome: "Rio Grande do Sul" },{ sigla: "RO", nome: "Rondônia" },
+        { sigla: "RR", nome: "Roraima" },{ sigla: "SC", nome: "Santa Catarina" },
+        { sigla: "SP", nome: "São Paulo" },{ sigla: "SE", nome: "Sergipe" },
         { sigla: "TO", nome: "Tocantins" }
     ];
 
@@ -116,9 +98,7 @@ export default function Matriz() {
         setCompanyEditing(true);
     }
 
-    function cancelCompanyEdit() {
-        setCompanyEditing(false);
-    }
+    function cancelCompanyEdit() {setCompanyEditing(false);}
 
     const isGerenteMatriz = Array.isArray(user?.roles) && user.roles.some(r => String(r).toUpperCase() === 'GERENTE_MATRIZ');
 
@@ -137,9 +117,7 @@ export default function Matriz() {
                             setUnidadeId(unidade.id);
                             setCompanyName(unidade.nome || "");
                             // Construir URL completa da foto
-                            const fotoUrl = unidade.imagemUrl 
-                                ? buildImageUrl(unidade.imagemUrl)
-                                : "";
+                            const fotoUrl = unidade.imagemUrl ? buildImageUrl(unidade.imagemUrl) : "";
                             console.log('📸 imagemUrl do servidor:', unidade.imagemUrl);
                             console.log('📸 fotoUrl construída:', fotoUrl);
                             setCompanyAvatarUrl(fotoUrl);
@@ -163,9 +141,7 @@ export default function Matriz() {
                             setUnidadeId(unidade.id);
                             setCompanyName(unidade.nome || "");
                             // Construir URL completa da foto
-                            const fotoUrl = unidade.imagemUrl 
-                                ? buildImageUrl(unidade.imagemUrl)
-                                : "";
+                            const fotoUrl = unidade.imagemUrl ? buildImageUrl(unidade.imagemUrl) : "";
                             console.log('📸 imagemUrl do servidor:', unidade.imagemUrl);
                             console.log('📸 fotoUrl construída:', fotoUrl);
                             setCompanyAvatarUrl(fotoUrl);
@@ -180,11 +156,8 @@ export default function Matriz() {
                         }
                     }
                 }
-            } catch (err) {
-                console.error('Erro ao carregar matriz:', err);
-            } finally {
-                setLoadingUnidade(false);
-            }
+            } catch (err) {console.error('Erro ao carregar matriz:', err);}
+            finally {setLoadingUnidade(false);}
         }
 
         if (fetchWithAuth && initialized) loadMatriz();
@@ -244,9 +217,7 @@ export default function Matriz() {
     }
 
     // helpers: strip digits and formatting
-    function onlyDigits(value) {
-        return String(value || '').replace(/\D/g, '');
-    }
+    function onlyDigits(value) {return String(value || '').replace(/\D/g, '');}
 
     function formatCEP(value) {
         const d = onlyDigits(value).slice(0, 8);
@@ -298,9 +269,7 @@ export default function Matriz() {
         const parts = name.trim().split(/\s+/).filter(Boolean);
         if (parts.length === 0) return '';
         const first = parts[0];
-        if (parts.length === 1) {
-            return first.slice(0, 2).toUpperCase();
-        }
+        if (parts.length === 1) {return first.slice(0, 2).toUpperCase();}
         const second = parts[1];
         return (String(first[0] || '') + String(second[0] || '')).toUpperCase();
     }
@@ -340,11 +309,8 @@ export default function Matriz() {
                         setEditEstado(data.data.uf || "");
                     }
                 }
-            } catch (err) {
-                console.error('Erro ao buscar CEP:', err);
-            } finally {
-                setLoadingCep(false);
-            }
+            } catch (err) {console.error('Erro ao buscar CEP:', err);}
+            finally {setLoadingCep(false);}
         }
     }
 
@@ -361,10 +327,7 @@ export default function Matriz() {
             console.log('📸 Upload para:', url);
             console.log('📦 Arquivo:', file.name);
 
-            const res = await fetchWithAuth(url, {
-                method: 'POST',
-                body: formData,
-            });
+            const res = await fetchWithAuth(url, {method: 'POST',body: formData,});
 
             console.log('📡 Status resposta:', res.status);
 
@@ -384,14 +347,11 @@ export default function Matriz() {
                 setCompanyAvatarUrl(fotoUrl);
                 setEditCompanyAvatarUrl(fotoUrl);
             }
-        } catch (err) {
-            console.error('❌ Erro ao fazer upload de foto:', err);
-        } finally {
+        } catch (err) {console.error('❌ Erro ao fazer upload de foto:', err);}
+        finally {
             setUploadingFoto(false);
             // Limpa o input
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            if (fileInputRef.current) {fileInputRef.current.value = '';}
         }
     }
 
@@ -400,9 +360,7 @@ export default function Matriz() {
 
         setUploadingFoto(true);
         try {
-            const res = await fetchWithAuth(`${API_URL}unidades/${unidadeId}/foto`, {
-                method: 'DELETE',
-            });
+            const res = await fetchWithAuth(`${API_URL}unidades/${unidadeId}/foto`, {method: 'DELETE',});
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
@@ -416,11 +374,8 @@ export default function Matriz() {
                 setCompanyAvatarUrl('');
                 setEditCompanyAvatarUrl('');
             }
-        } catch (err) {
-            console.error('Erro ao remover foto:', err);
-        } finally {
-            setUploadingFoto(false);
-        }
+        } catch (err) {console.error('Erro ao remover foto:', err);}
+        finally {setUploadingFoto(false);}
     }
 
     // Deleção em duas etapas
@@ -472,10 +427,23 @@ export default function Matriz() {
         } catch (err) {
             console.error('Erro ao excluir unidade:', err);
             setDeleteError('Erro ao excluir a matriz.');
-        } finally {
-            setDeleting(false);
         }
+        finally {setDeleting(false);}
     }
+
+     const { lang, changeLang } = useTranslation();
+        const languageOptions = [
+            { value: 'pt-BR', label: 'Português (BR)' },
+            { value: 'en', label: 'English' },
+            { value: 'es', label: 'Español' },
+            { value: 'fr', label: 'Français' }
+        ];
+        const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+        useEffect(() => {
+            setLocalTheme(globalTheme);
+            setLocalSelectedFontSize(globalSelectedFontSize);
+            setLocalLang(lang);
+        }, [globalTheme, globalSelectedFontSize, lang]);
     return (
         <>
             <main className="min-h-screen px-18 py-10 bg-surface-50">
@@ -484,7 +452,6 @@ export default function Matriz() {
                 <div className="flex gap-6">
                     <div className="flex-1 gap-6">
                         <div className="grid gap-4">
-
                             <div className="flex flex-col gap-8">
                                 {/* Nome da empresa */}
                                 <div className="flex flex-row justify-between pr-8 gap-4">
@@ -496,49 +463,26 @@ export default function Matriz() {
                                                 <Avatar className="h-16 w-16 cursor-pointer border-2 border-muted">
                                                     {companyAvatarUrl ? (
                                                         <AvatarImage src={companyAvatarUrl} alt="Avatar" />
-                                                    ) : (
-                                                        <AvatarFallback>{getInitials(companyName)}</AvatarFallback>
-                                                    )}
+                                                    ) : (<AvatarFallback>{getInitials(companyName)}</AvatarFallback>)}
                                                 </Avatar>
-                                                <input
-                                                    ref={fileInputRef}
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleFotoUnidadeChange}
-                                                    className="hidden"
-                                                />
+                                                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFotoUnidadeChange} className="hidden"/>
                                                 {companyEditing && (
                                                     <div className="flex gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => fileInputRef.current?.click()}
-                                                            disabled={uploadingFoto}
-                                                        >
+                                                        <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingFoto}>
                                                             <ImageIcon className="w-4 h-4 mr-1" />
                                                             {uploadingFoto ? <Transl>Upload...</Transl> : <Transl>Upload</Transl>}
                                                         </Button>
                                                         {companyAvatarUrl && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="destructive"
-                                                                onClick={handleRemoverFotoUnidade}
-                                                                disabled={uploadingFoto}
-                                                            >
+                                                            <Button size="sm" variant="destructive" onClick={handleRemoverFotoUnidade} disabled={uploadingFoto}>
                                                                 <Transl>Remover</Transl>
                                                             </Button>
                                                         )}
                                                     </div>
                                                 )}
-                                                {companyEditing && (
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        <Transl>Clique para enviar uma nova imagem</Transl>
-                                                    </p>
-                                                )}
+                                                {companyEditing && (<p className="text-xs text-muted-foreground mt-1"><Transl>Clique para enviar uma nova imagem</Transl></p>)}
                                             </div>
                                         </div>
                                     </div>
-
                                     {/* Nome */}
                                     <div className="flex flex-col">
                                         <Label className={"pb-3 font-bold"}><Transl>Nome</Transl></Label>
@@ -581,27 +525,17 @@ export default function Matriz() {
                                     <div className="w-full max-w-md">
                                         <div className="flex flex-col w-full items-start gap-2">
                                             {companyEditing ? (
-                                                <>
-                                                    <Input placeholder="Descrição curta / departamento" value={editDescricaoCurta} onChange={e => setEditDescricaoCurta(e.target.value)} className="w-full" />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <p className="text-sm text-foreground">{descricaoCurta || 'Sem descrição'}</p>
-                                                </>
-                                            )}
+                                                <><Input placeholder="Descrição curta / departamento" value={editDescricaoCurta} onChange={e => setEditDescricaoCurta(e.target.value)} className="w-full" /></>
+                                            ) : (<><p className="text-sm text-foreground">{descricaoCurta || 'Sem descrição'}</p></>)}
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
 
                             <Separator className="my-4" />
                             {/* Contatos da empresa */}
                             <div className="">
-                                <Label className={"pb-3 font-bold"}>
-                                    <Transl>Contatos</Transl>
-                                </Label>
-
+                                <Label className={"pb-3 font-bold"}><Transl>Contatos</Transl></Label>
                                 <div className="flex flex-wrap items-start gap-4">
                                     <div className="flex-1">
                                         {companyEditing ? (
@@ -621,9 +555,7 @@ export default function Matriz() {
                                                     <Mail className="w-4 h-4 text-muted-foreground" />
                                                     {email ? (
                                                         <a className="text-sm text-foreground hover:underline" href={`mailto:${email}`}>{email}</a>
-                                                    ) : (
-                                                        <p className="text-sm text-foreground">E-mail não informado</p>
-                                                    )}
+                                                    ) : (<p className="text-sm text-foreground">E-mail não informado</p>)}
                                                 </div>
                                             </div>
                                         )}
@@ -635,7 +567,6 @@ export default function Matriz() {
                             {/* Endereço da Unidade */}
                             <div className="">
                                 <Label className={"pb-3 font-bold"}><Transl>Endereço</Transl></Label>
-
                                 <div className="w-full">
                                     <div className="flex flex-col items-start gap-2">
                                         {companyEditing ? (
@@ -643,32 +574,17 @@ export default function Matriz() {
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full">
                                                     <div>
                                                         <Label className="pb-2 font-medium"><Transl>Endereço</Transl></Label>
-                                                        <Input
-                                                            placeholder="Endereço"
-                                                            value={editEndereco}
-                                                            onChange={e => setEditEndereco(e.target.value)}
-                                                            disabled={loadingCep}
-                                                        />
+                                                        <Input placeholder="Endereço" value={editEndereco} onChange={e => setEditEndereco(e.target.value)} disabled={loadingCep}/>
                                                     </div>
                                                     <div>
                                                         <Label className="pb-2 font-medium"><Transl>CEP</Transl></Label>
-                                                        <Input
-                                                            placeholder="CEP"
-                                                            value={editCep}
-                                                            onChange={handleCepChange}
-                                                            disabled={loadingCep}
-                                                        />
+                                                        <Input placeholder="CEP" value={editCep} onChange={handleCepChange} disabled={loadingCep}/>
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full">
                                                     <div>
                                                         <Label className="pb-2 font-medium"><Transl>Cidade</Transl></Label>
-                                                        <Input
-                                                            placeholder="Cidade"
-                                                            value={editCidade}
-                                                            onChange={e => setEditCidade(e.target.value)}
-                                                            disabled={loadingCep}
-                                                        />
+                                                        <Input placeholder="Cidade"value={editCidade} onChange={e => setEditCidade(e.target.value)} disabled={loadingCep}/>
                                                     </div>
                                                     <div>
                                                         <Label className="pb-2 font-medium"><Transl>Estado</Transl></Label>
@@ -688,50 +604,22 @@ export default function Matriz() {
                                                 </div>
                                             </>
                                         ) : (
-                                            <>
-                                                <p className="text-sm text-foreground">{endereco || 'Endereço não informado'}, {cep || 'CEP'}, {cidade || 'Cidade'} - {estado || 'Estado'}</p>
-                                            </>
+                                            <><p className="text-sm text-foreground">{endereco || 'Endereço não informado'}, {cep || 'CEP'}, {cidade || 'Cidade'} - {estado || 'Estado'}</p></>
                                         )}
                                     </div>
                                 </div>
                             </div>
                             <Separator className="my-4" />
 
-                            {/* Ferramentas e transferências (ex.: Transferir Matriz) */}
-                            {/* <div className="">
-                                <Label className={"pb-3 font-bold"}>
-                                    <Transl>Transferência</Transl>
-                                </Label>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                    <Transl>Transferir dados ou responsabilidades entre unidades.</Transl>
-                                </p>
-                                <div className="flex max-w-md items-center justify-end">
-                                    <p className="mr-4 text-sm text-muted-foreground">
-                                        <Transl>Saiba mais sobre transferência de unidades</Transl>
-                                        <a href={''} className="text-primary underline">
-                                            <Transl>Documentação</Transl>
-                                        </a>
-                                    </p>
-                                    <Button size="sm" variant="secondary">
-                                        <Transl>Transferir</Transl>
-                                    </Button>
-                                </div>
-                            </div>
-                            <Separator className="my-4" /> */}
-
                             {/* Apagar empresa (apenas em modo de edição) */}
                             {companyEditing && (
                                 <div>
-                                <Label className={"pb-3 font-bold"}>
-                                    <Transl>Deletar empresa</Transl>
-                                </Label>
+                                <Label className={"pb-3 font-bold"}><Transl>Deletar empresa</Transl></Label>
                                 <Alert variant="destructive" className="mb-4 max-w-md">
                                     <AlertTriangle className="h-4 w-4" />
                                     <AlertTitle><Transl>Aviso</Transl></AlertTitle>
                                     <AlertDescription>
-                                        <p>
-                                            <Transl>Excluir permanentemente a empresa (Matriz) e todos os dados. A ação não é reversível — </Transl><span className="font-medium underline"><Transl>proceda com cuidado.</Transl></span>
-                                        </p>
+                                        <p><Transl>Excluir permanentemente a empresa (Matriz) e todos os dados. A ação não é reversível — </Transl><span className="font-medium underline"><Transl>proceda com cuidado.</Transl></span></p>
                                     </AlertDescription>
                                 </Alert>
                                 <Button variant="destructive" onClick={handleDeleteClick}><Transl>Deletar empresa</Transl></Button>
@@ -740,14 +628,14 @@ export default function Matriz() {
                                 <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen} className="w-80">
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>Você tem certeza que deseja excluir a matriz?</DialogTitle>
+                                            <DialogTitle><Transl>Você tem certeza que deseja excluir a matriz?</Transl></DialogTitle>
                                         </DialogHeader>
                                         <div className="mt-2">
-                                            <p className="text-sm text-muted-foreground">Esta ação é irreversível. Todos os dados relacionados serão removidos.</p>
+                                            <Transl className="text-sm text-muted-foreground">Esta ação é irreversível. Todos os dados relacionados serão removidos.</Transl>
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancelar</Button>
-                                            <Button variant="destructive" onClick={handleConfirmFirst} className="ml-2">Sim</Button>
+                                            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}><Transl>Cancelar</Transl></Button>
+                                            <Button variant="destructive" onClick={handleConfirmFirst} className="ml-2"><Transl>Sim</Transl></Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -756,16 +644,16 @@ export default function Matriz() {
                                 <Dialog open={isConfirmTypingOpen} onOpenChange={setIsConfirmTypingOpen}>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>Você está prestes a excluir a matriz</DialogTitle>
+                                            <DialogTitle><Transl>Você está prestes a excluir a matriz</Transl></DialogTitle>
                                         </DialogHeader>
                                         <div className="mt-2 space-y-2">
-                                            <p className="text-sm text-muted-foreground">Para continuar, digite <strong>Excluir</strong> no campo abaixo e confirme.</p>
+                                            <Transl className="text-sm text-muted-foreground">Para continuar, digite <strong>Excluir</strong> no campo abaixo e confirme.</Transl>
                                             <Input value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)} placeholder="Digite Excluir" />
                                             {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="outline" onClick={handleCancelDelete}>Cancelar</Button>
-                                            <Button variant="destructive" onClick={handleFinalDelete} disabled={deleting} className="ml-2">Excluir</Button>
+                                            <Button variant="outline" onClick={handleCancelDelete}><Transl>Cancelar</Transl></Button>
+                                            <Button variant="destructive" onClick={handleFinalDelete} disabled={deleting} className="ml-2"><Transl>Excluir</Transl></Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -784,7 +672,6 @@ export default function Matriz() {
                     </div>
                 </div>
             </main>
-
         </>
     )
 }

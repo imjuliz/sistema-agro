@@ -154,6 +154,8 @@ export const listarContasFinanceirasComFiltros = async (unidadeId, filtros = {})
       subcategoriaId = null
     } = filtros;
 
+    console.log(`[listarContasFinanceirasComFiltros] unidadeId: ${unidadeId}, filtros:`, filtros);
+
     let where = {
       unidadeId: Number(unidadeId),
       deletadoEm: null
@@ -162,8 +164,16 @@ export const listarContasFinanceirasComFiltros = async (unidadeId, filtros = {})
     // Filtrar por mês e ano
     // Filtrar por competencia OU vencimento no período (qualquer um que estiver no período)
     if (mes && ano) {
-      const dataInicio = new Date(ano, mes - 1, 1);
-      const dataFim = new Date(ano, mes, 0, 23, 59, 59);
+      // Usar UTC para evitar problemas de fuso horário
+      // dataInicio: primeiro dia do mês às 00:00:00 UTC
+      const dataInicio = new Date(Date.UTC(ano, mes - 1, 1, 0, 0, 0, 0));
+      // dataFim: último dia do mês às 23:59:59.999 UTC
+      const ultimoDiaDoMes = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+      const dataFim = new Date(Date.UTC(ano, mes - 1, ultimoDiaDoMes, 23, 59, 59, 999));
+      
+      console.log(`[listarContasFinanceirasComFiltros] Filtrando por mês ${mes}/${ano}`);
+      console.log(`[listarContasFinanceirasComFiltros] dataInicio: ${dataInicio.toISOString()}`);
+      console.log(`[listarContasFinanceirasComFiltros] dataFim: ${dataFim.toISOString()}`);
       
       // Usar OR para pegar contas onde:
       // 1. A competencia está no período, OU
@@ -206,6 +216,8 @@ export const listarContasFinanceirasComFiltros = async (unidadeId, filtros = {})
       where.subcategoriaId = Number(subcategoriaId);
     }
 
+    console.log(`[listarContasFinanceirasComFiltros] where clause:`, JSON.stringify(where, null, 2));
+    
     const contas = await prisma.financeiro.findMany({
       where,
       include: {
@@ -219,6 +231,70 @@ export const listarContasFinanceirasComFiltros = async (unidadeId, filtros = {})
         { criadoEm: 'desc' }
       ]
     });
+
+    console.log(`[listarContasFinanceirasComFiltros] Total de contas encontradas: ${contas.length}`);
+    if (contas.length > 0) {
+      console.log(`[listarContasFinanceirasComFiltros] Primeira conta:`, {
+        id: contas[0].id,
+        competencia: contas[0].competencia,
+        vencimento: contas[0].vencimento,
+        tipoMovimento: contas[0].tipoMovimento,
+        unidadeId: contas[0].unidadeId
+      });
+    } else if (mes && ano) {
+      // Se não encontrou nada e há filtro de mês/ano, verificar quais datas existem
+      const contasSemFiltro = await prisma.financeiro.findMany({
+        where: {
+          unidadeId: Number(unidadeId),
+          deletadoEm: null,
+          ...(tipoMovimento ? { tipoMovimento } : {})
+        },
+        select: {
+          id: true,
+          competencia: true,
+          vencimento: true,
+          tipoMovimento: true
+        },
+        take: 5,
+        orderBy: { competencia: 'desc' }
+      });
+      
+      if (contasSemFiltro.length > 0) {
+        console.log(`[listarContasFinanceirasComFiltros] Nenhuma conta encontrada para ${mes}/${ano}. Exemplos de datas disponíveis:`, 
+          contasSemFiltro.map(c => ({
+            competencia: c.competencia ? new Date(c.competencia).toLocaleDateString('pt-BR') : null,
+            vencimento: c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR') : null,
+            tipoMovimento: c.tipoMovimento
+          }))
+        );
+      } else {
+        console.log(`[listarContasFinanceirasComFiltros] Nenhuma conta financeira encontrada para esta unidade (unidadeId: ${unidadeId})`);
+        
+        // Verificar se há dados financeiros em outras unidades ou sem filtro de tipo
+        const totalContas = await prisma.financeiro.count({
+          where: { deletadoEm: null }
+        });
+        
+        if (totalContas > 0) {
+          // Verificar quais unidades têm dados
+          const unidadesComDados = await prisma.financeiro.findMany({
+            where: { deletadoEm: null },
+            select: { unidadeId: true, competencia: true, vencimento: true },
+            distinct: ['unidadeId'],
+            take: 5
+          });
+          
+          console.log(`[listarContasFinanceirasComFiltros] ⚠️ ATENÇÃO: Existem ${totalContas} contas no banco, mas nenhuma para unidadeId ${unidadeId}`);
+          console.log(`[listarContasFinanceirasComFiltros] Unidades com dados:`, unidadesComDados.map(u => ({
+            unidadeId: u.unidadeId,
+            competencia: u.competencia ? new Date(u.competencia).toLocaleDateString('pt-BR') : null,
+            vencimento: u.vencimento ? new Date(u.vencimento).toLocaleDateString('pt-BR') : null
+          })));
+        } else {
+          console.log(`[listarContasFinanceirasComFiltros] ⚠️ ATENÇÃO: Não há nenhuma conta financeira no banco de dados. Execute o seed para criar dados de exemplo.`);
+        }
+      }
+    }
 
     return contas;
   } catch (error) {

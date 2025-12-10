@@ -1,5 +1,19 @@
 import prisma from "../prisma/client.js";
 
+export const contarFornecedoresExternos = async (unidadeId) => {
+  try {
+    const count = await prisma.fornecedorExterno.count({
+      where: {
+        unidadeId: Number(unidadeId),
+        status: 'ATIVO'
+      }
+    });
+    return { sucesso: true, count, message: 'Contagem de fornecedores externos realizada com sucesso!' };
+  } catch (error) {
+    return { sucesso: false, erro: 'Erro ao contar fornecedores externos', detalhes: error.message };
+  }
+};
+
 export const listarFornecedoresExternos = async (unidadeId) => {
   try {
     // Se veio unidadeId, lista fornecedores externos vinculados a essa unidade
@@ -848,5 +862,74 @@ export const buscarPedidosExternos = async (unidadeId) => {
       erro: "Erro ao buscar pedidos de fornecedores externos",
       detalhes: error.message
     };
+  }
+};
+
+// Cria um pedido genérico. `dados` pode conter qualquer combinação de campos
+// permitidos pelo modelo `Pedido`: contratoId, origemFornecedorExternoId,
+// origemUnidadeId, destinoUnidadeId, criadoPorId, observacoes, itens: []
+export const criarPedido = async (dados) => {
+  try {
+    // Prepare payload — allow caller to provide any of the recognized fields
+    const payload = {};
+
+    // Só adiciona campos que têm valor
+    if (dados.contratoId != null) payload.contratoId = Number(dados.contratoId);
+    if (dados.origemFornecedorExternoId != null) payload.origemFornecedorExternoId = Number(dados.origemFornecedorExternoId);
+    if (dados.origemUnidadeId != null) payload.origemUnidadeId = Number(dados.origemUnidadeId);
+    if (dados.destinoUnidadeId != null) payload.destinoUnidadeId = Number(dados.destinoUnidadeId);
+    if (dados.criadoPorId != null) payload.criadoPorId = Number(dados.criadoPorId);
+    if (dados.descricao != null) payload.descricao = dados.descricao;
+    if (dados.observacoes != null) payload.observacoes = dados.observacoes;
+
+    const created = await prisma.pedido.create({
+      data: payload,
+    });
+
+    // Re-fetch the created pedido including related data so frontend can display supplier names
+    const pedido = await prisma.pedido.findUnique({
+      where: { id: created.id },
+      include: {
+        contrato: { select: { id: true, fornecedorExterno: { select: { id: true, nomeEmpresa: true } } } },
+        fornecedorExterno: { select: { id: true, nomeEmpresa: true } },
+        destinoUnidade: { select: { id: true, nome: true, cidade: true, estado: true } },
+        origemUnidade: { select: { id: true, nome: true } }
+      }
+    });
+
+    return { sucesso: true, pedido, message: 'Pedido criado com sucesso.' };
+  } catch (error) {
+    console.error('[criarPedido] Erro ao criar pedido:', error);
+    return { sucesso: false, erro: 'Erro ao criar pedido.', detalhes: error.message };
+  }
+};
+
+// Atualiza o status de um pedido (ex: marcar como ENTREGUE)
+export const atualizarStatusPedido = async (pedidoId, novoStatus) => {
+  try {
+    if (!pedidoId) return { sucesso: false, erro: 'ID do pedido não informado.' };
+
+    const updated = await prisma.pedido.update({
+      where: { id: Number(pedidoId) },
+      data: {
+        status: novoStatus,
+        dataRecebimento: novoStatus === 'ENTREGUE' ? new Date() : undefined,
+      }
+    });
+
+    const pedido = await prisma.pedido.findUnique({
+      where: { id: updated.id },
+      include: {
+        contrato: { select: { id: true, fornecedorExterno: { select: { id: true, nomeEmpresa: true } } } },
+        fornecedorExterno: { select: { id: true, nomeEmpresa: true } },
+        destinoUnidade: { select: { id: true, nome: true, cidade: true, estado: true } },
+        origemUnidade: { select: { id: true, nome: true } }
+      }
+    });
+
+    return { sucesso: true, pedido, message: 'Status do pedido atualizado com sucesso.' };
+  } catch (error) {
+    console.error('[atualizarStatusPedido] Erro ao atualizar status do pedido:', error);
+    return { sucesso: false, erro: 'Erro ao atualizar status do pedido.', detalhes: error.message };
   }
 };

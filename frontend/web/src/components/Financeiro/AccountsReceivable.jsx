@@ -77,6 +77,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
               id: String(c.id),
               competencyDate: c.competencia ?? c.competencyDate ?? '',
               amount: Number(c.valor ?? c.amount ?? 0),
+              categoryId: c.categoriaId ? String(c.categoriaId) : null,
               subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
               description: c.descricao ?? c.description ?? '',
               status: 'received'
@@ -219,6 +220,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
               id: String(created.id),
               competencyDate: createdCompetency,
               amount: created && created.valor !== undefined ? Number(created.valor) : parseAmount(formData.amount),
+              categoryId: created.categoriaId ? String(created.categoriaId) : null,
               subcategoryId: String(created.subcategoriaId ?? formData.subcategoryId),
               description: created.descricao ?? formData.description,
               status: 'received'
@@ -227,6 +229,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             id: `local-${Date.now()}`,
             competencyDate: validarData(formData.competencyDate) || formData.competencyDate || '',
             amount: parseAmount(formData.amount),
+            categoryId: null, // Será preenchido quando o backend retornar
             subcategoryId: formData.subcategoryId,
             description: formData.description,
             status: 'received'
@@ -324,6 +327,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             ...editingAccount,
             competencyDate: validarData(formData.competencyDate) || formData.competencyDate || '',
             amount: parseFloat(formData.amount),
+            categoryId: result.dados?.categoriaId ? String(result.dados.categoriaId) : editingAccount.categoryId,
             subcategoryId: formData.subcategoryId,
             description: formData.description,
             status: 'received'
@@ -547,12 +551,29 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
 
   const formatDate = (dateString) => { return new Date(dateString).toLocaleDateString('pt-BR'); };
 
-  const getSubcategoryName = (subcategoryId) => {
-    for (const category of categories) {
-      const subcategory = category.subcategories.find(sub => sub.id === subcategoryId);
-      if (subcategory) { return `${category.name} > ${subcategory.name}`; }
+  const getSubcategoryName = (subcategoryId, categoryId = null) => {
+    // Primeiro, tentar encontrar pela subcategoria (se houver)
+    if (subcategoryId) {
+      for (const category of categories) {
+        const subcategory = category.subcategories.find(sub => sub.id === subcategoryId);
+        if (subcategory) {
+          return `${category.name} > ${subcategory.name}`;
+        }
+      }
     }
-    return 'Categoria não encontrada';};
+    
+    // Se não encontrou subcategoria, tentar encontrar pela categoria diretamente
+    // Isso acontece quando uma conta foi criada em uma categoria sem subcategoria
+    if (categoryId) {
+      const category = categories.find(cat => cat.id === categoryId);
+      if (category) {
+        return category.name; // Retorna apenas o nome da categoria
+      }
+    }
+    
+    // Se não encontrou nem subcategoria nem categoria, retornar mensagem de erro
+    return 'Categoria não encontrada';
+  };
 
   // Função para gerar Excel no formato de relatório financeiro
   const gerarExcelLocal = () => {
@@ -1138,7 +1159,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                       <TableRow key={account.id}>
                         <TableCell>{account.competencyDate ? formatDate(account.competencyDate) : '-'}</TableCell>
                         <TableCell>{formatCurrency(account.amount)}</TableCell>
-                        <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId)}</TableCell>
+                        <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId, account.categoryId)}</TableCell>
                         <TableCell className="max-w-xs truncate">{account.description || '-'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

@@ -1,5 +1,28 @@
-import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService } from "../models/Fornecedores.js";
+import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, criarPedido, atualizarStatusPedido, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService, contarFornecedoresExternos } from "../models/Fornecedores.js";
 import { fornecedorSchema } from "../schemas/fornecedorSchema.js";
+
+export const contarFornecedoresExternosController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    if (!unidadeId) {
+      return res.status(400).json({ sucesso: false, erro: 'Unidade não informada.' });
+    }
+    const resultado = await contarFornecedoresExternos(unidadeId);
+    
+    return {
+      sucesso: true,
+      qtdFornecedores: resultado.count || 0,
+      message: "Quantidade de fornecedores externos contada com sucesso!"
+    }
+  } catch (error) {
+    console.error("Erro no controller ao contar fornecedores externos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao contar fornecedores externos.",
+      detalhes: error.message,
+    });
+  }
+};
 
 // Retorna metadados úteis para o frontend (enums / opções)
 export const listarMetaContratosController = async (req, res) => {
@@ -524,5 +547,80 @@ export const buscarPedidosExternosController = async (req, res) => {
       erro: "Erro interno no servidor.",
       detalhes: error.message
     });
+  }
+};
+
+// Controller para criar pedido interno (loja -> fazenda)
+export const createPedidoInternoController = async (req, res) => {
+  try {
+    const origemUnidadeId = Number(req.params.unidadeId);
+    const dados = req.body || {};
+
+    if (!origemUnidadeId) {
+      return res.status(400).json({ sucesso: false, erro: 'unidadeId (origem) obrigatório na rota.' });
+    }
+
+    // definir criadoPorId a partir do usuário autenticado quando disponível
+    dados.criadoPorId = req.usuario?.id ?? dados.criadoPorId ?? null;
+    dados.origemUnidadeId = dados.origemUnidadeId ?? origemUnidadeId;
+
+    const resultado = await criarPedido(dados);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json(resultado);
+  } catch (error) {
+    console.error('[createPedidoInternoController] Erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao criar pedido interno.', detalhes: error.message });
+  }
+};
+
+// Controller para criar pedido externo (fazenda -> fornecedor externo)
+export const createPedidoExternoController = async (req, res) => {
+  try {
+    const origemUnidadeId = Number(req.params.unidadeId);
+    const dados = req.body || {};
+
+    if (!origemUnidadeId) {
+      return res.status(400).json({ sucesso: false, erro: 'unidadeId (origem) obrigatório na rota.' });
+    }
+
+    // definir criadoPorId a partir do usuário autenticado quando disponível
+    dados.criadoPorId = req.usuario?.id ?? dados.criadoPorId ?? null;
+    // origemUnidade é quem faz o pedido (fazenda)
+    dados.origemUnidadeId = dados.origemUnidadeId ?? origemUnidadeId;
+
+    // optional: permitir que o body contenha contratoId, origemFornecedorExternoId, descricao, etc.
+
+    const resultado = await criarPedido(dados);
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json(resultado);
+  } catch (error) {
+    console.error('[createPedidoExternoController] Erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao criar pedido externo.', detalhes: error.message });
+  }
+};
+
+// Controller para processar (marcar como ENTREGUE) um pedido
+export const processarPedidoController = async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    if (!pedidoId) return res.status(400).json({ sucesso: false, erro: 'ID do pedido não informado na rota.' });
+
+    const resultado = await atualizarStatusPedido(pedidoId, 'ENTREGUE');
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('[processarPedidoController] Erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao processar pedido.', detalhes: error.message });
   }
 };
