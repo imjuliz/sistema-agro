@@ -130,6 +130,41 @@ export async function createAnimais(data) {
   }
 }
 
+export async function createAnimaisCompleto(data) {
+  try {
+    const animais = await prisma.animal.create({
+      data: {
+        especie: data.especie,
+        raca: data.raca,
+        sexo: data.sexo || null,
+        sku: data.sku,
+        dataNasc: data.dataNasc ? new Date(data.dataNasc) : null,
+        peso: data.peso || null,
+        custo: data.custo ? Number(data.custo) : null,
+        formaAquisicao: data.formaAquisicao || null,
+        unidadeId: data.unidadeId,
+        loteId: data.loteId ? Number(data.loteId) : null,
+        fornecedorId: data.fornecedorId ? Number(data.fornecedorId) : null,
+      },
+      include: {
+        lote: true,
+        unidade: true,
+      }
+    })
+    return {
+      sucesso: true,
+      animais,
+      message: "Animal criado com sucesso.",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      erro: "Erro ao criar animal.",
+      detalhes: error.message,
+    }
+  }
+}
+
 export async function updateAnimais(id, data) {
   try {
     const animal = await prisma.animal.findUnique({ where: { id } });

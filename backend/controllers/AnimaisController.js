@@ -1,4 +1,4 @@
-import { getAnimais, getAnimaisPelaRaca, calcularRentabilidadeAnimal, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais } from "../models/animais.js";
+import { getAnimais, getAnimaisPelaRaca, calcularRentabilidadeAnimal, getAnimaisPorId, createAnimais, updateAnimais, deleteAnimais, createAnimaisCompleto } from "../models/animais.js";
 import { animaisSchema, idSchema, loteIdSchema } from "../schemas/animaisSchemas.js";
 
 export async function getAnimaisController(req, res) {
@@ -201,5 +201,63 @@ export async function deleteAnimaisController(req, res) {
       erro: "Erro ao deletar animais.",
       detalhes: error.message, // opcional, para debug
     })
+  }
+}
+
+export async function createAnimaisCompletoController(req, res) {
+  try {
+    const { especie, raca, sexo, sku, dataNasc, peso, custo, loteId, formaAquisicao, unidadeId } = req.body;
+
+    // Validações básicas
+    if (!especie || !raca || !sku || !unidadeId) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Espécie, raça, SKU e unidade são obrigatórios."
+      });
+    }
+
+    if (isNaN(Number(unidadeId))) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Unidade inválida."
+      });
+    }
+
+    if (loteId && isNaN(Number(loteId))) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Lote inválido."
+      });
+    }
+
+    const resultado = await createAnimaisCompleto({
+      especie,
+      raca,
+      sexo: sexo || null,
+      sku,
+      dataNasc: dataNasc || null,
+      peso: peso || null,
+      custo: custo ? Number(custo) : null,
+      loteId: loteId ? Number(loteId) : null,
+      formaAquisicao: formaAquisicao || null,
+      unidadeId: Number(unidadeId),
+    });
+
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(201).json({
+      sucesso: true,
+      animais: resultado.animais,
+      message: resultado.message,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao criar animal.",
+      detalhes: error.message,
+    });
   }
 }
