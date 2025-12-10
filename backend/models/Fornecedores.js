@@ -1,5 +1,34 @@
 import prisma from "../prisma/client.js";
 
+export const totalContratosExternos = async (unidadeId) => {
+  try {
+    const count = await prisma.contrato.count({
+      where: {
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null },
+      }
+    });
+    return { sucesso: true, count, message: 'Total de contratos externos calculado com sucesso!' };
+  } catch (error) {
+    return { sucesso: false, erro: 'Erro ao calcular total de contratos externos', detalhes: error.message };
+  }
+};
+
+export const totalContratosExternosAtivos = async (unidadeId) => {
+  try {
+    const count = await prisma.contrato.count({
+      where: {
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null },
+        status: 'ATIVO'
+      }
+    });
+    return { sucesso: true, count, message: 'Total de contratos externos ativos calculado com sucesso!' };
+  } catch (error) {
+    return { sucesso: false, erro: 'Erro ao calcular total de contratos externos ativos', detalhes: error.message };
+  }
+};
+
 export const contarFornecedoresExternos = async (unidadeId) => {
   try {
     const count = await prisma.fornecedorExterno.count({

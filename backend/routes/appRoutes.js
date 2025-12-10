@@ -6,7 +6,7 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import {listarPedidosEntregaController, listarPedidosOrigemController, atualizarQntdMinController, adicionarProdutoAoEstoqueController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController} from "../controllers/fazenda.js";
-import { calcularFornecedoresController, listarTodasAsLojasController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, createPedidoInternoController, createPedidoExternoController, processarPedidoController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController, criarFornecedorExternoController, buscarContratoPorIdController, contarFornecedoresExternosController } from "../controllers/FornecedorController.js";
+import { calcularFornecedoresController, listarTodasAsLojasController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, createPedidoInternoController, createPedidoExternoController, processarPedidoController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController, criarFornecedorExternoController, buscarContratoPorIdController, contarFornecedoresExternosController, totalContratosExternosController, totalContratosExternosAtivosController } from "../controllers/FornecedorController.js";
 import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController,  consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
@@ -154,7 +154,9 @@ router.get(
   listarFornecedoresExternosController
 );
 
+router.get("/contratosExternosAtivos/:unidadeId", totalContratosExternosAtivosController);
 router.get("/contarFornecedoresExternos/:unidadeId", contarFornecedoresExternosController);
+router.get("/totalContratosExternos/:unidadeId", totalContratosExternosController);
 router.get(
   "/listarFornecedoresInternos/:unidadeId",
   listarFornecedoresInternosController
