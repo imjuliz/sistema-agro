@@ -109,10 +109,10 @@ export function NavUser() {
                 <BadgeCheck />
                 Perfil
               </DropdownMenuItem> */}
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <Bell />
                 Notificações
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

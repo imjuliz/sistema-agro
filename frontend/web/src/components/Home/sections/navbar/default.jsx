@@ -12,7 +12,7 @@ export default function Navbar({
   homeUrl = '/',
   mobileLinks = [
     { text: "Sobre nós", href: '/sobreNos' },
-    { text: "Blog", href: '/blog' },
+    // { text: "Blog", href: '/blog' },
   ],
   actions = [
     // { text: "Criar conta", href: '/cadastrar', isButton: true, variant: 'outline' },

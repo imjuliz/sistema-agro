@@ -1,12 +1,16 @@
-"use client";
+import {
+  Tractor,
+  EclipseIcon,
+  FastForwardIcon,
+  LanguagesIcon,
+  MonitorSmartphoneIcon,
+  RocketIcon,
+  ScanFaceIcon,
+  SquarePenIcon,
+} from "lucide-react";
 
-import {Tractor, EclipseIcon, FastForwardIcon, LanguagesIcon, MonitorSmartphoneIcon, RocketIcon, ScanFaceIcon, SquarePenIcon,} from "lucide-react";
 import { Item, ItemDescription, ItemIcon, ItemTitle } from "@/components/ui/item";
 import { Section } from "@/components/ui/section";
-import { useTranslation } from "@/hooks/useTranslation";
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
-import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
-import { useEffect, useState } from "react";
 
 export default function Items({
   title = "Conheça a RuralTech",
@@ -16,7 +20,9 @@ export default function Items({
       description: "Na RuralTech, nossa matriz centraliza toda a operação da empresa, garantindo decisões estratégicas, gestão de equipes e inovação constante. É aqui que planejamos a produção, definimos padrões de qualidade e coordenamos nossas lojas e fazendas com excelência.",
       icon: (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
-      </svg>),
+      </svg>
+      ),
+      // icon: <ScanFaceIcon className="size-5 stroke-1" />,
     },
     {
       title: "Produção RuralTech",
@@ -32,44 +38,26 @@ export default function Items({
       </svg>
       ),
     },
-  ], className,}) {
-    const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-
-    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
-    // Estados locais para edição temporária antes de salvar
-    const [localTheme, setLocalTheme] = useState(globalTheme); 
-    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
-    const [localLang, setLocalLang] = useState(lang);
-
- const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
- 
- useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-        setLocalLang(lang);
-    }, [globalTheme, globalSelectedFontSize, lang]);
-
+  ],
+  className,
+}) {
   return (
     <Section className={className}>
       <div className="max-w-container mx-auto flex flex-col items-center gap-6 sm:gap-20">
-        <Transl className="max-w-[560px] text-center text-3xl leading-tight font-semibold sm:text-5xl sm:leading-tight">
+        <h2 className="max-w-[560px] text-center text-3xl leading-tight font-semibold sm:text-5xl sm:leading-tight">
+        {/* <h2 className="max-w-[224px] text-center text-3xl leading-tight font-semibold sm:text-5xl sm:leading-tight"> */}
           {title}
-        </Transl>
+        </h2>
         {items !== false && items.length > 0 && (
+          // <div className="grid auto-rows-fr grid-cols-2 gap-0 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           <div className="w-full px-8 grid auto-rows-fr gap-0 sm:grid-cols-1 sm:gap-4 lg:grid-cols-3">
             {items.map((item, index) => (
               <Item key={index}>
                 <ItemTitle className="flex items-center gap-2">
                   <ItemIcon>{item.icon}</ItemIcon>
-                  <Transl>{item.title}</Transl>
+                  {item.title}
                 </ItemTitle>
-                <ItemDescription className={'text-justify w-full'}><Transl>{item.description}</Transl></ItemDescription>
+                <ItemDescription className={'text-justify w-full'}>{item.description}</ItemDescription>
               </Item>
             ))}
           </div>

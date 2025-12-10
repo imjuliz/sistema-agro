@@ -20,7 +20,6 @@ export default function Navigation({
   menuItems = [
     // { title: "Para você", content: "components" },
     { title: "Sobre Nós", href: '/sobreNos', isLink: true },
-    { title: "Blog", href: '/blog', isLink: true },
   ],
   // components = [
   //   {
