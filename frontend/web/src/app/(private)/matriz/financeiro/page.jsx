@@ -508,28 +508,28 @@ export default function FinancasMatriz() {
         {error && (<div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">{error}</div>)}
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /><Transl>Dashboard</Transl></TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2"><Calculator className="h-4 w-4" /><Transl>Categorias</Transl></TabsTrigger>
-            <TabsTrigger value="payable" className="flex items-center gap-2"><CreditCard className="h-4 w-4" /><Transl>Despesas</Transl></TabsTrigger>
-            <TabsTrigger value="receivable" className="flex items-center gap-2"><Wallet className="h-4 w-4" /><Transl>Receitas</Transl></TabsTrigger>
+            <TabsTrigger value="dashboard" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Dashboard</TabsTrigger>
+            <TabsTrigger value="categories" className="flex items-center gap-2"><Calculator className="h-4 w-4" />Categorias</TabsTrigger>
+            <TabsTrigger value="payable" className="flex items-center gap-2"><CreditCard className="h-4 w-4" />Despesas</TabsTrigger>
+            <TabsTrigger value="receivable" className="flex items-center gap-2"><Wallet className="h-4 w-4" />Receitas</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard" className="space-y-6"> {/* Filtro de Período */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /><Transl>Filtro de Período</Transl></CardTitle>
-                <CardDescription><Transl>Selecione o mês e ano para visualizar os dados específicos do período</Transl></CardDescription>
+                <CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" />Filtro de Período</CardTitle>
+                <CardDescription>Selecione o mês e ano para visualizar os dados específicos do período</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="month-select"><Transl>Mês</Transl></Label>
+                    <Label htmlFor="month-select">Mês</Label>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                       <SelectTrigger id="month-select"><SelectValue /></SelectTrigger>
                       <SelectContent>{months.map((month) => (<SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>))}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="year-select"><Transl>Ano</Transl></Label>
+                    <Label htmlFor="year-select">Ano</Label>
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
                       <SelectTrigger id="year-select"><SelectValue /></SelectTrigger>
                       <SelectContent>{years.map((year) => (<SelectItem key={year} value={year.toString()}>{year}</SelectItem>))}</SelectContent>
@@ -538,7 +538,7 @@ export default function FinancasMatriz() {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" /><Transl>Exibindo dados de{" "}</Transl>
+                    <Calendar className="h-4 w-4" />Exibindo dados de{" "}
                     <strong>{getSelectedMonthName()} de {selectedYear}</strong>
                   </div>
                   <div className="flex gap-2">
@@ -546,17 +546,17 @@ export default function FinancasMatriz() {
                       <DropdownMenuTrigger asChild>
                         <Button variant='outline' size='sm'>
                           <DownloadIcon className='mr-2 h-4 w-4' />
-                          <Transl>Exportar</Transl>
+                          Exportar
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
                         <DropdownMenuItem onClick={exportarDashboardCSV}>
                           <FileTextIcon className='mr-2 h-4 w-4' />
-                          <Transl>Exportar CSV</Transl>
+                          Exportar CSV
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={exportarDashboardPDF}>
                           <FileSpreadsheetIcon className='mr-2 h-4 w-4' />
-                          <Transl>Exportar PDF</Transl>
+                          Exportar PDF
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -568,32 +568,32 @@ export default function FinancasMatriz() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm"><Transl>A Pagar</Transl></CardTitle>
+                  <CardTitle className="text-sm">A Pagar</CardTitle>
                   <TrendingDown className="h-4 w-4 text-red-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="">{formatCurrency(calculatedStats.totalPayablePending)}</div>
-                  <Transl className="text-xs text-muted-foreground">{calculatedStats.payablePendingCount} contas pendentes</Transl>
+                  <p className="text-xs text-muted-foreground">{calculatedStats.payablePendingCount} contas pendentes</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm"><Transl>Recebido</Transl></CardTitle>
+                  <CardTitle className="text-sm">Recebido</CardTitle>
                   <Wallet className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="">{formatCurrency(calculatedStats.totalReceived)}</div>
-                  <Transl className="text-xs text-muted-foreground">{calculatedStats.receivedCount} contas recebidas</Transl>
+                  <p className="text-xs text-muted-foreground">{calculatedStats.receivedCount} contas recebidas</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm"><Transl>Pago</Transl></CardTitle>
+                  <CardTitle className="text-sm">Pago</CardTitle>
                   <CreditCard className="h-4 w-4 text-red-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="">{formatCurrency(calculatedStats.totalPaid)}</div>
-                  <Transl className="text-xs text-muted-foreground">{calculatedStats.paidCount} contas pagas</Transl>
+                  <p className="text-xs text-muted-foreground">{calculatedStats.paidCount} contas pagas</p>
                 </CardContent>
               </Card>
             </div>
@@ -601,21 +601,21 @@ export default function FinancasMatriz() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle><Transl>Resumo das Categorias</Transl></CardTitle>
-                  <CardDescription><Transl>Organização atual das suas categorias</Transl></CardDescription>
+                  <CardTitle>Resumo das Categorias</CardTitle>
+                  <CardDescription>Organização atual das suas categorias</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span><Transl>Categorias de Entrada</Transl></span>
+                      <span>Categorias de Entrada</span>
                       <Badge className="bg-green-100 text-green-800">{categories.filter((cat) => cat.type === "entrada").length}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span><Transl>Categorias de Saída</Transl></span>
+                      <span>Categorias de Saída</span>
                       <Badge className="bg-red-100 text-red-800">{categories.filter((cat) => cat.type === "saida").length}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span><Transl>Total de Subcategorias</Transl></span>
+                      <span>Total de Subcategorias</span>
                       <Badge>{categories.reduce((sum, cat) => sum + cat.subcategories.length, 0)}</Badge>
                     </div>
                   </div>
@@ -623,22 +623,22 @@ export default function FinancasMatriz() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle><Transl>Resumo do Período</Transl></CardTitle>
-                  <CardDescription><Transl>{getSelectedMonthName()} de {selectedYear} - Baseado nas contas do período</Transl></CardDescription>
+                  <CardTitle>Resumo do Período</CardTitle>
+                  <CardDescription>{getSelectedMonthName()} de {selectedYear} - Baseado nas contas do período</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span><Transl>Total de Receitas</Transl></span>
+                      <span>Total de Receitas</span>
                       <span className="">{formatCurrency(calculatedStats.totalReceitas)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span><Transl>Total de Despesas</Transl></span>
+                      <span>Total de Despesas</span>
                       <span className="">{formatCurrency(calculatedStats.totalDespesas)}</span>
                     </div>
                     <hr />
                     <div className="flex justify-between items-center">
-                      <span><Transl>Resultado do Período</Transl></span>
+                      <span>Resultado do Período</span>
                       <span className={calculatedStats.totalReceitas - calculatedStats.totalDespesas >= 0 ? "text-green-600" : "text-red-600"}>{formatCurrency(calculatedStats.totalReceitas - calculatedStats.totalDespesas)}</span>
                     </div>
                   </div>
@@ -654,25 +654,25 @@ export default function FinancasMatriz() {
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span><Transl>Pagas</Transl></span>
+                      <span>Pagas</span>
                       <div className="text-right">
                         <div className="">{formatCurrency(calculatedStats.totalPaid)}</div>
-                        <div className="text-xs text-muted-foreground"><Transl>{calculatedStats.paidCount} contas</Transl></div>
+                        <div className="text-xs text-muted-foreground">{calculatedStats.paidCount} contas</div>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span><Transl>Pendentes</Transl></span>
+                      <span>Pendentes</span>
                       <div className="text-right">
                         <div className="">{formatCurrency(calculatedStats.totalPayablePending)}</div>
-                        <div className="text-xs text-muted-foreground"><Transl>{calculatedStats.payablePendingCount} contas</Transl></div>
+                        <div className="text-xs text-muted-foreground">{calculatedStats.payablePendingCount} contas</div>
                       </div>
                     </div>
                     <hr />
                     <div className="flex justify-between items-center">
-                      <span><Transl>Total do Período</Transl></span>
+                      <span>Total do Período</span>
                       <div className="text-right">
                         <div className="">{formatCurrency(calculatedStats.totalPaid + calculatedStats.totalPayablePending)}</div>
-                        <div className="text-xs text-muted-foreground"><Transl>{calculatedStats.paidCount + calculatedStats.payablePendingCount} contas</Transl></div>
+                        <div className="text-xs text-muted-foreground">{calculatedStats.paidCount + calculatedStats.payablePendingCount} contas</div>
                       </div>
                     </div>
                   </div>
@@ -683,21 +683,21 @@ export default function FinancasMatriz() {
           <TabsContent value="categories">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <span className="ml-2"><Transl>Carregando categorias...</Transl></span>
+                <span className="ml-2">Carregando categorias...</span>
               </div>
             ) : (<CategoryManager categories={categories} onCategoriesChange={handleCategoriesChange} fetchWithAuth={fetchWithAuth} API_URL="" onRefresh={fetchCategorias} />)}
           </TabsContent>
           <TabsContent value="payable">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <span className="ml-2"><Transl>Carregando contas a pagar...</Transl></span>
+                <span className="ml-2">Carregando contas a pagar...</span>
               </div>
             ) : (<AccountsPayable accounts={accountsPayable} categories={categories} onAccountsChange={handleAccountsPayableChange} fetchWithAuth={fetchWithAuth} API_URL={API_URL} onRefresh={fetchContas} />)}
           </TabsContent>
           <TabsContent value="receivable">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <span className="ml-2"><Transl>Carregando contas a receber...</Transl></span>
+                <span className="ml-2">Carregando contas a receber...</span>
               </div>
             ) : (<AccountsReceivable accounts={accountsReceivable} categories={categories} onAccountsChange={handleAccountsReceivableChange} fetchWithAuth={fetchWithAuth} API_URL={API_URL} onRefresh={fetchContas} />)}
           </TabsContent>

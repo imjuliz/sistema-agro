@@ -167,7 +167,7 @@ export function LoginForm({ className, ...props }) {
       </Card>
 
       <FieldDescription className="px-6 text-center">
-        Ao continuar, você concorda com nossos <a href="#" className="underline-offset-4 hover:underline">Termos de Serviço</a>{" "}
+        Ao continuar, você concorda com nossos <a href="/termosDeUso" className="underline-offset-4 hover:underline">Termos de Uso</a>{" "}
         e <a href="/politicaPrivacidade" className="underline-offset-4 hover:underline">Política de Privacidade</a>.
       </FieldDescription>
     </div>
