@@ -241,6 +241,7 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
             ))}
           </SelectContent>
         </Select>
+        
       </div>
 
       {/* LISTAGEM DE PEDIDOS */}

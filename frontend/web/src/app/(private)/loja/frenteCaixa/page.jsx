@@ -573,7 +573,7 @@ export default function app() {
     verificarCaixaAberto();
   }, [fetchWithAuth, user]);
   return (
-    <div className="min-h-screen px-18 py-10 bg-surface-50 gap-6">
+    <div className="min-h-screen px-18 py-10 bg-surface-50 flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -932,13 +932,13 @@ export default function app() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID da Transação</TableHead>
-                      <TableHead>Data/Hora</TableHead>
+                      {/* <TableHead>Data/Hora</TableHead> */}
                       <TableHead>Cliente</TableHead>
-                      <TableHead>Itens</TableHead>
+                      {/* <TableHead>Itens</TableHead> */}
                       <TableHead>Total</TableHead>
                       <TableHead>Pagamento</TableHead>
-                      <TableHead>Operador</TableHead>
-                      <TableHead>Ações</TableHead>
+                      {/* <TableHead>Operador</TableHead> */}
+                      {/* <TableHead>Ações</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -958,18 +958,18 @@ export default function app() {
                       recentSalesList.map((sale) => (
                         <TableRow key={sale.id}>
                           <TableCell className="font-medium">{sale.id}</TableCell>
-                          <TableCell>{sale.data ?? sale.date}</TableCell>
+                          {/* <TableCell>{sale.data ?? sale.date}</TableCell> */}
                           <TableCell>{sale.nomeCliente ?? sale.customer}</TableCell>
-                          <TableCell>{sale.itens ?? sale.items}</TableCell>
+                          {/* <TableCell>{sale.itens ?? sale.items}</TableCell> */}
                           <TableCell>R$ {Number(sale.total ?? sale.valor ?? 0).toFixed(2)}</TableCell>
                           <TableCell>{sale.pagamento ?? sale.paymentMethod}</TableCell>
-                          <TableCell>{sale.usuarioNome ?? sale.cashier}</TableCell>
-                          <TableCell>
+                          {/* <TableCell>{sale.usuarioNome ?? sale.cashier}</TableCell> */}
+                          {/* <TableCell>
                             <div className="flex gap-2">
                               <Button variant="outline" size="sm">Ver</Button>
                               <Button variant="outline" size="sm">Imprimir</Button>
                             </div>
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))
                     )}

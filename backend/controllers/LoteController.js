@@ -1,4 +1,4 @@
-import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesPorUnidade, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios,contarLotesAnimaliaPorTipo, contarAnimais, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia, criarAtividadeAnimalia, listarAtividadesDoLote, criarEnvioLoteService} from "../models/lote.js";
+import { getLote, getLotePorId,  updateLote, deleteLote, getLotePorTipo, listarLotesPlantio, listarLotesPorUnidade, listarLotesAnimalia, contarLotesPlantioDisponiveis, contarLotesAnimaliaDisponiveis, contarLotesColheita, contarLotesImproprios, contarLotesPlantioImproprios,contarLotesAnimaliaImproprios,contarLotesAnimaliaPorTipo, contarAnimais, updateLoteCampos, listarAtividadesPlantio, listarAtividadesAnimalia, contarQtdColheitasPorMes, criarAtividadeAgricola , criarLote, totalLotesPlantio, totalLotesAnimalia, criarAtividadeAnimalia, listarAtividadesDoLote, criarEnvioLoteService, contarTotalLotes} from "../models/lote.js";
 import { loteSchema, loteTipoVegetaisSchema, IdsSchema, IdSchema } from "../schemas/loteSchema.js";
 
 export async function getLoteController(req, res) {
@@ -73,6 +73,25 @@ export async function getLotePorTipoController(req, res) {
 //     })
 //   }
 // }
+
+export const contarLotesController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const quantidade = await contarTotalLotes(unidadeId);
+
+    return res.status(200).json({
+      sucesso: true,
+      quantidade,
+      message: "Quantidade de lotes obtida com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao contar lotes!",
+      error: error.message
+    });
+  }
+};
 
 export const listarLotesPlantioController = async (req, res) => {
   try {

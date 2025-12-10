@@ -21,7 +21,7 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
   const [selectedPedidos, setSelectedPedidos] = useState(null);
   const [searchPedidos, setSearchPedidos] = useState('');
   const [selectedPedidosCategory, setSelectedPedidosCategory] = useState('all');
-  const categoriesPedidos = ['all', 'PENDENTE', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO'];
+  const categoriesPedidos = ['all', 'Pendente', 'Em trânsito', 'Entregue', 'Cancelado'];
 
   // Normalizar pedidos do backend
   const normalizedOrders = (pedidosProp || []).map((p, idx) => ({
@@ -281,12 +281,7 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h4 className="text-muted-foreground">Nenhum pedido encontrado</h4>
-              <p className="text-muted-foreground">
-                {statusFilter === 'all'
-                  ? ''
-                  : `Nenhum pedido ${statusFilter} encontrado`
-                }
-              </p>
+              
             </div>
           )}
         </TabsContent>
