@@ -101,6 +101,27 @@ export const listarLotesPlantioController = async (req, res) => {
   }
 }
 
+export const listarLotesPlantioControllerOld = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    const resultado = await listarLotesPlantio(unidadeId);
+    const raw = resultado?.lotesVegetais || resultado?.loteVegetais || resultado?.lotes || resultado || [];
+    const lotesArray = Array.isArray(raw) ? raw : (Array.isArray(resultado?.lotesVegetais) ? resultado.lotesVegetais : []);
+
+    return res.status(200).json({
+      sucesso: true,
+      lotes: lotesArray,
+      message: "Lotes de plantio listados com sucesso.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao listar lotes de vegetais.",
+      detalhes: error.message,
+    })
+  }
+}
+
 export const listarLotesAnimaliaController = async (req, res) => {
   try {
     const unidadeId = req.params.unidadeId;

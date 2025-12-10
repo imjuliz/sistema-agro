@@ -13,6 +13,7 @@ import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { Card, CardContent, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card"
 import FornecedoresCard from './fornecedores-card';
 import { OrderManagement } from './OrderManagement';
+import { CreatePedidoLojaModal } from './CreatePedidoLojaModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 
@@ -26,6 +27,9 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
   const [fornecedorError, setFornecedorError] = useState(null);
   const [contratosExternos, setContratosExternos] = useState([]);
   const [pedidosExternos, setPedidosExternos] = useState([]);
+  
+  // modal para criar pedido interno
+  const [showCreatePedidoModal, setShowCreatePedidoModal] = useState(false)
 
   useEffect(() => {
     if (!unidadeId) return;
@@ -255,19 +259,40 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
             fornecedores={fornecedoresExternos} 
             contratos={contratosExternos} 
             pedidos={pedidosExternos} 
-            carregando={carregandoFornecedores} 
+            carregando={carregandoFornecedores}
+            unidadeId={unidadeId}
+            onShowCreatePedido={() => setShowCreatePedidoModal(true)}
           />
         
 
       {/* produtos */}
       {/* <ProductCatalog /> */}
       {/* produtos */}
+
+      {/* Modal para criar pedido interno */}
+      <CreatePedidoLojaModal
+        open={showCreatePedidoModal}
+        onOpenChange={setShowCreatePedidoModal}
+        unidadeId={unidadeId}
+        fornecedores={fornecedoresExternos}
+        onPedidoCreated={(pedido) => {
+          // Atualizar lista de pedidos
+          setPedidosExternos(prev => [pedido, ...prev]);
+        }}
+      />
       
     </div>
   );
 }
 
-function ContratosComoConsumidor({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+function ContratosComoConsumidor({ 
+  fornecedores = [], 
+  contratos = [], 
+  pedidos = [], 
+  carregando = false,
+  unidadeId = null,
+  onShowCreatePedido = () => {}
+}) {
   // This tab receives pre-fetched data from the parent `ConsumerDashboard` via props.
   return (
     <div className="space-y-6 flex flex-col gap-12">
@@ -296,6 +321,13 @@ function ContratosComoConsumidor({ fornecedores = [], contratos = [], pedidos = 
       </div>
 
       <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
+
+      <div className="flex justify-end">
+        <Button onClick={onShowCreatePedido}>
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Criar Pedido
+        </Button>
+      </div>
 
       <OrderManagement pedidos={pedidos} />
     </div>

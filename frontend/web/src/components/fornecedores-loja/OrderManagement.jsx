@@ -10,6 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Package, Clock, CheckCircle, XCircle, Truck, Eye, MessageSquare, Calendar, DollarSign, Search, Filter } from 'lucide-react';
 import { Input } from "@/components/ui/input";
+import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function OrderManagement({ pedidos: pedidosProp = [], carregando = false }) {
@@ -26,6 +29,7 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
     uniqueKey: `${p.id}-${idx}`, // Chave única para evitar duplicatas ao combinar pedidos externos e internos
     documentoReferencia: p.documentoReferencia || p.numeroDocumento || p.numero || p.id,
     customer: p.fornecedorExterno?.nomeEmpresa || p.contrato?.fornecedorExterno?.nomeEmpresa || p.origemUnidade?.nome || 'Fornecedor desconhecido',
+    description: p.descricao || p.descricaoPedido || p.observacoes || '',
     items: (p.itens || []).map(i => ({
       name: i.produto?.nome || i.fornecedorItem?.nome || i.produtoNome || i.nome || i.descricao || `Item ${i.id || '?'}`,
       quantity: Number(i.quantidade || 0),
@@ -142,37 +146,38 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
              </div>
            </div>
  
-           <div>
-             <Label>Itens Comprados</Label>
-             <div className="mt-2 space-y-2">
-               {order.items.map((item, index) => {
-                 // Garantir que temos um nome para o item
-                 const itemName = item.name || `Item ${index + 1}`;
-                 const quantity = item.quantity || 0;
-                 const price = item.price || 0;
-                 const itemTotal = quantity * price;
-                 
-                 return (
-                   <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                     <div>
-                       <p className="font-medium">{itemName}</p>
-                       <p className="text-sm text-muted-foreground">Quantidade: {quantity}</p>
-                     </div>
-                     <div className="text-right">
-                       <p>R$ {price.toFixed(2)} cada</p>
-                       <p className="text-sm">R$ {itemTotal.toFixed(2)}</p>
-                     </div>
-                   </div>
-                 );
-               })}
+           {order.description && (
+             <div>
+               <Label>Descrição do Pedido</Label>
+               <p className='mt-1 p-3 bg-muted rounded-lg'>{order.description}</p>
              </div>
-             <div className="mt-4 p-3 bg-muted rounded-lg">
-               <div className="flex justify-between items-center">
-                 <span>Total:</span>
-                 <span className="text-lg">R$ {order.total.toFixed(2)}</span>
+           )}
+
+           {order.items && order.items.length > 0 && (
+             <div>
+               <Label>Itens Comprados</Label>
+               <div className="mt-2 space-y-2">
+                 {order.items.map((item, index) => {
+                   const itemName = item.name || `Item ${index + 1}`;
+                   const quantity = item.quantity || 0;
+                   const price = item.price || 0;
+                   const itemTotal = quantity * price;
+                   return (
+                     <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                       <div>
+                         <p className="font-medium">{itemName}</p>
+                         <p className="text-sm text-muted-foreground">Quantidade: {quantity}</p>
+                       </div>
+                       <div className="text-right">
+                         <p>R$ {price.toFixed(2)} cada</p>
+                         <p className="text-sm">R$ {itemTotal.toFixed(2)}</p>
+                       </div>
+                     </div>
+                   );
+                 })}
                </div>
              </div>
-           </div>
+           )}
  
            {order.notes && (
              <div>
@@ -181,22 +186,27 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
              </div>
            )}
 
-           {order.status === 'Pendente' && (
-             <div className="flex gap-2">
-               <Button variant="outline" className="flex-1">
-                 <XCircle className="h-4 w-4 mr-2" />
-                 Rejeitar Pedido
-               </Button>
-               <Button className="flex-1">
-                 <CheckCircle className="h-4 w-4 mr-2" />
-                 Confirmar Pedido
-               </Button>
-             </div>
-           )}
+           {/* Removed Rejeitar/Confirmar buttons for external pedido details */}
          </div>
        </DialogContent>
      </Dialog>
    );
+
+  const { fetchWithAuth } = useAuth();
+  const router = useRouter();
+
+  const handleProcess = async (orderId) => {
+    try {
+      const url = `${String(API_URL || '/api/').replace(/\/$/, '')}/pedidos/${orderId}/processar`;
+      const res = await fetchWithAuth(url, { method: 'POST' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) return alert(body.erro || body.message || 'Erro ao processar pedido');
+      if (typeof router?.refresh === 'function') router.refresh(); else window.location.reload();
+    } catch (err) {
+      console.error('[handleProcess] Erro:', err);
+      alert('Erro ao processar pedido: ' + (err?.message || err));
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -251,19 +261,10 @@ export function OrderManagement({ pedidos: pedidosProp = [], carregando = false 
                     </div>
 
                     <div className="text-right space-y-2">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-lg">R$ {order.total.toFixed(2)}</span>
-                      </div>
-
                       <div className="flex gap-2">
                         <OrderDetails order={order} />
-                        {/* <Button variant="outline" size="sm">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Bate-papo
-                        </Button> */}
                         {order.status === 'Pendente' && (
-                          <Button size="sm">
+                          <Button size="sm" onClick={() => handleProcess(order.id)}>
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Processar
                           </Button>
