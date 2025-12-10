@@ -75,6 +75,7 @@ export default function sobreNos({
         { value: 'es', label: 'Español' },
         { value: 'fr', label: 'Français' }
     ];
+    
     const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
     useEffect(() => {
         setLocalTheme(globalTheme);
