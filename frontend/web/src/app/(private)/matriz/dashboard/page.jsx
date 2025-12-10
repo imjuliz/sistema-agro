@@ -12,6 +12,7 @@ import {Bar,BarChart,CartesianGrid,XAxis,PolarAngleAxis,PolarGrid,Radar,RadarCha
 import { useAuth } from "@/contexts/AuthContext"
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 const StatCard = ({ icon: Icon, value, label, delta }) => (
     <Card className="p-0 h-full">
@@ -54,18 +55,26 @@ function ChartBarDefault({ data, range, onChangeRange }) {
         })
     )
  const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-    useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-        setLocalLang(lang);
-    }, [globalTheme, globalSelectedFontSize, lang]);
+       const languageOptions = [
+           { value: 'pt-BR', label: 'Português (BR)' },
+           { value: 'en', label: 'English' },
+           { value: 'es', label: 'Español' },
+           { value: 'fr', label: 'Français' }
+       ];
+ 
+       const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+             // Estados locais para edição temporária antes de salvar
+             const [localTheme, setLocalTheme] = useState(globalTheme); 
+             const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+             const [localLang, setLocalLang] = useState(lang);
+ 
+       const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+       useEffect(() => {
+           setLocalTheme(globalTheme);
+           setLocalSelectedFontSize(globalSelectedFontSize);
+           setLocalLang(lang);
+       }, [globalTheme, globalSelectedFontSize, lang]);
+ 
     return (
         <Card>
             <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -120,19 +129,27 @@ function ChartRadarGridCircle({ data }) {
             }))
             : [{ month: "Sem dados", desktop: 0 }]
 
-            const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-    useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-        setLocalLang(lang);
-    }, [globalTheme, globalSelectedFontSize, lang]);
+          const { lang, changeLang } = useTranslation();
+                const languageOptions = [
+                    { value: 'pt-BR', label: 'Português (BR)' },
+                    { value: 'en', label: 'English' },
+                    { value: 'es', label: 'Español' },
+                    { value: 'fr', label: 'Français' }
+                ];
+          
+                const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+                      // Estados locais para edição temporária antes de salvar
+                      const [localTheme, setLocalTheme] = useState(globalTheme); 
+                      const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+                      const [localLang, setLocalLang] = useState(lang);
+          
+                const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+                useEffect(() => {
+                    setLocalTheme(globalTheme);
+                    setLocalSelectedFontSize(globalSelectedFontSize);
+                    setLocalLang(lang);
+                }, [globalTheme, globalSelectedFontSize, lang]);
+          
 
     return (
         <Card>
@@ -255,20 +272,27 @@ export default function Page() {
         finally {setLoadingPdf(false)}
     }
 
+   const { lang, changeLang } = useTranslation();
+         const languageOptions = [
+             { value: 'pt-BR', label: 'Português (BR)' },
+             { value: 'en', label: 'English' },
+             { value: 'es', label: 'Español' },
+             { value: 'fr', label: 'Français' }
+         ];
    
- const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-    useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-        setLocalLang(lang);
-    }, [globalTheme, globalSelectedFontSize, lang]);
+         const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+               // Estados locais para edição temporária antes de salvar
+               const [localTheme, setLocalTheme] = useState(globalTheme); 
+               const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+               const [localLang, setLocalLang] = useState(lang);
+   
+         const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+         useEffect(() => {
+             setLocalTheme(globalTheme);
+             setLocalSelectedFontSize(globalSelectedFontSize);
+             setLocalLang(lang);
+         }, [globalTheme, globalSelectedFontSize, lang]);
+   
 
      const stats = [
         {
@@ -302,8 +326,6 @@ export default function Page() {
     ]
 
     if (checking) return <FullPageLoader />
-
-   
 
     return (
         <div className="min-h-screen px-18 py-10 bg-surface-50">
