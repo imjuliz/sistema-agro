@@ -13,8 +13,6 @@ import { Mail, Phone, ArrowDownRight, Rocket, Lightbulb, User, Send, Instagram }
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { API_URL } from "@/lib/api";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
-import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
-
 
 const defaultFeatures = [
     {
@@ -149,7 +147,6 @@ export default function sobreNos({
         }
     };
     
-    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
 
     const handleChange = (field, value) => {
         // Aplicar formatação de telefone se for o campo phone
