@@ -157,25 +157,28 @@ const chartData2 = [
   { month: "Abril", entrada: 73, saida: 90 }, { month: "Maio", entrada: 39, saida: 30 }, { month: "Junho", entrada: 14, saida: 40 },
 ]
 
-const chartConfig2 = { entrada: { label: "Entrada", color: "#738C16", }, saida: { label: "Saída", color: "#99BF0F", }, }
+const chartConfig2 = { valor: { label: "Vendas", color: "#738C16" }, entrada: { label: "Entrada", color: "#738C16", }, saida: { label: "Saída", color: "#99BF0F", }, }
 
-export function ChartBarMultiple() {
+export function ChartBarMultiple({ data, loading }) {
+  const resolvedData = Array.isArray(data) && data.length ? data : chartData2;
+  const valueKey = resolvedData?.[0]?.valor != null ? "valor" : (resolvedData?.[0]?.entrada != null ? "entrada" : "valor");
+  const labelKey = resolvedData?.[0]?.label ? "label" : (resolvedData?.[0]?.month ? "month" : "label");
   return (
-    <Card className={"h-[60%] w-full"}>
+    <Card className={"h-full w-full"}>
       <CardHeader>
-        <CardTitle className={'text-2xl'}>Entradas e Saídas</CardTitle>
-        <CardDescription>Janeiro - Junho</CardDescription>
+        <CardTitle className={'text-2xl'}>Vendas</CardTitle>
+        <CardDescription>Últimos períodos</CardDescription>
       </CardHeader>
       <CardContent className={'h-[85%]'}>
         <ChartContainer config={chartConfig2} className={'h-full  w-full'}>
-          <BarChart accessibilityLayer data={chartData2}>
+          <BarChart accessibilityLayer data={resolvedData}>
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} />
+            <XAxis dataKey={labelKey} tickLine={false} tickMargin={10} axisLine={false} />
             <ChartTooltip cursor={true} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="entrada" fill="var(--color-entrada)" radius={4} />
-            <Bar dataKey="saida" fill="var(--color-saida)" radius={4} />
+            <Bar dataKey={valueKey} fill="var(--color-entrada)" radius={4} />
           </BarChart>
         </ChartContainer>
+        {loading && <div className="text-sm text-muted-foreground mt-2">Carregando...</div>}
       </CardContent>
     </Card>
   )

@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,8 @@ export default function app() {
   const { toast } = useToast();
   // Guarda as últimas respostas (normalizadas) por endpoint/key — não causa re-render
   const lastResponsesRef = useRef({});
+  const sessionExpiredRef = useRef(false);
+  const router = useRouter();
 
   const [productsList, setProductsList] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -62,6 +65,7 @@ export default function app() {
   const [saldoInicial, setSaldoInicial] = useState('');
   const [saldoInicialError, setSaldoInicialError] = useState('');
   const [paymentMessage, setPaymentMessage] = useState('');
+  const [clienteCpf, setClienteCpf] = useState('');
   const [caixaInfo, setCaixaInfo] = useState(null);
   
   const categories = ['all', ...Array.from(new Set((productsList || []).map(p => p.category || ''))).filter(c => c)];
@@ -72,6 +76,33 @@ export default function app() {
     const matchesSearch = term === '' || product.name.toLowerCase().includes(term) || productSku.includes(term);
     return matchesCategory && matchesSearch;
   });
+
+  const extractDigits = (value = '') => String(value || '').replace(/\D/g, '');
+  const formatCpfInput = (value = '') => {
+    const digits = extractDigits(value).slice(0, 11);
+    const part1 = digits.slice(0, 3);
+    const part2 = digits.slice(3, 6);
+    const part3 = digits.slice(6, 9);
+    const part4 = digits.slice(9, 11);
+    let formatted = part1;
+    if (part2) formatted += `.${part2}`;
+    if (part3) formatted += `.${part3}`;
+    if (part4) formatted += `-${part4}`;
+    return formatted;
+  };
+  const getCpfDigits = (value = '') => extractDigits(value).slice(0, 11);
+
+  const handleUnauthorized = () => {
+    if (sessionExpiredRef.current) return;
+    sessionExpiredRef.current = true;
+    toast({
+      title: 'Sessão expirada',
+      description: 'Faça login novamente para continuar.',
+      variant: 'destructive',
+    });
+    try { router.push('/login'); }
+    catch (err) { window.location.href = '/login'; }
+  };
 
   const addToCart = (product) => {
     if (!caixaAberto) return;
@@ -125,11 +156,19 @@ export default function app() {
         if (resp.caixa) setCaixaInfo(resp.caixa);
         toast({ title: 'Caixa aberto', description: 'Caixa do dia iniciado com sucesso.' });
       } else {
-        alert('Erro ao abrir caixa: ' + (resp?.erro || 'Erro desconhecido'));
+        toast({
+          title: 'Erro ao abrir caixa',
+          description: resp?.erro || 'Erro desconhecido',
+          variant: 'destructive',
+        });
       }
     } catch (err) {
       console.error('Erro ao abrir caixa:', err);
-      alert('Erro ao abrir caixa');
+      toast({
+        title: 'Erro ao abrir caixa',
+        description: err?.message || 'Não foi possível abrir o caixa.',
+        variant: 'destructive',
+      });
     } finally {
       setAbrindoCaixa(false);
       verificarCaixaAberto();
@@ -147,11 +186,19 @@ export default function app() {
         setCaixaInfo(resp.caixa || null);
         setCaixaAberto(false);
       } else {
-        alert('Erro ao fechar caixa: ' + (resp?.erro || 'Erro desconhecido'));
+        toast({
+          title: 'Erro ao fechar caixa',
+          description: resp?.erro || 'Erro desconhecido',
+          variant: 'destructive',
+        });
       }
     } catch (err) {
       console.error('Erro ao fechar caixa:', err);
-      alert('Erro ao fechar caixa');
+      toast({
+        title: 'Erro ao fechar caixa',
+        description: err?.message || 'Não foi possível fechar o caixa.',
+        variant: 'destructive',
+      });
     } finally {
       setFechandoCaixa(false);
       verificarCaixaAberto();
@@ -211,7 +258,12 @@ export default function app() {
         const contentType = resp.headers && resp.headers.get ? resp.headers.get('content-type') || '' : '';
         if (!resp.ok) {
           const txt = await resp.text().catch(() => null);
-          return persistAndReturn({ sucesso: false, erro: typeof txt === 'string' ? txt.slice(0, 2000) : `HTTP ${resp.status}`, detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status: resp.status });
+          const status = resp.status;
+          if (status === 401 || status === 403) {
+            handleUnauthorized();
+            return persistAndReturn({ sucesso: false, erro: 'Sessão expirada', detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status });
+          }
+          return persistAndReturn({ sucesso: false, erro: typeof txt === 'string' ? txt.slice(0, 2000) : `HTTP ${status}`, detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status });
         }
         if (contentType.includes('application/json')) {
           const parsed = await resp.json().catch((e) => ({ ok: false, parseError: e.message }));
@@ -232,7 +284,12 @@ export default function app() {
 
       if (!resp.ok) {
         const txt = await resp.text().catch(() => null);
-        return persistAndReturn({ sucesso: false, erro: typeof txt === 'string' ? txt.slice(0, 2000) : `HTTP ${resp.status}`, detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status: resp.status });
+        const status = resp.status;
+        if (status === 401 || status === 403) {
+          handleUnauthorized();
+          return persistAndReturn({ sucesso: false, erro: 'Sessão expirada', detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status });
+        }
+        return persistAndReturn({ sucesso: false, erro: typeof txt === 'string' ? txt.slice(0, 2000) : `HTTP ${status}`, detalhes: typeof txt === 'string' ? txt.slice(0, 2000) : null, status });
       }
 
       if (contentType.includes('application/json')) {
@@ -250,7 +307,12 @@ export default function app() {
     setEmitindoNota(true);
     try {
       const url = makeUrl(ENDPOINTS.notaFiscal(vendaId));
-      const resp = await fetchWithAuth(url, { method: 'POST' });
+      const body = {
+        clienteCpf: getCpfDigits(clienteCpf) || undefined,
+        clienteNome: clienteNome || undefined,
+        valorPagoCliente: paymentMethod === 'cash' ? amountReceived : getTotal(),
+      };
+      const resp = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
       if (!resp?.ok) {
         const txt = await resp.text().catch(() => '');
         throw new Error(txt || `HTTP ${resp?.status}`);
@@ -266,7 +328,11 @@ export default function app() {
       window.URL.revokeObjectURL(fileUrl);
     } catch (error) {
       console.error('Erro ao emitir nota fiscal:', error);
-      alert('Venda registrada, mas não foi possível gerar a nota fiscal.');
+      toast({
+        title: 'Erro ao emitir nota fiscal',
+        description: 'Venda registrada, mas não foi possível gerar a nota fiscal.',
+        variant: 'destructive',
+      });
     } finally {
       setEmitindoNota(false);
     }
@@ -287,11 +353,20 @@ export default function app() {
 
   const processSale = async () => {
     if (!cart || cart.length === 0) {
-      alert('Carrinho vazio. Adicione produtos antes de finalizar.');
+      toast({
+        title: 'Carrinho vazio',
+        description: 'Adicione produtos antes de finalizar a venda.',
+        variant: 'destructive',
+      });
       return;
     }
     if (!caixaAberto) {
       setPaymentMessage('Abra o caixa antes de registrar uma venda.');
+      toast({
+        title: 'Caixa fechado',
+        description: 'Abra o caixa para registrar vendas.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -303,7 +378,14 @@ export default function app() {
         return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
       });
 
-      const payload = { pagamento: paymentMethod, itens, nomeCliente: clienteNome || undefined, caixaId: caixaInfo?.id };
+      const payload = {
+        pagamento: paymentMethod,
+        itens,
+        nomeCliente: clienteNome || undefined,
+        cpfCliente: getCpfDigits(clienteCpf) || undefined,
+        caixaId: caixaInfo?.id,
+        valorPagoCliente: paymentMethod === 'cash' ? amountReceived : getTotal()
+      };
       console.log('📤 Enviando payload para /vendas/criar:', payload);
       console.log('👤 User info (user):', user);
       
@@ -312,7 +394,11 @@ export default function app() {
 
       if (!resp || resp.sucesso === false) {
         console.error('Erro ao criar venda', resp);
-        alert('Erro ao registrar venda. Veja o console para detalhes.');
+        toast({
+          title: 'Erro ao registrar venda',
+          description: resp?.erro || 'Veja o console para detalhes.',
+          variant: 'destructive',
+        });
         return;
       }
 
@@ -320,6 +406,7 @@ export default function app() {
       if (resp?.venda?.id) { await emitirNotaFiscal(resp.venda.id); }
       clearCart();
       setClienteNome('');
+      setClienteCpf('');
       setIsPaymentOpen(false);
       verificarCaixaAberto();
       fetchRecentSales();
@@ -330,7 +417,11 @@ export default function app() {
 
     } catch (error) {
       console.error('Erro ao processar venda:', error);
-      alert('Erro ao processar venda. Veja console para detalhes.');
+      toast({
+        title: 'Erro ao processar venda',
+        description: error?.message || 'Veja o console para detalhes.',
+        variant: 'destructive',
+      });
     }
   };
   const loadFinance = async () => {
@@ -625,7 +716,7 @@ export default function app() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={verificarCaixaAberto}>Atualizar status</Button>
+                {/* <Button variant="outline" onClick={verificarCaixaAberto}>Atualizar status</Button> */}
                 <Button onClick={handleFecharCaixa} disabled={fechandoCaixa}>
                   {fechandoCaixa ? 'Fechando...' : '✓ Fechar Caixa'}
                 </Button>
@@ -707,6 +798,14 @@ export default function app() {
                   <div className="space-y-2">
                     <Label>Cliente</Label>
                     <Input placeholder="Nome do cliente (opcional)" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CPF do cliente (opcional)</Label>
+                    <Input
+                      placeholder="000.000.000-00"
+                      value={clienteCpf}
+                      onChange={(e) => setClienteCpf(formatCpfInput(e.target.value))}
+                    />
                   </div>
 
                   {/* Itens do Carrinho */}
