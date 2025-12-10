@@ -1,5 +1,6 @@
 import express from "express";
 import { getUnidadesController, getUnidadePorIdController, createUnidadeController, updateUnidadeController, deleteUnidadeController, contarFazendasController, getFazendasController, getLojaController, getMatrizController, getUsuariosPorUnidadeController, getUsuarioPorIdController, contarLojasController, buscarCepController, atualizarFotoUnidadeController, removerFotoUnidadeController, getCitySuggestionsController } from "../controllers/UnidadesController.js";
+import { listarCaixasController } from "../controllers/FinanceiroController.js";
 import { auth } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/uploadMiddleware.js";
 
@@ -49,6 +50,7 @@ router.get("/usuarios", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja
 router.post("/:id/foto", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), upload.single('foto'), atualizarFotoUnidadeController);
 router.delete("/:id/foto", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), removerFotoUnidadeController);
 
+router.get("/:unidadeId/caixas", auth(), listarCaixasController);
 router.get("/:unidadeId/usuarios", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getUsuariosPorUnidadeController);
 router.get("/usuarios/:id", auth(["gerente_matriz", "gerente_fazenda", "gerente_loja"]), getUsuarioPorIdController);
 

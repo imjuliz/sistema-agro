@@ -51,7 +51,7 @@ export function OverviewTab({ lojaId }) {
   const [caixasLoading, setCaixasLoading] = useState(false)
   const [openEditInfo, setOpenEditInfo] = useState(false)
   const [openEditLocal, setOpenEditLocal] = useState(false)
-  const [formInfo, setFormInfo] = useState({ focoProdutivo: "", quantidadeFuncionarios: "", cnpj: "" })
+  const [formInfo, setFormInfo] = useState({ quantidadeFuncionarios: "", cnpj: "" })
   const [formLocal, setFormLocal] = useState({ endereco: "", cidade: "", estado: "", cep: "", latitude: "", longitude: "" })
 
   const isGerenteMatriz = useMemo(() => {
@@ -176,7 +176,6 @@ export function OverviewTab({ lojaId }) {
 
   function hydrateFormsFromDados(unidade) {
     setFormInfo({
-      focoProdutivo: Array.isArray(unidade?.focoProdutivo) ? unidade.focoProdutivo.join(", ") : (unidade?.focoProdutivo ?? ""),
       quantidadeFuncionarios: unidade?.quantidadeFuncionarios ?? "",
       cnpj: formatCnpjInput(unidade?.cnpj ?? ""),
     });
@@ -197,7 +196,6 @@ export function OverviewTab({ lojaId }) {
   async function salvarInfo() {
     try {
       const payload = {
-        focoProdutivo: formInfo.focoProdutivo,
         cnpj: formInfo.cnpj ? formInfo.cnpj.replace(/\D/g, "") : null,
       };
       const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}`, {
@@ -283,13 +281,34 @@ export function OverviewTab({ lojaId }) {
   }
 
   function formatTime(timeValue) {
-    if (!timeValue) return null;
+    if (!timeValue) return '—';
     try {
-      // Se for string no formato HH:mm ou HH:mm:ss
+      // Se for string
       if (typeof timeValue === 'string') {
-        const parts = timeValue.split(':');
+        const trimmed = timeValue.trim();
+        if (!trimmed) return '—';
+        
+        // Se for string ISO (ex: "1970-01-01T10:00" ou "1970-01-01T10:00:00.000Z")
+        if (trimmed.includes('T')) {
+          const timePart = trimmed.split('T')[1];
+          if (timePart) {
+            // Remove timezone e milissegundos se existirem
+            const timeOnly = timePart.split('.')[0].split('Z')[0].split('+')[0];
+            const parts = timeOnly.split(':');
+            if (parts.length >= 2) {
+              const hours = parts[0].padStart(2, '0');
+              const minutes = parts[1].padStart(2, '0');
+              return `${hours}:${minutes}`;
+            }
+          }
+        }
+        
+        // Se for string no formato HH:mm ou HH:mm:ss
+        const parts = trimmed.split(':');
         if (parts.length >= 2) {
-          return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+          const hours = parts[0].padStart(2, '0');
+          const minutes = parts[1].padStart(2, '0');
+          return `${hours}:${minutes}`;
         }
       }
       // Se for Date/DateTime
@@ -303,7 +322,41 @@ export function OverviewTab({ lojaId }) {
     } catch (e) {
       console.warn('Erro ao formatar horário:', e);
     }
-    return null;
+    return '—';
+  }
+
+  function formatDate(dateValue) {
+    if (!dateValue) return '—';
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      if (isNaN(date.getTime())) return '—';
+      return date.toLocaleDateString('pt-BR', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (e) {
+      console.warn('Erro ao formatar data:', e);
+      return '—';
+    }
+  }
+
+  function formatDateTime(dateValue) {
+    if (!dateValue) return '—';
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      if (isNaN(date.getTime())) return '—';
+      return date.toLocaleString('pt-BR', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.warn('Erro ao formatar data/hora:', e);
+      return '—';
+    }
   }
 
   function formatCurrency(value) {
@@ -391,7 +444,7 @@ export function OverviewTab({ lojaId }) {
               <Calendar className="size-4 text-muted-foreground" />
               <div>
                 <div className="text-sm font-medium">Criado em</div>
-                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : (dadosLoja?.criadoEm ? new Date(dadosLoja.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }) : "-")}</div>
+                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatDate(dadosLoja?.criadoEm)}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -494,17 +547,18 @@ export function OverviewTab({ lojaId }) {
                   <TableHead>Saldo Final</TableHead>
                   <TableHead>Faturamento do Dia</TableHead>
                   <TableHead>Aberto em</TableHead>
+                  <TableHead>Fechado em</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {caixasLoading && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">Carregando...</TableCell>
+                    <TableCell colSpan={7} className="text-center">Carregando...</TableCell>
                   </TableRow>
                 )}
                 {!caixasLoading && caixas.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">Nenhum caixa encontrado para hoje.</TableCell>
+                    <TableCell colSpan={7} className="text-center">Nenhum caixa encontrado para hoje.</TableCell>
                   </TableRow>
                 )}
                 {!caixasLoading && caixas.map((caixa) => {
@@ -523,7 +577,10 @@ export function OverviewTab({ lojaId }) {
                       <TableCell>{formatCurrency(caixa.saldoFinal || 0)}</TableCell>
                       <TableCell className="font-semibold">{formatCurrency(faturamento)}</TableCell>
                       <TableCell>
-                        {caixa.abertoEm ? new Date(caixa.abertoEm).toLocaleString('pt-BR') : '—'}
+                        {formatDateTime(caixa.abertoEm)}
+                      </TableCell>
+                      <TableCell>
+                        {caixa.fechadoEm ? formatDateTime(caixa.fechadoEm) : '—'}
                       </TableCell>
                     </TableRow>
                   );
@@ -635,13 +692,6 @@ export function OverviewTab({ lojaId }) {
           <DialogTitle>Editar informações da unidade</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Culturas atuais (separe por vírgula)</Label>
-            <Input
-              value={formInfo.focoProdutivo}
-              onChange={(e) => setFormInfo((f) => ({ ...f, focoProdutivo: e.target.value }))}
-            />
-          </div>
           <div className="space-y-1">
             <Label>Quantidade de funcionários</Label>
             <Input

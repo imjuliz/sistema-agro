@@ -2539,32 +2539,13 @@ async function main() {
         await seedPedidoItems(prisma);
 
         // === ESTOQUES DAS UNIDADES ===
-        const estoques = [
-            {
-
-                unidadeId: unidadeMap["Fazenda Beta"],
-                descricao: "Estoque principal - Fazenda Beta",
+        // Garantir que todas as lojas e fazendas tenham estoque
+        const todasUnidades = await prisma.unidade.findMany();
+        const estoques = todasUnidades.map(unidade => ({
+            unidadeId: unidade.id,
+            descricao: `Estoque principal - ${unidade.nome}`,
                 qntdItens: 0,
-            },
-            {
-                unidadeId: unidadeMap["Fazenda Teste"],
-                descricao: "Estoque principal - Fazenda Teste",
-                qntdItens: 0,
-            },
-            {
-
-                unidadeId: unidadeMap["Loja Teste"],
-                descricao: "Estoque principal - Loja Teste",
-                qntdItens: 0,
-            },
-            {
-
-                unidadeId: unidadeMap["Casa Útil Mercado"],
-                descricao: "Estoque principal - Casa Útil Mercado",
-                qntdItens: 0,
-
-            },
-        ];
+        }));
 
         await prisma.estoque.createMany({ data: estoques, skipDuplicates: true })
 
@@ -3853,6 +3834,78 @@ async function main() {
             }
         }
 
+        // ===== GARANTIR PRODUTOS PARA TODAS AS LOJAS =====
+        console.log("\n🛍️  Garantindo produtos para todas as lojas...");
+        
+        const todasLojas = await prisma.unidade.findMany({
+            where: { tipo: TU.LOJA }
+        });
+
+        for (const loja of todasLojas) {
+            const produtosLoja = produtosParaVenda.filter(p => p.unidadeId === loja.id);
+            
+            // Se a loja não tem produtos, criar produtos padrão
+            if (produtosLoja.length === 0) {
+                console.log(`   Criando produtos padrão para ${loja.nome}...`);
+                
+                let produtosPadrao = [];
+                
+                if (loja.nome === "Sabor do Campo Laticínios") {
+                    produtosPadrao = [
+                        { nome: "Leite pasteurizado 1L", preco: 6.50, validade: 7, peso: 1.0, un: UMED.UNIDADE, categoria: "Laticínios" },
+                        { nome: "Queijo fresco 500g", preco: 18.00, validade: 30, peso: 0.5, un: UMED.UNIDADE, categoria: "Laticínios" },
+                        { nome: "Iogurte natural 500g", preco: 8.50, validade: 15, peso: 0.5, un: UMED.UNIDADE, categoria: "Laticínios" },
+                        { nome: "Manteiga 200g", preco: 12.00, validade: 30, peso: 0.2, un: UMED.UNIDADE, categoria: "Laticínios" },
+                        { nome: "Requeijão cremoso 250g", preco: 9.50, validade: 20, peso: 0.25, un: UMED.UNIDADE, categoria: "Laticínios" }
+                    ];
+                } else if (loja.nome === "Casa Útil Mercado") {
+                    produtosPadrao = [
+                        { nome: "Soja grão (saca 60kg)", preco: 180.00, validade: 365, peso: 60.0, un: UMED.SACA, categoria: "Grãos e Cereais" },
+                        { nome: "Milho grão (saca 60kg)", preco: 150.00, validade: 365, peso: 60.0, un: UMED.SACA, categoria: "Grãos e Cereais" },
+                        { nome: "Trigo (saca 50kg)", preco: 140.00, validade: 365, peso: 50.0, un: UMED.SACA, categoria: "Grãos e Cereais" },
+                        { nome: "Feijão carioca (saca 30kg)", preco: 220.00, validade: 365, peso: 30.0, un: UMED.SACA, categoria: "Grãos e Cereais" },
+                        { nome: "Óleo de soja refinado 1L", preco: 12.50, validade: 180, peso: 1.0, un: UMED.LITRO, categoria: "Grãos e Cereais" },
+                        { nome: "Fubá de milho 1kg", preco: 8.00, validade: 365, peso: 1.0, un: UMED.KG, categoria: "Grãos e Cereais" }
+                    ];
+                } else if (loja.nome === "Loja Teste") {
+                    produtosPadrao = [
+                        { nome: "Leite pasteurizado 1L", preco: 6.50, validade: 7, peso: 1.0, un: UMED.UNIDADE, categoria: "Laticínios" },
+                        { nome: "Queijo fresco 500g", preco: 18.00, validade: 30, peso: 0.5, un: UMED.UNIDADE, categoria: "Laticínios" },
+                        { nome: "Carne bovina corte dianteiro", preco: 45.00, validade: 5, peso: 1.0, un: UMED.KG, categoria: "Carnes" },
+                        { nome: "Carne bovina corte traseiro", preco: 55.00, validade: 5, peso: 1.0, un: UMED.KG, categoria: "Carnes" }
+                    ];
+                }
+
+                // Criar produtos para esta loja
+                for (const item of produtosPadrao) {
+                    const qtd = Math.floor(Math.random() * 20) + 15; // Entre 15 e 35 unidades
+                    
+                    for (let i = 0; i < qtd; i++) {
+                        const dataFabricacao = new Date();
+                        const dataValidade = new Date();
+                        dataValidade.setDate(dataValidade.getDate() + item.validade);
+
+                        const produto = await prisma.produto.create({
+                            data: {
+                                unidadeId: loja.id,
+                                nome: item.nome,
+                                sku: `VENDA-${loja.nome.substring(0, 3).toUpperCase()}-${item.nome.substring(0, 10).replace(/\s+/g, '')}-${i}-${Date.now()}`,
+                                categoria: item.categoria,
+                                descricao: `${item.nome} - Produto de qualidade`,
+                                preco: item.preco,
+                                dataFabricacao: dataFabricacao,
+                                dataValidade: dataValidade,
+                                unidadeMedida: item.un,
+                                pesoUnidade: item.peso,
+                                isForSale: true
+                            }
+                        });
+                        produtosParaVenda.push(produto);
+                    }
+                }
+            }
+        }
+
         console.log(`✓ ${produtosParaVenda.length} produtos criados e disponíveis para venda nas lojas`);
 
         // Estatísticas por loja
@@ -3870,10 +3923,163 @@ async function main() {
         }
         console.log("");
 
+        // ===== CRIAR ESTOQUEPRODUTO A PARTIR DOS PRODUTOS CRIADOS PARA VENDA =====
+        console.log("\n📦 Criando EstoqueProduto a partir dos produtos para venda...");
+        
+        // Agrupar produtos por unidade
+        const produtosPorUnidade = {};
+        for (const produto of produtosParaVenda) {
+            if (!produtosPorUnidade[produto.unidadeId]) {
+                produtosPorUnidade[produto.unidadeId] = [];
+            }
+            produtosPorUnidade[produto.unidadeId].push(produto);
+        }
+
+        // Criar EstoqueProduto para cada produto
+        let estoqueProdutosCriados = 0;
+        for (const [unidadeId, produtos] of Object.entries(produtosPorUnidade)) {
+            // Buscar estoque da unidade
+            const estoque = await prisma.estoque.findUnique({
+                where: { unidadeId: parseInt(unidadeId) }
+            });
+
+            if (!estoque) {
+                console.log(`⚠️  Estoque não encontrado para unidade ${unidadeId}`);
+                continue;
+            }
+
+            // Agrupar produtos por nome para consolidar quantidade
+            const produtosAgrupados = {};
+            for (const produto of produtos) {
+                const chave = produto.nome;
+                if (!produtosAgrupados[chave]) {
+                    produtosAgrupados[chave] = {
+                        produto: produto,
+                        quantidade: 0,
+                        precoUnitario: Number(produto.preco)
+                    };
+                }
+                produtosAgrupados[chave].quantidade += 1;
+            }
+
+            // Criar EstoqueProduto para cada grupo
+            for (const [nome, dados] of Object.entries(produtosAgrupados)) {
+                try {
+                    // Verificar se já existe
+                    const existe = await prisma.estoqueProduto.findFirst({
+                        where: {
+                            estoqueId: estoque.id,
+                            produtoId: dados.produto.id
+                        }
+                    });
+
+                    if (existe) {
+                        // Atualizar quantidade
+                        await prisma.estoqueProduto.update({
+                            where: { id: existe.id },
+                            data: {
+                                qntdAtual: existe.qntdAtual + dados.quantidade
+                            }
+                        });
+                    } else {
+                        // Criar novo
+                        await prisma.estoqueProduto.create({
+                            data: {
+                                nome: dados.produto.nome,
+                                sku: dados.produto.sku,
+                                estoqueId: estoque.id,
+                                produtoId: dados.produto.id,
+                                qntdAtual: dados.quantidade,
+                                qntdMin: 1,
+                                precoUnitario: dados.precoUnitario,
+                                unidadeBase: dados.produto.unidadeMedida || UMED.UNIDADE,
+                                pesoUnidade: dados.produto.pesoUnidade,
+                                validade: dados.produto.dataValidade,
+                                dataEntrada: new Date()
+                            }
+                        });
+                    }
+                    estoqueProdutosCriados++;
+                } catch (error) {
+                    console.log(`⚠️  Erro ao criar EstoqueProduto para ${nome}: ${error.message}`);
+                }
+            }
+        }
+
+        console.log(`✓ ${estoqueProdutosCriados} EstoqueProduto criados/atualizados`);
+        
+        // Garantir que TODOS os produtos tenham EstoqueProduto
+        console.log("\n🔍 Verificando produtos sem EstoqueProduto...");
+        
+        // Buscar todos os produtos de lojas
+        const todosProdutosLoja = await prisma.produto.findMany({
+            where: {
+                isForSale: true,
+                unidade: {
+                    tipo: TU.LOJA
+                }
+            },
+            include: {
+                unidade: true,
+                estoqueProdutos: true
+            }
+        });
+
+        // Filtrar produtos que não têm EstoqueProduto
+        const produtosSemEstoque = todosProdutosLoja.filter(p => p.estoqueProdutos.length === 0);
+
+        if (produtosSemEstoque.length > 0) {
+            console.log(`   Encontrados ${produtosSemEstoque.length} produtos sem EstoqueProduto, criando...`);
+            
+            for (const produto of produtosSemEstoque) {
+                const estoque = await prisma.estoque.findUnique({
+                    where: { unidadeId: produto.unidadeId }
+                });
+
+                if (estoque) {
+                    try {
+                        await prisma.estoqueProduto.create({
+                            data: {
+                                nome: produto.nome,
+                                sku: produto.sku,
+                                estoqueId: estoque.id,
+                                produtoId: produto.id,
+                                qntdAtual: Math.floor(Math.random() * 10) + 5, // Entre 5 e 15 unidades
+                                qntdMin: 1,
+                                precoUnitario: Number(produto.preco),
+                                unidadeBase: produto.unidadeMedida || UMED.UNIDADE,
+                                pesoUnidade: produto.pesoUnidade,
+                                validade: produto.dataValidade,
+                                dataEntrada: new Date()
+                            }
+                        });
+                        estoqueProdutosCriados++;
+                    } catch (error) {
+                        console.log(`   ⚠️  Erro ao criar EstoqueProduto para ${produto.nome}: ${error.message}`);
+                    }
+                }
+            }
+            console.log(`✓ ${produtosSemEstoque.length} EstoqueProduto adicionais criados`);
+        }
+
         // CAIXAS
-        const lojas = unidades.filter(u => u.tipo === TU.LOJA);
+        const lojas = await prisma.unidade.findMany({
+            where: { tipo: TU.LOJA }
+        });
 
         for (const loja of lojas) {
+            // Verificar se já existe caixa aberto para esta loja
+            const caixaExistente = await prisma.caixa.findFirst({
+                where: {
+                    unidadeId: loja.id,
+                    status: true
+                }
+            });
+
+            if (caixaExistente) {
+                continue; // Já existe caixa aberto
+            }
+
             const gerenteLoja = await prisma.usuario.findFirst({
                 where: {
                     unidadeId: loja.id,
@@ -3894,8 +4100,8 @@ async function main() {
             }
         }
 
-        // ===== CRIAR VENDAS E ITENS DE VENDA PARA HOJE =====
-        console.log("\n💰 Criando vendas de hoje nas lojas específicas...");
+        // ===== CRIAR VENDAS E ITENS DE VENDA PARA HOJE E ÚLTIMOS 15 DIAS =====
+        console.log("\n💰 Criando vendas para hoje e últimos 15 dias nas lojas específicas...");
 
         const vendasCriadas = [];
 
@@ -3906,16 +4112,14 @@ async function main() {
         const fimHoje = new Date();
         fimHoje.setHours(23, 59, 59, 999);
 
-        console.log(`📅 Criando vendas para: ${hoje.toLocaleDateString('pt-BR')}`);
+        console.log(`📅 Criando vendas para: ${hoje.toLocaleDateString('pt-BR')} e últimos 15 dias`);
 
-        // Buscar caixas abertos APENAS nas lojas específicas
+        // Buscar caixas abertos em TODAS as lojas
         const caixasAbertas = await prisma.caixa.findMany({
             where: {
                 status: true,
                 unidade: {
-                    nome: {
-                        in: ["Loja Teste", "Sabor do Campo Laticínios"]
-                    }
+                    tipo: TU.LOJA
                 }
             },
             include: {
@@ -3925,28 +4129,45 @@ async function main() {
         });
 
         if (caixasAbertas.length === 0) {
-            console.log("⚠️  Nenhum caixa aberto nas lojas: 'Loja Teste' ou 'Sabor do Campo Laticínios'");
+            console.log("⚠️  Nenhum caixa aberto nas lojas");
         } else {
-            console.log(`✓ Encontrados ${caixasAbertas.length} caixas abertos nas lojas especificadas`);
+            console.log(`✓ Encontrados ${caixasAbertas.length} caixas abertos nas lojas`);
         }
 
         for (const caixa of caixasAbertas) {
-            // Buscar produtos disponíveis para venda nesta loja
-            const produtosDisponiveis = await prisma.produto.findMany({
+            // Buscar estoque da unidade
+            const estoque = await prisma.estoque.findUnique({
+                where: { unidadeId: caixa.unidadeId }
+            });
+
+            if (!estoque) {
+                console.log(`⚠️  Nenhum estoque encontrado para ${caixa.unidade.nome}`);
+                continue;
+            }
+
+            // Buscar produtos de estoque disponíveis para venda nesta loja
+            const estoqueProdutosDisponiveis = await prisma.estoqueProduto.findMany({
                 where: {
-                    unidadeId: caixa.unidadeId,
+                    estoqueId: estoque.id,
+                    qntdAtual: { gt: 0 },
+                    produtoId: { not: null }, // Garantir que tem produto relacionado
+                    produto: {
                     isForSale: true
+                    }
+                },
+                include: {
+                    produto: true
                 },
                 take: 50
             });
 
-            if (produtosDisponiveis.length === 0) {
-                console.log(`⚠️  Nenhum produto disponível para ${caixa.unidade.nome}`);
+            if (estoqueProdutosDisponiveis.length === 0) {
+                console.log(`⚠️  Nenhum produto disponível no estoque para ${caixa.unidade.nome}`);
                 continue;
             }
 
-            // Criar entre 5 e 15 vendas por loja
-            const numVendas = Math.floor(Math.random() * 11) + 5;
+            // Criar entre 30 e 60 vendas por loja
+            const numVendas = Math.floor(Math.random() * 31) + 30;
 
             for (let i = 0; i < numVendas; i++) {
                 // Selecionar entre 1 e 5 produtos aleatórios
@@ -3954,24 +4175,29 @@ async function main() {
                 const produtosSelecionados = [];
 
                 for (let j = 0; j < numItens; j++) {
-                    const produtoAleatorio = produtosDisponiveis[Math.floor(Math.random() * produtosDisponiveis.length)];
-                    produtosSelecionados.push(produtoAleatorio);
+                    const estoqueProdutoAleatorio = estoqueProdutosDisponiveis[Math.floor(Math.random() * estoqueProdutosDisponiveis.length)];
+                    produtosSelecionados.push(estoqueProdutoAleatorio);
                 }
 
                 // Calcular total da venda
                 let totalVenda = 0;
                 const itensVenda = [];
 
-                for (const produto of produtosSelecionados) {
-                    const quantidade = Math.floor(Math.random() * 3) + 1; // 1 a 3 unidades
-                    const precoUnitario = Number(produto.preco);
+                for (const estoqueProduto of produtosSelecionados) {
+                    // Garantir que a quantidade não exceda o estoque disponível
+                    const quantidadeMaxima = Math.min(estoqueProduto.qntdAtual, 3);
+                    const quantidade = Math.floor(Math.random() * quantidadeMaxima) + 1; // 1 a quantidadeMaxima unidades
+                    // Usar precoUnitario do EstoqueProduto ou do Produto relacionado
+                    const precoUnitario = estoqueProduto.precoUnitario 
+                        ? Number(estoqueProduto.precoUnitario) 
+                        : (estoqueProduto.produto ? Number(estoqueProduto.produto.preco) : 0);
                     const desconto = Math.random() < 0.3 ? (precoUnitario * 0.05 * quantidade) : 0; // 30% chance de 5% desconto
                     const subtotal = (precoUnitario * quantidade) - desconto;
 
                     totalVenda += subtotal;
 
                     itensVenda.push({
-                        produtoId: produto.id,
+                        produtoId: estoqueProduto.id, // Usar EstoqueProduto.id
                         quantidade: quantidade,
                         precoUnitario: precoUnitario,
                         desconto: desconto,
@@ -3983,8 +4209,14 @@ async function main() {
                 const formasPagamento = [TPAG.DINHEIRO, TPAG.CARTAO, TPAG.PIX];
                 const formaPagamento = formasPagamento[Math.floor(Math.random() * formasPagamento.length)];
 
-                // Data da venda = HOJE com horário aleatório
+                // Data da venda = Distribuir entre hoje e últimos 15 dias
+                // 40% das vendas são de hoje, 60% distribuídas nos últimos 15 dias
+                const diasAtras = Math.random() < 0.4 
+                    ? 0  // 40% das vendas são de hoje
+                    : Math.floor(Math.random() * 15) + 1; // 60% distribuídas nos últimos 15 dias
+                
                 const dataVenda = new Date();
+                dataVenda.setDate(dataVenda.getDate() - diasAtras);
                 dataVenda.setHours(
                     Math.floor(Math.random() * 12) + 8, // Hora entre 8h e 19h
                     Math.floor(Math.random() * 60),     // Minuto aleatório
@@ -4023,11 +4255,11 @@ async function main() {
                 vendasCriadas.push(venda);
             }
 
-            console.log(`✓ ${numVendas} vendas de hoje criadas para ${caixa.unidade.nome}`);
+            console.log(`✓ ${numVendas} vendas criadas para ${caixa.unidade.nome} (distribuídas nos últimos 15 dias)`);
         }
 
-        console.log(`\n✅ Total de ${vendasCriadas.length} vendas de hoje criadas com sucesso!`);
-        console.log(`📅 Data das vendas: ${hoje.toLocaleDateString('pt-BR')}`);
+        console.log(`\n✅ Total de ${vendasCriadas.length} vendas criadas com sucesso!`);
+        console.log(`📅 Período das vendas: últimos 15 dias (incluindo hoje: ${hoje.toLocaleDateString('pt-BR')})`);
 
         // Resumo por loja
         const resumoPorLoja = {};
@@ -4050,9 +4282,16 @@ async function main() {
 
         // --- Seed financeiro: criar lançamentos de exemplo para matriz, fazendas e lojas ---
         // colocar abaixo de onde unidadeMap e usuarioMap já existem (após criar unidades/usuarios)
+        console.log("\n💰 Criando dados financeiros...");
         async function seedFinanceiro(prisma, unidadeMap, usuarioMap) {
             const daysFromNow = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
             const firstOfMonth = (y, m) => new Date(y, m - 1, 1);
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1;
+            const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const getMonthName = (month) => monthNames[month - 1] || "Mês";
 
             // Lista de unidades (nomes conforme seu unidadeMap)
             const unidades = [
@@ -4077,21 +4316,21 @@ async function main() {
                 // SAIDAS
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId, nome: "Folha" } },
+                        where: { unidadeId_nome_tipo: { unidadeId, nome: "Folha", tipo: "SAIDA" } },
                         update: {},
                         create: { unidadeId, nome: "Folha", tipo: "SAIDA" }
                     })
                 );
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId, nome: "Manutenção" } },
+                        where: { unidadeId_nome_tipo: { unidadeId, nome: "Manutenção", tipo: "SAIDA" } },
                         update: {},
                         create: { unidadeId, nome: "Manutenção", tipo: "SAIDA" }
                     })
                 );
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId, nome: "Aluguel" } },
+                        where: { unidadeId_nome_tipo: { unidadeId, nome: "Aluguel", tipo: "SAIDA" } },
                         update: {},
                         create: { unidadeId, nome: "Aluguel", tipo: "SAIDA" }
                     })
@@ -4099,14 +4338,14 @@ async function main() {
                 // ENTRADAS
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId, nome: "Receita" } },
+                        where: { unidadeId_nome_tipo: { unidadeId, nome: "Receita", tipo: "ENTRADA" } },
                         update: {},
                         create: { unidadeId, nome: "Receita", tipo: "ENTRADA" }
                     })
                 );
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId, nome: "Vendas" } },
+                        where: { unidadeId_nome_tipo: { unidadeId, nome: "Vendas", tipo: "ENTRADA" } },
                         update: {},
                         create: { unidadeId, nome: "Vendas", tipo: "ENTRADA" }
                     })
@@ -4118,7 +4357,7 @@ async function main() {
             if (matrizId) {
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId: matrizId, nome: "Repasse" } },
+                        where: { unidadeId_nome_tipo: { unidadeId: matrizId, nome: "Repasse", tipo: "SAIDA" } },
                         update: {},
                         create: { unidadeId: matrizId, nome: "Repasse", tipo: "SAIDA" }
                     })
@@ -4129,7 +4368,7 @@ async function main() {
                 if (!unidadeId || nomeUnidade === "RuralTech") continue;
                 categoryPromises.push(
                     prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId, nome: "Repasse Recebido" } },
+                        where: { unidadeId_nome_tipo: { unidadeId, nome: "Repasse Recebido", tipo: "ENTRADA" } },
                         update: {},
                         create: { unidadeId, nome: "Repasse Recebido", tipo: "ENTRADA" }
                     })
@@ -4217,7 +4456,7 @@ async function main() {
             // 3) Montar array de dados (lancamentos)
             const dados = [];
 
-            const competencia = firstOfMonth(2025, 11);
+            const competencia = firstOfMonth(prevYear, prevMonth);
 
             // -- folhas (saídas)
             for (const [unidadeNome, valor] of Object.entries(folhas)) {
@@ -4230,13 +4469,13 @@ async function main() {
                     unidadeId,
                     categoriaId,
                     subcategoriaId: null,
-                    descricao: `Folha de pagamento - Novembro/2025 (${unidadeNome})`,
+                    descricao: `Folha de pagamento - ${getMonthName(prevMonth)}/${prevYear} (${unidadeNome})`,
                     tipoMovimento: "SAIDA",
                     formaPagamento: "PIX",
                     valor: valor,
                     valorPago: valor,
                     competencia,
-                    vencimento: new Date("2025-11-30"),
+                    vencimento: new Date(prevYear, prevMonth - 1, 30),
                     dataPagamento: daysFromNow(-5),
                     parcela: 1,
                     totalParcelas: 1,
@@ -4256,13 +4495,13 @@ async function main() {
                     unidadeId,
                     categoriaId,
                     subcategoriaId: null,
-                    descricao: `Aluguel - Novembro/2025 (${unidadeNome})`,
+                    descricao: `Aluguel - ${getMonthName(prevMonth)}/${prevYear} (${unidadeNome})`,
                     tipoMovimento: "SAIDA",
                     formaPagamento: "BOLETO",
                     valor: valor,
                     valorPago: null,
                     competencia,
-                    vencimento: new Date("2025-11-10"),
+                    vencimento: new Date(prevYear, prevMonth - 1, 10),
                     parcela: 1,
                     totalParcelas: 1,
                     status: "PENDENTE",
@@ -4281,7 +4520,7 @@ async function main() {
                     unidadeId,
                     categoriaId,
                     subcategoriaId: null,
-                    descricao: `Manutenção / reparos - Novembro/2025 (${unidadeNome})`,
+                    descricao: `Manutenção / reparos - ${getMonthName(prevMonth)}/${prevYear} (${unidadeNome})`,
                     tipoMovimento: "SAIDA",
                     formaPagamento: "PIX",
                     valor: valor,
@@ -4309,7 +4548,7 @@ async function main() {
                             unidadeId: matrizId,
                             categoriaId: categoriaRepasseMatriz,
                             subcategoriaId: null,
-                            descricao: `Repasse operacional para ${unidadeNome} - Novembro/2025`,
+                            descricao: `Repasse operacional para ${unidadeNome} - ${getMonthName(prevMonth)}/${prevYear}`,
                             tipoMovimento: "SAIDA",
                             formaPagamento: "TRANSFERENCIA",
                             valor: valor,
@@ -4331,7 +4570,7 @@ async function main() {
                             unidadeId: unidadeIdRecebedora,
                             categoriaId: catRepReceb,
                             subcategoriaId: null,
-                            descricao: `Repasse recebido da Matriz - Novembro/2025`,
+                            descricao: `Repasse recebido da Matriz - ${getMonthName(prevMonth)}/${prevYear}`,
                             tipoMovimento: "ENTRADA",
                             formaPagamento: "TRANSFERENCIA",
                             valor: valor,
@@ -4360,7 +4599,7 @@ async function main() {
                     unidadeId,
                     categoriaId,
                     subcategoriaId: null,
-                    descricao: `Receita / Vendas - Novembro/2025 (${unidadeNome})`,
+                    descricao: `Receita / Vendas - ${getMonthName(prevMonth)}/${prevYear} (${unidadeNome})`,
                     tipoMovimento: "ENTRADA",
                     formaPagamento: "PIX",
                     valor: valor,
@@ -4375,300 +4614,1017 @@ async function main() {
                 });
             }
 
-            const fazendaBetaNome = "Fazenda Beta";
-            const fazendaBetaId = unidadeMap[fazendaBetaNome];
+            // ===== DADOS PARA O MÊS ATUAL (currentMonth/currentYear) =====
+            const competenciaAtual = firstOfMonth(currentYear, currentMonth);
+            
+            // -- folhas (saídas) para o mês atual
+            for (const [unidadeNome, valor] of Object.entries(folhas)) {
+                const unidadeId = unidadeMap[unidadeNome];
+                if (!unidadeId) continue;
+                const categoriaId = getCategoriaId(unidadeNome, "Folha");
+                if (!categoriaId) continue;
+                dados.push({
+                    criadoPorId: usuarioMap["Julia Alves"],
+                    unidadeId,
+                    categoriaId,
+                    subcategoriaId: null,
+                    descricao: `Folha de pagamento - ${getMonthName(currentMonth)}/${currentYear} (${unidadeNome})`,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
+                    valor: valor,
+                    valorPago: null, // Ainda não pago
+                    competencia: competenciaAtual,
+                    vencimento: new Date(currentYear, currentMonth - 1, 30),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PENDENTE",
+                    documento: `FOLHA-${unidadeNome.replace(/\s+/g, '').toUpperCase()}-${currentYear}${String(currentMonth).padStart(2, '0')}`
+                });
+            }
 
-            if (fazendaBetaId) {
-                // garantir categorias específicas para Fazenda Beta (se não existirem)
-                const categoriasBeta = await Promise.all([
-                    prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId: fazendaBetaId, nome: "Sanidade" } },
-                        update: {},
-                        create: { unidadeId: fazendaBetaId, nome: "Sanidade", tipo: "SAIDA" }
-                    }),
-                    prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId: fazendaBetaId, nome: "Compras" } },
-                        update: {},
-                        create: { unidadeId: fazendaBetaId, nome: "Compras", tipo: "SAIDA" }
-                    }),
-                    prisma.categoria.upsert({
-                        where: { unidadeId_nome: { unidadeId: fazendaBetaId, nome: "Equipamentos" } },
-                        update: {},
-                        create: { unidadeId: fazendaBetaId, nome: "Equipamentos", tipo: "SAIDA" }
-                    })
-                ]);
+            // -- receitas / vendas (entradas) para o mês atual
+            for (const [unidadeNome, valor] of Object.entries(receitas)) {
+                const unidadeId = unidadeMap[unidadeNome];
+                if (!unidadeId) continue;
+                const categoriaId = getCategoriaId(unidadeNome, "Receita") || getCategoriaId(unidadeNome, "Vendas");
+                if (!categoriaId) continue;
+                dados.push({
+                    criadoPorId: usuarioMap["Julia Alves"],
+                    unidadeId,
+                    categoriaId,
+                    subcategoriaId: null,
+                    descricao: `Receita / Vendas - ${getMonthName(currentMonth)}/${currentYear} (${unidadeNome})`,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "PIX",
+                    valor: valor,
+                    valorPago: valor, // Receitas são consideradas recebidas
+                    competencia: competenciaAtual,
+                    vencimento: competenciaAtual, // Para ENTRADA, vencimento = competência
+                    dataPagamento: daysFromNow(-2), // Recebido há 2 dias
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PAGA",
+                    documento: `REC-${unidadeNome.replace(/\s+/g, '').toUpperCase()}-${currentYear}${String(currentMonth).padStart(2, '0')}`
+                });
+            }
 
-                const getCat = (nome) => {
-                    const uid = fazendaBetaId;
-                    const key = `${uid}|${nome}`;
-                    // tentar mapa existente (getCategoriaId no escopo da função original)
-                    const built = (typeof getCategoriaId === 'function') ? getCategoriaId(fazendaBetaNome, nome) : null;
-                    if (built) return built;
-                    // fallback a partir das upserts que acabamos de rodar
-                    const found = categoriasBeta.find(c => c.nome === nome);
-                    return found ? found.id : null;
-                };
+            // const fazendaBetaNome = "Fazenda Beta";
+            // const fazendaBetaId = unidadeMap[fazendaBetaNome];
 
-                // Competência / datas
-                const competenciaBeta = firstOfMonth(2025, 12);
+            // if (fazendaBetaId) {
+            //     // garantir categorias específicas para Fazenda Beta (se não existirem)
+            //     const categoriasBeta = await Promise.all([
+            //         prisma.categoria.upsert({
+            //             where: { unidadeId_nome: { unidadeId: fazendaBetaId, nome: "Sanidade" } },
+            //             update: {},
+            //             create: { unidadeId: fazendaBetaId, nome: "Sanidade", tipo: "SAIDA" }
+            //         }),
+            //         prisma.categoria.upsert({
+            //             where: { unidadeId_nome: { unidadeId: fazendaBetaId, nome: "Compras" } },
+            //             update: {},
+            //             create: { unidadeId: fazendaBetaId, nome: "Compras", tipo: "SAIDA" }
+            //         }),
+            //         prisma.categoria.upsert({
+            //             where: { unidadeId_nome: { unidadeId: fazendaBetaId, nome: "Equipamentos" } },
+            //             update: {},
+            //             create: { unidadeId: fazendaBetaId, nome: "Equipamentos", tipo: "SAIDA" }
+            //         })
+            //     ]);
 
-                const lancamentosBeta = [
-                    // 1) Folha - adiantamento / benefícios
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Folha") || getCat("Compras") || getCat("Manutenção") || getCategoriaId(fazendaBetaNome, "Folha"),
-                        subcategoriaId: null,
-                        descricao: "Adiantamento + benefícios - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 3200,
-                        valorPago: 3200,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-20),
-                        dataPagamento: daysFromNow(-20),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "FOLHA-ADIANT-BETA-202511"
-                    },
+            //     const getCat = (nome) => {
+            //         const uid = fazendaBetaId;
+            //         const key = `${uid}|${nome}`;
+            //         // tentar mapa existente (getCategoriaId no escopo da função original)
+            //         const built = (typeof getCategoriaId === 'function') ? getCategoriaId(fazendaBetaNome, nome) : null;
+            //         if (built) return built;
+            //         // fallback a partir das upserts que acabamos de rodar
+            //         const found = categoriasBeta.find(c => c.nome === nome);
+            //         return found ? found.id : null;
+            //     };
 
-                    // 2) Sanidade - vacinas / medicamentos
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Sanidade"),
-                        subcategoriaId: null,
-                        descricao: "Vacinação e medicamentos - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 3000,
-                        valorPago: 3000,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-15),
-                        dataPagamento: daysFromNow(-15),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "SANIDADE-BETA-202511"
-                    },
+            //     // Competência / datas
+            //     const competenciaBeta = firstOfMonth(2025, 12);
 
-                    // 3) Compras de insumos (ração / fertilizantes)
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Compras"),
-                        subcategoriaId: null,
-                        descricao: "Compra de ração e insumos - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "BOLETO",
-                        valor: 8000,
-                        valorPago: null,
-                        competencia: competenciaBeta,
-                        vencimento: new Date("2025-11-20"),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PENDENTE",
-                        documento: "COMPRA-INSUMOS-BETA-202511"
-                    },
+            //     const lancamentosBeta = [
+            //         // 1) Folha - adiantamento / benefícios
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Folha") || getCat("Compras") || getCat("Manutenção") || getCategoriaId(fazendaBetaNome, "Folha"),
+            //             subcategoriaId: null,
+            //             descricao: "Adiantamento + benefícios - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 3200,
+            //             valorPago: 3200,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-20),
+            //             dataPagamento: daysFromNow(-20),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "FOLHA-ADIANT-BETA-202511"
+            //         },
 
-                    // 4) Manutenção / equipamentos (reparo de ordenhadeira, tratores)
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Equipamentos") || getCat("Manutenção"),
-                        subcategoriaId: null,
-                        descricao: "Manutenção de equipamento - ordem de serviço - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 4500,
-                        valorPago: 4500,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-8),
-                        dataPagamento: daysFromNow(-8),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "MANUT-EQ-BETA-202511"
-                    },
-                    // 1) Folha – Adiantamento / benefícios
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Folha"),
-                        subcategoriaId: null,
-                        descricao: "Adiantamento + benefícios - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 3200,
-                        valorPago: 3200,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-5),
-                        dataPagamento: daysFromNow(-5),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "FOLHA-ADIANT-BETA-202511"
-                    },
+            //         // 2) Sanidade - vacinas / medicamentos
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Sanidade"),
+            //             subcategoriaId: null,
+            //             descricao: "Vacinação e medicamentos - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 3000,
+            //             valorPago: 3000,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-15),
+            //             dataPagamento: daysFromNow(-15),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "SANIDADE-BETA-202511"
+            //         },
 
-                    // 2) Sanidade – vacinação / medicamentos
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Sanidade"),
-                        subcategoriaId: null,
-                        descricao: "Vacinação e medicamentos - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 3000,
-                        valorPago: 3000,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-12),
-                        dataPagamento: daysFromNow(-12),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "SANIDADE-BETA-202511"
-                    },
+            //         // 3) Compras de insumos (ração / fertilizantes)
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Compras"),
+            //             subcategoriaId: null,
+            //             descricao: "Compra de ração e insumos - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "BOLETO",
+            //             valor: 8000,
+            //             valorPago: null,
+            //             competencia: competenciaBeta,
+            //             vencimento: new Date("2025-11-20"),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PENDENTE",
+            //             documento: "COMPRA-INSUMOS-BETA-202511"
+            //         },
 
-                    // 3) Receita – venda de leite
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCategoriaId(fazendaBetaNome, "Receita"),
-                        subcategoriaId: null,
-                        descricao: "Venda de leite - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "ENTRADA",
-                        formaPagamento: "PIX",
-                        valor: 42000,
-                        valorPago: 42000,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-7),
-                        dataPagamento: daysFromNow(-7),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "VENDA-LEITE-BETA-202511"
-                    },
+            //         // 4) Manutenção / equipamentos (reparo de ordenhadeira, tratores)
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Equipamentos") || getCat("Manutenção"),
+            //             subcategoriaId: null,
+            //             descricao: "Manutenção de equipamento - ordem de serviço - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 4500,
+            //             valorPago: 4500,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-8),
+            //             dataPagamento: daysFromNow(-8),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "MANUT-EQ-BETA-202511"
+            //         },
+            //         // 1) Folha – Adiantamento / benefícios
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Folha"),
+            //             subcategoriaId: null,
+            //             descricao: "Adiantamento + benefícios - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 3200,
+            //             valorPago: 3200,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-5),
+            //             dataPagamento: daysFromNow(-5),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "FOLHA-ADIANT-BETA-202511"
+            //         },
 
-                    // 4) Receita – venda de gado
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCategoriaId(fazendaBetaNome, "Receita"),
-                        subcategoriaId: null,
-                        descricao: "Venda de gado - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "ENTRADA",
-                        formaPagamento: "TRANSFERENCIA",
-                        valor: 18000,
-                        valorPago: 18000,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-10),
-                        dataPagamento: daysFromNow(-10),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "VENDA-GADO-BETA-202511"
-                    },
+            //         // 2) Sanidade – vacinação / medicamentos
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Sanidade"),
+            //             subcategoriaId: null,
+            //             descricao: "Vacinação e medicamentos - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 3000,
+            //             valorPago: 3000,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-12),
+            //             dataPagamento: daysFromNow(-12),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "SANIDADE-BETA-202511"
+            //         },
 
+            //         // 3) Receita – venda de leite
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCategoriaId(fazendaBetaNome, "Receita"),
+            //             subcategoriaId: null,
+            //             descricao: "Venda de leite - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "ENTRADA",
+            //             formaPagamento: "PIX",
+            //             valor: 42000,
+            //             valorPago: 42000,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-7),
+            //             dataPagamento: daysFromNow(-7),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "VENDA-LEITE-BETA-202511"
+            //         },
 
-                    //
-                    //  PENDENTES (2 itens)
-                    //
-
-                    // 5) Compra de ração e insumos — pendente (a vencer)
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Compras"),
-                        subcategoriaId: null,
-                        descricao: "Compra de ração e insumos - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "BOLETO",
-                        valor: 8000,
-                        valorPago: null,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(+3), // ainda vai vencer
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PENDENTE",
-                        documento: "COMPRA-INSUMOS-BETA-202511"
-                    },
-
-                    // 6) Frete / logística — pendente (recente)
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Manutenção"),
-                        subcategoriaId: null,
-                        descricao: "Frete e logística - transporte de leite (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 1200,
-                        valorPago: null,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(+1),
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PENDENTE",
-                        documento: "FRETE-BETA-202511"
-                    },
+            //         // 4) Receita – venda de gado
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCategoriaId(fazendaBetaNome, "Receita"),
+            //             subcategoriaId: null,
+            //             descricao: "Venda de gado - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "ENTRADA",
+            //             formaPagamento: "TRANSFERENCIA",
+            //             valor: 18000,
+            //             valorPago: 18000,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-10),
+            //             dataPagamento: daysFromNow(-10),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "VENDA-GADO-BETA-202511"
+            //         },
 
 
-                    //
-                    //  ATRASADAS (2 itens)
-                    //
+            //         //
+            //         //  PENDENTES (2 itens)
+            //         //
 
-                    // 7) Manutenção de equipamento — atrasada mas foi paga
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Manutenção"),
-                        subcategoriaId: null,
-                        descricao: "Manutenção de ordenhadeira - Novembro/2025 (Fazenda Beta)",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "PIX",
-                        valor: 4500,
-                        valorPago: 4500,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-20), // vencido
-                        dataPagamento: daysFromNow(-17), // pago com atraso
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PAGA",
-                        documento: "MANUT-EQ-BETA-202511"
-                    },
+            //         // 5) Compra de ração e insumos — pendente (a vencer)
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Compras"),
+            //             subcategoriaId: null,
+            //             descricao: "Compra de ração e insumos - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "BOLETO",
+            //             valor: 8000,
+            //             valorPago: null,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(+3), // ainda vai vencer
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PENDENTE",
+            //             documento: "COMPRA-INSUMOS-BETA-202511"
+            //         },
 
-                    // 8) Compra emergencial de peças — atrasada e pendente
-                    {
-                        criadoPorId: usuarioMap["Richard Souza"],
-                        unidadeId: fazendaBetaId,
-                        categoriaId: getCat("Equipamentos"),
-                        subcategoriaId: null,
-                        descricao: "Compra emergencial de peças - Fazenda Beta",
-                        tipoMovimento: "SAIDA",
-                        formaPagamento: "BOLETO",
-                        valor: 2600,
-                        valorPago: null,
-                        competencia: competenciaBeta,
-                        vencimento: daysFromNow(-4), // atrasado
-                        parcela: 1,
-                        totalParcelas: 1,
-                        status: "PENDENTE",
-                        documento: "COMPRA-PECAS-BETA-202511"
-                    }
+            //         // 6) Frete / logística — pendente (recente)
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Manutenção"),
+            //             subcategoriaId: null,
+            //             descricao: "Frete e logística - transporte de leite (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 1200,
+            //             valorPago: null,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(+1),
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PENDENTE",
+            //             documento: "FRETE-BETA-202511"
+            //         },
+
+
+            //         //
+            //         //  ATRASADAS (2 itens)
+            //         //
+
+            //         // 7) Manutenção de equipamento — atrasada mas foi paga
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Manutenção"),
+            //             subcategoriaId: null,
+            //             descricao: "Manutenção de ordenhadeira - Novembro/2025 (Fazenda Beta)",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "PIX",
+            //             valor: 4500,
+            //             valorPago: 4500,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-20), // vencido
+            //             dataPagamento: daysFromNow(-17), // pago com atraso
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PAGA",
+            //             documento: "MANUT-EQ-BETA-202511"
+            //         },
+
+            //         // 8) Compra emergencial de peças — atrasada e pendente
+            //         {
+            //             criadoPorId: usuarioMap["Richard Souza"],
+            //             unidadeId: fazendaBetaId,
+            //             categoriaId: getCat("Equipamentos"),
+            //             subcategoriaId: null,
+            //             descricao: "Compra emergencial de peças - Fazenda Beta",
+            //             tipoMovimento: "SAIDA",
+            //             formaPagamento: "BOLETO",
+            //             valor: 2600,
+            //             valorPago: null,
+            //             competencia: competenciaBeta,
+            //             vencimento: daysFromNow(-4), // atrasado
+            //             parcela: 1,
+            //             totalParcelas: 1,
+            //             status: "PENDENTE",
+            //             documento: "COMPRA-PECAS-BETA-202511"
+            //         }
+            //     ];
+
+            //     // Inserir os lançamentos específicos de Fazenda Beta no array principal 'dados'
+            //     for (const l of lancamentosBeta) {
+            //         dados.push(l);
+            //     }
+            // }
+
+            // ===== ADICIONAR DADOS FINANCEIROS PARA RURALTECH, CASA ÚTIL E FAZENDA BETA =====
+            
+            // 1. RURALTECH - Saídas e Entradas
+            const ruralTechId = unidadeMap["RuralTech"];
+            if (ruralTechId) {
+                // Lista de unidades para criar categorias de saída
+                const unidadesParaCategorias = [
+                    "Fazenda Alpha", "Fazenda Gamma", "Fazenda Beta", "Fazenda Delta", "Fazenda Teste",
+                    "Casa Útil Mercado", "Sabor do Campo Laticínios", "VerdeFresco Hortaliças", "AgroBoi", "Loja Teste"
                 ];
 
-                // Inserir os lançamentos específicos de Fazenda Beta no array principal 'dados'
-                for (const l of lancamentosBeta) {
-                    dados.push(l);
+                // Criar categorias de SAÍDA para cada unidade (RuralTech)
+                const categoriasSaidaRuralTech = [];
+                for (const nomeUnidade of unidadesParaCategorias) {
+                    const categoria = await prisma.categoria.upsert({
+                        where: { unidadeId_nome_tipo: { unidadeId: ruralTechId, nome: nomeUnidade, tipo: "SAIDA" } },
+                        update: {},
+                        create: { unidadeId: ruralTechId, nome: nomeUnidade, tipo: "SAIDA" }
+                    });
+                    categoriasSaidaRuralTech.push({ id: categoria.id, nome: nomeUnidade });
+
+                    // Criar subcategorias para cada categoria
+                    const subcategorias = [
+                        "Folha de pagamento",
+                        "Manutenção de máquinas para fazendas",
+                        "Reforma do ambiente para as lojas"
+                    ];
+
+                    for (const subNome of subcategorias) {
+                        await prisma.subcategoria.upsert({
+                            where: { categoriaId_nome: { categoriaId: categoria.id, nome: subNome } },
+                        update: {},
+                            create: { categoriaId: categoria.id, nome: subNome }
+                        });
+                    }
+                }
+
+                // Criar categorias de ENTRADA para cada fazenda (RuralTech)
+                const fazendas = ["Fazenda Alpha", "Fazenda Gamma", "Fazenda Beta", "Fazenda Delta", "Fazenda Teste"];
+                const categoriasEntradaRuralTech = [];
+                for (const nomeFazenda of fazendas) {
+                    const categoria = await prisma.categoria.upsert({
+                        where: { unidadeId_nome_tipo: { unidadeId: ruralTechId, nome: `${nomeFazenda} - Receitas`, tipo: "ENTRADA" } },
+                        update: {},
+                        create: { unidadeId: ruralTechId, nome: `${nomeFazenda} - Receitas`, tipo: "ENTRADA" }
+                    });
+                    categoriasEntradaRuralTech.push({ id: categoria.id, nome: nomeFazenda });
+
+                    // Criar subcategorias para receitas das fazendas
+                    const subcategoriasReceitas = [
+                        "Venda de produtos",
+                        "Venda de animais",
+                        "Venda de leite",
+                        "Outras receitas"
+                    ];
+
+                    for (const subNome of subcategoriasReceitas) {
+                        await prisma.subcategoria.upsert({
+                            where: { categoriaId_nome: { categoriaId: categoria.id, nome: subNome } },
+                            update: {},
+                            create: { categoriaId: categoria.id, nome: subNome }
+                        });
+                    }
+                }
+
+                // Adicionar lançamentos financeiros para RuralTech
+                const competenciaRuralTechNov = firstOfMonth(prevYear, prevMonth); // Mês anterior
+                const competenciaRuralTechDez = firstOfMonth(currentYear, currentMonth); // Mês atual
+                
+                // ===== NOVEMBRO/2025 =====
+                // Saídas - Folha de pagamento para cada unidade
+                for (const cat of categoriasSaidaRuralTech) {
+                    const categoria = await prisma.categoria.findFirst({
+                        where: { unidadeId: ruralTechId, nome: cat.nome, tipo: cat.tipo }
+                    });
+                    if (categoria) {
+                        const subcategoria = await prisma.subcategoria.findFirst({
+                            where: { categoriaId: categoria.id, nome: "Folha de pagamento" }
+                        });
+                        
+                        dados.push({
+                            criadoPorId: usuarioMap["Julia Alves"],
+                            unidadeId: ruralTechId,
+                            categoriaId: categoria.id,
+                            subcategoriaId: subcategoria?.id || null,
+                            descricao: `Folha de pagamento - ${cat.nome} - ${getMonthName(prevMonth)}/${prevYear}`,
+                        tipoMovimento: "SAIDA",
+                        formaPagamento: "PIX",
+                            valor: 5000 + Math.floor(Math.random() * 5000),
+                            valorPago: 5000 + Math.floor(Math.random() * 5000),
+                            competencia: competenciaRuralTechNov,
+                            vencimento: new Date(prevYear, prevMonth - 1, 30),
+                            dataPagamento: daysFromNow(-35),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                            documento: `FOLHA-${cat.nome.replace(/\s+/g, '').toUpperCase()}-202511`
+                        });
+                    }
+                }
+
+                // Entradas - Receitas das fazendas
+                for (const cat of categoriasEntradaRuralTech) {
+                    const categoria = await prisma.categoria.findFirst({
+                        where: { unidadeId: ruralTechId, nome: { contains: cat.nome } }
+                    });
+                    if (categoria) {
+                        dados.push({
+                            criadoPorId: usuarioMap["Julia Alves"],
+                            unidadeId: ruralTechId,
+                            categoriaId: categoria.id,
+                        subcategoriaId: null,
+                            descricao: `Receita recebida de ${cat.nome} - ${getMonthName(prevMonth)}/${prevYear}`,
+                            tipoMovimento: "ENTRADA",
+                            formaPagamento: "TRANSFERENCIA",
+                            valor: 10000 + Math.floor(Math.random() * 20000),
+                            valorPago: 10000 + Math.floor(Math.random() * 20000),
+                            competencia: competenciaRuralTechNov,
+                            vencimento: daysFromNow(-40),
+                            dataPagamento: daysFromNow(-40),
+                            parcela: 1,
+                            totalParcelas: 1,
+                            status: "PAGA",
+                            documento: `REC-${cat.nome.replace(/\s+/g, '').toUpperCase()}-202511`
+                        });
+                    }
+                }
+
+                // ===== DEZEMBRO/2025 (MÊS ATUAL) =====
+                // Saídas - Folha de pagamento para cada unidade (algumas pagas, algumas pendentes)
+                for (let i = 0; i < categoriasSaidaRuralTech.length; i++) {
+                    const cat = categoriasSaidaRuralTech[i];
+                    const categoria = await prisma.categoria.findFirst({
+                        where: { unidadeId: ruralTechId, nome: cat.nome, tipo: cat.tipo }
+                    });
+                    if (categoria) {
+                        const subcategoria = await prisma.subcategoria.findFirst({
+                            where: { categoriaId: categoria.id, nome: "Folha de pagamento" }
+                        });
+                        
+                        const isPaid = i < 5; // Primeiras 5 pagas, resto pendente
+                        
+                        dados.push({
+                            criadoPorId: usuarioMap["Julia Alves"],
+                            unidadeId: ruralTechId,
+                            categoriaId: categoria.id,
+                            subcategoriaId: subcategoria?.id || null,
+                            descricao: `Folha de pagamento - ${cat.nome} - ${getMonthName(currentMonth)}/${prevYear}`,
+                        tipoMovimento: "SAIDA",
+                        formaPagamento: "PIX",
+                            valor: 5000 + Math.floor(Math.random() * 5000),
+                            valorPago: isPaid ? (5000 + Math.floor(Math.random() * 5000)) : null,
+                            competencia: competenciaRuralTechDez,
+                            vencimento: new Date(currentYear, currentMonth - 1, 30),
+                            dataPagamento: isPaid ? daysFromNow(-i * 2) : null,
+                            parcela: 1,
+                            totalParcelas: 1,
+                            status: isPaid ? "PAGA" : "PENDENTE",
+                            documento: `FOLHA-${cat.nome.replace(/\s+/g, '').toUpperCase()}-202512`
+                        });
+                    }
+                }
+
+                // Entradas - Receitas das fazendas (várias entradas no mês)
+                for (const cat of categoriasEntradaRuralTech) {
+                    const categoria = await prisma.categoria.findFirst({
+                        where: { unidadeId: ruralTechId, nome: { contains: cat.nome } }
+                    });
+                    if (categoria) {
+                        // Criar 2-3 receitas por fazenda no mês
+                        for (let i = 1; i <= 2; i++) {
+                            dados.push({
+                                criadoPorId: usuarioMap["Julia Alves"],
+                                unidadeId: ruralTechId,
+                                categoriaId: categoria.id,
+                                subcategoriaId: null,
+                                descricao: `Receita recebida de ${cat.nome} - ${getMonthName(currentMonth)}/${prevYear} - ${i === 1 ? 'Primeira quinzena' : 'Segunda quinzena'}`,
+                                tipoMovimento: "ENTRADA",
+                                formaPagamento: "TRANSFERENCIA",
+                                valor: 10000 + Math.floor(Math.random() * 20000),
+                                valorPago: 10000 + Math.floor(Math.random() * 20000),
+                                competencia: competenciaRuralTechDez,
+                                vencimento: daysFromNow(-i * 7),
+                                dataPagamento: daysFromNow(-i * 7),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                                documento: `REC-${cat.nome.replace(/\s+/g, '').toUpperCase()}-202512-${i}`
+                            });
+                        }
+                    }
+                }
+
+                // Saídas - Manutenção (algumas unidades)
+                for (let i = 0; i < 3; i++) {
+                    const cat = categoriasSaidaRuralTech[i];
+                    const categoria = await prisma.categoria.findFirst({
+                        where: { unidadeId: ruralTechId, nome: cat.nome, tipo: cat.tipo }
+                    });
+                    if (categoria) {
+                        const subcategoria = await prisma.subcategoria.findFirst({
+                            where: { categoriaId: categoria.id, nome: "Manutenção de máquinas para fazendas" }
+                        });
+                        
+                        dados.push({
+                            criadoPorId: usuarioMap["Julia Alves"],
+                            unidadeId: ruralTechId,
+                            categoriaId: categoria.id,
+                            subcategoriaId: subcategoria?.id || null,
+                            descricao: `Manutenção de máquinas - ${cat.nome} - ${getMonthName(currentMonth)}/${prevYear}`,
+                            tipoMovimento: "SAIDA",
+                            formaPagamento: "PIX",
+                            valor: 2000 + Math.floor(Math.random() * 3000),
+                            valorPago: i < 2 ? (2000 + Math.floor(Math.random() * 3000)) : null,
+                            competencia: competenciaRuralTechDez,
+                            vencimento: daysFromNow(-i * 3),
+                            dataPagamento: i < 2 ? daysFromNow(-i * 3) : null,
+                            parcela: 1,
+                            totalParcelas: 1,
+                            status: i < 2 ? "PAGA" : "PENDENTE",
+                            documento: `MANUT-${cat.nome.replace(/\s+/g, '').toUpperCase()}-202512`
+                        });
+                    }
                 }
             }
 
-            // Chame dentro do main depois que unidadeMap e usuarioMap existirem:
-            await seedFinanceiro(prisma, unidadeMap, usuarioMap);
-            console.log(" SEED CONCLUÍDO COM SUCESSO! Todas as etapas foram executadas na ordem correta.");
+            // 2. CASA ÚTIL MERCADO - Saídas e Entradas
+            const casaUtilId = unidadeMap["Casa Útil Mercado"];
+            if (casaUtilId) {
+                // Criar categoria de saída - Salários
+                const categoriaSalarios = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: casaUtilId, nome: "Salários", tipo: "SAIDA" } },
+                    update: {},
+                    create: { unidadeId: casaUtilId, nome: "Salários", tipo: "SAIDA" }
+                });
+
+                // Criar subcategorias para salários
+                await prisma.subcategoria.upsert({
+                    where: { categoriaId_nome: { categoriaId: categoriaSalarios.id, nome: "Folha de pagamento" } },
+                    update: {},
+                    create: { categoriaId: categoriaSalarios.id, nome: "Folha de pagamento" }
+                });
+                await prisma.subcategoria.upsert({
+                    where: { categoriaId_nome: { categoriaId: categoriaSalarios.id, nome: "Benefícios" } },
+                    update: {},
+                    create: { categoriaId: categoriaSalarios.id, nome: "Benefícios" }
+                });
+
+                // Criar categoria de entrada - Vendas
+                const categoriaVendas = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: casaUtilId, nome: "Vendas", tipo: "ENTRADA" } },
+                    update: {},
+                    create: { unidadeId: casaUtilId, nome: "Vendas", tipo: "ENTRADA" }
+                });
+
+                // Criar categoria de entrada - Matriz
+                const categoriaMatriz = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: casaUtilId, nome: "Repasse Recebido", tipo: "ENTRADA" } },
+                    update: {},
+                    create: { unidadeId: casaUtilId, nome: "Repasse Recebido", tipo: "ENTRADA" }
+                });
+
+                const competenciaCasaUtilNov = firstOfMonth(prevYear, prevMonth); // Mês anterior
+                const competenciaCasaUtilDez = firstOfMonth(currentYear, currentMonth); // Mês atual
+                const subcategoriaFolha = await prisma.subcategoria.findFirst({
+                    where: { categoriaId: categoriaSalarios.id, nome: "Folha de pagamento" }
+                });
+
+                // ===== NOVEMBRO/2025 =====
+                // Saídas - Salários
+                dados.push({
+                    criadoPorId: usuarioMap["Maria Del Rey"],
+                    unidadeId: casaUtilId,
+                    categoriaId: categoriaSalarios.id,
+                    subcategoriaId: subcategoriaFolha?.id || null,
+                    descricao: `Folha de pagamento - ${getMonthName(prevMonth)}/${prevYear} (Casa Útil Mercado)`,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
+                    valor: 7000,
+                    valorPago: 7000,
+                    competencia: competenciaCasaUtilNov,
+                    vencimento: new Date(prevYear, prevMonth - 1, 30),
+                    dataPagamento: daysFromNow(-35),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PAGA",
+                    documento: "FOLHA-CASAUTIL-202511"
+                });
+
+                // Entradas - Vendas
+                dados.push({
+                    criadoPorId: usuarioMap["Maria Del Rey"],
+                    unidadeId: casaUtilId,
+                    categoriaId: categoriaVendas.id,
+                        subcategoriaId: null,
+                    descricao: `Vendas realizadas - ${getMonthName(prevMonth)}/${prevYear} (Casa Útil Mercado)`,
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "PIX",
+                    valor: 30000,
+                    valorPago: 30000,
+                    competencia: competenciaCasaUtilNov,
+                    vencimento: daysFromNow(-40),
+                    dataPagamento: daysFromNow(-40),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PAGA",
+                    documento: "VENDAS-CASAUTIL-202511"
+                });
+
+                // Entradas - Repasse da Matriz
+                dados.push({
+                    criadoPorId: usuarioMap["Maria Del Rey"],
+                    unidadeId: casaUtilId,
+                    categoriaId: categoriaMatriz.id,
+                    subcategoriaId: null,
+                    descricao: "Repasse recebido da Matriz - Novembro/2025",
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "TRANSFERENCIA",
+                    valor: 1800,
+                    valorPago: 1800,
+                    competencia: competenciaCasaUtilNov,
+                    vencimento: daysFromNow(-37),
+                    dataPagamento: daysFromNow(-37),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PAGA",
+                    documento: "REPASSE-CASAUTIL-202511"
+                });
+
+                // ===== DEZEMBRO/2025 (MÊS ATUAL) =====
+                // Saídas - Salários
+                dados.push({
+                    criadoPorId: usuarioMap["Maria Del Rey"],
+                    unidadeId: casaUtilId,
+                    categoriaId: categoriaSalarios.id,
+                    subcategoriaId: subcategoriaFolha?.id || null,
+                    descricao: `Folha de pagamento - ${getMonthName(currentMonth)}/${prevYear} (Casa Útil Mercado)`,
+                        tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
+                    valor: 7000,
+                        valorPago: null,
+                    competencia: competenciaCasaUtilDez,
+                    vencimento: new Date(currentYear, currentMonth - 1, 30),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PENDENTE",
+                    documento: "FOLHA-CASAUTIL-202512"
+                });
+
+                // Entradas - Vendas (várias vendas do mês)
+                for (let i = 1; i <= 5; i++) {
+                    dados.push({
+                        criadoPorId: usuarioMap["Maria Del Rey"],
+                        unidadeId: casaUtilId,
+                        categoriaId: categoriaVendas.id,
+                        subcategoriaId: null,
+                        descricao: `Vendas realizadas - ${getMonthName(currentMonth)}/${prevYear} - Semana ${i} (Casa Útil Mercado)`,
+                        tipoMovimento: "ENTRADA",
+                        formaPagamento: "PIX",
+                        valor: 5000 + Math.floor(Math.random() * 3000),
+                        valorPago: 5000 + Math.floor(Math.random() * 3000),
+                        competencia: competenciaCasaUtilDez,
+                        vencimento: daysFromNow(-i * 2),
+                        dataPagamento: daysFromNow(-i * 2),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                        documento: `VENDAS-CASAUTIL-202512-SEM${i}`
+                    });
+                }
+
+                // Entradas - Repasse da Matriz
+                dados.push({
+                    criadoPorId: usuarioMap["Maria Del Rey"],
+                    unidadeId: casaUtilId,
+                    categoriaId: categoriaMatriz.id,
+                    subcategoriaId: null,
+                    descricao: "Repasse recebido da Matriz - Dezembro/2025",
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "TRANSFERENCIA",
+                    valor: 1800,
+                    valorPago: 1800,
+                    competencia: competenciaCasaUtilDez,
+                    vencimento: daysFromNow(-5),
+                    dataPagamento: daysFromNow(-5),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PAGA",
+                    documento: "REPASSE-CASAUTIL-202512"
+                });
+
+                // Saídas - Aluguel (pendente)
+                const categoriaAluguel = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: casaUtilId, nome: "Aluguel", tipo: "SAIDA" } },
+                    update: {},
+                    create: { unidadeId: casaUtilId, nome: "Aluguel", tipo: "SAIDA" }
+                });
+
+                dados.push({
+                    criadoPorId: usuarioMap["Maria Del Rey"],
+                    unidadeId: casaUtilId,
+                    categoriaId: categoriaAluguel.id,
+                    subcategoriaId: null,
+                    descricao: `Aluguel - ${getMonthName(currentMonth)}/${prevYear} (Casa Útil Mercado)`,
+                    tipoMovimento: "SAIDA",
+                    formaPagamento: "BOLETO",
+                    valor: 4000,
+                    valorPago: null,
+                    competencia: competenciaCasaUtilDez,
+                    vencimento: new Date(currentYear, currentMonth - 1, 10),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PENDENTE",
+                    documento: "ALUGUEL-CASAUTIL-202512"
+                });
+            }
+
+            // 3. FAZENDA BETA - Atualizar saídas e entradas
+            const fazendaBetaId = unidadeMap["Fazenda Beta"];
+            if (fazendaBetaId) {
+                // Criar categoria de saída - Veterinário para emergência
+                const categoriaVeterinario = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: fazendaBetaId, nome: "Veterinário", tipo: "SAIDA" } },
+                    update: {},
+                    create: { unidadeId: fazendaBetaId, nome: "Veterinário", tipo: "SAIDA" }
+                });
+
+                // Criar subcategoria - Emergência
+                await prisma.subcategoria.upsert({
+                    where: { categoriaId_nome: { categoriaId: categoriaVeterinario.id, nome: "Emergência" } },
+                    update: {},
+                    create: { categoriaId: categoriaVeterinario.id, nome: "Emergência" }
+                });
+
+                // Criar categoria de saída - Salários (se não existir)
+                const categoriaSalariosBeta = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: fazendaBetaId, nome: "Folha", tipo: "SAIDA" } },
+                    update: {},
+                    create: { unidadeId: fazendaBetaId, nome: "Folha", tipo: "SAIDA" }
+                });
+
+                // Criar categoria de entrada - Vendas (se não existir)
+                const categoriaVendasBeta = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: fazendaBetaId, nome: "Vendas", tipo: "ENTRADA" } },
+                    update: {},
+                    create: { unidadeId: fazendaBetaId, nome: "Vendas", tipo: "ENTRADA" }
+                });
+
+                // Criar categoria de entrada - Matriz (se não existir)
+                const categoriaMatrizBeta = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: fazendaBetaId, nome: "Repasse Recebido", tipo: "ENTRADA" } },
+                    update: {},
+                    create: { unidadeId: fazendaBetaId, nome: "Repasse Recebido", tipo: "ENTRADA" }
+                });
+
+                const competenciaBetaNov = firstOfMonth(prevYear, prevMonth); // Mês anterior
+                const competenciaBetaDez = firstOfMonth(currentYear, currentMonth); // Mês atual
+                const subcategoriaEmergencia = await prisma.subcategoria.findFirst({
+                    where: { categoriaId: categoriaVeterinario.id, nome: "Emergência" }
+                });
+
+                // ===== NOVEMBRO/2025 =====
+                // Saída - Veterinário para emergência
+                dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                    categoriaId: categoriaVeterinario.id,
+                    subcategoriaId: subcategoriaEmergencia?.id || null,
+                    descricao: `Veterinário para emergência - ${getMonthName(prevMonth)}/${prevYear} (Fazenda Beta)`,
+                        tipoMovimento: "SAIDA",
+                        formaPagamento: "PIX",
+                    valor: 2500,
+                    valorPago: 2500,
+                    competencia: competenciaBetaNov,
+                    vencimento: daysFromNow(-38),
+                    dataPagamento: daysFromNow(-38),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                    documento: "VET-EMERG-BETA-202511"
+                });
+
+                // Saída - Salários (adicionar se não existir nos dados anteriores)
+                const jaExisteSalario = dados.some(d => 
+                    d.unidadeId === fazendaBetaId && 
+                    d.descricao?.includes("Folha") && 
+                    d.descricao?.includes("Fazenda Beta") &&
+                    d.descricao?.includes("Novembro")
+                );
+                if (!jaExisteSalario) {
+                    dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                        categoriaId: categoriaSalariosBeta.id,
+                        subcategoriaId: null,
+                        descricao: `Salários - ${getMonthName(prevMonth)}/${prevYear} (Fazenda Beta)`,
+                        tipoMovimento: "SAIDA",
+                        formaPagamento: "PIX",
+                        valor: 13000,
+                        valorPago: 13000,
+                        competencia: competenciaBetaNov,
+                        vencimento: new Date(prevYear, prevMonth - 1, 30),
+                        dataPagamento: daysFromNow(-35),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                        documento: "FOLHA-BETA-202511"
+                    });
+                }
+
+                // Entrada - Vendas
+                dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                    categoriaId: categoriaVendasBeta.id,
+                        subcategoriaId: null,
+                    descricao: `Vendas - ${getMonthName(prevMonth)}/${prevYear} (Fazenda Beta)`,
+                        tipoMovimento: "ENTRADA",
+                        formaPagamento: "PIX",
+                    valor: 60000,
+                    valorPago: 60000,
+                    competencia: competenciaBetaNov,
+                    vencimento: daysFromNow(-42),
+                    dataPagamento: daysFromNow(-42),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                    documento: "VENDAS-BETA-202511"
+                });
+
+                // Entrada - Repasse da Matriz
+                dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                    categoriaId: categoriaMatrizBeta.id,
+                        subcategoriaId: null,
+                    descricao: "Repasse recebido da Matriz - Novembro/2025",
+                        tipoMovimento: "ENTRADA",
+                        formaPagamento: "TRANSFERENCIA",
+                    valor: 4800,
+                    valorPago: 4800,
+                    competencia: competenciaBetaNov,
+                    vencimento: daysFromNow(-37),
+                    dataPagamento: daysFromNow(-37),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                    documento: "REPASSE-BETA-202511"
+                });
+
+                // ===== DEZEMBRO/2025 (MÊS ATUAL) =====
+                // Saída - Veterinário para emergência
+                dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                    categoriaId: categoriaVeterinario.id,
+                    subcategoriaId: subcategoriaEmergencia?.id || null,
+                    descricao: `Veterinário para emergência - ${getMonthName(currentMonth)}/${prevYear} (Fazenda Beta)`,
+                        tipoMovimento: "SAIDA",
+                    formaPagamento: "PIX",
+                    valor: 2800,
+                    valorPago: 2800,
+                    competencia: competenciaBetaDez,
+                    vencimento: daysFromNow(-3),
+                    dataPagamento: daysFromNow(-3),
+                        parcela: 1,
+                        totalParcelas: 1,
+                    status: "PAGA",
+                    documento: "VET-EMERG-BETA-202512"
+                });
+
+                // Saída - Salários
+                dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                    categoriaId: categoriaSalariosBeta.id,
+                        subcategoriaId: null,
+                    descricao: `Salários - ${getMonthName(currentMonth)}/${prevYear} (Fazenda Beta)`,
+                        tipoMovimento: "SAIDA",
+                        formaPagamento: "PIX",
+                    valor: 13000,
+                        valorPago: null,
+                    competencia: competenciaBetaDez,
+                    vencimento: new Date(currentYear, currentMonth - 1, 30),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PENDENTE",
+                    documento: "FOLHA-BETA-202512"
+                });
+
+                // Entrada - Vendas (várias vendas no mês)
+                for (let i = 1; i <= 4; i++) {
+                    dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                        categoriaId: categoriaVendasBeta.id,
+                        subcategoriaId: null,
+                        descricao: `Vendas - ${getMonthName(currentMonth)}/${prevYear} - ${i === 1 ? 'Primeira semana' : i === 2 ? 'Segunda semana' : i === 3 ? 'Terceira semana' : 'Quarta semana'} (Fazenda Beta)`,
+                        tipoMovimento: "ENTRADA",
+                        formaPagamento: "PIX",
+                        valor: 12000 + Math.floor(Math.random() * 8000),
+                        valorPago: 12000 + Math.floor(Math.random() * 8000),
+                        competencia: competenciaBetaDez,
+                        vencimento: daysFromNow(-i * 2),
+                        dataPagamento: daysFromNow(-i * 2),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PAGA",
+                        documento: `VENDAS-BETA-202512-SEM${i}`
+                    });
+                }
+
+                // Entrada - Repasse da Matriz
+                dados.push({
+                        criadoPorId: usuarioMap["Richard Souza"],
+                        unidadeId: fazendaBetaId,
+                    categoriaId: categoriaMatrizBeta.id,
+                        subcategoriaId: null,
+                    descricao: "Repasse recebido da Matriz - Dezembro/2025",
+                    tipoMovimento: "ENTRADA",
+                    formaPagamento: "TRANSFERENCIA",
+                    valor: 4800,
+                    valorPago: 4800,
+                    competencia: competenciaBetaDez,
+                    vencimento: daysFromNow(-5),
+                    dataPagamento: daysFromNow(-5),
+                    parcela: 1,
+                    totalParcelas: 1,
+                    status: "PAGA",
+                    documento: "REPASSE-BETA-202512"
+                });
+
+                // Saída - Manutenção (pendente)
+                const categoriaManutencaoBeta = await prisma.categoria.upsert({
+                    where: { unidadeId_nome_tipo: { unidadeId: fazendaBetaId, nome: "Manutenção", tipo: "SAIDA" } },
+                    update: {},
+                    create: { unidadeId: fazendaBetaId, nome: "Manutenção", tipo: "SAIDA" }
+                });
+
+                dados.push({
+                    criadoPorId: usuarioMap["Richard Souza"],
+                    unidadeId: fazendaBetaId,
+                    categoriaId: categoriaManutencaoBeta.id,
+                    subcategoriaId: null,
+                    descricao: `Manutenção de equipamentos - ${getMonthName(currentMonth)}/${prevYear} (Fazenda Beta)`,
+                        tipoMovimento: "SAIDA",
+                        formaPagamento: "BOLETO",
+                    valor: 3500,
+                        valorPago: null,
+                    competencia: competenciaBetaDez,
+                    vencimento: new Date(currentYear, currentMonth - 1, 15),
+                        parcela: 1,
+                        totalParcelas: 1,
+                        status: "PENDENTE",
+                    documento: "MANUT-BETA-202512"
+                });
+            }
+
+            // Inserir todos os dados financeiros no banco
+            if (dados.length > 0) {
+                await prisma.financeiro.createMany({ data: dados, skipDuplicates: true });
+                console.log(`✓ ${dados.length} lançamentos financeiros criados`);
+            }
         }
+        
+        // Chamar a função seedFinanceiro
+        await seedFinanceiro(prisma, unidadeMap, usuarioMap);
 
         // Dados gerais — Fazenda Beta (5 registros)
         const fazendaBetaId = unidadeMap["Fazenda Beta"];

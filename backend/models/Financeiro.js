@@ -420,6 +420,64 @@ export const abrirCaixa = async (usuarioId, unidadeId, saldoInicial = 0) => {
     }
 };
 
+export const listarCaixas = async (unidadeId, dataInicio = null, dataFim = null) => {
+    try {
+        const where = {
+            unidadeId: Number(unidadeId)
+        };
+
+        // Se dataInicio e dataFim foram fornecidos, filtrar por período
+        if (dataInicio && dataFim) {
+            where.abertoEm = {
+                gte: new Date(dataInicio),
+                lte: new Date(dataFim)
+            };
+        }
+
+        const caixas = await prisma.caixa.findMany({
+            where,
+            include: {
+                usuario: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        email: true
+                    }
+                },
+                unidade: {
+                    select: {
+                        id: true,
+                        nome: true
+                    }
+                },
+                vendas: {
+                    select: {
+                        id: true,
+                        total: true,
+                        criadoEm: true
+                    }
+                }
+            },
+            orderBy: {
+                abertoEm: 'desc'
+            }
+        });
+
+        return {
+            sucesso: true,
+            caixas: caixas,
+            total: caixas.length
+        };
+    } catch (error) {
+        console.error('Erro ao listar caixas:', error);
+        return {
+            sucesso: false,
+            erro: 'Erro ao listar caixas',
+            detalhes: error.message
+        };
+    }
+};
+
 //do arquivo Loja.js
 export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA DA UNIDADE
     try {
