@@ -328,10 +328,7 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
   function validateStep1Fields() {
     const e = {};
-    // Validar mínimo 1 fornecedor
-    if (fornecedores.length === 0) {
-      e.fornecedores = "É obrigatório adicionar pelo menos 1 fornecedor.";
-    }
+    // Não exigimos fornecedor obrigatório (pode ter apenas contratos internos)
     // Validar mínimo 1 contrato
     if (contracts.length === 0) {
       e.contracts = "É obrigatório adicionar pelo menos 1 contrato.";
@@ -339,10 +336,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     // Validar cada contrato tem campos obrigatórios
     contracts.forEach((c, idx) => {
       if (!c.dataInicio) e[`contract_${idx}_dataInicio`] = "Data de início é obrigatória.";
-      if (!c.dataEnvio) e[`contract_${idx}_dataEnvio`] = "Dia de envio é obrigatório.";
-      if (!c.isFornecedora && !c.duration) e[`contract_${idx}_duration`] = "Duração do contrato é obrigatória.";
-      if (!c.isFornecedora && !c.dataFim) e[`contract_${idx}_dataFim`] = "Data de fim é obrigatória.";
-      if (!c.diaPagamento) e[`contract_${idx}_diaPagamento`] = "Dia de pagamento é obrigatório.";
+      if (!c.dataEnvio && c.dataEnvio !== 0) e[`contract_${idx}_dataEnvio`] = "Dia de envio é obrigatório.";
+      if (!c.diaPagamento && c.diaPagamento !== 0) e[`contract_${idx}_diaPagamento`] = "Dia de pagamento é obrigatório.";
       if (!c.formaPagamento) e[`contract_${idx}_formaPagamento`] = "Forma de pagamento é obrigatória.";
       if (!c.frequenciaEntregas) e[`contract_${idx}_frequenciaEntregas`] = "Frequência de entregas é obrigatória.";
     });
@@ -420,11 +415,11 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       descricao: '',
       itens: [],
       dataInicio: new Date().toISOString().slice(0, 10),
-      dataEnvio: '',
+      dataEnvio: new Date().toISOString().slice(0, 10),
       dataFim: null,
-      frequenciaEntregas: null,
-      diaPagamento: '',
-      formaPagamento: null,
+      frequenciaEntregas: 'MENSALMENTE',
+      diaPagamento: '1',
+      formaPagamento: 'PIX',
       status: 'ATIVO',
       duration: '',
       // indica se a fazenda será fornecedora (envia produtos) neste contrato
@@ -496,9 +491,9 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       dataInicio: new Date().toISOString().slice(0, 10),
       dataEnvio: new Date().toISOString().slice(0, 10),
       dataFim: null,
-      frequenciaEntregas: null,
-      diaPagamento: '',
-      formaPagamento: null,
+      frequenciaEntregas: 'MENSALMENTE',
+      diaPagamento: '1',
+      formaPagamento: 'PIX',
       status: 'ATIVO',
       duration: '',
       isFornecedora: false,
@@ -522,14 +517,17 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (!internalContractDraft.dataFim) {
       errors_new.dataFim = 'Data de fim é obrigatória';
     }
-    if (!internalContractDraft.dataEnvio) {
+    if (!internalContractDraft.dataEnvio && internalContractDraft.dataEnvio !== 0) {
       errors_new.dataEnvio = 'Dia de envio é obrigatório';
     }
     if (!internalContractDraft.frequenciaEntregas) {
       errors_new.frequenciaEntregas = 'Frequência é obrigatória';
     }
-    if (!internalContractDraft.diaPagamento) {
+    if (!internalContractDraft.diaPagamento && internalContractDraft.diaPagamento !== 0) {
       errors_new.diaPagamento = 'Dia de pagamento é obrigatório';
+    }
+    if (!internalContractDraft.formaPagamento) {
+      errors_new.formaPagamento = 'Forma de pagamento é obrigatória';
     }
     
     if (Object.keys(errors_new).length > 0) {
@@ -548,8 +546,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       dataEnvio: internalContractDraft.dataEnvio,
       frequenciaEntregas: internalContractDraft.frequenciaEntregas,
       diaPagamento: internalContractDraft.diaPagamento,
-      formaPagamento: internalContractDraft.formaPagamento || '',
-      status: internalContractDraft.status || 'ativo',
+      formaPagamento: internalContractDraft.formaPagamento,
+      status: internalContractDraft.status || 'ATIVO',
       itens: [],
       isFornecedora: true,
       unidadeLojaId: internalContractDraft.selectedLojaId,
@@ -781,6 +779,28 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
     // monta payload unidade
     const enderecoCompleto = endereco.trim() + (enderecoNumero && enderecoNumero.trim() ? `, nº ${enderecoNumero.trim()}` : '');
+
+    // Helper: converte string "HH:MM" em ISO-8601 DateTime (usa data de hoje)
+    function timeToISO(timeStr) {
+      if (!timeStr || typeof timeStr !== 'string') return undefined;
+      const m = timeStr.match(/^(\d{2}):(\d{2})$/);
+      if (!m) return undefined;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth(); // 0-indexed
+      const day = now.getDate();
+      const hh = Number(m[1]);
+      const mm = Number(m[2]);
+      // create local date with given hours/minutes
+      const d = new Date(year, month, day, hh, mm, 0);
+      return d.toISOString();
+    }
+    
+    // Validar que endereço não está vazio
+    if (!enderecoCompleto || !enderecoCompleto.trim()) {
+      setFormError('Endereço é obrigatório.');
+      return;
+    }
     
     // Se não temos latitude/longitude mas temos endereço completo, buscar coordenadas
     if ((latitude === null || longitude === null) && enderecoCompleto && cidade && estado) {
@@ -840,8 +860,14 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     if (latitude !== null && latitude !== undefined) payload.latitude = latitude;
     if (longitude !== null && longitude !== undefined) payload.longitude = longitude;
     if (cultura) payload.cultura = cultura;
-    if (horarioAbertura) payload.horarioAbertura = horarioAbertura;
-    if (horarioFechamento) payload.horarioFechamento = horarioFechamento;
+    if (horarioAbertura) {
+      const iso = timeToISO(horarioAbertura);
+      if (iso) payload.horarioAbertura = iso;
+    }
+    if (horarioFechamento) {
+      const iso = timeToISO(horarioFechamento);
+      if (iso) payload.horarioFechamento = iso;
+    }
     if (descricaoCurta) payload.descricaoCurta = descricaoCurta;
     if (focoProdutivo && focoProdutivo.trim()) payload.focoProdutivo = focoProdutivo.trim().substring(0, 50); // limite: 50 caracteres
 
@@ -861,10 +887,13 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
         console.error('❌ Erro ao criar unidade - Status:', r.status, 'Body:', body);
+        console.error('❌ Detalhes do erro:', JSON.stringify(body, null, 2));
         throw new Error(body?.erro || `Erro criando unidade: ${r.status}`);
       }
       const unidade = await r.json();
       console.log('✅ Unidade criada com sucesso:', unidade);
+
+      const createdUnidadeId = unidade.unidade?.id || unidade.id;
 
       // 1) Criar fornecedores que estão com isNew === true
       const tempToRealFornecedor = {}; // tempId -> realId
@@ -908,45 +937,117 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
       // 2) Criar contratos, garantindo referenciar fornecedor realId quando necessário
       const createdContracts = [];
-      for (const c of contracts) {
-        // c.fornecedorIndex aponta para fornecedores array; pegue o fornecedor correspondente
-        const fornecedor = fornecedores[c.fornecedorIndex];
-        const fornecedorExternoId = fornecedor ? (fornecedor.isNew ? tempToRealFornecedor[fornecedor.id] : fornecedor.id) : null;
 
-        const contractPayload = {
-          fornecedorExternoId: fornecedorExternoId || null,
-          dataInicio: c.dataInicio || new Date().toISOString().slice(0, 10),
-          dataFim: c.dataFim || null,
-          diaEnvio: c.dataEnvio || null, // Agora é um número (dia de 1 a 31)
-          status: c.status || 'ATIVO',
-          frequenciaEntregas: c.frequenciaEntregas || null,
-          diaPagamento: c.diaPagamento || '',
-          formaPagamento: c.formaPagamento || null,
-          valorTotal: c.valorTotal || null,
-          itens: (c.itens || []).map(item => ({
-            nome: item.nome,
-            quantidade: item.quantidade,
-            unidadeMedida: item.unidadeMedida,
-            precoUnitario: item.precoUnitario,
-            raca: item.raca,
-            pesoUnidade: item.pesoUnidade,
-          }))
-        };
+      // helper: convert date or day -> ISO
+      function toISO(dateLike) {
+        if (!dateLike) return undefined;
+        // if already ISO-like or date string
+        const d = new Date(dateLike);
+        if (!Number.isNaN(d.getTime())) return d.toISOString();
+        return undefined;
+      }
 
-        const rc = await fetchWithAuth(`${base}/criarContratoExterno/${unidade.id}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(contractPayload)
-        });
-
-        if (!rc.ok) {
-          const body = await rc.json().catch(() => ({}));
-          console.warn('Erro criando contrato no backend, pulando:', body?.erro || rc.status);
-          createdContracts.push(contractPayload);
-          continue;
+      // helper: dataEnvio may be a day number (1-31) or a date string; try to construct an ISO using dataInicio month
+      function dataEnvioToISO(dataEnvio, dataInicio) {
+        if (!dataEnvio) return undefined;
+        // if dataEnvio looks like a full date
+        const maybe = new Date(dataEnvio);
+        if (!Number.isNaN(maybe.getTime())) return maybe.toISOString();
+        // if numeric day and we have dataInicio
+        const day = Number(dataEnvio);
+        if (!Number.isNaN(day) && dataInicio) {
+          const ref = new Date(dataInicio);
+          if (!Number.isNaN(ref.getTime())) {
+            const d = new Date(ref.getFullYear(), ref.getMonth(), day, 0, 0, 0);
+            return d.toISOString();
+          }
         }
-        const cc = await rc.json();
-        createdContracts.push(cc);
+        // fallback: today
+        return new Date().toISOString();
+      }
+
+      for (const c of contracts) {
+        // detect internal contract (fornecedora) vs external
+        const isInternal = !!c.isFornecedora || !!c.unidadeLojaId;
+
+        if (isInternal) {
+          // criar contrato interno: rota espera fazendaId no params (quem fornece) e body com unidadeId (loja)
+          const payloadContratoInterno = {
+            unidadeId: Number(c.unidadeLojaId || c.fornecedorUnidadeId),
+            dataInicio: toISO(c.dataInicio) || new Date().toISOString(),
+            dataFim: c.dataFim ? toISO(c.dataFim) : null,
+            dataEnvio: dataEnvioToISO(c.dataEnvio, c.dataInicio),
+            descricao: c.descricao || '',
+            status: c.status || 'ATIVO',
+            frequenciaEntregas: c.frequenciaEntregas || null,
+            diaPagamento: c.diaPagamento || '',
+            formaPagamento: c.formaPagamento || null,
+            valorTotal: c.valorTotal || null,
+            itens: (c.itens || []).map(item => ({
+              nome: item.nome,
+              quantidade: item.quantidade,
+              unidadeMedida: item.unidadeMedida,
+              precoUnitario: item.precoUnitario,
+              raca: item.raca,
+              pesoUnidade: item.pesoUnidade,
+            }))
+          };
+
+          const rc = await fetchWithAuth(`${base}/criarContratoInterno/${createdUnidadeId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadContratoInterno)
+          });
+
+          if (!rc.ok) {
+            const body = await rc.json().catch(() => ({}));
+            console.warn('Erro criando contrato no backend, pulando (interno):', body?.erro || rc.status);
+            createdContracts.push(payloadContratoInterno);
+            continue;
+          }
+          const cc = await rc.json();
+          createdContracts.push(cc);
+        } else {
+          // externo
+          const fornecedor = fornecedores[c.fornecedorIndex];
+          const fornecedorExternoId = fornecedor ? (fornecedor.isNew ? tempToRealFornecedor[fornecedor.id] : fornecedor.id) : null;
+
+          const payloadContrato = {
+            fornecedorExternoId: fornecedorExternoId || null,
+            dataInicio: toISO(c.dataInicio) || new Date().toISOString(),
+            dataFim: c.dataFim ? toISO(c.dataFim) : null,
+            dataEnvio: dataEnvioToISO(c.dataEnvio, c.dataInicio),
+            descricao: c.descricao || '',
+            status: c.status || 'ATIVO',
+            frequenciaEntregas: c.frequenciaEntregas || null,
+            diaPagamento: c.diaPagamento || '',
+            formaPagamento: c.formaPagamento || null,
+            valorTotal: c.valorTotal || null,
+            itens: (c.itens || []).map(item => ({
+              nome: item.nome,
+              quantidade: item.quantidade,
+              unidadeMedida: item.unidadeMedida,
+              precoUnitario: item.precoUnitario,
+              raca: item.raca,
+              pesoUnidade: item.pesoUnidade,
+            }))
+          };
+
+          const rc = await fetchWithAuth(`${base}/criarContratoExterno/${createdUnidadeId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadContrato)
+          });
+
+          if (!rc.ok) {
+            const body = await rc.json().catch(() => ({}));
+            console.warn('Erro criando contrato no backend, pulando (externo):', body?.erro || rc.status);
+            createdContracts.push(payloadContrato);
+            continue;
+          }
+          const cc = await rc.json();
+          createdContracts.push(cc);
+        }
       }
 
       // 3) Criar usuários novos (teamInvites isNew === true) e associar unidade
@@ -1566,18 +1667,27 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                         {/* Campo de seleção de loja */}
                         <div className="space-y-2 flex-1">
                           <Label htmlFor="select-loja">Loja *</Label>
-                          <Select>
+                          <Select
+                            value={internalContractDraft.selectedLojaId || ""}
+                            onValueChange={(value) => setInternalContractDraft(prev => ({ ...prev, selectedLojaId: value }))}
+                          >
                             <SelectTrigger id="select-loja">
                               <SelectValue placeholder="Selecionar loja existente" />
                             </SelectTrigger>
                             <SelectContent className="z-[1001]">
-                              <SelectItem value="loja1">Loja 1</SelectItem>
-                              <SelectItem value="loja2">Loja 2</SelectItem>
+                              {existingLojas.map((l, idx) => (
+                                <SelectItem key={`loja-${idx}-${String(l.id)}`} value={String(l.id)}>
+                                  {l.nomeEmpresa || l.nome}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
+                          {internalContractFormErrors.selectedLojaId && (
+                            <p className="text-sm text-red-600 mt-1">{internalContractFormErrors.selectedLojaId}</p>
+                          )}
                         </div>
                         <div className="flex items-end">
-                          <Button><Plus /> Contrato Interno</Button>
+                          <Button onClick={createInternalContract}><Plus /> Contrato Interno</Button>
                         </div>
                       </div>
 
@@ -1591,6 +1701,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               type="date"
                               placeholder="Data"
                               className="text-sm"
+                              value={internalContractDraft.dataInicio || ''}
+                              onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataInicio: e.target.value }))}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1599,6 +1711,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               type="date"
                               placeholder="Data"
                               className="text-sm"
+                              value={internalContractDraft.dataFim || ''}
+                              onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataFim: e.target.value }))}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1609,20 +1723,33 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               max={31}
                               placeholder="1-31"
                               className="text-sm"
+                              value={internalContractDraft.dataEnvio || ''}
+                              onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataEnvio: e.target.value }))}
                             />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Frequência *</Label>
-                            <Select>
+                            <Select
+                              value={internalContractDraft.frequenciaEntregas || ''}
+                              onValueChange={(v) => setInternalContractDraft(prev => ({ ...prev, frequenciaEntregas: v }))}
+                            >
                               <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Semanal" />
+                                <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent className="z-[1001]">
-                                <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
-                                <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
-                                <SelectItem value="MENSALMENTE">Mensal</SelectItem>
-                                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
-                                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                                {frequenciaOptions.length > 0 ? (
+                                  frequenciaOptions.map((opt, idx) => (
+                                    <SelectItem key={`freq-${idx}`} value={opt.value || opt}>
+                                      {opt.label || opt}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <>
+                                    <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
+                                    <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                                    <SelectItem value="MENSALMENTE">Mensal</SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
@@ -1636,24 +1763,42 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               max={31}
                               placeholder="1-31"
                               className="text-sm"
+                              value={internalContractDraft.diaPagamento || ''}
+                              onChange={(e) => setInternalContractDraft(prev => ({ ...prev, diaPagamento: e.target.value }))}
                             />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Forma Pagamento *</Label>
-                            <Select>
+                            <Select
+                              value={internalContractDraft.formaPagamento || ''}
+                              onValueChange={(v) => setInternalContractDraft(prev => ({ ...prev, formaPagamento: v }))}
+                            >
                               <SelectTrigger className="text-sm">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent className="z-[1001]">
-                                <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                                <SelectItem value="CARTAO">Cartão</SelectItem>
-                                <SelectItem value="PIX">PIX</SelectItem>
+                                {formaPagamentoOptions.length > 0 ? (
+                                  formaPagamentoOptions.map((opt, idx) => (
+                                    <SelectItem key={`forma-${idx}`} value={opt.value || opt}>
+                                      {opt.label || opt}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <>
+                                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                                    <SelectItem value="CARTAO">Cartão</SelectItem>
+                                    <SelectItem value="PIX">PIX</SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Status *</Label>
-                            <Select>
+                            <Select
+                              value={internalContractDraft.status || 'ATIVO'}
+                              onValueChange={(v) => setInternalContractDraft(prev => ({ ...prev, status: v }))}
+                            >
                               <SelectTrigger className="text-sm">
                                 <SelectValue placeholder="Ativo" />
                               </SelectTrigger>
@@ -1663,6 +1808,15 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               </SelectContent>
                             </Select>
                           </div>
+                        </div>
+
+                        <div className="space-y-2 mt-3">
+                          <Label className="text-xs">Descrição</Label>
+                          <Textarea
+                            value={internalContractDraft.descricao || ''}
+                            onChange={(e) => setInternalContractDraft(prev => ({ ...prev, descricao: e.target.value }))}
+                            className="min-h-[80px] text-sm"
+                          />
                         </div>
                       </div>
                     </div>
