@@ -4100,8 +4100,8 @@ async function main() {
             }
         }
 
-        // ===== CRIAR VENDAS E ITENS DE VENDA PARA HOJE =====
-        console.log("\n💰 Criando vendas de hoje nas lojas específicas...");
+        // ===== CRIAR VENDAS E ITENS DE VENDA PARA HOJE E ÚLTIMOS 15 DIAS =====
+        console.log("\n💰 Criando vendas para hoje e últimos 15 dias nas lojas específicas...");
 
         const vendasCriadas = [];
 
@@ -4112,7 +4112,7 @@ async function main() {
         const fimHoje = new Date();
         fimHoje.setHours(23, 59, 59, 999);
 
-        console.log(`📅 Criando vendas para: ${hoje.toLocaleDateString('pt-BR')}`);
+        console.log(`📅 Criando vendas para: ${hoje.toLocaleDateString('pt-BR')} e últimos 15 dias`);
 
         // Buscar caixas abertos em TODAS as lojas
         const caixasAbertas = await prisma.caixa.findMany({
@@ -4209,8 +4209,14 @@ async function main() {
                 const formasPagamento = [TPAG.DINHEIRO, TPAG.CARTAO, TPAG.PIX];
                 const formaPagamento = formasPagamento[Math.floor(Math.random() * formasPagamento.length)];
 
-                // Data da venda = HOJE com horário aleatório
+                // Data da venda = Distribuir entre hoje e últimos 15 dias
+                // 40% das vendas são de hoje, 60% distribuídas nos últimos 15 dias
+                const diasAtras = Math.random() < 0.4 
+                    ? 0  // 40% das vendas são de hoje
+                    : Math.floor(Math.random() * 15) + 1; // 60% distribuídas nos últimos 15 dias
+                
                 const dataVenda = new Date();
+                dataVenda.setDate(dataVenda.getDate() - diasAtras);
                 dataVenda.setHours(
                     Math.floor(Math.random() * 12) + 8, // Hora entre 8h e 19h
                     Math.floor(Math.random() * 60),     // Minuto aleatório
@@ -4249,11 +4255,11 @@ async function main() {
                 vendasCriadas.push(venda);
             }
 
-            console.log(`✓ ${numVendas} vendas de hoje criadas para ${caixa.unidade.nome}`);
+            console.log(`✓ ${numVendas} vendas criadas para ${caixa.unidade.nome} (distribuídas nos últimos 15 dias)`);
         }
 
-        console.log(`\n✅ Total de ${vendasCriadas.length} vendas de hoje criadas com sucesso!`);
-        console.log(`📅 Data das vendas: ${hoje.toLocaleDateString('pt-BR')}`);
+        console.log(`\n✅ Total de ${vendasCriadas.length} vendas criadas com sucesso!`);
+        console.log(`📅 Período das vendas: últimos 15 dias (incluindo hoje: ${hoje.toLocaleDateString('pt-BR')})`);
 
         // Resumo por loja
         const resumoPorLoja = {};

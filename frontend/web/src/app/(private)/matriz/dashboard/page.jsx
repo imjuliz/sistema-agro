@@ -114,15 +114,22 @@ function ChartBarDefault({ data, range, onChangeRange }) {
                     </Button>
                 </div>
             </CardHeader>
-            <CardContent className="h-80">
-                <ChartContainer config={chartConfigBar}>
-                    <BarChart accessibilityLayer data={prepared}>
+            <CardContent className="h-80 overflow-hidden">
+                <ChartContainer config={chartConfigBar} className="h-full w-full">
+                    <BarChart 
+                        accessibilityLayer 
+                        data={prepared}
+                        margin={{ top: 5, right: 10, left: 0, bottom: 50 }}
+                    >
                         <CartesianGrid vertical={false} />
                         <XAxis
                             dataKey="month"
                             tickLine={false}
                             tickMargin={10}
                             axisLine={false}
+                            angle={-45}
+                            textAnchor="end"
+                            interval={0}
                         />
                         <ChartTooltip
                             cursor={false}
