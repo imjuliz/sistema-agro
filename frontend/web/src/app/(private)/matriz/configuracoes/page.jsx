@@ -26,8 +26,8 @@ export default function SettingsPage() {
         // If it's an email and contains @, use the part before @ as fallback
         const candidate = s.includes('@') ? s.split('@')[0] : s;
         const parts = candidate.split(/\s+/).filter(Boolean);
-        if (parts.length >= 2) {return (parts[0][0] + parts[1][0]).toUpperCase();}
-        if (parts[0].length >= 2) {return (parts[0][0] + parts[0][1]).toUpperCase();}
+        if (parts.length >= 2) { return (parts[0][0] + parts[1][0]).toUpperCase(); }
+        if (parts[0].length >= 2) { return (parts[0][0] + parts[0][1]).toUpperCase(); }
         return parts[0][0].toUpperCase();
     }
 
@@ -54,8 +54,8 @@ export default function SettingsPage() {
     const fileRef = useRef(null);
 
     // Estados locais para edição temporária antes de salvar
-    const [localTheme, setLocalTheme] = useState(globalTheme); 
-    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+    const [localTheme, setLocalTheme] = useState(globalTheme);
+    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize);
 
     // Indica se o usuário alterou alguma preferência em relação ao valor global
     // Inclui idioma (`localLang`) para habilitar o botão quando o usuário apenas trocar o idioma
@@ -76,7 +76,7 @@ export default function SettingsPage() {
 
     // Remover useEffects antigos de tema e font size
     // ... (o conteúdo dos useEffects para theme e selectedFontSize deve ser removido aqui)
-    
+
     // popula os estados quando user chegar (dep array estável - primitivos)
     useEffect(() => {
         if (!loading && user) {
@@ -111,10 +111,9 @@ export default function SettingsPage() {
         const f = e.target.files?.[0];
         if (!f) return;
         // revoke previous blob URL if present to avoid leaks and stale references
-        try {
-            if (avatarUrl && String(avatarUrl).startsWith('blob:')) {URL.revokeObjectURL(avatarUrl);}
-        } catch (err) { }
-            // ignore
+        try { if (avatarUrl && String(avatarUrl).startsWith('blob:')) { URL.revokeObjectURL(avatarUrl); } }
+        catch (err) { } // ignore
+
         const url = URL.createObjectURL(f);
         setAvatarUrl(url);
         setAvatarFile(f);
@@ -131,68 +130,58 @@ export default function SettingsPage() {
     async function saveProfile() {
         console.log("saveProfile - Função chamada.");
         setProfileEditing(false);
-        
+
         const dataToUpdate = {
             nome: nome,
             telefone: telefone,
             // ftPerfil será enviado se já for um path válido; caso contrário
             // faremos upload do arquivo `avatarFile` e usaremos o path retornado
         };
-
         console.log("saveProfile - Dados a enviar:", dataToUpdate);
 
-        // If user selected a new file, upload it first to the backend upload endpoint
         if (avatarFile) {
             try {
                 const form = new FormData();
                 form.append('foto', avatarFile);
-                const uploadRes = await fetchWithAuth(`${API_URL}usuarios/editarFoto`, {
-                    method: 'POST',
-                    body: form,
-                });
+                const uploadRes = await fetchWithAuth(`${API_URL}usuarios/editarFoto`, { method: 'POST', body: form, });
                 if (uploadRes.ok) {
                     const uploadJson = await uploadRes.json().catch(() => ({}));
                     const uploadedPath = uploadJson.usuario?.ftPerfil || uploadJson.usuario?.ftPerfil;
                     if (uploadedPath) {
                         dataToUpdate.ftPerfil = uploadedPath;
-                        // store the relative path (e.g. 'uploads/..') in state and let buildImageUrl
-                        // compute the absolute URL when rendering. Do NOT call buildImageUrl here.
-                        // revoke any existing blob preview before switching to server path
-                        try {
-                            if (avatarUrl && String(avatarUrl).startsWith('blob:')) {URL.revokeObjectURL(avatarUrl);}
-                        } catch (err) {}
+                        try { if (avatarUrl && String(avatarUrl).startsWith('blob:')) { URL.revokeObjectURL(avatarUrl); } }
+                        catch (err) { }
                         setAvatarUrl(uploadedPath);
-                        // clear avatarFile since it's uploaded
                         setAvatarFile(null);
                     }
                 } else {
                     const err = await uploadRes.json().catch(() => ({}));
                     console.error('Erro ao subir avatar:', err);
-                    try { toast({ title: 'Erro', description: err.erro || 'Falha ao enviar imagem.', variant: 'destructive' }); } catch (e) {}
+                    try { toast({ title: 'Erro', description: err.erro || 'Falha ao enviar imagem.', variant: 'destructive' }); } catch (e) { }
                 }
             } catch (err) {
                 console.error('saveProfile - erro upload avatar:', err);
-                try { toast({ title: 'Erro', description: 'Erro ao enviar imagem.', variant: 'destructive' }); } catch (e) {}
+                try { toast({ title: 'Erro', description: 'Erro ao enviar imagem.', variant: 'destructive' }); } catch (e) { }
             }
         }
         try {
             const res = await fetchWithAuth("/api/auth/me", { // Alterado para usar /api/auth/me
                 method: 'PUT',
-                headers: {'Content-Type': 'application/json',},
+                headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify(dataToUpdate),
             });
 
             const result = await res.json();
             console.log("saveProfile - Resposta da API:", res.status, result);
 
-                if (res.ok) {
+            if (res.ok) {
                 console.log("saveProfile - Chamando toast de sucesso.");
                 toast({
                     title: "Sucesso",
                     description: result.mensagem || "Perfil atualizado com sucesso!",
                 });
                 // Atualiza o usuário no contexto: requisição direta a /auth/me
-                try {await refreshUser();}
+                try { await refreshUser(); }
                 catch (e) {
                     // fallback: tenta o fluxo de refresh de token
                     console.warn('saveProfile - refreshUser falhou, tentando doRefresh()', e);
@@ -216,14 +205,10 @@ export default function SettingsPage() {
         }
     }
 
-    // cleanup blob URLs on unmount
     useEffect(() => {
         return () => {
-            try {
-                if (avatarUrl && String(avatarUrl).startsWith('blob:')) {
-                    URL.revokeObjectURL(avatarUrl);
-                }
-            } catch (err) {}
+            try { if (avatarUrl && String(avatarUrl).startsWith('blob:')) { URL.revokeObjectURL(avatarUrl); } }
+            catch (err) { }
         };
     }, [avatarUrl]);
 
@@ -234,10 +219,8 @@ export default function SettingsPage() {
     async function savePreferences() {
         console.log("savePreferences - Função chamada.");
         applyPreferences(localTheme, localSelectedFontSize);
-        // Apply language only when the user confirms by saving preferences
-        try {
-            if (localLang && localLang !== lang) changeLang(localLang);
-        } catch (e) {console.error('savePreferences - erro ao aplicar idioma', e);}
+        try { if (localLang && localLang !== lang) changeLang(localLang); }
+        catch (e) { console.error('savePreferences - erro ao aplicar idioma', e); }
         console.log("savePreferences - Chamando toast de sucesso.");
         toast({
             title: "Sucesso",
@@ -277,21 +260,17 @@ export default function SettingsPage() {
         const digits = tel.replace(/\D/g, ""); // remove tudo que não é número
 
         // 11 dígitos → celular: (11) 98765-4321
-        if (digits.length === 11) {
-            return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-        }
+        if (digits.length === 11) { return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`; }
 
         // 10 dígitos → fixo: (11) 3876-4321
-        if (digits.length === 10) {
-            return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-        }
+        if (digits.length === 10) { return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`; }
 
         return tel; // fallback: retorna como está
     }
 
     return (
         <div className="min-h-screen px-18 py-10 bg-surface-50">
-         
+
             <div className="flex gap-6">
                 {/* Sidebar */}
                 <aside className="w-72 h-fit rounded-lg border border-border bg-background p-4">
@@ -299,7 +278,6 @@ export default function SettingsPage() {
                         {[
                             { key: "Perfil", label: "Perfil", icon: User },
                             { key: "Aparencia", label: "Aparência", icon: ImageIcon },
-                            // { key: "Notificacoes", label: "Notificações", icon: Bell }
                         ].map((it) => {
                             const Icon = it.icon;
                             const selected = active === it.key;
@@ -327,7 +305,7 @@ export default function SettingsPage() {
                                                 <div className="flex items-center gap-4">
                                                     <Avatar className="h-20 w-20">
                                                         {avatarUrl ? (
-                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} style={{ objectFit: 'cover' }} />
+                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" onError={(e) => { try { e.currentTarget.src = ''; } catch (_) { } }} style={{ objectFit: 'cover' }} />
                                                         ) : (
                                                             <AvatarFallback>
                                                                 {getInitials(nome || emailSelect)}
@@ -356,24 +334,16 @@ export default function SettingsPage() {
                                                             <Transl>Digite seu nome completo.</Transl>
                                                         </p>
                                                     </>
-
                                                 ) : (<p className="text-sm text-foreground">{nome || "Nome não informado"}</p>)}
-
                                             </div>
 
                                             <div>
                                                 <Label className="pb-3 font-bold" htmlFor="emailInput">
                                                     <Transl>Email</Transl>
                                                 </Label>
-
                                                 {profileEditing ? (
                                                     <>
-                                                        <Input
-                                                            id="emailInput"
-                                                            type="email"
-                                                            value={emailSelect}
-                                                            onChange={(e) => setEmailSelect(e.target.value)}
-                                                        />
+                                                        <Input id="emailInput" type="email" value={emailSelect} onChange={(e) => setEmailSelect(e.target.value)} />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Gerencie seus emails.</Transl>
                                                         </p>
@@ -400,33 +370,6 @@ export default function SettingsPage() {
                                                 )}
 
                                             </div>
-
-                                            {/* <div>
-                                                <Label className={"pb-3 font-bold"}>URLs</Label>
-                                                <p className="text-sm text-muted-foreground mb-2">
-                                                    <Transl>Adicione links do site da unidade, blog ou perfis sociais.</Transl>
-                                                </p>
-                                                <div className="flex flex-col gap-2">
-                                                    {profileEditing ? (
-                                                        urls.map((u, i) => (
-                                                            <div key={i} className="flex items-center gap-2">
-                                                                <Input value={u} onChange={(e) => updateUrl(i, e.target.value)} className="flex-1" />
-                                                                <Button variant="outline" size="sm" onClick={() => removeUrl(i)}>
-                                                                    <Transl>Remover</Transl>
-                                                                </Button>
-                                                            </div>
-                                                        ))
-                                                    ) : (urls.map((u, i) => (<p key={i} className="text-sm text-foreground">{u}</p>)))}
-                                                    {profileEditing ? (
-                                                        <div>
-                                                            <Button size="sm" onClick={addUrl} variant="secondary">
-                                                                <Transl>Adicionar URL</Transl>
-                                                            </Button>
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div> */}
-
                                             <div className="pt-3">
                                                 {profileEditing ? (
                                                     <div className="flex gap-2">
@@ -466,7 +409,7 @@ export default function SettingsPage() {
                                     {/* Language selector */}
                                     <div className="flex items-center gap-2">
                                         <Label htmlFor="language-select" className="hidden md:inline-block font-bold"><Transl>Idioma</Transl></Label>
-                                            <Select value={localLang} onValueChange={(v) => setLocalLang(v)}>
+                                        <Select value={localLang} onValueChange={(v) => setLocalLang(v)}>
                                             <SelectTrigger id="language-select" className="w-40">
                                                 <SelectValue />
                                             </SelectTrigger>
@@ -501,7 +444,6 @@ export default function SettingsPage() {
                                 </div>
                             </>
                         )}
-
                     </div>
                 </section>
             </div>
