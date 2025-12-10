@@ -4,6 +4,7 @@ import { AudioWaveform, Vegan, Rabbit, Command, Frame, GalleryVerticalEnd, Map, 
 import { NavMain } from "@/components/NavBar/nav-main"
 import { NavProjects } from "@/components/NavBar/nav-projects"
 import { NavUser } from "@/components/NavBar/nav-user"
+import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
 import { TeamSwitcher } from "@/components/team-switcher"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, } from "@/components/NavBar/sidebar"
 import { ThemeToggle } from "@/components/toggleSwitchTema";
@@ -33,45 +34,44 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           {
-            title: "Dashboard",
+            title: <Transl>Dashboard</Transl>,
             url: "/matriz/dashboard",
             icon: PieChart,
           },
           {
-            title: "Financeiro",
+            title: <Transl>Financeiro</Transl>,
             url: "/matriz/financeiro",
             icon: WalletCards,
           },
           {
-            title: "Configurações",
+            title: <Transl>Configurações</Transl>,
             url: "/matriz/configuracoes",
             icon: Settings2,
-            // items: [],
           },
         ],
-        navMainLabel: 'Geral',
-        projectsLabel: 'Unidades',
+        navMainLabel: <Transl>Geral</Transl>,
+        projectsLabel: <Transl>Unidades</Transl>,
         projects: [
-          { name: "Fazendas", url: "/matriz/unidades/fazendas", icon: Tractor },
-          { name: "Lojas", url: "/matriz/unidades/lojas", icon: Store },
-          { name: "Matriz", url: "/matriz/unidades/matriz", icon: Building2 },
+          { name: <Transl>Fazendas</Transl>, url: "/matriz/unidades/fazendas", icon: Tractor },
+          { name: <Transl>Lojas</Transl>, url: "/matriz/unidades/lojas", icon: Store },
+          { name: <Transl>Matriz</Transl>, url: "/matriz/unidades/matriz", icon: Building2 },
         ],
       }
 
     case "GERENTE_LOJA":
       return {
         navMain: [
-          { title: "Dashboard", url: "/loja/dashboard", icon: PieChart, },
-          { title: "Financeiro", url: "/loja/vendasDespesas", icon: WalletCards },
-          { title: "Funcionários", url: "/loja/funcionarios", icon: UserCog, },
-          { title: "Fornecedores", url: "/loja/fornecedores", icon: Container },
-          { title: "Configurações", url: "/loja/configuracoes", icon: Settings2, },
+          { title: <Transl>Dashboard</Transl>, url: "/loja/dashboard", icon: PieChart, },
+          { title: <Transl>Financeiro</Transl>, url: "/loja/vendasDespesas", icon: WalletCards },
+          { title: <Transl>Funcionários</Transl>, url: "/loja/funcionarios", icon: UserCog, },
+          { title: <Transl>Fornecedores</Transl>, url: "/loja/fornecedores", icon: Container },
+          { title: <Transl>Configurações</Transl>, url: "/loja/configuracoes", icon: Settings2, },
         ],
-        navMainLabel: 'Geral',
-        projectsLabel: 'Links rápidos',
+        navMainLabel: <Transl>Geral</Transl>,
+        projectsLabel: <Transl>Links rápidos</Transl>,
         projects: [
-          { name: "Frente de Caixa", url: "/loja/frenteCaixa", icon: ShoppingCart, },
-          { name: "Estoque", url: "/loja/estoque", icon: Boxes },
+          { name: <Transl>Frente de Caixa</Transl>, url: "/loja/frenteCaixa", icon: ShoppingCart, },
+          { name: <Transl>Estoque</Transl>, url: "/loja/estoque", icon: Boxes },
         ],
       }
 
@@ -79,49 +79,47 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           {
-            title: "Animalia",
+            title: <Transl>Animalia</Transl>,
             url: "/fazenda/animalia",
             icon: Dog,
           },
           {
-            title: "Plantações",
+            title: <Transl>Plantações</Transl>,
             url: "/fazenda/plantio",
             icon: Vegan,
           },
           {
-            title: "Registro de Animais",
+            title: <Transl>Registro de Animais</Transl>,
             url: "/fazenda/animais",
             icon: Folder,
           },
           {
-            title: "Lotes",
+            title: <Transl>Lotes</Transl>,
             url: "/fazenda/lotes",
             icon: SquarePen,
           },
           {
-            title: "Novo",
+            title: <Transl>Novo</Transl>,
             url: "/fazenda/novaAtividade",
             icon: SquarePlus,
           },
           {
-            title: "Consultar Lote",
+            title: <Transl>Consultar Lote</Transl>,
             url: "/fazenda/consultarLote",
             icon: SquareChartGantt,
           },
           {
-            title: "Configurações",
+            title: <Transl>Configurações</Transl>,
             url: "/fazenda/configuracoes",
             icon: Settings2,
-            // items: [],
           },
         ],
-        navMainLabel: 'Geral',
-        projectsLabel: 'Fazendas',
+        navMainLabel: <Transl>Geral</Transl>,
+        projectsLabel: <Transl>Fazendas</Transl>,
         projects: [
-          { name: "Estoque", url: "/fazenda/estoque", icon: Boxes },
-          // { name: "Configurações", url: "/fazenda/configuracoes", icon: Frame },
-          { name: "Fornecedores", url: "/fazenda/fornecedores", icon: Container, },
-          { name: "Financeiro", url: "/fazenda/vendasDespesas", icon: Frame },
+          { name: <Transl>Estoque</Transl>, url: "/fazenda/estoque", icon: Boxes },
+          { name: <Transl>Fornecedores</Transl>, url: "/fazenda/fornecedores", icon: Container, },
+          { name: <Transl>Financeiro</Transl>, url: "/fazenda/vendasDespesas", icon: Frame },
         ],
       }
 
@@ -129,14 +127,14 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           {
-            title: "Configurações",
+            title: <Transl>Configurações</Transl>,
             url: "/configuracoes",
             icon: Settings2,
-            items: [{ title: "Meu perfil", url: "/perfil" }],
+            items: [{ title: <Transl>Meu perfil</Transl>, url: "/perfil" }],
           },
         ],
-        navMainLabel: 'Geral',
-        projectsLabel: 'Unidades',
+        navMainLabel: <Transl>Geral</Transl>,
+        projectsLabel: <Transl>Unidades</Transl>,
         projects: [],
       }
   }

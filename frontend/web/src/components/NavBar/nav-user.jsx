@@ -8,6 +8,7 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar, } from "@/
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect } from 'react'
+import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
 
 export function NavUser() {
   const { isMobile } = useSidebar()
@@ -103,8 +104,8 @@ export function NavUser() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuSeparator /> */}
+            {/* <DropdownMenuGroup> */}
               {/* <DropdownMenuItem>
                 <BadgeCheck />
                 Perfil
@@ -113,12 +114,12 @@ export function NavUser() {
                 <Bell />
                 Notificações
               </DropdownMenuItem> */}
-            </DropdownMenuGroup>
+            {/* </DropdownMenuGroup> */}
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <button onClick={handleLogout} className="flex items-center gap-2 w-full text-left">
                 <LogOut />
-                Sair
+                <Transl>Sair</Transl>
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>

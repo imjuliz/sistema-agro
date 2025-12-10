@@ -26,9 +26,9 @@ export function NavMain({ items, label = 'Geral' }) {
         {items.map((item) => {
           const Icon = item.icon;
           return (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.url || (typeof item.title === 'string' ? item.title : undefined)}>
               <a href={item.url} className="w-full">
-                <SidebarMenuButton tooltip={item.title}>
+                <SidebarMenuButton tooltip={{ children: item.title }}>
                   {Icon ? <Icon /> : null}
                   <span>{item.title}</span>
                 </SidebarMenuButton>
@@ -38,7 +38,7 @@ export function NavMain({ items, label = 'Geral' }) {
               {item.items?.length ? (
                 <SidebarMenuSub>
                   {item.items.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
+                    <SidebarMenuSubItem key={subItem.url || (typeof subItem.title === 'string' ? subItem.title : undefined)}>
                       <SidebarMenuSubButton asChild>
                         <a href={subItem.url} className="w-full">
                           <span>{subItem.title}</span>

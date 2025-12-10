@@ -345,6 +345,11 @@ asChild = false,
   if (!tooltip) {return button}
 
   if (typeof tooltip === "string") {tooltip = {children: tooltip,}}
+  // If a React element was passed (e.g. <Transl>...</Transl>), wrap it so
+  // we don't accidentally spread the React element object (which contains
+  // an internal `key`) into TooltipContent. Spreading a props object that
+  // contains `key` causes React to warn — pass `children` explicitly instead.
+  if (React.isValidElement(tooltip)) {tooltip = { children: tooltip }}
 
   return (
     <Tooltip>

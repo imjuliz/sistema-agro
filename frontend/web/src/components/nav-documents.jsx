@@ -29,7 +29,7 @@ export function NavDocuments({
       <SidebarGroupLabel>Documents</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <SidebarMenuItem key={item.name}>
+          <SidebarMenuItem key={item.url || (typeof item.name === 'string' ? item.name : undefined)}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
                 <item.icon />

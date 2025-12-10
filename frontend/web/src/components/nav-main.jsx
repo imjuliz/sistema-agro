@@ -27,13 +27,13 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
-            key={item.title}
+            key={item.url || (typeof item.title === 'string' ? item.title : undefined)}
             asChild
             defaultOpen={item.isActive}
             className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
+                <SidebarMenuButton tooltip={{ children: item.title }}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                   <ChevronRight
@@ -43,7 +43,7 @@ export function NavMain({
               <CollapsibleContent>
                 <SidebarMenuSub>
                   {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
+                    <SidebarMenuSubItem key={subItem.url || (typeof subItem.title === 'string' ? subItem.title : undefined)}>
                       <SidebarMenuSubButton asChild>
                         <a href={subItem.url}>
                           <span>{subItem.title}</span>
