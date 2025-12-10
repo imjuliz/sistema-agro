@@ -46,6 +46,8 @@ export function SectionCards() {
     const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
     const [lotesDisponiveis, setLotesDisponiveis] = useState(null);
     const [lotesColheita, setLotesColheita] = useState(null);
+    const [totalLotesAg, setTotalLotesAg] = useState(null);
+    const [lotesImproprios, setLotesImproprios] = useState(null);
 
     useEffect(() => {
         let mounted = true;
@@ -104,6 +106,57 @@ export function SectionCards() {
         return () => { mounted = false }
     }, [unidadeId, fetchWithAuth]);
 
+    useEffect(() => {
+        let mounted = true;
+        async function loadTotalLotesPlantio() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/totalLotesPlantio/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                // controller returns { sucesso: true, quantidade: { quantidade: number } } or { sucesso: true, quantidade: number }
+                let raw = data?.quantidade?.quantidade ?? data?.quantidade;
+                const qtd = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+                setTotalLotesAg(qtd);
+            } catch (err) {
+                console.error('Erro carregando total de lotes de plantio:', err);
+                setTotalLotesAg(0);
+            }
+        }
+        loadTotalLotesPlantio();
+        return () => { mounted = false }
+    }, [unidadeId, fetchWithAuth]);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadLotesImproprios() {
+            if (!unidadeId) return;
+            try {
+                const fetchFn = fetchWithAuth || fetch;
+                const res = await fetchFn(`${API_URL}/lotesPlantioImproprios/${unidadeId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!mounted) return;
+                // controller returns { sucesso: true, lotesImproprios: { quantidade: number } } or { sucesso: true, lotesImproprios: number }
+                let raw = undefined;
+                if (data?.lotesImproprios) {
+                    if (typeof data.lotesImproprios === 'object') {
+                        raw = data.lotesImproprios.quantidade ?? data.lotesImproprios.qtd ?? data.lotesImproprios;
+                    } else {
+                        raw = data.lotesImproprios;
+                    }
+                }
+                const qtd = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+                setLotesImproprios(qtd);
+            } catch (err) {
+                console.error('Erro carregando lotes impróprios:', err);
+                setLotesImproprios(0);
+            }
+        }
+        loadLotesImproprios();
+        return () => { mounted = false }
+    }, [unidadeId, fetchWithAuth]);
+
     return (
         <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-8 px-8 min-w-[20%] mx-auto w-full mb-10">
             <Card className="@container/card">
@@ -127,38 +180,15 @@ export function SectionCards() {
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Quantidade colhida</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl columns lg:flex items-center justify-between">12T
-                        <Select>
-                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Produto</SelectLabel>
-                                    <SelectItem value="apple">Maçã</SelectItem><SelectItem value="banana">Banana</SelectItem>
-                                    <SelectItem value="blueberry">Cenoura</SelectItem><SelectItem value="grapes">Milho</SelectItem>
-                                    <SelectItem value="pineapple">Trigo</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </CardTitle>
+                    <CardDescription>Total de lotes agrícolas</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{totalLotesAg ?? '-'}</CardTitle>
                 </CardHeader>
             </Card>
 
             <Card className="@container/card">
                 <CardHeader>
-                    <CardDescription>Produção média por cultura</CardDescription>
-                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl columns lg:flex items-center justify-between">10T/ha
-                        <Select>
-                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Produto" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup><SelectLabel>Produto</SelectLabel>
-                                    <SelectItem value="apple">Maçã</SelectItem><SelectItem value="banana">Banana</SelectItem>
-                                    <SelectItem value="blueberry">Cenoura</SelectItem><SelectItem value="grapes">Milho</SelectItem>
-                                    <SelectItem value="pineapple">Trigo</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </CardTitle>
+                    <CardDescription>Lotes Impróprios para venda</CardDescription>
+                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{lotesImproprios ?? '-'}</CardTitle>
                 </CardHeader>
             </Card>
         </div>
