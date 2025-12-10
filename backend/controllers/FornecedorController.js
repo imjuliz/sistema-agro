@@ -1,6 +1,49 @@
-import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, criarPedido, atualizarStatusPedido, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService, contarFornecedoresExternos } from "../models/Fornecedores.js";
+import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, criarPedido, atualizarStatusPedido, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService, contarFornecedoresExternos, totalContratosExternos, totalContratosExternosAtivos } from "../models/Fornecedores.js";
 import { fornecedorSchema } from "../schemas/fornecedorSchema.js";
 
+export const totalContratosExternosController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    if (!unidadeId) {
+      return res.status(400).json({ sucesso: false, erro: 'Unidade não informada.' });
+    }
+    const resultado = await totalContratosExternos(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      count: resultado.count || 0,
+      message: "Total de contratos externos obtido com sucesso!"
+    });
+  } catch (error) {
+    console.error("Erro no controller ao obter total de contratos externos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao obter total de contratos externos.",
+      detalhes: error.message,
+    });
+  }
+};
+
+export const totalContratosExternosAtivosController = async (req, res) => {
+  try {
+    const unidadeId = req.params.unidadeId;
+    if (!unidadeId) {
+      return res.status(400).json({ sucesso: false, erro: 'Unidade não informada.' });
+    }
+    const resultado = await totalContratosExternosAtivos(unidadeId);
+    return res.status(200).json({
+      sucesso: true,
+      count: resultado.count || 0,
+      message: "Total de contratos externos ativos obtido com sucesso!"
+    });
+  } catch (error) {
+    console.error("Erro no controller ao obter total de contratos externos ativos:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao obter total de contratos externos ativos.",
+      detalhes: error.message,
+    });
+  }
+};
 export const contarFornecedoresExternosController = async (req, res) => {
   try {
     const unidadeId = req.params.unidadeId;
@@ -9,11 +52,11 @@ export const contarFornecedoresExternosController = async (req, res) => {
     }
     const resultado = await contarFornecedoresExternos(unidadeId);
     
-    return {
+    return res.status(200).json({
       sucesso: true,
-      qtdFornecedores: resultado.count || 0,
+      count: resultado.count || 0,
       message: "Quantidade de fornecedores externos contada com sucesso!"
-    }
+    });
   } catch (error) {
     console.error("Erro no controller ao contar fornecedores externos:", error);
     return res.status(500).json({

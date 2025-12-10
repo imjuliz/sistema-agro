@@ -1,6 +1,7 @@
 "use client"
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChartBarMultiple } from "@/components/chart-area-interactive"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
@@ -48,6 +49,7 @@ export default function DashboardLoja() {
   const [recentSales, setRecentSales] = useState([]);
   const [pagamentos, setPagamentos] = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [range, setRange] = useState("7");
 
   const currency = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const makeUrl = (path) => {
@@ -85,70 +87,26 @@ export default function DashboardLoja() {
     if (!unidadeId) { setLoading(false); return; }
     setLoading(true);
     try {
-      const [
-        diariaRes,
-        mediaRes,
-        pagamentosRes,
-        estoqueRes,
-        usuariosRes,
-        vendasRes,
-        saldoRes,
-      ] = await Promise.all([
-        fetchJson(`/somarDiaria/${unidadeId}`),
-        fetchJson(`/vendas/media-por-transacao/${unidadeId}`),
-        fetchJson(`/vendas/divisao-pagamentos/${unidadeId}`),
-        fetchJson(`/estoqueSomar`),
-        fetchJson(`/usuarios/unidade/listar`),
-        fetchJson(`/listarVendas/${unidadeId}`),
-        fetchJson(`/saldo-final`),
-      ]);
-
-      const vendasHoje = mediaRes?.quantidade ?? (Array.isArray(vendasRes) ? vendasRes.length : 0);
-      const faturamentoHoje = diariaRes?.total ?? mediaRes?.total ?? 0;
-      const itensEstoque = estoqueRes?.totalItens ?? 0;
-      const funcionariosAtivos = Array.isArray(usuariosRes) ? usuariosRes.length : (usuariosRes?.usuarios?.length ?? 0);
-      const saldoFinal = saldoRes?.saldoFinal ?? 0;
-
-      setStats({ vendasHoje, faturamentoHoje, itensEstoque, funcionariosAtivos, saldoFinal });
-      setPagamentos(pagamentosRes?.detalhamento ?? null);
-
-      const salesList = Array.isArray(vendasRes) ? vendasRes : (vendasRes?.vendas || []);
-      setRecentSales((salesList || []).slice(0, 5));
-
-      // Monta dados do gráfico de barras para vendas dos últimos 15 dias
-      const now = new Date();
-      const dayKey = (d) => d.toISOString().slice(0, 10);
-      const dayLabel = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      const isValidDate = (val) => {
-        const dt = new Date(val);
-        return !Number.isNaN(dt.getTime()) ? dt : null;
-      };
-      const mapValor = {};
-      (salesList || []).forEach((sale) => {
-        const rawDate = sale.data ?? sale.date ?? sale.createdAt;
-        const parsed = isValidDate(rawDate);
-        if (!parsed) return;
-        const key = dayKey(parsed);
-        mapValor[key] = (mapValor[key] || 0) + Number(sale.total ?? sale.valor ?? sale.total_venda ?? 0);
-      });
-      // gera últimos 15 dias
-      const days = [];
-      for (let i = 14; i >= 0; i -= 1) {
-        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-        const key = dayKey(d);
-        days.push({ key, label: dayLabel(d) });
+      const resumo = await fetchJson(`/loja/dashboard/resumo/${unidadeId}`);
+      if (!resumo || resumo.sucesso === false) {
+        toast({ title: 'Falha ao carregar dados', description: resumo?.erro || 'Sem resposta do servidor.', variant: 'destructive' });
+        setLoading(false);
+        return;
       }
-      const barData = days.map(({ key, label }) => ({
-        label,
-        valor: Number(mapValor[key] || 0),
-      }));
-      setChartData(barData);
 
-      const dynamicAlerts = [];
-      if (itensEstoque < 20) dynamicAlerts.push({ id: 'estoque', text: 'Estoque baixo em vários itens', icon: Box });
-      if (saldoFinal < 0) dynamicAlerts.push({ id: 'saldo', text: 'Saldo do caixa negativo', icon: DollarSign });
-      if (vendasHoje === 0) dynamicAlerts.push({ id: 'sem-vendas', text: 'Nenhuma venda registrada hoje', icon: ShoppingCart });
-      setAlerts(dynamicAlerts);
+      const s = resumo.stats || {};
+      setStats({
+        vendasHoje: s.vendasHoje ?? 0,
+        faturamentoHoje: s.faturamentoHoje ?? 0,
+        itensEstoque: s.itensEstoque ?? 0,
+        funcionariosAtivos: s.funcionariosAtivos ?? 0,
+        saldoFinal: s.saldoFinal ?? 0,
+      });
+
+      setPagamentos(resumo.pagamentos || null);
+      setRecentSales(resumo.recentSales || []);
+      setChartData(resumo.barData || []);
+      setAlerts(resumo.alerts || []);
     } catch (error) {
       console.error('Erro ao carregar dashboard:', error);
       toast({ title: 'Erro ao carregar dashboard', description: error.message || 'Falha ao buscar dados.', variant: 'destructive' });
@@ -173,6 +131,45 @@ export default function DashboardLoja() {
     return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   };
 
+  const barPrepared = useMemo(() => {
+    const data = Array.isArray(chartData) ? chartData : [];
+    const limited = range === "7" ? data.slice(-7) : data.slice(-15);
+    return limited.map((item) => ({
+      month: item.label || item.month || item.data || "",
+      total: Number(item.valor ?? item.total ?? 0),
+    }));
+  }, [chartData, range]);
+
+  const ChartBarLoja = () => (
+    <Card>
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Vendas por período</CardTitle>
+          <CardDescription>Visão desta loja (7d ou 15d)</CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Button variant={range === "7" ? "default" : "outline"} size="sm" onClick={() => setRange("7")}>
+            Últimos 7 dias
+          </Button>
+          <Button variant={range === "15" ? "default" : "outline"} size="sm" onClick={() => setRange("15")}>
+            Últimos 15 dias
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="h-80 overflow-hidden">
+        <ChartContainer config={{ total: { label: "Total", color: "#738C16" } }} className="h-full w-full">
+          <BarChart accessibilityLayer data={barPrepared} margin={{ top: 5, right: 10, left: 0, bottom: 50 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" interval={0}/>
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel formatter={(value) => currency(value)} />}/>
+            <Bar dataKey="total" fill="var(--color-total, #738C16)" radius={8} />
+          </BarChart>
+        </ChartContainer>
+        {loading && <div className="text-sm text-muted-foreground mt-2">Carregando...</div>}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen px-4 sm:px-8 lg:px-12 py-8 bg-surface-50">
       <div className="space-y-6">
@@ -184,23 +181,7 @@ export default function DashboardLoja() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Vendas (últimos meses)</span>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={loadDashboard} disabled={loading}>Atualizar</Button>
-                    <Button size="sm" disabled>Exportar</Button>
-                  </div>
-                </CardTitle>
-                <CardDescription>Resumo de vendas recentes (gráfico alimentado pelo backend conforme dados disponíveis).</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72 lg:h-80">
-                  <ChartBarMultiple data={chartData} loading={loading} />
-                </div>
-              </CardContent>
-            </Card>
+            <ChartBarLoja />
 
             <Card>
               <CardHeader>
@@ -217,9 +198,9 @@ export default function DashboardLoja() {
                     recentSales.map((sale) => (
                       <li key={sale.id} className="flex justify-between items-center">
                         <div>
-                          <div className="font-medium">Venda #{sale.id} — {sale.nomeCliente ?? sale.customer ?? 'Cliente'}</div>
+                          <div className="font-medium">Venda #{sale.id} — {sale.nomeCliente ?? sale.customer ?? sale.cliente ?? 'Cliente'}</div>
                           <div className="text-xs text-muted-foreground">
-                            {formatDateTime(sale.data ?? sale.date ?? sale.createdAt)} • {sale.itens ?? sale.items ?? sale.quantidade ?? '—'} itens
+                            {formatDateTime(sale.data ?? sale.date ?? sale.createdAt ?? sale.criadoEm)} • {sale.itens ?? sale.items ?? sale.quantidade ?? '—'} itens
                           </div>
                         </div>
                         <div className="font-semibold">R$ {currency(sale.total ?? sale.valor ?? sale.total_venda ?? 0)}</div>
@@ -262,7 +243,7 @@ export default function DashboardLoja() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-3">
-                  <div className="flex justify-between"><div className="text-sm">Saldo atual</div><div className="font-semibold">R$ {currency(stats.saldoFinal)}</div></div>
+                  {/* <div className="flex justify-between"><div className="text-sm">Saldo atual</div><div className="font-semibold">R$ {currency(stats.saldoFinal)}</div></div> */}
                   <div className="flex justify-between"><div className="text-sm">Entradas (hoje)</div><div className="font-semibold">R$ {currency(stats.faturamentoHoje)}</div></div>
                   <div className="flex justify-between"><div className="text-sm">Transações (hoje)</div><div className="font-semibold">{stats.vendasHoje}</div></div>
                 </div>

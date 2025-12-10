@@ -32,6 +32,10 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
   const [fornecedorError, setFornecedorError] = useState(null);
   const [contratosExternos, setContratosExternos] = useState([]);
   const [pedidosExternos, setPedidosExternos] = useState([]);
+  // KPIs
+  const [totalFornecedoresExternos, setTotalFornecedoresExternos] = useState(0);
+  const [totalContratosAtivos, setTotalContratosAtivos] = useState(0);
+  const [totalContratos, setTotalContratos] = useState(0);
   // modal / form para criar fornecedor externo
   const [showAddFornecedorModal, setShowAddFornecedorModal] = useState(false)
   const [novoNomeEmpresa, setNovoNomeEmpresa] = useState("")
@@ -88,6 +92,42 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
       }
 
       setContratosExternos(contratosArray);
+
+      // 2.5) Buscar KPIs de fornecedores
+      try {
+        const countRes = await fetchWithAuth(`${API_URL}contarFornecedoresExternos/${unidadeId}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        const ativosRes = await fetchWithAuth(`${API_URL}contratosExternosAtivos/${unidadeId}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        const totalRes = await fetchWithAuth(`${API_URL}totalContratosExternos/${unidadeId}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+
+        if (countRes.ok) {
+          const countBody = await countRes.json().catch(() => ({}));
+          console.log('[ConsumerDashboard] Contagem fornecedores recebida:', countBody);
+          setTotalFornecedoresExternos(countBody.count ?? 0);
+        }
+
+        if (ativosRes.ok) {
+          const ativosBody = await ativosRes.json().catch(() => ({}));
+          console.log('[ConsumerDashboard] Total contratos ativos recebido:', ativosBody);
+          setTotalContratosAtivos(ativosBody.count ?? 0);
+        }
+
+        if (totalRes.ok) {
+          const totalBody = await totalRes.json().catch(() => ({}));
+          console.log('[ConsumerDashboard] Total contratos recebido:', totalBody);
+          setTotalContratos(totalBody.count ?? 0);
+        }
+      } catch (e) {
+        console.warn('[ConsumerDashboard] Erro ao buscar KPIs:', e);
+      }
 
       // 3) Extrai fornecedores ÚNICOS dos contratos (EXTERNOS e FORNECEDOR)
       const fornecedoresFromContratos = (contratosArray || [])
@@ -290,6 +330,9 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
             carregando={carregandoFornecedores}
             unidadeId={unidadeId}
             onShowCreatePedido={() => setShowCreatePedidoModal(true)}
+            totalFornecedoresExternos={totalFornecedoresExternos}
+            totalContratosAtivos={totalContratosAtivos}
+            totalContratos={totalContratos}
           />
 
           <Dialog open={showAddFornecedorModal} onOpenChange={setShowAddFornecedorModal}>
@@ -378,7 +421,10 @@ function ContratosComoConsumidor({
   pedidos = [], 
   carregando = false,
   unidadeId = null,
-  onShowCreatePedido = () => {}
+  onShowCreatePedido = () => {},
+  totalFornecedoresExternos = 0,
+  totalContratosAtivos = 0,
+  totalContratos = 0
 }) {
   // This tab receives pre-fetched data from the parent `ConsumerDashboard` via props.
   return (
@@ -387,21 +433,21 @@ function ContratosComoConsumidor({
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
             <CardDescription>Contratos Ativos</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">7</CardTitle>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{totalContratosAtivos}</CardTitle>
             <CardAction><FileCheck /></CardAction>
           </CardHeader>
         </Card>
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
-            <CardDescription>Contratos pendentes</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">3</CardTitle>
+            <CardDescription>Total de Contratos</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{totalContratos}</CardTitle>
             <CardAction><Clock /></CardAction>
           </CardHeader>
         </Card>
         <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
           <CardHeader>
-            <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">24</CardTitle>
+            <CardDescription>Fornecedores Externos</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{totalFornecedoresExternos}</CardTitle>
             <CardAction><CheckCircle /></CardAction>
           </CardHeader>
         </Card>

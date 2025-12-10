@@ -20,6 +20,13 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddSubcategoryOpen, setIsAddSubcategoryOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({});
+
+  // Dialog de confirmação de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'category' | 'subcategory', categoryId, subcategoryId? }
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteConfirmError, setDeleteConfirmError] = useState('');
+  const [deleteStep, setDeleteStep] = useState('confirm'); // confirm | input
   
   // Estados para edição
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -201,9 +208,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       const url = API_URL ? `${API_URL}categorias/${categoryId}` : `/api/categorias/${categoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -212,11 +217,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         throw new Error(errorMessage);
       }
 
-      toast({
-        title: "Sucesso!",
-        description: "Categoria deletada com sucesso.",
-        variant: "default",
-      });
+      toast({ title: "Sucesso!", description: "Categoria deletada com sucesso.", variant: "default" });
 
       if (onRefresh) {
         await onRefresh();
@@ -226,11 +227,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
     } catch (error) {
       console.error('Erro ao deletar categoria:', error);
       const errorMessage = error.message || 'Erro ao deletar categoria. Tente novamente.';
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -239,9 +236,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
       const url = API_URL ? `${API_URL}subcategorias/${subcategoryId}` : `/api/subcategorias/${subcategoryId}`;
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -250,21 +245,14 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         throw new Error(errorMessage);
       }
 
-      toast({
-        title: "Sucesso!",
-        description: "Subcategoria deletada com sucesso.",
-        variant: "default",
-      });
+      toast({ title: "Sucesso!", description: "Subcategoria deletada com sucesso.", variant: "default" });
 
       if (onRefresh) {
         await onRefresh();
       } else {
         const updatedCategories = categories.map(category => {
           if (category.id === categoryId) {
-            return {
-              ...category,
-              subcategories: category.subcategories.filter(sub => sub.id !== subcategoryId)
-            };
+            return { ...category, subcategories: category.subcategories.filter(sub => sub.id !== subcategoryId) };
           }
           return category;
         });
@@ -273,11 +261,36 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
     } catch (error) {
       console.error('Erro ao deletar subcategoria:', error);
       const errorMessage = error.message || 'Erro ao deletar subcategoria. Tente novamente.';
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    }
+  };
+
+  const openDeleteDialog = (target) => {
+    setDeleteTarget(target);
+    setDeleteConfirmText('');
+    setDeleteConfirmError('');
+    setDeleteStep('confirm');
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteStep === 'confirm') {
+      setDeleteStep('input');
+      return;
+    }
+
+    if (deleteConfirmText !== 'Excluir') {
+      setDeleteConfirmError('Digite "Excluir" para confirmar.');
+      return;
+    }
+    setDeleteConfirmError('');
+    setDeleteDialogOpen(false);
+
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'category') {
+      await deleteCategory(deleteTarget.categoryId);
+    } else if (deleteTarget.type === 'subcategory') {
+      await deleteSubcategory(deleteTarget.categoryId, deleteTarget.subcategoryId);
     }
   };
 
@@ -459,6 +472,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
   const saidas = categories.filter(cat => cat.type === 'saida');
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex gap-4 ">
         <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
@@ -651,7 +665,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteCategory(category.id)}
+                            onClick={() => openDeleteDialog({ type: 'category', categoryId: category.id })}
                             className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -708,7 +722,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => deleteSubcategory(category.id, subcategory.id)}
+                                onClick={() => openDeleteDialog({ type: 'subcategory', categoryId: category.id, subcategoryId: subcategory.id })}
                                 className="text-red-400 hover:text-red-600 h-6 w-6 p-0"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -897,7 +911,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => deleteSubcategory(category.id, subcategory.id)}
+                                onClick={() => openDeleteDialog({ type: 'subcategory', categoryId: category.id, subcategoryId: subcategory.id })}
                                 className="text-red-400 hover:text-red-600 h-6 w-6 p-0"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -915,5 +929,41 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
         </Card>
       </div>
     </div>
+    <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+      setDeleteDialogOpen(open);
+      if (!open) {
+        setDeleteStep('confirm');
+        setDeleteConfirmText('');
+        setDeleteConfirmError('');
+      }
+    }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Você tem certeza quer excluir esse item? A ação não podera ser desfeita.</DialogTitle>
+          {deleteStep === 'confirm' ? (
+            <DialogDescription>Essa ação removerá o item permanentemente.</DialogDescription>
+          ) : (
+            <DialogDescription>Digite <strong>Excluir</strong> para confirmar.</DialogDescription>
+          )}
+        </DialogHeader>
+        {deleteStep === 'input' && (
+          <div className="space-y-3">
+            <Input
+              value={deleteConfirmText}
+              onChange={(e) => { setDeleteConfirmText(e.target.value); setDeleteConfirmError(''); }}
+              placeholder='Digite "Excluir"'
+            />
+            {deleteConfirmError && <p className="text-sm text-destructive">{deleteConfirmError}</p>}
+          </div>
+        )}
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+          <Button variant={deleteStep === 'confirm' ? "default" : "destructive"} onClick={confirmDelete}>
+            {deleteStep === 'confirm' ? 'Prosseguir' : 'Excluir'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

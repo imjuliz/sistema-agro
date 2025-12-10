@@ -1,5 +1,34 @@
 import prisma from "../prisma/client.js";
 
+export const totalContratosExternos = async (unidadeId) => {
+  try {
+    const count = await prisma.contrato.count({
+      where: {
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null },
+      }
+    });
+    return { sucesso: true, count, message: 'Total de contratos externos calculado com sucesso!' };
+  } catch (error) {
+    return { sucesso: false, erro: 'Erro ao calcular total de contratos externos', detalhes: error.message };
+  }
+};
+
+export const totalContratosExternosAtivos = async (unidadeId) => {
+  try {
+    const count = await prisma.contrato.count({
+      where: {
+        unidadeId: Number(unidadeId),
+        fornecedorExternoId: { not: null },
+        status: 'ATIVO'
+      }
+    });
+    return { sucesso: true, count, message: 'Total de contratos externos ativos calculado com sucesso!' };
+  } catch (error) {
+    return { sucesso: false, erro: 'Erro ao calcular total de contratos externos ativos', detalhes: error.message };
+  }
+};
+
 export const contarFornecedoresExternos = async (unidadeId) => {
   try {
     const count = await prisma.fornecedorExterno.count({
@@ -633,6 +662,9 @@ export const listarLojasAtendidas = async (unidadeId) => { //função para a faz
 
 export const criarContratoInterno = async (fazendaId, dadosContrato) => {
   try {
+    console.log('[criarContratoInterno] fazendaId:', fazendaId);
+    console.log('[criarContratoInterno] dadosContrato recebido:', JSON.stringify(dadosContrato, null, 2));
+
     const {
       unidadeId, // loja
       dataInicio,
@@ -647,6 +679,16 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
       itens = []
     } = dadosContrato;
 
+    console.log('[criarContratoInterno] Valores extraídos:');
+    console.log('  - unidadeId:', unidadeId);
+    console.log('  - dataInicio:', dataInicio);
+    console.log('  - dataFim:', dataFim);
+    console.log('  - dataEnvio:', dataEnvio);
+    console.log('  - status:', status);
+    console.log('  - frequenciaEntregas:', frequenciaEntregas);
+    console.log('  - diaPagamento:', diaPagamento);
+    console.log('  - formaPagamento:', formaPagamento);
+
     if (!fazendaId) {
       return { sucesso: false, erro: "ID da fazenda (fornecedorExterno interno) é obrigatório." };
     }
@@ -656,7 +698,13 @@ export const criarContratoInterno = async (fazendaId, dadosContrato) => {
     }
 
     if (!dataInicio || !dataEnvio || !frequenciaEntregas || !diaPagamento || !formaPagamento) {
-      return { sucesso: false, erro: "Campos obrigatórios ausentes." };
+      const missingFields = [];
+      if (!dataInicio) missingFields.push('dataInicio');
+      if (!dataEnvio) missingFields.push('dataEnvio');
+      if (!frequenciaEntregas) missingFields.push('frequenciaEntregas');
+      if (!diaPagamento) missingFields.push('diaPagamento');
+      if (!formaPagamento) missingFields.push('formaPagamento');
+      return { sucesso: false, erro: `Campos obrigatórios ausentes: ${missingFields.join(', ')}` };
     }
 
     const contrato = await prisma.contrato.create({

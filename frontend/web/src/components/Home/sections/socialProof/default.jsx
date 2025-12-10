@@ -5,6 +5,7 @@ import { Section } from "@/components/ui/section";
 export default function ThreeDMarqueeDemo() {
   return (
     <Section>
+
       <div className="mx-auto my-10 max-w-7xl rounded-3xl p-2">
       {/* container relativo que serve de referência para os overlays */}
       <div className="relative overflow-hidden">
@@ -14,8 +15,20 @@ export default function ThreeDMarqueeDemo() {
         </div>
 
         {/* overlays laterais — com suporte ao modo claro/escuro */}
-        <div className="rounded-l-3xl pointer-events-none absolute inset-y-0 left-0 w-32 z-50 transition-colors" style={{background:"linear-gradient(90deg, var(--overlay-start) 0%, var(--overlay-mid) 40%, rgba(0,0,0,0) 100%)",}}/>
-        <div className="rounded-r-3xl pointer-events-none absolute inset-y-0 right-0 w-32 z-50 transition-colors" style={{background:"linear-gradient(270deg, var(--overlay-start) 0%, var(--overlay-mid) 40%, rgba(0,0,0,0) 100%)",}}/>
+        <div
+          className="rounded-l-3xl pointer-events-none absolute inset-y-0 left-0 w-32 z-50 transition-colors"
+          style={{
+            background:
+              "linear-gradient(90deg, var(--overlay-start) 0%, var(--overlay-mid) 40%, rgba(0,0,0,0) 100%)",
+          }}
+        />
+        <div
+          className="rounded-r-3xl pointer-events-none absolute inset-y-0 right-0 w-32 z-50 transition-colors"
+          style={{
+            background:
+              "linear-gradient(270deg, var(--overlay-start) 0%, var(--overlay-mid) 40%, rgba(0,0,0,0) 100%)",
+          }}
+        />
 
         {/* definindo variáveis CSS dinâmicas para modo claro/escuro */}
         <style jsx>{`
@@ -31,5 +44,6 @@ export default function ThreeDMarqueeDemo() {
       </div>
     </div>
     </Section>
+    
   );
 }

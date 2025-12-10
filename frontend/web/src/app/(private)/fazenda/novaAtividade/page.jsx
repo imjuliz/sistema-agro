@@ -98,11 +98,15 @@ export default function Page() {
             const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null
             const base = String(API_URL || '/api').replace(/\/$/, '')
             
+            console.log('[NovaAtividade useEffect] tipoContrato:', tipoContrato, 'unidadeId:', unidadeId)
+            
             if (tipoContrato === "INTERNO") {
                 setCarregandoLojas(true)
+                console.log('[NovaAtividade] Carregando lojas...')
                 try {
                     const r1 = await fetchFn(`${base}/listarTodasAsLojas`)
                     const d1 = await r1.json().catch(() => ({}))
+                    console.log('[NovaAtividade] Resposta lojas:', d1)
                     const lojasArray = d1?.lojas || d1?.data || (Array.isArray(d1) ? d1 : [])
                     setLojas(Array.isArray(lojasArray) ? lojasArray : [])
                 } catch (err) {
@@ -113,10 +117,68 @@ export default function Page() {
                 }
             } else {
                 setCarregandoFornecedores(true)
+                console.log('[NovaAtividade] Carregando fornecedores externos...')
                 try {
-                    const r2 = await fetchFn(`${base}/listarFornecedoresExternos/${unidadeId}`)
+                    const url = `${base}/listarFornecedoresExternos/${unidadeId}`
+                    console.log('[NovaAtividade] solicitando fornecedores externos:', url)
+                    const r2 = await fetchFn(url)
+                    console.log('[NovaAtividade] status fornecedores externos:', r2.status, r2.ok)
                     const d2 = await r2.json().catch(() => ({}))
-                    const fornecedoresArray = d2?.fornecedores || d2?.data || (Array.isArray(d2) ? d2 : [])
+                    console.log('[NovaAtividade] resposta fornecedores externos (bruta):', d2)
+                    console.log('[NovaAtividade] tipo de d2:', typeof d2)
+                    console.log('[NovaAtividade] d2.sucesso:', d2?.sucesso)
+                    console.log('[NovaAtividade] d2.fornecedores:', d2?.fornecedores)
+                    console.log('[NovaAtividade] d2.fornecedores length:', d2?.fornecedores?.length)
+
+                    // robust extractor: backend returns { sucesso: true, fornecedores: [...] }
+                    const extractArray = (obj) => {
+                        if (!obj) {
+                            console.log('[NovaAtividade extractArray] obj é null/undefined')
+                            return []
+                        }
+                        if (Array.isArray(obj)) {
+                            console.log('[NovaAtividade extractArray] obj é um array direto')
+                            return obj
+                        }
+                        
+                        // Most likely: { sucesso: true, fornecedores: [...] }
+                        if (Array.isArray(obj.fornecedores)) {
+                            console.log('[NovaAtividade extractArray] Encontrados fornecedores na chave .fornecedores, quantidade:', obj.fornecedores.length)
+                            return obj.fornecedores
+                        }
+                        
+                        // Fallback para outras chaves conhecidas
+                        const keys = ['fornecedores', 'data', 'items', 'results', 'fornecedoresExternos', 'fornecedor']
+                        for (const k of keys) {
+                            if (Array.isArray(obj[k])) {
+                                console.log(`[NovaAtividade extractArray] Encontrados fornecedores na chave .${k}, quantidade:`, obj[k].length)
+                                return obj[k]
+                            }
+                        }
+                        
+                        // Scan de todos os valores
+                        for (const k of Object.keys(obj)) {
+                            try {
+                                const v = obj[k]
+                                if (Array.isArray(v)) {
+                                    console.log(`[NovaAtividade extractArray] Encontrados fornecedores na chave .${k} (scan), quantidade:`, v.length)
+                                    return v
+                                }
+                                if (v && typeof v === 'object') {
+                                    const inner = Object.values(v).find(x => Array.isArray(x))
+                                    if (Array.isArray(inner)) {
+                                        console.log(`[NovaAtividade extractArray] Encontrados fornecedores aninhados em .${k}, quantidade:`, inner.length)
+                                        return inner
+                                    }
+                                }
+                            } catch (e) { /* ignore */ }
+                        }
+                        console.warn('[NovaAtividade extractArray] Nenhum array de fornecedores encontrado')
+                        return []
+                    }
+
+                    const fornecedoresArray = extractArray(d2)
+                    console.log('[NovaAtividade] fornecedores extraídos final:', fornecedoresArray.length, 'items:', fornecedoresArray)
                     setFornecedoresExternos(Array.isArray(fornecedoresArray) ? fornecedoresArray : [])
                 } catch (err) {
                     console.error('Erro carregando fornecedores externos:', err)
@@ -729,23 +791,13 @@ export default function Page() {
             rotaApi: "/criarContrato",
             campos: [],
             icone: <DocumentTextIcon className="w-12 h-12 text-pink-600 -ml-5" />,
-        },
-        {
-            titulo: "despesas / saídas",
-            rotaApi: "/api/atividades/financeiro/criar",
-            campos: [{ name: "descricao", label: "Descrição", type: "text" },
-            { name: "tipoSaida", label: "Tipo de saída()", type: "text" },
-            { name: "valor", label: "Valor", type: "number" },
-            { name: "data", label: "Data", type: "date" }
-            ],
-            icone: <BanknotesIcon className="w-12 h-12 text-green-400 -ml-5" />,
         }
     ]
 
     return (
         <div className="flex flex-col items-center justify-center p-8">
             <h1 className="text-3xl font-bold mb-10">Nova atividade</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-8">
                 {atividades.map((item, index) => (
                     <Card key={index} className="w-64 h-64 flex flex-col items-center justify-center text-center border-2 hover:shadow-lg transition cursor-pointer" onClick={() => selecionarAtividade(item)}>
                         <CardHeader>{item.icone}</CardHeader>
@@ -1087,18 +1139,24 @@ export default function Page() {
                         <div>
                             <Label>{tipoContrato === 'INTERNO' ? 'Loja' : 'Fornecedor Externo'}</Label>
                             {tipoContrato === 'INTERNO' ? (
-                                carregandoLojas ? (<p>Carregando lojas...</p>) : (
-                                    <select value={lojaOuFornecedorId} onChange={(e) => setLojaOuFornecedorId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
-                                        <option value="">Selecione uma loja</option>
-                                        {lojas.map((l) => (<option key={l.id} value={l.id}>{l?.nome ?? `Loja ${l.id}`}</option>))}
-                                    </select>
+                                carregandoLojas ? (<p className="text-sm text-gray-500">Carregando lojas...</p>) : (
+                                    <>
+                                        <select value={lojaOuFornecedorId} onChange={(e) => setLojaOuFornecedorId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                            <option value="">Selecione uma loja</option>
+                                            {lojas.map((l) => (<option key={l.id} value={l.id}>{l?.nome ?? `Loja ${l.id}`}</option>))}
+                                        </select>
+                                        {lojas.length === 0 && <p className="text-xs text-amber-600 mt-1">Nenhuma loja disponível</p>}
+                                    </>
                                 )
                             ) : (
-                                carregandoFornecedores ? (<p>Carregando fornecedores...</p>) : (
-                                    <select value={lojaOuFornecedorId} onChange={(e) => setLojaOuFornecedorId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
-                                        <option value="">Selecione um fornecedor</option>
-                                        {fornecedoresExternos.map((f) => (<option key={f.id} value={f.id}>{f?.nomeEmpresa ?? `Fornecedor ${f.id}`}</option>))}
-                                    </select>
+                                carregandoFornecedores ? (<p className="text-sm text-gray-500">Carregando fornecedores...</p>) : (
+                                    <>
+                                        <select value={lojaOuFornecedorId} onChange={(e) => setLojaOuFornecedorId(e.target.value)} className="w-full border rounded p-2 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-900">
+                                            <option value="">Selecione um fornecedor</option>
+                                            {fornecedoresExternos.map((f) => (<option key={f.id} value={f.id}>{f?.nomeEmpresa ?? f?.nome ?? `Fornecedor ${f.id}`}</option>))}
+                                        </select>
+                                        {fornecedoresExternos.length === 0 && <p className="text-xs text-amber-600 mt-1">Nenhum fornecedor externo cadastrado para esta unidade</p>}
+                                    </>
                                 )
                             )}
                         </div>
