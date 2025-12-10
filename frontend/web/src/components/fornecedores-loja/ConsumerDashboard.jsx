@@ -216,45 +216,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
 
   return (
     <div className="space-y-6 flex flex-col gap-12">
-      {/* cards / kpis / indicadores */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
-        <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
-          <CardHeader>
-            <CardDescription>Contratos Ativos</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              7
-            </CardTitle>
-            <CardAction>
-              <FileCheck />
-            </CardAction>
-          </CardHeader>
-        </Card>
-        <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
-          <CardHeader>
-            <CardDescription>Contratos pendentes</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              3
-            </CardTitle>
-            <CardAction>
-              <Clock />
-            </CardAction>
-          </CardHeader>
-         
-        </Card>
-        <Card className="h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition">
-          <CardHeader>
-            <CardDescription>NÃO SEI O QUE COLOCAR AQUI</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              24
-            </CardTitle>
-            <CardAction>
-              <CheckCircle />
-            </CardAction>
-          </CardHeader>
-        </Card>
-      </div> */}
-
-      
+    
           <ContratosComoConsumidor 
             fornecedores={fornecedoresExternos} 
             contratos={contratosExternos} 
@@ -264,11 +226,6 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
             onShowCreatePedido={() => setShowCreatePedidoModal(true)}
           />
         
-
-      {/* produtos */}
-      {/* <ProductCatalog /> */}
-      {/* produtos */}
-
       {/* Modal para criar pedido interno */}
       <CreatePedidoLojaModal
         open={showCreatePedidoModal}
@@ -328,7 +285,6 @@ function ContratosComoConsumidor({
           Criar Pedido
         </Button>
       </div>
-
       <OrderManagement pedidos={pedidos} />
     </div>
   );

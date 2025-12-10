@@ -51,7 +51,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController, listarLotesPlantioControllerOld} from "../controllers/LoteController.js";
+import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController, listarLotesPlantioControllerOld, contarLotesController} from "../controllers/LoteController.js";
 // import { adicionarProdutoEstoqueController } from "../controllers/EstoqueController.js";
 
 // tradução
@@ -105,6 +105,7 @@ router.get("/listarProdutos/:unidadeId", getProdutosController);
 
 router.get("/listarProdutosEstoque/:unidadeId", produtosDoEstoqueController);
 
+router.get("/contarTotalLotes/:unidadeId", contarLotesController)
 router.get("/estoqueSomar", auth, somarQtdTotalEstoqueController);
 router.get("/produto-mais-vendido", auth(), buscarProdutoMaisVendidoController);
 router.get("/produtos", auth(), listarProdutosController);

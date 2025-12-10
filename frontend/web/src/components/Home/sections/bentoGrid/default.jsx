@@ -1,7 +1,4 @@
 "use client";
-
-import { motion } from "framer-motion";
-import { Icon } from "lucide-react"; // opcional se quiser ícones
 import React from "react";
 
 import { Section } from "@/components/ui/section";
@@ -11,7 +8,6 @@ import { FirstBentoAnimation } from "./first-bento-animation";
 import { FourthBentoAnimation } from "./fourth-bento-animation";
 import { SecondBentoAnimation } from "./second-bento-animation";
 import { ThirdBentoAnimation } from "./third-bento-animation";
-import { cn } from "@/lib/utils";
 
 export function BentoSection() {
 

@@ -16,9 +16,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
-import { useTranslation } from "@/hooks/useTranslation";
-import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 // Função para formatar telefone
 const formatarTelefone = (telefone) => {
@@ -265,27 +262,6 @@ export default function FuncionariosFazenda() {
   const _userRoleRaw = user?.perfil?.funcao ?? user?.perfil ?? user?.role ?? '';
   const _userRole = typeof _userRoleRaw === 'string' ? _userRoleRaw.toUpperCase() : '';
   const isGerenteLoja = _userRole === 'GERENTE_FAZENDA' || _userRole === 'GERENTE_FAZENDA';
-
-  const { lang, changeLang } = useTranslation();
-  const languageOptions = [
-    { value: 'pt-BR', label: 'Português (BR)' },
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Español' },
-    { value: 'fr', label: 'Français' }
-  ];
-  const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
-
-  // Estados locais para edição temporária antes de salvar
-  const [localTheme, setLocalTheme] = useState(globalTheme);
-  const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize);
-  const [localLang, setLocalLang] = useState(lang);
-
-  const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-  useEffect(() => {
-    setLocalTheme(globalTheme);
-    setLocalSelectedFontSize(globalSelectedFontSize);
-    setLocalLang(lang);
-  }, [globalTheme, globalSelectedFontSize, lang]);
 
   return (
     <div className="flex gap-6">

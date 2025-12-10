@@ -79,11 +79,6 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           {
-            title: "Dashboard",
-            url: "/fazenda/dashboard",
-            icon: PieChart,
-          },
-          {
             title: "Animalia",
             url: "/fazenda/animalia",
             icon: Dog,
