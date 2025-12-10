@@ -10,6 +10,8 @@ import { FirstBentoAnimation } from "./first-bento-animation";
 import { FourthBentoAnimation } from "./fourth-bento-animation";
 import { SecondBentoAnimation } from "./second-bento-animation";
 import { ThirdBentoAnimation } from "./third-bento-animation";
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+import { useEffect, useState } from "react";
 
 export function BentoSection() {
   const { lang, changeLang } = useTranslation();
@@ -19,7 +21,15 @@ export function BentoSection() {
     { value: 'es', label: 'Español' },
     { value: 'fr', label: 'Français' }
   ];
+
+  const { theme: globalTheme, selectedFontSize: globalSelectedFontSize } = useAppearance(); // Obter do contexto
+      // Estados locais para edição temporária antes de salvar
+      const [localTheme, setLocalTheme] = useState(globalTheme); 
+      const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+      const [localLang, setLocalLang] = useState(lang);
+
   const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+  
   useEffect(() => {
     setLocalTheme(globalTheme);
     setLocalSelectedFontSize(globalSelectedFontSize);

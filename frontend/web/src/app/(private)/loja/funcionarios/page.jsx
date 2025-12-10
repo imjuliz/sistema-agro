@@ -18,6 +18,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 // Função para formatar telefone
 const formatarTelefone = (telefone) => {
@@ -282,6 +283,13 @@ export default function FuncionariosFazenda() {
           { value: 'es', label: 'Español' },
           { value: 'fr', label: 'Français' }
       ];
+
+      const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+            // Estados locais para edição temporária antes de salvar
+            const [localTheme, setLocalTheme] = useState(globalTheme); 
+            const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+            const [localLang, setLocalLang] = useState(lang);
+
       const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
       useEffect(() => {
           setLocalTheme(globalTheme);

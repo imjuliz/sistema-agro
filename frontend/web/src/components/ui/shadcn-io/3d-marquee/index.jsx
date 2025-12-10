@@ -2,6 +2,9 @@
 import React from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+import { useEffect, useState } from "react";
+
 export default function SocialProofMarquee({ testimonials }) {
   const { lang, changeLang } = useTranslation();
   const languageOptions = [
@@ -10,7 +13,15 @@ export default function SocialProofMarquee({ testimonials }) {
     { value: 'es', label: 'Español' },
     { value: 'fr', label: 'Français' }
   ];
+
+  const { theme: globalTheme, selectedFontSize: globalSelectedFontSize } = useAppearance(); // Obter do contexto
+      // Estados locais para edição temporária antes de salvar
+      const [localTheme, setLocalTheme] = useState(globalTheme); 
+      const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+      const [localLang, setLocalLang] = useState(lang);
+
   const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+  
   useEffect(() => {
     setLocalTheme(globalTheme);
     setLocalSelectedFontSize(globalSelectedFontSize);

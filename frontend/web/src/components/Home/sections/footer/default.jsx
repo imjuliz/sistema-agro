@@ -5,6 +5,8 @@ import { Footer, FooterBottom, FooterColumn, FooterContent } from "@/components/
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+import { useEffect, useState } from "react";
 
 export default function FooterSection(props) {
   const { lang, changeLang } = useTranslation();
@@ -14,8 +16,16 @@ export default function FooterSection(props) {
         { value: 'es', label: 'Español' },
         { value: 'fr', label: 'Français' }
     ];
+
+    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+        // Estados locais para edição temporária antes de salvar
+        const [localTheme, setLocalTheme] = useState(globalTheme); 
+        const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+        const [localLang, setLocalLang] = useState(lang);
+
  const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-useEffect(() => {
+
+ useEffect(() => {
         setLocalTheme(globalTheme);
         setLocalSelectedFontSize(globalSelectedFontSize);
         setLocalLang(lang);
