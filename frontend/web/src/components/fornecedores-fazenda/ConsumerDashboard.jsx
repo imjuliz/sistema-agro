@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import FornecedoresCard from './fornecedores-card';
 import ConsumidoresCard from './consumidores-card';
 import { OrderManagement } from './OrderManagement';
+import { CreatePedidoModal } from './CreatePedidoModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 
@@ -41,6 +42,9 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
   const [novoEndereco, setNovoEndereco] = useState("")
   const [novoStatus, setNovoStatus] = useState('ATIVO')
   const [creatingFornecedor, setCreatingFornecedor] = useState(false)
+  
+  // modal para criar pedido externo
+  const [showCreatePedidoModal, setShowCreatePedidoModal] = useState(false)
 
   const loadFornecedores = async () => {
     if (!unidadeId) return;
@@ -283,7 +287,9 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
             fornecedores={fornecedoresExternos} 
             contratos={contratosExternos} 
             pedidos={pedidosExternos} 
-            carregando={carregandoFornecedores} 
+            carregando={carregandoFornecedores}
+            unidadeId={unidadeId}
+            onShowCreatePedido={() => setShowCreatePedidoModal(true)}
           />
 
           <Dialog open={showAddFornecedorModal} onOpenChange={setShowAddFornecedorModal}>
@@ -347,12 +353,33 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
       {/* produtos */}
       {/* <ProductCatalog /> */}
       {/* produtos */}
+
+      {/* Modal para criar pedido externo */}
+      <CreatePedidoModal
+        open={showCreatePedidoModal}
+        onOpenChange={setShowCreatePedidoModal}
+        unidadeId={unidadeId}
+        tipo="externo"
+        fornecedores={fornecedoresExternos}
+        contratos={contratosExternos}
+        onPedidoCreated={(pedido) => {
+          // Atualizar lista de pedidos
+          setPedidosExternos(prev => [pedido, ...prev]);
+        }}
+      />
       
     </div>
   );
 }
 
-function ContratosComoConsumidor({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+function ContratosComoConsumidor({ 
+  fornecedores = [], 
+  contratos = [], 
+  pedidos = [], 
+  carregando = false,
+  unidadeId = null,
+  onShowCreatePedido = () => {}
+}) {
   // This tab receives pre-fetched data from the parent `ConsumerDashboard` via props.
   return (
     <div className="space-y-6 flex flex-col gap-12">
@@ -381,6 +408,13 @@ function ContratosComoConsumidor({ fornecedores = [], contratos = [], pedidos = 
       </div>
 
       <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
+
+      <div className="flex justify-end">
+        <Button onClick={onShowCreatePedido}>
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Criar Pedido
+        </Button>
+      </div>
 
       <OrderManagement pedidos={pedidos} />
     </div>
@@ -465,14 +499,17 @@ function ContratosComoFornecedor() {
 
         // 4) Buscar pedidos relacionados
         try {
-          // Buscar pedidos onde a fazenda (unidadeId) é a origem (pedidos que a fazenda fez para lojas)
-          const pRes = await fetchWithAuth(`${API_URL}estoque-produtos/pedidos-origem/${unidadeId}`, { method: 'GET', credentials: 'include' });
+          // Buscar pedidos onde a fazenda (unidadeId) é o DESTINO (pedidos que lojas fizeram para esta fazenda)
+          // Usar endpoint listarPedidosEntrega (rota: /estoque-produtos/pedidos/:unidadeId)
+          const pRes = await fetchWithAuth(`${API_URL}estoque-produtos/pedidos/${unidadeId}`, { method: 'GET', credentials: 'include' });
           const pBody = await pRes.json().catch(() => ({}));
-          const pData = Array.isArray(pBody.pedidos) ? pBody.pedidos : (Array.isArray(pBody) ? pBody : []);
-          console.log('[ContratosComoFornecedor] Pedidos encontrados (origem):', pData.length, pData);
+          let pData = Array.isArray(pBody.pedidos) ? pBody.pedidos : (Array.isArray(pBody) ? pBody : []);
+          // Filtrar apenas pedidos cuja origem é outra unidade (loja) — evitar mostrar pedidos que esta fazenda criou para fornecedores externos
+          pData = (pData || []).filter(p => p.origemUnidadeId && Number(p.origemUnidadeId) !== Number(unidadeId));
+          console.log('[ContratosComoFornecedor] Pedidos encontrados (destino, filtrados por origem loja):', pData.length, pData);
           setPedidos(pData);
         } catch (e) {
-          console.warn('[ContratosComoFornecedor] Aviso ao buscar pedidos (origem):', e?.message);
+          console.warn('[ContratosComoFornecedor] Aviso ao buscar pedidos (destino):', e?.message);
         }
       } catch (err) {
         console.error('[ContratosComoFornecedor] Erro ao carregar dados:', err);

@@ -8,6 +8,8 @@ import Logo from "@/components/ui/logo";
 import { Section } from "@/components/ui/section";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useEffect, useState } from "react";
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 export default function Logos({
   title = "Por que escolher a RuralTech?",
@@ -20,7 +22,6 @@ export default function Logos({
   ],
   className,
 }) {
-
   const { lang, changeLang } = useTranslation();
     const languageOptions = [
         { value: 'pt-BR', label: 'Português (BR)' },
@@ -28,8 +29,16 @@ export default function Logos({
         { value: 'es', label: 'Español' },
         { value: 'fr', label: 'Français' }
     ];
- const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-useEffect(() => {
+
+    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize } = useAppearance(); // Obter do contexto
+    // Estados locais para edição temporária antes de salvar
+    const [localTheme, setLocalTheme] = useState(globalTheme); 
+    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+    const [localLang, setLocalLang] = useState(lang);
+
+   const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+   
+   useEffect(() => {
         setLocalTheme(globalTheme);
         setLocalSelectedFontSize(globalSelectedFontSize);
         setLocalLang(lang);

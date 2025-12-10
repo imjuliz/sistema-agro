@@ -6,7 +6,7 @@ import { auth } from "../middlewares/authMiddleware.js";
 import { translateText } from "../controllers/TranslateController.js";
 import {listarPedidosEntregaController, listarPedidosOrigemController, atualizarQntdMinController, adicionarProdutoAoEstoqueController } from "../controllers/estoque_produtosController.js";
 import { verificarProducaoLoteController, calcularMediaProducaoPorLoteController, gerarRelatorioLoteController, gerarRelatorioProducaoController} from "../controllers/fazenda.js";
-import { calcularFornecedoresController, listarTodasAsLojasController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController, criarFornecedorExternoController, buscarContratoPorIdController } from "../controllers/FornecedorController.js";
+import { calcularFornecedoresController, listarTodasAsLojasController, criarContratoExternoController, criarContratoInternoController, listarFornecedoresExternosController, listarFornecedoresInternosController, listarLojasAtendidasController, verContratosComFazendasController, verContratosComFazendasAsFornecedorController, verContratosComLojasController, verContratosExternosController, listarMetaContratosController, buscarPedidosExternosController, createPedidoInternoController, createPedidoExternoController, processarPedidoController, getFornecedoresKpisController, updateFornecedorController, deleteFornecedorController, criarFornecedorExternoController, buscarContratoPorIdController, contarFornecedoresExternosController } from "../controllers/FornecedorController.js";
 import { listarEstoqueController,  listarProdutosController, somarQtdTotalEstoqueController,  consultarLoteController } from '../controllers/estoque_produtosController.js'
 import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
@@ -51,7 +51,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController} from "../controllers/LoteController.js";
+import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController, listarLotesPlantioControllerOld} from "../controllers/LoteController.js";
 // import { adicionarProdutoEstoqueController } from "../controllers/EstoqueController.js";
 
 // tradução
@@ -111,7 +111,7 @@ router.get("/produtos", auth(), listarProdutosController);
 router.get("/estoqueSomar", auth(), somarQtdTotalEstoqueController);
 router.get("/unidade/produtos", auth(["GERENTE_MATRIZ", "GERENTE_FAZENDA", "FUNCIONARIO"]), listarEstoqueController);
 // router.get("/lotesPlantio/:unidadeId", lotesPlantioController);
-router.get("/lotesPlantio/:unidadeId", listarLotesPlantioController);
+router.get("/lotesPlantio/:unidadeId", listarLotesPlantioControllerOld);
 router.get("/loteAnimalia/:unidadeId", listarLotesAnimaliaController);
 router.get("/totalLotesPlantio/:unidadeId", totalLotesPlantioController); //colocar na pag plantio
 router.get("/totalLotesAnimalia/:unidadeId", totalLotesAnimaliaController); //colocar na pag animalia
@@ -153,6 +153,8 @@ router.get(
   "/listarFornecedoresExternos/:unidadeId",
   listarFornecedoresExternosController
 );
+
+router.get("/contarFornecedoresExternos/:unidadeId", contarFornecedoresExternosController);
 router.get(
   "/listarFornecedoresInternos/:unidadeId",
   listarFornecedoresInternosController
@@ -164,6 +166,23 @@ router.get(
 );
 router.get("/verContratosExternos/:unidadeId", verContratosExternosController);
 router.get("/pedidos-externos/:unidadeId", buscarPedidosExternosController);
+// Criar pedidos
+router.post(
+  "/pedidos-internos/:unidadeId",
+  auth(["GERENTE_LOJA", "FUNCIONARIO_LOJA", "GERENTE_MATRIZ"]),
+  createPedidoInternoController
+);
+router.post(
+  "/pedidos-externos/:unidadeId",
+  auth(["GERENTE_FAZENDA", "FUNCIONARIO_FAZENDA", "GERENTE_MATRIZ"]),
+  createPedidoExternoController
+);
+// Processar pedido (marca como ENTREGUE)
+router.post(
+  "/pedidos/:id/processar",
+  auth(["GERENTE_FAZENDA", "GERENTE_MATRIZ"]),
+  processarPedidoController
+);
 router.get(
   "/verContratosComFazendas/:unidadeId",
   verContratosComFazendasController

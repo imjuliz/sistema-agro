@@ -361,6 +361,7 @@ model ContratoItens {
 model Pedido {
   id                        Int                @id @default(autoincrement())
   contratoId                Int?               @map("contrato_id")
+  descricao                 String?            @db.VarChar(500)
   origemFornecedorExternoId Int?               @map("fornecedor_externo_id")
   origemUnidadeId           Int?               @map("origem_unidade_id")
   destinoUnidadeId          Int?               @map("destino_unidade_id")

@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Download } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
+import { Transl } from '../TextoTraduzido/TextoTraduzido';
 
 export function AccountsPayable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh, readOnly = false, unidadeId = null }) {
   const { toast } = useToast();
@@ -1094,42 +1095,42 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
-            <CardTitle className="text-sm">Total Pendente</CardTitle>
+            <CardTitle className="text-sm"><Transl>Total Pendente</Transl></CardTitle>
             <Calendar className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-orange-600">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'pending').length} contas</p>
+            <Transl className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'pending').length} contas</Transl>
           </CardContent>
         </Card>
         <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
-            <CardTitle className="text-sm">Total Vencido</CardTitle>
+            <CardTitle className="text-sm"><Transl>Total Vencido</Transl></CardTitle>
             <AlertCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-red-600">{formatCurrency(totalOverdue)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'overdue').length} contas</p>
+            <Transl className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'overdue').length} contas</Transl>
           </CardContent>
         </Card>
         <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm">Total Pago</CardTitle>
+            <CardTitle className="text-sm"><Transl>Total Pago</Transl></CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-green-600">{formatCurrency(totalPaid)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'paid').length} contas</p>
+            <Transl className="text-xs text-muted-foreground">{filteredAccounts.filter(acc => acc.status === 'paid').length} contas</Transl>
           </CardContent>
         </Card>
         <Card className={"gap-4 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm ">Total Geral</CardTitle>
+            <CardTitle className="text-sm "><Transl>Total Geral</Transl></CardTitle>
             <FileText className="h-4 w-4 " />
           </CardHeader>
           <CardContent>
             <div className="">{formatCurrency(totalPending + totalOverdue + totalPaid)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.length} contas</p>
+            <Transl className="text-xs text-muted-foreground">{filteredAccounts.length} contas</Transl>
           </CardContent>
         </Card>
       </div>
@@ -1139,22 +1140,23 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         <div>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 open-sans" />Filtro de Período</CardTitle>
-            <CardDescription>Selecione o mês e ano para filtrar as contas a pagar</CardDescription>
+              <Calendar className="h-5 w-5 open-sans" /><Transl>Filtro de Período</Transl></CardTitle>
+            <CardDescription><Transl>Selecione o mês e ano para filtrar as contas a pagar</Transl></CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                <Label>Mês</Label>
+                <Label><Transl>Mês</Transl></Label>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger id="month-filter"><SelectValue /></SelectTrigger>
+                   {/* quando coloca o Transl aqui, quebra o select */}
                   <SelectContent>
                     {months.map(month => (<SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Ano</Label>
+                <Label><Transl>Ano</Transl></Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger id="year-filter"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -1172,7 +1174,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                   className="flex items-center gap-2"
                   onClick={exportarCSVBackend}
                 >
-                  <Download className="h-4 w-4" />Exportar CSV
+                  <Download className="h-4 w-4" /><Transl>Exportar CSV</Transl>
                 </Button>
                 {/* <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
                   <DialogTrigger asChild>
@@ -1240,39 +1242,39 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                 </Dialog> */}
                 <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!isReadOnly) setIsAddDialogOpen(open); }}>
                   <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Conta</Button>
+                    <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" /><Transl>Nova Conta</Transl></Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
-                      <DialogTitle>Nova Conta a Pagar</DialogTitle>
-                      <DialogDescription>Adicione uma nova conta a pagar ao sistema</DialogDescription>
+                      <DialogTitle><Transl>Nova Conta a Pagar</Transl></DialogTitle>
+                      <DialogDescription><Transl>Adicione uma nova conta a pagar ao sistema</Transl></DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label className={"pb-3"}>Data de Competência</Label>
+                          <Label className={"pb-3"}><Transl>Data de Competência</Transl></Label>
                           <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => { setFormData({ ...formData, competencyDate: e.target.value }); setFormErrors(prev => ({ ...prev, competencyDate: '' })); }} className={formErrors.competencyDate ? 'border-destructive' : ''} />
-                          {formErrors.competencyDate && (<p className="text-sm text-destructive mt-2">Data de Competência é obrigatório</p>)}
+                          {formErrors.competencyDate && (<Transl className="text-sm text-destructive mt-2">Data de Competência é obrigatório</Transl>)}
                         </div>
                         <div>
-                          <Label className={"pb-3"}>Data de Vencimento</Label>
+                          <Label className={"pb-3"}><Transl>Data de Vencimento</Transl></Label>
                           <Input id="due-date" type="date" value={formData.dueDate} onChange={(e) => { setFormData({ ...formData, dueDate: e.target.value }); setFormErrors(prev => ({ ...prev, dueDate: '' })); }} className={formErrors.dueDate ? 'border-destructive' : ''} />
-                          {formErrors.dueDate && (<p className="text-sm text-destructive mt-2">Data de Vencimento é obrigatório</p>)}
+                          {formErrors.dueDate && (<Transl className="text-sm text-destructive mt-2">Data de Vencimento é obrigatório</Transl>)}
                         </div>
                       </div>
                       <div>
-                        <Label className={"pb-3"}>Data de Pagamento (opcional)</Label>
+                        <Label className={"pb-3"}><Transl>Data de Pagamento (opcional)</Transl></Label>
                         <Input id="payment-date" type="date" value={formData.paymentDate} onChange={(e) => { setFormData({ ...formData, paymentDate: e.target.value }); setFormErrors(prev => ({ ...prev, paymentDate: '' })); }} className={formErrors.paymentDate ? 'border-destructive' : ''} />
-                        {formErrors.paymentDate && (<p className="text-sm text-destructive mt-2">{formErrors.paymentDate}</p>)}
+                        {formErrors.paymentDate && (<Transl className="text-sm text-destructive mt-2">{formErrors.paymentDate}</Transl>)}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label className={"pb-3"}>Valor</Label>
+                          <Label className={"pb-3"}><Transl>Valor</Transl></Label>
                           <Input id="amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => { setFormData({ ...formData, amount: e.target.value }); setFormErrors(prev => ({ ...prev, amount: '' })); }} className={formErrors.amount ? 'border-destructive' : ''} />
-                          {formErrors.amount && (<p className="text-sm text-destructive mt-2">Valor é obrigatório</p>)}
+                          {formErrors.amount && (<Transl className="text-sm text-destructive mt-2">Valor é obrigatório</Transl>)}
                         </div>
                         <div>
-                          <Label className={"pb-3"}>Subcategoria</Label>
+                          <Label className={"pb-3"}><Transl>Subcategoria</Transl></Label>
                           <Select value={formData.subcategoryId} onValueChange={(value) => { setFormData({ ...formData, subcategoryId: value }); setFormErrors(prev => ({ ...prev, subcategoryId: '' })); }}>
                             <SelectTrigger className={formErrors.subcategoryId ? 'border-destructive' : ''}><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
                             <SelectContent>
@@ -1287,17 +1289,17 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                               ))}
                             </SelectContent>
                           </Select>
-                          {formErrors.subcategoryId && (<p className="text-sm text-destructive mt-2">Subcategoria é obrigatório</p>)}
+                          {formErrors.subcategoryId && (<Transl className="text-sm text-destructive mt-2">Subcategoria é obrigatório</Transl>)}
                         </div>
                       </div>
                       <div>
-                        <Label className={"pb-3"}>Descrição</Label>
+                        <Label className={"pb-3"}><Transl>Descrição</Transl></Label>
                         <Textarea id="description" placeholder="Descrição da conta a pagar" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}/>
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setFormErrors({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: ''}); }}>Cancelar</Button>
-                      <Button onClick={handleAdd}>Adicionar</Button>
+                      <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setFormErrors({competencyDate: '',dueDate: '',paymentDate: '',amount: '',subcategoryId: ''}); }}><Transl>Cancelar</Transl></Button>
+                      <Button onClick={handleAdd}><Transl>Adicionar</Transl></Button>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -1305,33 +1307,33 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
             </div>
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <p>Exibindo contas de <strong>{getSelectedMonthName()} de {selectedYear}</strong></p>
+              <Transl>Exibindo contas de <strong>{getSelectedMonthName()} de {selectedYear}</strong></Transl>
             </div>
           </CardContent>
         </div>
         <div>
           <CardHeader>
-            <CardTitle>Lista de Contas/Despesas</CardTitle>
-            <CardDescription>Todas as despesas cadastradas</CardDescription>
+            <CardTitle><Transl>Lista de Contas/Despesas</Transl></CardTitle>
+            <CardDescription><Transl>Todas as despesas cadastradas</Transl></CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-8 text-muted-foreground">
-                Carregando contas...
+                <Transl>Carregando contas...</Transl>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Competência</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Pagamento</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
+                      <TableHead><Transl>Competência</Transl></TableHead>
+                      <TableHead><Transl>Vencimento</Transl></TableHead>
+                      <TableHead><Transl>Pagamento</Transl></TableHead>
+                      <TableHead><Transl>Valor</Transl></TableHead>
+                      <TableHead><Transl>Categoria</Transl></TableHead>
+                      <TableHead><Transl>Descrição</Transl></TableHead>
+                      <TableHead><Transl>Status</Transl></TableHead>
+                      <TableHead><Transl>Ações</Transl></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1354,12 +1356,12 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                    <AlertDialogDescription>Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                    <AlertDialogTitle><Transl>Confirmar exclusão</Transl></AlertDialogTitle>
+                                    <AlertDialogDescription><Transl>Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.</Transl></AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}>Excluir</AlertDialogAction>
+                                    <AlertDialogCancel><Transl>Cancelar</Transl></AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}><Transl>Excluir</Transl></AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
@@ -1370,28 +1372,30 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                     ) : (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          {localAccounts.length === 0 ? (
+                          <Transl>{localAccounts.length === 0 ? (
                             'Nenhuma conta cadastrada. Clique em "Nova Conta" para adicionar uma conta a pagar.'
                           ) : (
                             <div className="space-y-2">
-                              <p>Nenhuma conta encontrada para <strong>{getSelectedMonthName()} de {selectedYear}</strong>.</p>
-                              <p className="text-xs">Total de contas no sistema: <strong>{localAccounts.length}</strong></p>
+                              <Transl>Nenhuma conta encontrada para <strong>{getSelectedMonthName()} de {selectedYear}</strong>.</Transl>
+                              <Transl className="text-xs">Total de contas no sistema: <strong>{localAccounts.length}</strong></Transl>
                               <div className="text-xs text-muted-foreground mt-2">
-                                <p>Dica: Verifique se as datas de competência ou vencimento das contas estão no mês/ano selecionado.</p>
-                                <p className="mt-1">Contas disponíveis:</p>
+                                <Transl>Dica: Verifique se as datas de competência ou vencimento das contas estão no mês/ano selecionado.</Transl>
+                                <Transl className="mt-1">Contas disponíveis:</Transl>
                                 <ul className="list-disc list-inside mt-1">
                                   {localAccounts.slice(0, 5).map(acc => (
                                     <li key={acc.id}>
+                                      <Transl>
                                       ID: {acc.id} - 
                                       Competência: {acc.competencyDate || 'N/A'} - 
-                                      Vencimento: {acc.dueDate || 'N/A'}
+                                      Vencimento: {acc.dueDate || 'N/A'}''
+                                      </Transl>
                                     </li>
                                   ))}
-                                  {localAccounts.length > 5 && <li>... e mais {localAccounts.length - 5} contas</li>}
+                                  {localAccounts.length > 5 && <li><Transl>... e mais {localAccounts.length - 5} contas</Transl></li>}
                                 </ul>
                               </div>
                             </div>
-                          )}
+                          )}</Transl>
                         </TableCell>
                       </TableRow>
                     )}
@@ -1400,7 +1404,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                 {filteredAccounts.length > 0 && (
                   <CardFooter className="flex items-center justify-between px-4 py-3 border-t border-neutral-800">
                     <div className="flex items-center gap-3">
-                      <Label className="text-sm font-medium">Linhas por pág.</Label>
+                      <Label className="text-sm font-medium"><Transl>Linhas por pág.</Transl></Label>
                       <Select value={String(perPage)} onValueChange={(value) => { const v = Number(value); setPerPage(v); setPage(1); }}>
                         <SelectTrigger className="w-[70px]">
                           <SelectValue />
@@ -1413,7 +1417,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                         </SelectContent>
                       </Select>
 
-                      <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredAccounts.length / perPage) || 1)}</div>
+                      <div className="text-sm"><Transl>Pág. {page} de {Math.max(1, Math.ceil(filteredAccounts.length / perPage) || 1)}</Transl></div>
                       <div className="inline-flex items-center gap-1 border-l border-neutral-800 pl-3">
                         <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página">
                           <ChevronsLeft className="h-4 w-4" />

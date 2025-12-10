@@ -14,6 +14,8 @@ import { Plus, Edit, Trash2, DollarSign, Calendar, FileText, Upload, AlertCircle
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from "@/components/TextoTraduzido/TextoTraduzido";
 
 export function AccountsReceivable({ accounts, categories, onAccountsChange, fetchWithAuth, API_URL, onRefresh, readOnly = false, unidadeId = null }) {
   const { toast } = useToast();
@@ -1019,39 +1021,41 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       {/* Filtros de Período */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 open-sans" />Filtro de Período</CardTitle>
-          <CardDescription>Selecione o mês e ano para filtrar as receitas</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 open-sans" /><Transl>Filtro de Período</Transl></CardTitle>
+          <CardDescription><Transl>Selecione o mês e ano para filtrar as receitas</Transl></CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="month-filter">Mês</Label>
+              <Label htmlFor="month-filter"><Transl>Mês</Transl></Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger id="month-filter"><SelectValue /></SelectTrigger>
+                {/* Ao colocar transl quebra o select*/}
                 <SelectContent>{months.map(month => (<SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>))}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="year-filter">Ano</Label>
+              <Label htmlFor="year-filter"><Transl>Ano</Transl></Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger id="year-filter">
                   <SelectValue />
                 </SelectTrigger>
+                {/* Ao colocar transl quebra o select*/}
                 <SelectContent>{availableYears.map(year => (<SelectItem key={year} value={year.toString()}>{year}</SelectItem>))}</SelectContent>
               </Select>
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground flex flex-row gap-2">
             <Calendar className="h-4 w-4" />
-            <p>Exibindo receitas de <strong>{getSelectedMonthName()} de {selectedYear}</strong>
-            {filteredAccounts.length !== localAccounts.length && (<Badge variant="secondary" className="ml-2">{filteredAccounts.length} de {localAccounts.length} receitas</Badge>)}</p>
+            <Transl>Exibindo receitas de <strong>{getSelectedMonthName()} de {selectedYear}</strong>
+            {filteredAccounts.length !== localAccounts.length && (<Badge variant="secondary" className="ml-2">{filteredAccounts.length} de {localAccounts.length} receitas</Badge>)}</Transl>
           </div>
         </CardContent>
       </Card>
       <div className="flex justify-between items-center">
         <div>
-          <h2>Receitas a Receber - {getSelectedMonthName()}/{selectedYear}</h2>
-          <p className="text-muted-foreground">Gerencie suas receitas</p>
+          <Transl>Receitas a Receber - {getSelectedMonthName()}/{selectedYear}</Transl>
+          <Transl className="text-muted-foreground">Gerencie suas receitas</Transl>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -1059,32 +1063,32 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
             className="flex items-center gap-2"
             onClick={exportarCSVBackend}
           >
-            <Download className="h-4 w-4" />Exportar CSV
+            <Download className="h-4 w-4" /><Transl>Exportar CSV</Transl>
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!isReadOnly) setIsAddDialogOpen(open); }}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Receita
+              <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" /><Transl>Nova Receita</Transl>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-xl">
               <DialogHeader>
-                <DialogTitle>Nova Receita</DialogTitle>
-                <DialogDescription>Adicione uma nova receita ao sistema</DialogDescription>
+                <DialogTitle><Transl>Nova Receita</Transl></DialogTitle>
+                <DialogDescription><Transl>Adicione uma nova receita ao sistema</Transl></DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="competency-date" className="pb-3">Data de Competência</Label>
+                  <Label htmlFor="competency-date" className="pb-3"><Transl>Data de Competência</Transl></Label>
                   <Input id="competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} className={formErrors.competencyDate ? 'border-red-600 ring-1 ring-red-600' : ''} />
                   {formErrors.competencyDate && <p className="text-sm text-red-600 mt-1">{formErrors.competencyDate}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="amount" className="pb-3">Valor</Label>
+                    <Label htmlFor="amount" className="pb-3"><Transl>Valor</Transl></Label>
                     <Input id="amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={formErrors.amount ? 'border-red-600 ring-1 ring-red-600' : ''} />
                     {formErrors.amount && <p className="text-sm text-red-600 mt-1">{formErrors.amount}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="subcategory" className="pb-3">Subcategoria</Label>
+                    <Label htmlFor="subcategory" className="pb-3"><Transl>Subcategoria</Transl></Label>
                     <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
                       <SelectTrigger id="subcategory" className={formErrors.subcategoryId ? 'border-red-600 ring-1 ring-red-600' : ''}><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
                       <SelectContent>
@@ -1103,13 +1107,13 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="description" className="pb-3">Descrição</Label>
+                  <Label htmlFor="description" className="pb-3"><Transl>Descrição</Transl></Label>
                   <Textarea id="description" placeholder="Descrição da receita" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={handleAdd}>Adicionar</Button>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}><Transl>Cancelar</Transl></Button>
+                <Button onClick={handleAdd}><Transl>Adicionar</Transl></Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -1118,35 +1122,35 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       <div className="grid grid-cols-1  gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Total Recebido</CardTitle>
+            <CardTitle className="text-sm"><Transl>Total Recebido</Transl></CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-green-600">{formatCurrency(totalReceived)}</div>
-            <p className="text-xs text-muted-foreground">{filteredAccounts.length} receitas</p>
+            <Transl className="text-xs text-muted-foreground">{filteredAccounts.length} receitas</Transl>
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Receitas</CardTitle>
-          <CardDescription>Todas as receitas cadastradas</CardDescription>
+          <CardTitle><Transl>Lista de Receitas</Transl></CardTitle>
+          <CardDescription><Transl>Todas as receitas cadastradas</Transl></CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
-              Carregando receitas...
+              <Transl>Carregando receitas...</Transl>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Competência</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Ações</TableHead>
+                    <TableHead><Transl>Competência</Transl></TableHead>
+                    <TableHead><Transl>Valor</Transl></TableHead>
+                    <TableHead><Transl>Categoria</Transl></TableHead>
+                    <TableHead><Transl>Descrição</Transl></TableHead>
+                    <TableHead><Transl>Ações</Transl></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1166,12 +1170,12 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                  <AlertDialogTitle><Transl>Confirmar exclusão</Transl></AlertDialogTitle>
+                                  <AlertDialogDescription><Transl>Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.</Transl></AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}>Excluir</AlertDialogAction>
+                                  <AlertDialogCancel><Transl>Cancelar</Transl></AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}><Transl>Excluir</Transl></AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
@@ -1203,7 +1207,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                 </div> */}
 
                 <div className="flex items-center gap-3">
-                  <Label className="text-sm font-medium">Linhas por pág.</Label>
+                  <Label className="text-sm font-medium"><Transl>Linhas por pág.</Transl></Label>
                   <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
                     <SelectTrigger className="w-[80px]">
                       <SelectValue />
@@ -1216,7 +1220,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                     </SelectContent>
                   </Select>
 
-                  <div className="text-sm">Pág. {page} de {Math.max(1, Math.ceil(filteredAccounts.length / perPage) || 1)}</div>
+                  <div className="text-sm"><Transl>Pág. {page} de {Math.max(1, Math.ceil(filteredAccounts.length / perPage) || 1)}</Transl></div>
 
                   <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
                     <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
@@ -1245,24 +1249,24 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Receita</DialogTitle>
-            <DialogDescription>Modifique os dados da conta a receber</DialogDescription>
+            <DialogTitle><Transl>Editar Receita</Transl></DialogTitle>
+            <DialogDescription><Transl>Modifique os dados da conta a receber</Transl></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {formErrors._global && <div className="text-sm text-red-600">{formErrors._global}</div>}
             <div>
-              <Label htmlFor="edit-competency-date">Data de Competência</Label>
+              <Label htmlFor="edit-competency-date"><Transl>Data de Competência</Transl></Label>
               <Input id="edit-competency-date" type="date" value={formData.competencyDate} onChange={(e) => setFormData({ ...formData, competencyDate: e.target.value })} className={formErrors.competencyDate ? 'border-red-600 ring-1 ring-red-600' : ''} />
               {formErrors.competencyDate && <p className="text-sm text-red-600 mt-1">{formErrors.competencyDate}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-amount">Valor</Label>
+                <Label htmlFor="edit-amount"><Transl>Valor</Transl></Label>
                 <Input id="edit-amount" type="number" step="0.01" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={formErrors.amount ? 'border-red-600 ring-1 ring-red-600' : ''} />
                 {formErrors.amount && <p className="text-sm text-red-600 mt-1">{formErrors.amount}</p>}
               </div>
               <div>
-                <Label htmlFor="edit-subcategory">Subcategoria</Label>
+                <Label htmlFor="edit-subcategory"><Transl>Subcategoria</Transl></Label>
                 <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}>
                   <SelectTrigger id="edit-subcategory" className={formErrors.subcategoryId ? 'border-red-600 ring-1 ring-red-600' : ''}>
                     <SelectValue placeholder="Selecione uma subcategoria" />
@@ -1283,13 +1287,13 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
               </div>
             </div>
             <div>
-              <Label htmlFor="edit-description">Descrição</Label>
+              <Label htmlFor="edit-description"><Transl>Descrição</Transl></Label>
               <Textarea id="edit-description" placeholder="Descrição da receita" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleUpdate}>Salvar</Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}><Transl>Cancelar</Transl></Button>
+            <Button onClick={handleUpdate}><Transl>Salvar</Transl></Button>
           </div>
         </DialogContent>
       </Dialog>
