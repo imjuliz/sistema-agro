@@ -12,8 +12,9 @@ import { toast } from 'sonner';
 import { Mail, Phone, ArrowDownRight, Rocket, Lightbulb, User, Send, Instagram } from "lucide-react";
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { API_URL } from "@/lib/api";
-import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+
 
 const defaultFeatures = [
     {
@@ -68,8 +69,6 @@ export default function sobreNos({
             .then(() => toast.success(`Copiado: ${text}`))
             .catch(() => toast.error("Falha ao copiar. Tente novamente."));
     };
-
-  
 
     const cards = [
         {
@@ -149,6 +148,8 @@ export default function sobreNos({
             toast.error("Erro ao enviar mensagem. Tente novamente.");
         }
     };
+    
+    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
 
     const handleChange = (field, value) => {
         // Aplicar formatação de telefone se for o campo phone
