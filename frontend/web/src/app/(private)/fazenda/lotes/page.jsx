@@ -21,7 +21,8 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { Download, Plus, Sliders, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, Tractor, Search } from "lucide-react"
+import { Download, Plus, Sliders, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, Tractor, Search, Info } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 // aliases used in the existing markup
 const DownloadIcon = Download
 const FileTextIcon = FileText
@@ -55,6 +56,8 @@ export default function LotesPage() {
   const [orderBy, setOrderBy] = useState('mais_recente')
 
   const [openAddLote, setOpenAddLote] = useState(false)
+  const [selectedLote, setSelectedLote] = useState(null)
+  const [openDetailsModal, setOpenDetailsModal] = useState(false)
 
   // map the `units` variable used by the layout to our lotes list
   const units = lotes || []
@@ -77,6 +80,11 @@ export default function LotesPage() {
     setOpenAddLote(false)
     // Forçar recarga dos lotes
     window.location.reload()
+  }
+
+  const handleOpenDetails = (lote) => {
+    setSelectedLote(lote)
+    setOpenDetailsModal(true)
   }
 
   const handleExportCSV = (items) => {
@@ -352,32 +360,23 @@ export default function LotesPage() {
                 {units.map(u => {
                   // u is a Lote object; map visual fields without changing layout
                   const loteName = u.nome || u.name || `Lote ${u.id}`
-                  const unidade = u.unidade || null
-                  const location = unidade ? (unidade.cidade ? `${unidade.cidade}${unidade.estado ? ', ' + unidade.estado : ''}` : (unidade.nome || unidade.name || '')) : ''
-                  const areaDisplay = (u.qntdItens != null)
-                    ? `${u.qntdItens} itens`
-                    : (Array.isArray(u.itensEsperados) ? `${u.itensEsperados.length} itens` : '—')
-                  const syncDate = u.dataEnvioReferencia ? new Date(u.dataEnvioReferencia).toLocaleString() : (u.atualizadoEm ? new Date(u.atualizadoEm).toLocaleString() : '—')
+                  const tipoProduto = u.tipoProduto || '—'
 
                   return (
-                    <div key={u.id} className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition ">
-                      <div className="flex flex-col items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div>
-                            <div className="font-bold text-lg">{loteName}</div>
-                            <div className="text-sm text-muted-foreground">{location}</div>
-                          </div>
-                        </div>
-                        <div className="flex flex-row gap-3 ">
-                          <div className="text-base font-medium">Quantidade de itens: </div><div className="text-base font-normal">{areaDisplay}</div>
-                        </div>
+                    <div key={u.id} className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition h-full flex flex-col items-center justify-between gap-4">
+                      <div className="text-center flex flex-col gap-2 flex-1 flex items-center justify-center">
+                        <div className="font-bold text-lg">{loteName}</div>
+                        <div className="text-sm text-muted-foreground">{tipoProduto}</div>
                       </div>
-                      {/* <div className="mt-3 text-sm text-muted-foreground">Última sync: {syncDate}</div> */}
-                      <div className="border-t pt-2 mt-1">
-                        <Link href={`/fazenda/lotes/${u.id}`}>
-                          <Button variant="ghost" size="sm" className={"cursor-pointer"}>Acompanhar produção</Button>
-                        </Link>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full flex items-center gap-2"
+                        onClick={() => handleOpenDetails(u)}
+                      >
+                        <Info className="h-4 w-4" />
+                        Detalhes
+                      </Button>
                     </div>
                   )
                 })}
@@ -473,6 +472,76 @@ export default function LotesPage() {
         onCreated={handleLoteCreated}
         unidadeId={unidadeId}
       />
+
+      {/* Modal de Detalhes do Lote */}
+      <Dialog open={openDetailsModal} onOpenChange={setOpenDetailsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Lote</DialogTitle>
+            <DialogDescription>Informações relevantes do lote</DialogDescription>
+          </DialogHeader>
+
+          {selectedLote && (
+            <div className="space-y-4">
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase">Nome</div>
+                <div className="text-lg font-bold">{selectedLote.nome || selectedLote.name || '—'}</div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase">Tipo de Produto</div>
+                <div className="text-base">{selectedLote.tipoProduto || '—'}</div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase">ID</div>
+                <div className="text-base font-mono text-sm">{selectedLote.id || '—'}</div>
+              </div>
+
+              {selectedLote.unidade && (
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase">Unidade</div>
+                  <div className="text-base">{selectedLote.unidade.nome || '—'}</div>
+                </div>
+              )}
+
+              {selectedLote.qntdItens != null && (
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase">Quantidade de Itens</div>
+                  <div className="text-base">{selectedLote.qntdItens}</div>
+                </div>
+              )}
+
+              {selectedLote.atualizadoEm && (
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase">Última Atualização</div>
+                  <div className="text-base">{new Date(selectedLote.atualizadoEm).toLocaleString('pt-BR')}</div>
+                </div>
+              )}
+
+              {selectedLote.dataEnvioReferencia && (
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase">Data de Referência</div>
+                  <div className="text-base">{new Date(selectedLote.dataEnvioReferencia).toLocaleString('pt-BR')}</div>
+                </div>
+              )}
+
+              {selectedLote.status && (
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase">Status</div>
+                  <div className="text-base capitalize">{selectedLote.status}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDetailsModal(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

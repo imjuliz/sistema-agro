@@ -11,9 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input';
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
-import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
-
 
 export default function estoqueFazenda() {
   const { fetchWithAuth } = useAuth();
@@ -86,27 +83,6 @@ export default function estoqueFazenda() {
 
 function ConteudoEstoque({onOpenMovimento, isModalOpen, setIsModalOpen, modalItem, setModalItem, movimentoTipo, setMovimentoTipo,movimentoQuantidade, setMovimentoQuantidade, movimentoObs, setMovimentoObs, isSubmitting, submitMovimento, closeMovimentoModal}) {
   const { refresh } = useInventory();
-const { lang, changeLang } = useTranslation();
-      const languageOptions = [
-          { value: 'pt-BR', label: 'Português (BR)' },
-          { value: 'en', label: 'English' },
-          { value: 'es', label: 'Español' },
-          { value: 'fr', label: 'Français' }
-      ];
-
-      const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
-            // Estados locais para edição temporária antes de salvar
-            const [localTheme, setLocalTheme] = useState(globalTheme); 
-            const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
-            const [localLang, setLocalLang] = useState(lang);
-
-      const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-      useEffect(() => {
-          setLocalTheme(globalTheme);
-          setLocalSelectedFontSize(globalSelectedFontSize);
-          setLocalLang(lang);
-      }, [globalTheme, globalSelectedFontSize, lang]);
-
 
   return (
     <div className="flex gap-6">
@@ -114,28 +90,28 @@ const { lang, changeLang } = useTranslation();
         {/* Company Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base"><Transl>Legenda do Status do Estoque</Transl></CardTitle>
+            <CardTitle className="text-base">Legenda do Status do Estoque</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-green-500 rounded"></div>
               <div>
-                <Transl className="text-sm font-medium">Acima do Mínimo</Transl>
-                <Transl className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</Transl>
+                <div className="text-sm font-medium">Acima do Mínimo</div>
+                <div className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-yellow-500 rounded"></div>
               <div>
-                <Transl className="text-sm font-medium">No Mínimo / Perto do Mínimo</Transl>
-                <Transl className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</Transl>
+                <div className="text-sm font-medium">No Mínimo / Perto do Mínimo</div>
+                <div className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-red-500 rounded"></div>
               <div>
-                <Transl className="text-sm font-medium">Abaixo do Mínimo</Transl>
-                <Transl className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</Transl>
+                <div className="text-sm font-medium">Abaixo do Mínimo</div>
+                <div className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</div>
               </div>
             </div>
           </CardContent>
@@ -150,7 +126,7 @@ const { lang, changeLang } = useTranslation();
       <AlertDialog open={isModalOpen} onOpenChange={(open) => { if (!open) { setIsModalOpen(false); setModalItem(null); } else setIsModalOpen(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle><Transl>Registrar movimentação</Transl></AlertDialogTitle>
+            <AlertDialogTitle>Registrar movimentação</AlertDialogTitle>
             <AlertDialogDescription>
               {modalItem ? `Item: ${modalItem.name} — Estoque atual: ${modalItem.currentStock}` : 'Selecionar item e informar os dados da movimentação.'}
             </AlertDialogDescription>
@@ -164,25 +140,25 @@ const { lang, changeLang } = useTranslation();
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ENTRADA"><Transl>Entrada</Transl></SelectItem>
-                  <SelectItem value="SAIDA"><Transl>Saída</Transl></SelectItem>
+                  <SelectItem value="ENTRADA">Entrada</SelectItem>
+                  <SelectItem value="SAIDA">Saída</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label><Transl>Quantidade</Transl></Label>
+              <Label>Quantidade</Label>
               <Input value={movimentoQuantidade} onChange={(e) => setMovimentoQuantidade(e.target.value)} placeholder="Informe a quantidade" />
             </div>
 
             <div>
-              <Label><Transl>Observações (opcional)</Transl></Label>
+              <Label>Observações (opcional)</Label>
               <Textarea value={movimentoObs} onChange={(e) => setMovimentoObs(e.target.value)} />
             </div>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null)}}><Transl>Fechar</Transl></AlertDialogCancel>
+            <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null)}}>Fechar</AlertDialogCancel>
             <AlertDialogAction onClick={() => submitMovimento(refresh)} disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Registrar'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
