@@ -1,19 +1,18 @@
 'use client'
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
 import { InventoryProvider, useInventory } from '@/contexts/InventoryContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
-import { ArrowLeftRight } from 'lucide-react';
-import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input';
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 
 export default function estoqueFazenda() {
   const { fetchWithAuth } = useAuth();
@@ -58,11 +57,8 @@ export default function estoqueFazenda() {
 
       const url = `${API_URL}estoque/movimento`;
       let res;
-      try {
-        res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      } catch (e) {
-        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      }
+      try {res = await fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });}
+      catch (e) {res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });}
 
       if (!res.ok) {
         const txt = await res.text().catch(() => null);
@@ -71,37 +67,25 @@ export default function estoqueFazenda() {
       }
 
       // Atualizar os dados após sucesso
-      if (refreshCallback) {
-        await refreshCallback();
-      }
+      if (refreshCallback) {await refreshCallback();}
 
       closeMovimentoModal();
     } catch (err) {
       console.error('Erro ao registrar movimentação', err);
       alert(String(err?.message ?? err));
-    } finally {
-      setIsSubmitting(false);
     }
+    finally {setIsSubmitting(false);}
   }
 
   return (
     <InventoryProvider defaultUnidadeId={null}>
-      <ConteudoEstoque 
-        onOpenMovimento={openMovimentoModal}
+      <ConteudoEstoque onOpenMovimento={openMovimentoModal}
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         modalItem={modalItem}
         setModalItem={setModalItem}
         movimentoTipo={movimentoTipo}
-        setMovimentoTipo={setMovimentoTipo}
-        movimentoQuantidade={movimentoQuantidade}
-        setMovimentoQuantidade={setMovimentoQuantidade}
-        movimentoObs={movimentoObs}
-        setMovimentoObs={setMovimentoObs}
-        isSubmitting={isSubmitting}
-        submitMovimento={submitMovimento}
-        closeMovimentoModal={closeMovimentoModal}
-      />
+        setMovimentoTipo={setMovimentoTipo} movimentoQuantidade={movimentoQuantidade} setMovimentoQuantidade={setMovimentoQuantidade} movimentoObs={movimentoObs} setMovimentoObs={setMovimentoObs} isSubmitting={isSubmitting} submitMovimento={submitMovimento} closeMovimentoModal={closeMovimentoModal}/>
     </InventoryProvider>
   );
 }
@@ -123,6 +107,21 @@ function ConteudoEstoque({
   closeMovimentoModal
 }) {
   const { refresh } = useInventory();
+
+  const { lang, changeLang } = useTranslation();
+      const languageOptions = [
+          { value: 'pt-BR', label: 'Português (BR)' },
+          { value: 'en', label: 'English' },
+          { value: 'es', label: 'Español' },
+          { value: 'fr', label: 'Français' }
+      ];
+      const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+      useEffect(() => {
+          setLocalTheme(globalTheme);
+          setLocalSelectedFontSize(globalSelectedFontSize);
+          setLocalLang(lang);
+      }, [globalTheme, globalSelectedFontSize, lang]);
+
   return (
     <div className="flex gap-6">
 
@@ -130,34 +129,32 @@ function ConteudoEstoque({
         {/* Company Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Legenda do Status do Estoque</CardTitle>
+            <CardTitle className="text-base"><Transl>Legenda do Status do Estoque</Transl></CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-green-500 rounded"></div>
               <div>
-                <div className="text-sm font-medium">Acima do Mínimo</div>
-                <div className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</div>
+                <Transl className="text-sm font-medium">Acima do Mínimo</Transl>
+                <Transl className="text-sm text-muted-foreground">(Estoque &gt; Min + 5)</Transl>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-yellow-500 rounded"></div>
               <div>
-                <div className="text-sm font-medium">No Mínimo / Perto do Mínimo</div>
-                <div className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</div>
+                <Transl className="text-sm font-medium">No Mínimo / Perto do Mínimo</Transl>
+                <Transl className="text-sm text-muted-foreground">(Min - 5 a Min + 5)</Transl>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-red-500 rounded"></div>
               <div>
-                <div className="text-sm font-medium">Abaixo do Mínimo</div>
-                <div className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</div>
+                <Transl className="text-sm font-medium">Abaixo do Mínimo</Transl>
+                <Transl className="text-sm text-muted-foreground">(Estoque &lt; Min - 5)</Transl>
               </div>
             </div>
           </CardContent>
         </Card>
-
-
       </div>
       <div className=" flex-1 min-w-0 space-y-6">
         <StoreLevelView onOpenMovimento={onOpenMovimento} />
@@ -167,7 +164,7 @@ function ConteudoEstoque({
       <AlertDialog open={isModalOpen} onOpenChange={(open) => { if (!open) { setIsModalOpen(false); setModalItem(null); } else setIsModalOpen(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Registrar movimentação</AlertDialogTitle>
+            <AlertDialogTitle><Transl>Registrar movimentação</Transl></AlertDialogTitle>
             <AlertDialogDescription>
               {modalItem ? `Item: ${modalItem.name} — Estoque atual: ${modalItem.currentStock}` : 'Selecionar item e informar os dados da movimentação.'}
             </AlertDialogDescription>
@@ -181,25 +178,24 @@ function ConteudoEstoque({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ENTRADA">Entrada</SelectItem>
-                  <SelectItem value="SAIDA">Saída</SelectItem>
+                  <SelectItem value="ENTRADA"><Transl>Entrada</Transl></SelectItem>
+                  <SelectItem value="SAIDA"><Transl>Saída</Transl></SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <Label>Quantidade</Label>
+              <Label><Transl>Quantidade</Transl></Label>
               <Input value={movimentoQuantidade} onChange={(e) => setMovimentoQuantidade(e.target.value)} placeholder="Informe a quantidade" />
             </div>
 
             <div>
-              <Label>Observações (opcional)</Label>
+              <Label><Transl>Observações (opcional)</Transl></Label>
               <Textarea value={movimentoObs} onChange={(e) => setMovimentoObs(e.target.value)} />
             </div>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null); }}>Fechar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => { setIsModalOpen(false); setModalItem(null); }}><Transl>Fechar</Transl></AlertDialogCancel>
             <AlertDialogAction onClick={() => submitMovimento(refresh)} disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Registrar'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
