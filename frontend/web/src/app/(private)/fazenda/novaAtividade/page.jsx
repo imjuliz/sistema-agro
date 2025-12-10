@@ -213,20 +213,49 @@ export default function Page() {
                     const contratosArray = d1?.contratos || d1?.data || (Array.isArray(d1) ? d1 : [])
                     setContratosEnvio(Array.isArray(contratosArray) ? contratosArray : [])
 
-                    // lotes da unidade
-                    const r2 = await fetchFn(`${base}/lotesPlantio/${unidadeId}`)
-                    const d2 = await r2.json().catch(() => ({}))
-                    const extractArray = (obj) => {
-                        if (!obj) return []
-                        if (Array.isArray(obj)) return obj
-                        const keys = ['lotesPlantio','lotes','data','lotesVegetais','loteVegetais']
-                        for (const k of keys) if (Array.isArray(obj[k])) return obj[k]
-                        const vals = Object.values(obj)
-                        for (const v of vals) if (Array.isArray(v)) return v
-                        return []
+                    // lotes da unidade (todos: PLANTIO e ANIMALIA)
+                    let allLotes = []
+                    
+                    // Buscar lotes de plantio
+                    try {
+                        const r2 = await fetchFn(`${base}/lotesPlantio/${unidadeId}`)
+                        const d2 = await r2.json().catch(() => ({}))
+                        const extractArray = (obj) => {
+                            if (!obj) return []
+                            if (Array.isArray(obj)) return obj
+                            const keys = ['lotes','data','lotesPlantio','lotesVegetais']
+                            for (const k of keys) if (Array.isArray(obj[k])) return obj[k]
+                            const vals = Object.values(obj)
+                            for (const v of vals) if (Array.isArray(v)) return v
+                            return []
+                        }
+                        const plantioLotes = extractArray(d2)
+                        allLotes = allLotes.concat(plantioLotes || [])
+                    } catch (err) {
+                        console.warn('Erro carregando lotes de plantio:', err)
                     }
-                    const rawLotes = extractArray(d2)
-                    const filtered = (rawLotes || []).filter(l => String(l?.status || '').toUpperCase() !== 'VENDIDO')
+
+                    // Buscar lotes de animalia
+                    try {
+                        const r3 = await fetchFn(`${base}/loteAnimalia/${unidadeId}`)
+                        const d3 = await r3.json().catch(() => ({}))
+                        const extractArray = (obj) => {
+                            if (!obj) return []
+                            if (Array.isArray(obj)) return obj
+                            const keys = ['lotes','data','loteAnimalia','lotesAnimalia']
+                            for (const k of keys) if (Array.isArray(obj[k])) return obj[k]
+                            const vals = Object.values(obj)
+                            for (const v of vals) if (Array.isArray(v)) return v
+                            return []
+                        }
+                        const animaliaLotes = extractArray(d3)
+                        allLotes = allLotes.concat(animaliaLotes || [])
+                    } catch (err) {
+                        console.warn('Erro carregando lotes de animalia:', err)
+                    }
+
+                    // Filtrar lotes não vendidos
+                    const filtered = (allLotes || []).filter(l => String(l?.status || '').toUpperCase() !== 'VENDIDO')
                     setLotesEnvio(filtered)
                 } else {
                     setContratosEnvio([])
