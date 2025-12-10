@@ -1,4 +1,4 @@
-import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas, abrirCaixa, listarCaixas } from '../models/Financeiro.js';
+import { listarSaidas, listarVendas, somarDiaria, somarSaidas, calcularSaldoLiquido, listarSaidasPorUnidade, mostrarSaldoF, buscarProdutoMaisVendido, contarVendasPorMesUltimos6Meses, criarVenda, calcularLucroDoMes, somarEntradaMensal, criarNotaFiscal, calcularMediaPorTransacaoDiaria, somarPorPagamentoDiario, listarDespesas, abrirCaixa, listarCaixas, statusCaixaHoje, fecharCaixa } from '../models/Financeiro.js';
 import fs from "fs";
 
 // ABRIR CAIXA
@@ -28,6 +28,42 @@ export const abrirCaixaController = async (req, res) => {
       erro: "Erro ao abrir caixa.",
       detalhes: error.message,
     });
+  }
+};
+
+// STATUS DO CAIXA
+export const statusCaixaController = async (req, res) => {
+  try {
+    const usuario = req.usuario || req.session?.usuario;
+    if (!usuario?.unidadeId) {
+      return res.status(401).json({ sucesso: false, erro: "Sessão inválida ou unidade não identificada." });
+    }
+
+    const resultado = await statusCaixaHoje(usuario.unidadeId);
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao consultar status do caixa:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao consultar status do caixa.", detalhes: error.message });
+  }
+};
+
+// FECHAR CAIXA
+export const fecharCaixaController = async (req, res) => {
+  try {
+    const usuario = req.usuario || req.session?.usuario;
+    if (!usuario || !usuario.unidadeId) {
+      return res.status(401).json({ sucesso: false, erro: "Sessão inválida ou usuário sem unidade associada." });
+    }
+
+    const resultado = await fecharCaixa(usuario.id, usuario.unidadeId);
+    if (!resultado.sucesso) {
+      return res.status(400).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro no controller ao fechar caixa:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao fechar caixa.", detalhes: error.message });
   }
 };
 
@@ -400,7 +436,11 @@ export const listarDespesasController = async (req, res) => {
 
 export const criarNotaFiscalController = async (req, res) => {
   try {
-    const resultado = await criarNotaFiscal(req.body);
+    const usuario = req.usuario || req.session?.usuario;
+    const vendaId = Number(req.params?.vendaId ?? req.body?.vendaId ?? req.body?.id);
+    const payload = { ...req.body, vendaId, unidadeId: usuario?.unidadeId, usuarioId: usuario?.id };
+
+    const resultado = await criarNotaFiscal(payload);
 
     if (!resultado.sucesso) {return res.status(400).json(resultado);}
     // Ler PDF

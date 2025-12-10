@@ -13,11 +13,13 @@ import { Plus, Minus, Search, ShoppingCart, CreditCard, User, Barcode, Percent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
+import { useToast } from '@/components/ui/use-toast';
 
 
 export default function app() {
   const { fetchWithAuth, user } = useAuth();
   usePerfilProtegido("GERENTE_LOJA");
+  const { toast } = useToast();
   // Guarda as últimas respostas (normalizadas) por endpoint/key — não causa re-render
   const lastResponsesRef = useRef({});
 
@@ -55,16 +57,24 @@ export default function app() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [caixaAberto, setCaixaAberto] = useState(false);
   const [abrindoCaixa, setAbrindoCaixa] = useState(false);
+  const [fechandoCaixa, setFechandoCaixa] = useState(false);
+  const [emitindoNota, setEmitindoNota] = useState(false);
+  const [saldoInicial, setSaldoInicial] = useState('');
+  const [saldoInicialError, setSaldoInicialError] = useState('');
+  const [paymentMessage, setPaymentMessage] = useState('');
+  const [caixaInfo, setCaixaInfo] = useState(null);
   
   const categories = ['all', ...Array.from(new Set((productsList || []).map(p => p.category || ''))).filter(c => c)];
   const filteredProducts = (productsList || []).filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const term = searchTerm.trim().toLowerCase();
-    const matchesSearch = term === '' || product.name.toLowerCase().includes(term) || (product.barcode && product.barcode.includes(term));
+    const productSku = (product.sku || product.barcode || '').toLowerCase();
+    const matchesSearch = term === '' || product.name.toLowerCase().includes(term) || productSku.includes(term);
     return matchesCategory && matchesSearch;
   });
 
   const addToCart = (product) => {
+    if (!caixaAberto) return;
     setCart((c) => {
       const existing = c.find(i => i.id === product.id);
       if (existing) { return c.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i); }
@@ -83,29 +93,37 @@ export default function app() {
   
   const verificarCaixaAberto = async () => {
     try {
-      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
-      if (!unidadeId) return;
-      
-      // Tenta buscar o saldo final — se conseguir, significa que um caixa está aberto
-      const resp = await safeFetchJson('/saldo-final', { method: 'GET' });
-      if (resp && resp.sucesso) {
+      const resp = await safeFetchJson(ENDPOINTS.caixaStatus, { method: 'GET' });
+      if (resp?.aberto && resp?.caixa) {
         setCaixaAberto(true);
+        setCaixaInfo(resp.caixa);
+        if (typeof resp.caixa?.saldoFinal !== 'undefined' && resp.caixa?.saldoFinal !== null) {
+          setSaldoFinal(Number(resp.caixa.saldoFinal ?? 0));
+        }
       } else {
         setCaixaAberto(false);
+        setCaixaInfo(null);
       }
     } catch (err) {
       console.debug('Erro ao verificar caixa:', err);
       setCaixaAberto(false);
+      setCaixaInfo(null);
     }
   };
   
   const handleAbrirCaixa = async () => {
+    if (saldoInicial === '' || saldoInicial === null || Number.isNaN(Number(saldoInicial))) {
+      setSaldoInicialError('Informe o saldo inicial antes de abrir o caixa.');
+      return;
+    }
+    setSaldoInicialError('');
     setAbrindoCaixa(true);
     try {
-      const resp = await safeFetchJson('/caixa/abrir', { method: 'POST', body: JSON.stringify({ saldoInicial: 0 }) });
+      const resp = await safeFetchJson(ENDPOINTS.caixaAbrir, { method: 'POST', body: JSON.stringify({ saldoInicial: Number(saldoInicial || 0) }) });
       if (resp && resp.sucesso) {
         setCaixaAberto(true);
-        alert('✓ Caixa aberto com sucesso!');
+        if (resp.caixa) setCaixaInfo(resp.caixa);
+        toast({ title: 'Caixa aberto', description: 'Caixa do dia iniciado com sucesso.' });
       } else {
         alert('Erro ao abrir caixa: ' + (resp?.erro || 'Erro desconhecido'));
       }
@@ -114,6 +132,29 @@ export default function app() {
       alert('Erro ao abrir caixa');
     } finally {
       setAbrindoCaixa(false);
+      verificarCaixaAberto();
+    }
+  };
+
+  const handleFecharCaixa = async () => {
+    setFechandoCaixa(true);
+    try {
+      const resp = await safeFetchJson(ENDPOINTS.caixaFechar, { method: 'POST' });
+      if (resp?.sucesso) {
+        const finalNumber = Number(resp?.saldoFinal ?? resp?.caixa?.saldoFinal ?? 0);
+        toast({ title: 'Caixa fechado', description: `Saldo final: R$ ${finalNumber.toFixed(2)}` });
+        setSaldoFinal(finalNumber);
+        setCaixaInfo(resp.caixa || null);
+        setCaixaAberto(false);
+      } else {
+        alert('Erro ao fechar caixa: ' + (resp?.erro || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error('Erro ao fechar caixa:', err);
+      alert('Erro ao fechar caixa');
+    } finally {
+      setFechandoCaixa(false);
+      verificarCaixaAberto();
     }
   };
   
@@ -122,13 +163,17 @@ export default function app() {
     produtosBase: '/produtos',
     listarProdutosEstoque: (unidadeId) => `/listarProdutosEstoque/${unidadeId}`,
     saldoFinal: '/saldo-final',
+    caixaAbrir: '/caixa/abrir',
+    caixaStatus: '/caixa/status',
+    caixaFechar: '/caixa/fechar',
     somarDiaria: (unidadeId) => `/somarDiaria/${unidadeId}`,
     vendasMedia: (unidadeId) => `/vendas/media-por-transacao/${unidadeId}`,
     vendasPagamentos: (unidadeId) => `/vendas/divisao-pagamentos/${unidadeId}`,
     produtoMaisVendido: (unidadeId) => `/financeiro/produto-mais-vendido/${unidadeId}`,
     usuariosUnidadeListar: '/usuarios/unidade/listar',
     listarVendas: (unidadeId) => `/listarVendas/${unidadeId}`,
-    vendasCriar: '/vendas/criar'
+    vendasCriar: '/vendas/criar',
+    notaFiscal: (vendaId) => `/vendas/${vendaId}/nota-fiscal`
   };
 
   const makeUrl = (path) => {
@@ -200,9 +245,53 @@ export default function app() {
     catch (error) { return persistAndReturn({ ok: false, error: error.message }); }
   };
 
+  const emitirNotaFiscal = async (vendaId) => {
+    if (!vendaId || typeof fetchWithAuth !== 'function') return;
+    setEmitindoNota(true);
+    try {
+      const url = makeUrl(ENDPOINTS.notaFiscal(vendaId));
+      const resp = await fetchWithAuth(url, { method: 'POST' });
+      if (!resp?.ok) {
+        const txt = await resp.text().catch(() => '');
+        throw new Error(txt || `HTTP ${resp?.status}`);
+      }
+      const blob = await resp.blob();
+      const fileUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `nota_fiscal_${vendaId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(fileUrl);
+    } catch (error) {
+      console.error('Erro ao emitir nota fiscal:', error);
+      alert('Venda registrada, mas não foi possível gerar a nota fiscal.');
+    } finally {
+      setEmitindoNota(false);
+    }
+  };
+
+  const fetchRecentSales = async () => {
+    try {
+      const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+      if (!unidadeId) { setRecentSalesList([]); return; }
+      const vendasResp = await safeFetchJson(ENDPOINTS.listarVendas(unidadeId));
+      if (Array.isArray(vendasResp)) setRecentSalesList(vendasResp);
+      else if (vendasResp && vendasResp.sucesso && Array.isArray(vendasResp.vendas)) setRecentSalesList(vendasResp.vendas);
+      else if (vendasResp && Array.isArray(vendasResp.listaVendas)) setRecentSalesList(vendasResp.listaVendas);
+    } catch (err) {
+      console.warn('Erro ao atualizar vendas recentes:', err);
+    }
+  };
+
   const processSale = async () => {
     if (!cart || cart.length === 0) {
       alert('Carrinho vazio. Adicione produtos antes de finalizar.');
+      return;
+    }
+    if (!caixaAberto) {
+      setPaymentMessage('Abra o caixa antes de registrar uma venda.');
       return;
     }
 
@@ -214,7 +303,7 @@ export default function app() {
         return { produtoSku: String(i.id), quantidade: Number(i.quantity || 1), precoUnitario: Number(i.price || 0), desconto: 0 };
       });
 
-      const payload = { pagamento: paymentMethod, itens, nomeCliente: clienteNome || undefined };
+      const payload = { pagamento: paymentMethod, itens, nomeCliente: clienteNome || undefined, caixaId: caixaInfo?.id };
       console.log('📤 Enviando payload para /vendas/criar:', payload);
       console.log('👤 User info (user):', user);
       
@@ -227,9 +316,13 @@ export default function app() {
         return;
       }
 
-      alert('Venda registrada com sucesso!');
+      toast({ title: 'Venda registrada', description: 'Venda registrada com sucesso!' });
+      if (resp?.venda?.id) { await emitirNotaFiscal(resp.venda.id); }
       clearCart();
+      setClienteNome('');
       setIsPaymentOpen(false);
+      verificarCaixaAberto();
+      fetchRecentSales();
 
       // atualizar saldo final
       const s = await safeFetchJson(ENDPOINTS.saldoFinal);
@@ -329,7 +422,11 @@ export default function app() {
       // - { produtos: [...] } (our produtosDoEstoqueController returns { id, descricao, produtos })
       // - { estoques: [...] } (older shape)
       if (Array.isArray(produtosResp)) {
-        setProductsList(produtosResp);
+        setProductsList(produtosResp.map((p) => ({
+          ...p,
+          sku: p.sku ?? p.barcode ?? p.codigo ?? p.id,
+          barcode: p.barcode ?? p.sku ?? p.codigo ?? ''
+        })));
       } else if (produtosResp && Array.isArray(produtosResp.produtos)) {
         // produtos from produtosDoEstoqueController -> map estoqueProdutos to UI product shape
         const mapped = produtosResp.produtos.map((ep) => ({
@@ -339,12 +436,13 @@ export default function app() {
           stock: Number(ep.qntdAtual ?? ep.quantidade ?? 0),
           category: ep.categoria ?? ep.produto?.categoria ?? '—',
           barcode: ep.sku ?? ep.codigo ?? '',
+          sku: ep.sku ?? ep.codigo ?? '',
           image: ep.imagem ?? '/loja/placeholder/80/80'
         }));
         if (mapped.length) setProductsList(mapped);
       } else if (produtosResp && Array.isArray(produtosResp.estoques)) {
         const flattened = [];
-        produtosResp.estoques.forEach(est => { (est.estoqueProdutos || []).forEach(ep => flattened.push({ id: ep.id, name: ep.nome ?? ep.produto?.nome, price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0), stock: Number(ep.quantidade ?? ep.qntdAtual ?? 0), category: ep.categoria ?? ep.produto?.categoria ?? '—', barcode: ep.sku ?? ep.codigo ?? '', image: ep.imagem ?? '/loja/placeholder/80/80' })); });
+        produtosResp.estoques.forEach(est => { (est.estoqueProdutos || []).forEach(ep => flattened.push({ id: ep.id, name: ep.nome ?? ep.produto?.nome, price: Number(ep.precoUnitario ?? ep.preco ?? ep.price ?? 0), stock: Number(ep.quantidade ?? ep.qntdAtual ?? 0), category: ep.categoria ?? ep.produto?.categoria ?? '—', barcode: ep.sku ?? ep.codigo ?? '', sku: ep.sku ?? ep.codigo ?? '', image: ep.imagem ?? '/loja/placeholder/80/80' })); });
         if (flattened.length) setProductsList(flattened);
       }
       else { if (produtosResp && produtosResp.ok === false) setProductsError(produtosResp.text || 'Erro ao carregar produtos') }
@@ -385,7 +483,7 @@ export default function app() {
   }, [fetchWithAuth, user]);
   return (
     <div className="min-h-screen px-18 py-10 bg-surface-50">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Vendas de Hoje</CardTitle>
@@ -421,8 +519,24 @@ export default function app() {
           </CardContent>
         </Card>
 
-        {/* Divisão por pagamentos / Produto mais vendido (compact) */}
         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Produto mais vendido</CardTitle>
+            <BarChart className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {financeLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : financeError ? (<div className="text-sm text-red-600">{financeError}</div>) : (
+              <>
+                <div className="text-2xl font-bold">{topProduct?.nome ? `${topProduct.nome}` : '—'}</div>
+                <p className="text-xs text-muted-foreground">SKU: {topProduct.sku || '—'}</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        {/* Divisão por pagamentos / Produto mais vendido (compact) */}
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Divisão / Top produto</CardTitle>
             <Layers className="size-4 text-muted-foreground" />
@@ -465,7 +579,7 @@ export default function app() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <Tabs defaultValue="pos" className="space-y-4">
@@ -475,15 +589,47 @@ export default function app() {
         </TabsList>
 
         {!caixaAberto && (
-          <Card className="border-yellow-300 bg-yellow-50">
+          <Card className="border-neutral-300 dark:border-neutral-700 dark:bg-neutral-750">
             <CardHeader>
-              <CardTitle className="text-yellow-900">⚠️ Caixa não aberto</CardTitle>
-              <CardDescription className="text-yellow-700">Você precisa abrir o caixa antes de registrar vendas.</CardDescription>
+              <CardTitle className="text-neutral-900 dark:text-neutral-100">⚠️ Caixa não aberto</CardTitle>
+              <CardDescription className="text-neutral-700 dark:text-neutral-300">Você precisa abrir o caixa antes de registrar vendas.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={handleAbrirCaixa} disabled={abrindoCaixa} className="bg-yellow-600 hover:bg-yellow-700">
+            <CardContent className="space-y-3">
+              <div className="space-y-1">
+                <Label>Saldo inicial do caixa</Label>
+                <Input type="number" value={saldoInicial} onChange={(e) => setSaldoInicial(e.target.value)} placeholder="0,00" step="0.01" />
+                {saldoInicialError && <p className="text-sm text-red-600">{saldoInicialError}</p>}
+              </div>
+              <Button onClick={handleAbrirCaixa} disabled={abrindoCaixa} className="">
                 {abrindoCaixa ? 'Abrindo caixa...' : '✓ Abrir Caixa'}
               </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {caixaAberto && (
+          <Card className="border-neutral-300 dark:border-neutral-700 dark:bg-neutral-750">
+            <CardHeader>
+              <CardTitle className="text-neutral-900 dark:text-neutral-100">Caixa aberto</CardTitle>
+              <CardDescription className="text-neutral-700 dark:text-neutral-300">Controle rápido do caixa do dia</CardDescription>
+            </CardHeader>
+              <CardContent className="space-y-3">
+              <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                <div className="p-3 rounded-sm border border-neutral-300 dark:border-neutral-600 dark:bg-neutral-650">
+                  <div className="text-muted-foreground">Saldo inicial</div>
+                  <div className="font-semibold">R$ {Number(caixaInfo?.saldoInicial ?? 0).toFixed(2)}</div>
+                </div>
+                <div className="p-3 rounded-sm border border-neutral-300 dark:border-neutral-600 dark:bg-neutral-650">
+                  <div className="text-muted-foreground">Total de vendas hoje</div>
+                  <div className="font-semibold">R$ {Number(caixaInfo?.totalVendas ?? 0).toFixed(2)}</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={verificarCaixaAberto}>Atualizar status</Button>
+                <Button onClick={handleFecharCaixa} disabled={fechandoCaixa}>
+                  {fechandoCaixa ? 'Fechando...' : '✓ Fechar Caixa'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -503,13 +649,13 @@ export default function app() {
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                       <Input placeholder="Pesquise produtos com o leitor de código de barras..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                     </div>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    {/* <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                       <SelectTrigger className="w-[180px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as categorias</SelectItem>
                         {categories.slice(1).map((category) => (<SelectItem key={category} value={category}>{category}</SelectItem>))}
                       </SelectContent>
-                    </Select>
+                    </Select> */}
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-96 overflow-y-auto">
@@ -521,13 +667,17 @@ export default function app() {
                       <div className="text-sm text-muted-foreground p-4">Nenhum produto encontrado</div>
                     ) : (
                       filteredProducts.map((product) => (
-                        <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => addToCart(product)}>
+                        <Card
+                          key={product.id}
+                          className={`cursor-pointer hover:shadow-md transition-shadow ${!caixaAberto ? 'pointer-events-none opacity-60' : ''}`}
+                          onClick={() => addToCart(product)}
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-center space-x-3">
-                              <img src={product.image || '/loja/placeholder/80/80'} alt={product.name} className="w-12 h-12 object-cover rounded" />
+                              {/* <img src={product.image || '/loja/placeholder/80/80'} alt={product.name} className="w-12 h-12 object-cover rounded" /> */}
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium truncate">{product.name}</div>
-                                <div className="text-sm text-muted-foreground">{product.category}</div>
+                                <div className="text-sm text-muted-foreground">{product.sku || product.barcode || '—'}</div>
                                 <div className="flex justify-between items-center mt-1">
                                   <span className="font-bold text-green-600">R$ {(Number(product.price || 0)).toFixed(2)}</span>
                                   <span className="text-xs text-muted-foreground">Estoque: {product.stock ?? 0}</span>
@@ -603,7 +753,7 @@ export default function app() {
                   )}
 
                   {/* Botão de Checkout */}
-                  <Button className="w-full" disabled={cart.length === 0} onClick={() => setIsPaymentOpen(true)}>
+                  <Button className="w-full" disabled={cart.length === 0 || !caixaAberto} onClick={() => { setPaymentMessage(''); setIsPaymentOpen(true); }}>
                     <CreditCard className="size-4 mr-2" />Finalizar
                   </Button>
                 </CardContent>
@@ -614,8 +764,8 @@ export default function app() {
           {/* seleção de cliente substituída por input simples (clienteNome) */}
 
           {/* Modal de Pagamento */}
-          <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
-            <DialogContent>
+          <Dialog open={isPaymentOpen} onOpenChange={(open) => { setIsPaymentOpen(open); if (!open) setPaymentMessage(''); }}>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Processar Pagamento</DialogTitle>
                 <DialogDescription>Conclua a transação</DialogDescription>
@@ -656,9 +806,15 @@ export default function app() {
                   )}
                 </div>
 
+                {paymentMessage && (
+                  <div className="text-sm text-red-600">{paymentMessage}</div>
+                )}
+
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setIsPaymentOpen(false)} className="flex-1">Cancelar</Button>
-                  <Button onClick={processSale} className="flex-1" disabled={paymentMethod === 'cash' && amountReceived < getTotal()}>Concluir Venda</Button>
+                  <Button onClick={processSale} className="flex-1" disabled={(paymentMethod === 'cash' && amountReceived < getTotal()) || emitindoNota}>
+                    {emitindoNota ? 'Emitindo nota...' : 'Concluir Venda'}
+                  </Button>
                 </div>
               </div>
             </DialogContent>

@@ -369,6 +369,48 @@ export const listarDespesas = async (unidadeId) => {
     }
   };
 
+const toNumber = (value) => Number(value ?? 0);
+
+// Recupera o caixa aberto para a unidade (hoje)
+export const statusCaixaHoje = async (unidadeId) => {
+  try {
+    const agora = new Date();
+    const inicioDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const fimDoDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999);
+
+    const caixa = await prisma.caixa.findFirst({
+      where: {
+        unidadeId: Number(unidadeId),
+        abertoEm: { gte: inicioDoDia, lte: fimDoDia },
+        status: true,
+      },
+      include: { vendas: { select: { total: true } } },
+      orderBy: { abertoEm: "desc" },
+    });
+
+    if (!caixa) return { aberto: false, caixa: null, totalVendas: 0 };
+
+    const totalVendas = (caixa.vendas || []).reduce((acc, v) => acc + toNumber(v.total), 0);
+
+    return {
+      aberto: true,
+      caixa: {
+        id: caixa.id,
+        unidadeId: caixa.unidadeId,
+        usuarioId: caixa.usuarioId,
+        abertoEm: caixa.abertoEm,
+        saldoInicial: toNumber(caixa.saldoInicial),
+        saldoFinal: caixa.saldoFinal != null ? toNumber(caixa.saldoFinal) : null,
+        status: caixa.status,
+        totalVendas,
+      },
+      totalVendas,
+    };
+  } catch (error) {
+    return { aberto: false, erro: "Erro ao consultar caixa", detalhes: error.message };
+  }
+};
+
 // Função para abrir o caixa do dia
 export const abrirCaixa = async (usuarioId, unidadeId, saldoInicial = 0) => {
     try {
@@ -478,6 +520,50 @@ export const listarCaixas = async (unidadeId, dataInicio = null, dataFim = null)
     }
 };
 
+// Fecha o caixa aberto de hoje e calcula saldo final
+export const fecharCaixa = async (usuarioId, unidadeId) => {
+  try {
+    const status = await statusCaixaHoje(unidadeId);
+    if (!status.aberto || !status.caixa) {
+      return { sucesso: false, erro: "Nenhum caixa aberto encontrado para hoje." };
+    }
+
+    const caixaAberto = status.caixa;
+    const vendasAgg = await prisma.venda.aggregate({
+      _sum: { total: true },
+      where: { caixaId: caixaAberto.id },
+    });
+
+    const totalVendas = toNumber(vendasAgg._sum.total);
+    const saldoFinal = toNumber(caixaAberto.saldoInicial) + totalVendas;
+
+    const caixaAtualizado = await prisma.caixa.update({
+      where: { id: caixaAberto.id },
+      data: {
+        status: false,
+        saldoFinal,
+        fechadoEm: new Date(),
+        usuarioId: Number(usuarioId),
+      },
+      include: { vendas: true },
+    });
+
+    return {
+      sucesso: true,
+      caixa: {
+        ...caixaAtualizado,
+        saldoInicial: toNumber(caixaAtualizado.saldoInicial),
+        saldoFinal: caixaAtualizado.saldoFinal != null ? toNumber(caixaAtualizado.saldoFinal) : saldoFinal,
+      },
+      totalVendas,
+      saldoFinal,
+    };
+  } catch (error) {
+    console.error("Erro ao fechar caixa:", error);
+    return { sucesso: false, erro: "Erro ao fechar caixa", detalhes: error.message };
+  }
+};
+
 //do arquivo Loja.js
 export const mostrarSaldoF = async (unidadeId) => {//MOSTRA O SALDO FINAL DO DIA DA UNIDADE
     try {
@@ -562,8 +648,8 @@ export async function contarVendasPorMesUltimos6Meses(unidadeId) {
 //insert na tabela de venda
 export async function criarVenda(req, res) {
     try {
-  const { caixaId, usuarioId, unidadeId, pagamento, itens, nomeCliente } = req.body;
-  console.log('criarVenda payload:', { caixaId, usuarioId, unidadeId, pagamento, itensLength: Array.isArray(itens) ? itens.length : 0, nomeCliente });
+  const { caixaId, usuarioId, unidadeId, pagamento, itens, nomeCliente, cpfCliente } = req.body;
+  console.log('criarVenda payload:', { caixaId, usuarioId, unidadeId, pagamento, itensLength: Array.isArray(itens) ? itens.length : 0, nomeCliente, cpfCliente });
   console.log('req.body completo:', req.body);
   
   // Validate required fields with detailed error messages
@@ -644,9 +730,10 @@ export async function criarVenda(req, res) {
           usuarioId: Number(usuarioId),
           unidadeId: Number(unidadeId),
           pagamento: pagamentoFinal,
-      total: totalVenda,
-      status: 'OK',
-      nomeCliente: nomeCliente ?? null,
+        total: totalVenda,
+        status: 'OK',
+        nomeCliente: nomeCliente ?? null,
+        cpfCliente: cpfCliente ? String(cpfCliente) : null,
           itens: {
             create: itensResolvidos.map((item) => ({
               produtoId: Number(item.produtoId),
@@ -734,120 +821,131 @@ export async function listarSaidasPorUnidade(unidadeId) {
 // ----------- 18/11/2025
 export const criarNotaFiscal = async (data) => {
   try {
-    const { caixaId, usuarioId, unidadeId, itens, pagamento } = data;
+    const vendaId = Number(data?.vendaId ?? data?.id ?? data?.venda?.id);
+    const unidadeContext = data?.unidadeId ? Number(data.unidadeId) : null;
+    const clienteCpf = data?.clienteCpf ? String(data.clienteCpf) : null;
+    const clienteNomeExtra = data?.clienteNome ? String(data.clienteNome) : null;
+    const atendenteCpf = data?.atendenteCpf ? String(data.atendenteCpf) : null;
+    const valorPagoCliente = data?.valorPagoCliente != null ? toNumber(data.valorPagoCliente) : null;
 
-    // 1 — Validar unidade
-  const unidade = await prisma.unidade.findUnique({where: { id: Number(unidadeId) }});
-
-    if (!unidade) {
-      return {
-        sucesso: false,
-        erro: "Unidade não encontrada"
-      };
+    if (!vendaId) {
+      return { sucesso: false, erro: "vendaId é obrigatório para emitir a nota." };
     }
 
-    // 2 — Validar caixa
-  const caixa = await prisma.caixa.findUnique({where: { id: Number(caixaId) }});
-
-    if (!caixa || caixa.unidadeId !== Number(unidadeId)) {return {sucesso: false,erro: "Caixa não pertence à unidade especificada"};}
-
-    // 3 — Criar venda
-    const venda = await prisma.venda.create({
-      data: {
-        caixaId: Number(caixaId),
-        usuarioId: Number(usuarioId),
-        unidadeId: Number(unidadeId),
-        pagamento,
-        total: 0,
-        status: 'OK'
-      }
+    const venda = await prisma.venda.findUnique({
+      where: { id: vendaId },
+      include: {
+        itens: { include: { produto: true } },
+        unidade: true,
+        usuario: true,
+        caixa: true,
+      },
     });
 
-    let totalVenda = 0;
-    const itensCriados = [];
-
-    // 4 — Criar itens + movimentar estoque
-    for (const item of itens) {
-      const subtotal = (item.quantidade * item.precoUnitario) - item.desconto;
-      totalVenda += subtotal;
-
-      // Criar item
-      const novoItem = await prisma.itemVenda.create({
-        data: {
-          vendaId: venda.id,
-          produtoId: item.produtoId,
-          quantidade: item.quantidade,
-          precoUnitario: item.precoUnitario,
-          desconto: item.desconto,
-          subtotal
-        }
-      });
-
-      itensCriados.push(novoItem);
-
-      // Buscar o estoque (depósito) da unidade
-      const estoque = await prisma.estoque.findFirst({ where: { unidadeId: Number(unidadeId) } });
-      if (!estoque) {
-        return { sucesso: false, erro: `Estoque/depósito não encontrado para unidade ${unidadeId}` };
-      }
-
-      // Buscar o produto dentro do estoque (estoque_produto)
-      const estoqueProduto = await prisma.estoqueProduto.findFirst({ where: { estoqueId: estoque.id, produtoId: item.produtoId } });
-      if (!estoqueProduto) {
-        return { sucesso: false, erro: `Produto ${item.produtoId} não está no estoque desta unidade` };
-      }
-
-      // Atualizar quantidade atual do produto (campo: qntdAtual)
-      await prisma.estoqueProduto.update({
-        where: { id: estoqueProduto.id },
-        data: { qntdAtual: Math.max(0, Number(estoqueProduto.qntdAtual || 0) - Number(item.quantidade || 0)) }
-      });
-
-      // Registrar movimento no estoque (apontando para o depósito/estoque)
-      await prisma.estoqueMovimento.create({
-        data: {
-          estoqueId: estoque.id,
-          tipoMovimento: "SAIDA",
-          quantidade: Number(item.quantidade || 0),
-          vendaId: venda.id,
-          origemUnidadeId: Number(unidadeId)
-        }
-      });
+    if (!venda) {
+      return { sucesso: false, erro: "Venda não encontrada." };
     }
 
-    // 5 — Atualizar total
-    await prisma.venda.update({where: { id: venda.id },data: { total: totalVenda } });
+    if (unidadeContext && venda.unidadeId !== unidadeContext) {
+      return { sucesso: false, erro: "Venda não pertence à unidade informada." };
+    }
 
-    // 6 — Criar PDF
-    const filePath = path.join(process.cwd(), `nota_fiscal_${venda.id}.pdf`);
+    const itensCriados = venda.itens || [];
+    const totalItens = itensCriados.reduce((acc, item) => acc + Number(item.quantidade || 0), 0);
+    const totalDescontos = itensCriados.reduce((acc, item) => acc + toNumber(item.desconto), 0);
+    const totalSubtotais = itensCriados.reduce((acc, item) => acc + toNumber(item.subtotal), 0);
+    const totalVenda =
+      totalSubtotais ||
+      toNumber(venda.total);
+
+    // imposto estimado (por enquanto 8% do total)
+    const totalImpostos = Number((totalVenda * 0.08).toFixed(2));
+
+    const pagoCliente = valorPagoCliente != null ? valorPagoCliente : totalVenda;
+
+    const pdfDir = path.join(process.cwd(), "tmp_notas");
+    await fs.promises.mkdir(pdfDir, { recursive: true });
+
+    const filePath = path.join(pdfDir, `nota_fiscal_${venda.id}.pdf`);
     const doc = new PDFDocument();
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Cabeçalho
-    doc.fontSize(22).text("NOTA FISCAL", { align: "center" }).moveDown();
-    doc.fontSize(12).text(`Venda: ${venda.id}`);
-    doc.text(`Unidade: ${unidadeId}`);
-    doc.text(`Caixa: ${caixaId}`);
-    doc.text(`Usuário: ${usuarioId}`);
-    doc.text(`Pagamento: ${pagamento}`);
-    doc.text(`Data: ${new Date().toLocaleString("pt-BR")}`);
-    doc.moveDown();
+    // Cabeçalho estilo cupom NFC-e
+    doc.fontSize(12).text(venda.unidade?.nome ?? "LOJA", { align: "center" });
+    doc.moveDown(0.3);
+    const cnpjUnidade = venda.unidade?.cnpj ?? venda.unidade?.cnpjCnpj ?? null;
+    if (cnpjUnidade) {
+      doc.text(`CNPJ: ${cnpjUnidade}`, { align: "center" });
+    }
+    doc.moveDown(0.5);
 
-    // Itens
-    doc.fontSize(16).text("Itens da Nota:").moveDown(0.5);
+    doc.fontSize(11).text("DANFE NFC-e - Documento Auxiliar da Nota Fiscal de", { align: "center" });
+    doc.text("Consumidor Eletrônica", { align: "center" });
+    doc.moveDown(0.5);
+
+    // Linha de separação
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.5);
+
+    // Tabela de itens
+    doc.fontSize(10);
+    doc.text("Cód".padEnd(12) + "Descrição".padEnd(26) + "Qtde".padStart(6) + " Vlr Unit".padStart(12) + " Vlr Total".padStart(12));
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
 
     itensCriados.forEach((i) => {
-      doc.fontSize(12)
-        .text(`Produto ID: ${i.produtoId}`)
-        .text(`Quantidade: ${i.quantidade}`)
-        .text(`Preço: R$ ${i.precoUnitario}`)
-        .text(`Desconto: R$ ${i.desconto}`)
-        .text(`Subtotal: R$ ${i.subtotal}`)
-        .moveDown();
+      const sku = i.produto?.sku ?? i.produtoId;
+      const nome = i.produto?.nome ?? String(i.produtoId);
+      const q = Number(i.quantidade || 0);
+      const unit = toNumber(i.precoUnitario);
+      const sub = toNumber(i.subtotal);
+      const line =
+        String(sku).padEnd(12).slice(0, 12) +
+        String(nome).padEnd(26).slice(0, 26) +
+        String(q).padStart(6) +
+        `R$ ${unit.toFixed(2)}`.padStart(12) +
+        `R$ ${sub.toFixed(2)}`.padStart(12);
+      doc.text(line);
     });
 
-    doc.fontSize(16).text(`TOTAL: R$ ${totalVenda}`, { align: "right" });
+    doc.moveDown(0.5);
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.5);
+
+    // Resumos
+    doc.fontSize(10);
+    doc.text(`Qtd. total de itens: ${totalItens}`);
+    doc.text(`Valor total da compra: R$ ${totalVenda.toFixed(2)}`);
+    doc.text(`Forma de pagamento: ${venda.pagamento}`);
+    doc.text(`Valor pago pelo cliente: R$ ${pagoCliente.toFixed(2)}`);
+    doc.text(`Total de descontos: R$ ${totalDescontos.toFixed(2)}`);
+    doc.text(`Total de impostos (aprox. 8%): R$ ${totalImpostos.toFixed(2)}`);
+    doc.text(`Data de emissão: ${new Date(venda.criadoEm).toLocaleString("pt-BR")}`);
+
+    doc.moveDown(0.8);
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.5);
+
+    // Dados do consumidor
+    const nomeConsumidor = clienteNomeExtra || venda.nomeCliente || "CONSUMIDOR";
+    doc.fontSize(10).text("DADOS DO CONSUMIDOR:");
+    doc.text(`Nome: ${nomeConsumidor}`);
+    const cpfConsumidor = clienteCpf || venda.cpfCliente || null;
+    if (cpfConsumidor) {
+      doc.text(`CPF: ${cpfConsumidor}`);
+    }
+
+    doc.moveDown(0.8);
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.5);
+
+    // Dados do atendente
+    const nomeAtendente = venda.usuario?.nome ?? venda.usuarioId;
+    doc.text("ATENDENTE:");
+    doc.text(`Nome: ${nomeAtendente}`);
+    if (atendenteCpf) {
+      doc.text(`CPF: ${atendenteCpf}`);
+    }
 
     doc.end();
 
@@ -858,7 +956,11 @@ export const criarNotaFiscal = async (data) => {
       venda,
       itens: itensCriados,
       total: totalVenda,
-      pdfPath: filePath
+      pdfPath: filePath,
+      totalDescontos,
+      totalImpostos,
+      valorPagoCliente: pagoCliente,
+      totalItens
     };
 
   } catch (error) {

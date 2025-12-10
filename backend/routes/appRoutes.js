@@ -12,7 +12,7 @@ import {
     mostrarSaldoFController, contarVendasPorMesUltimos6MesesController, criarVendaController, calcularSaldoLiquidoController,
     listarSaidasPorUnidadeController, somarDiariaController, somarSaidasController, calcularLucroController,
     somarEntradaMensalController, listarVendasController,  calcularMediaPorTransacaoController, divisaoPagamentosController, buscarProdutoMaisVendidoController,
-    listarDespesasController, abrirCaixaController
+    listarDespesasController, abrirCaixaController, statusCaixaController, fecharCaixaController, criarNotaFiscalController
 } from "../controllers/FinanceiroController.js";
 import {
   criarCategoriaController,
@@ -59,12 +59,15 @@ router.post("/translate", translateText);
 
 // rotas usadas para loja --------------------------------------------------------------------
 router.post("/caixa/abrir", auth(), abrirCaixaController);
+router.get("/caixa/status", auth(), statusCaixaController);
+router.post("/caixa/fechar", auth(), fecharCaixaController);
 router.get(
   "/vendas/ultimos-6-meses",
   auth(),
   contarVendasPorMesUltimos6MesesController
 );
 router.post("/vendas/criar", auth(), criarVendaController);
+router.post("/vendas/:vendaId/nota-fiscal", auth(), criarNotaFiscalController);
 router.get("/listarVendas/:unidadeId", listarVendasController);
 router.get("/listarDespesas/:unidadeId", listarDespesasController);
 router.get("/calcularLucro/:unidadeId", calcularLucroController);

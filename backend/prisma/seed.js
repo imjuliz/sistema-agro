@@ -4230,12 +4230,20 @@ async function main() {
                     "Carlos Souza", "Juliana Lima", "Roberto Alves", "Fernanda Rocha",
                     "Ricardo Mendes", "Patricia Ferreira", null, null, null // alguns sem nome
                 ];
-                const nomeCliente = nomesClientes[Math.floor(Math.random() * nomesClientes.length)];
+                const cpfsClientes = [
+                    "111.111.111-11", "222.222.222-22", "333.333.333-33", "444.444.444-44",
+                    "555.555.555-55", "666.666.666-66", "777.777.777-77", "888.888.888-88",
+                    "999.999.999-99", "000.000.000-00", null, null, null
+                ];
+                const idxCliente = Math.floor(Math.random() * nomesClientes.length);
+                const nomeCliente = nomesClientes[idxCliente];
+                const cpfCliente = cpfsClientes[idxCliente] || null;
 
                 // Criar a venda
                 const venda = await prisma.venda.create({
                     data: {
                         nomeCliente: nomeCliente,
+                        cpfCliente: cpfCliente,
                         caixaId: caixa.id,
                         usuarioId: caixa.usuarioId,
                         unidadeId: caixa.unidadeId,

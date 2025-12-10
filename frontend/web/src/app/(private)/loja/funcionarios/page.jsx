@@ -18,13 +18,15 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+
 
 // Função para formatar telefone
 const formatarTelefone = (telefone) => {
   if (!telefone) return '';
   const cleaned = telefone.replace(/\D/g, '');
-  if (cleaned.length === 11) {return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;}
-  else if (cleaned.length === 10) {return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;}
+  if (cleaned.length === 11) { return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`; }
+  else if (cleaned.length === 10) { return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`; }
   return telefone;
 };
 
@@ -49,12 +51,12 @@ export default function FuncionariosFazenda() {
   const [page, setPage] = useState(1);
 
   // Estados de filtros temporários (para o popover)
-  const [tempTypeFilters, setTempTypeFilters] = useState({"GERENTE_LOJA": true,"FUNCIONARIO_LOJA": true,});
-  const [tempStatusFilters, setTempStatusFilters] = useState({"Ativo": true,"Inativo": false,});
+  const [tempTypeFilters, setTempTypeFilters] = useState({ "GERENTE_LOJA": true, "FUNCIONARIO_LOJA": true, });
+  const [tempStatusFilters, setTempStatusFilters] = useState({ "Ativo": true, "Inativo": false, });
 
   // Estados de filtros aplicados (usados para filtrar a lista)
-  const [typeFilters, setTypeFilters] = useState({"GERENTE_LOJA": true,"FUNCIONARIO_LOJA": true,});
-  const [statusFilters, setStatusFilters] = useState({"Ativo": true,"Inativo": false,});
+  const [typeFilters, setTypeFilters] = useState({ "GERENTE_LOJA": true, "FUNCIONARIO_LOJA": true, });
+  const [statusFilters, setStatusFilters] = useState({ "Ativo": true, "Inativo": false, });
 
   // Controle do popover para sincronizar filtros temporários quando aberto
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -74,7 +76,7 @@ export default function FuncionariosFazenda() {
   });
   const [savingEdit, setSavingEdit] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
-  
+
   // Estados para convidar novo usuário
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteData, setInviteData] = useState({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
@@ -94,14 +96,14 @@ export default function FuncionariosFazenda() {
         return;
       }
       if (jsonResponse.sucesso && jsonResponse.usuarios) {
-        const filtered = jsonResponse.usuarios.filter(u =>u.perfil?.funcao === "GERENTE_LOJA" || u.perfil?.funcao === "FUNCIONARIO_LOJA");
+        const filtered = jsonResponse.usuarios.filter(u => u.perfil?.funcao === "GERENTE_LOJA" || u.perfil?.funcao === "FUNCIONARIO_LOJA");
         setFuncionarios(filtered);
       }
-    } catch (error) {console.error("[FuncionariosLoja] Erro ao carregar funcionários:", error);}
-    finally {setLoadingFuncionarios(false);}
+    } catch (error) { console.error("[FuncionariosLoja] Erro ao carregar funcionários:", error); }
+    finally { setLoadingFuncionarios(false); }
   };
 
-  useEffect(() => {loadFuncionarios();}, [user?.unidadeId, fetchWithAuth]);
+  useEffect(() => { loadFuncionarios(); }, [user?.unidadeId, fetchWithAuth]);
 
   // Funções de filtro
   // Funções para alterar filtros temporários
@@ -127,8 +129,8 @@ export default function FuncionariosFazenda() {
 
   // Resetar filtros
   const resetFilters = () => {
-    const defaults = {"GERENTE_LOJA": true,"FUNCIONARIO_LOJA": true,};
-    const defaultStatus = {"Ativo": true,"Inativo": false,};
+    const defaults = { "GERENTE_LOJA": true, "FUNCIONARIO_LOJA": true, };
+    const defaultStatus = { "Ativo": true, "Inativo": false, };
     setTempTypeFilters(defaults);
     setTempStatusFilters(defaultStatus);
     setTypeFilters(defaults);
@@ -140,13 +142,13 @@ export default function FuncionariosFazenda() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return funcionarios.filter(f => {
-      const matchQuery = q === '' || 
-        f.nome.toLowerCase().includes(q) || 
+      const matchQuery = q === '' ||
+        f.nome.toLowerCase().includes(q) ||
         f.email.toLowerCase().includes(q) ||
         f.telefone?.includes(q);
-      
+
       const matchType = !!typeFilters[f.perfil?.funcao];
-      
+
       // Determinar status do funcionário (ativo/inativo)
       const statusLabel = f.status === true || f.status === 'ativo' ? "Ativo" : "Inativo";
       const matchStatus = !!statusFilters[statusLabel];
@@ -187,8 +189,8 @@ export default function FuncionariosFazenda() {
 
       if (response.sucesso) {
         // Atualizar lista local
-        setFuncionarios(prev => prev.map(f => 
-          f.id === selectedUser.id 
+        setFuncionarios(prev => prev.map(f =>
+          f.id === selectedUser.id
             ? { ...f, ...editingData }
             : f
         ));
@@ -203,7 +205,7 @@ export default function FuncionariosFazenda() {
       console.error("Erro ao salvar edições:", error);
       alert("Erro ao salvar as edições");
     }
-    finally {setSavingEdit(false);}
+    finally { setSavingEdit(false); }
   };
 
   // Abrir modal de deleção
@@ -217,7 +219,7 @@ export default function FuncionariosFazenda() {
     if (!selectedUser) return;
 
     try {
-      const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, {method: 'DELETE',});
+      const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, { method: 'DELETE', });
 
       const response = await res.json();
 
@@ -241,7 +243,7 @@ export default function FuncionariosFazenda() {
   const openInviteModal = () => setIsInviteModalOpen(true);
   const closeInviteModal = () => setIsInviteModalOpen(false);
 
-  const handleInviteChange = (field, value) => {setInviteData(prev => ({ ...prev, [field]: value }));};
+  const handleInviteChange = (field, value) => { setInviteData(prev => ({ ...prev, [field]: value })); };
 
   const submitInvite = async () => {
     if (!user || user.perfil?.funcao !== 'GERENTE_LOJA') return;
@@ -266,8 +268,8 @@ export default function FuncionariosFazenda() {
         setInviteData({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_LOJA' });
         await loadFuncionarios();
       }
-    } catch (err) {console.error('[FuncionariosLoja] submitInvite error', err);}
-    finally {setInviteSaving(false);}
+    } catch (err) { console.error('[FuncionariosLoja] submitInvite error', err); }
+    finally { setInviteSaving(false); }
   };
 
   // Verificar se é gerente da loja (tolerante a diferentes formatos)
@@ -275,19 +277,26 @@ export default function FuncionariosFazenda() {
   const _userRole = typeof _userRoleRaw === 'string' ? _userRoleRaw.toUpperCase() : '';
   const isGerenteLoja = _userRole === 'GERENTE_LOJA' || _userRole === 'GERENTE_LOJA';
 
-   const { lang, changeLang } = useTranslation();
-      const languageOptions = [
-          { value: 'pt-BR', label: 'Português (BR)' },
-          { value: 'en', label: 'English' },
-          { value: 'es', label: 'Español' },
-          { value: 'fr', label: 'Français' }
-      ];
-      const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-      useEffect(() => {
-          setLocalTheme(globalTheme);
-          setLocalSelectedFontSize(globalSelectedFontSize);
-          setLocalLang(lang);
-      }, [globalTheme, globalSelectedFontSize, lang]);
+  const { lang, changeLang } = useTranslation();
+  const languageOptions = [
+    { value: 'pt-BR', label: 'Português (BR)' },
+    { value: 'en', label: 'English' },
+    { value: 'es', label: 'Español' },
+    { value: 'fr', label: 'Français' }
+  ];
+  const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+
+
+  const [localTheme, setLocalTheme] = useState(globalTheme);
+  const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize);
+  const [localLang, setLocalLang] = useState(lang);
+
+  const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+  useEffect(() => {
+    setLocalTheme(globalTheme);
+    setLocalSelectedFontSize(globalSelectedFontSize);
+    setLocalLang(lang);
+  }, [globalTheme, globalSelectedFontSize, lang]);
 
   return (
     <div className="min-h-screen px-18 py-10 bg-surface-50">
@@ -398,10 +407,10 @@ export default function FuncionariosFazenda() {
                   {isGerenteLoja && (
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEditClick(func)}>
-                        <Pen className="size-4 mr-2" /><Transl>Editar</Transl> 
+                        <Pen className="size-4 mr-2" /><Transl>Editar</Transl>
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(func)}>
-                        <Trash className="size-4 mr-2" /><Transl>Demitir</Transl>                        
+                        <Trash className="size-4 mr-2" /><Transl>Demitir</Transl>
                       </Button>
                     </div>
                   )}
@@ -432,10 +441,10 @@ export default function FuncionariosFazenda() {
                           <Mail className="size-4 mr-2" />Email
                         </Button>
                         <Button variant="outline" size="sm">
-                          <Phone className="size-4 mr-2" /> <Transl>Ligar</Transl> 
+                          <Phone className="size-4 mr-2" /> <Transl>Ligar</Transl>
                         </Button>
                         <Button variant="outline" size="sm">
-                          <MessageSquare className="size-4 mr-2" /><Transl>Mensagem</Transl>             
+                          <MessageSquare className="size-4 mr-2" /><Transl>Mensagem</Transl>
                         </Button>
                       </div>
                     </div>
@@ -456,20 +465,20 @@ export default function FuncionariosFazenda() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="nome" className="text-right"><Transl>Nome</Transl></Label>
-              <Input id="nome" value={editingData.nome} onChange={e => setEditingData({ ...editingData, nome: e.target.value })} className="col-span-3"/>
+              <Input id="nome" value={editingData.nome} onChange={e => setEditingData({ ...editingData, nome: e.target.value })} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
-              <Input id="email" type="email" value={editingData.email} onChange={e => setEditingData({ ...editingData, email: e.target.value })} className="col-span-3"/>
+              <Input id="email" type="email" value={editingData.email} onChange={e => setEditingData({ ...editingData, email: e.target.value })} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="telefone" className="text-right"><Transl>Telefone</Transl></Label>
-              <Input id="telefone" value={editingData.telefone} onChange={e => setEditingData({ ...editingData, telefone: formatarTelefoneInput(e.target.value) })} className="col-span-3" placeholder="(XX) XXXXX-XXXX"/>
+              <Input id="telefone" value={editingData.telefone} onChange={e => setEditingData({ ...editingData, telefone: formatarTelefoneInput(e.target.value) })} className="col-span-3" placeholder="(XX) XXXXX-XXXX" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="senha" className="text-right"><Transl>Senha (opcional)</Transl></Label>
               <div className="col-span-3 relative">
-                <Input id="senha" type={showEditPassword ? "text" : "password"} value={editingData.senha} onChange={e => setEditingData({ ...editingData, senha: e.target.value })}/>
+                <Input id="senha" type={showEditPassword ? "text" : "password"} value={editingData.senha} onChange={e => setEditingData({ ...editingData, senha: e.target.value })} />
                 <button type="button" onClick={() => setShowEditPassword(!showEditPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -490,7 +499,7 @@ export default function FuncionariosFazenda() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-             <Transl>Cancelar</Transl> 
+              <Transl>Cancelar</Transl>
             </Button>
             <Button onClick={handleSaveEdit} disabled={savingEdit}>{savingEdit ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>

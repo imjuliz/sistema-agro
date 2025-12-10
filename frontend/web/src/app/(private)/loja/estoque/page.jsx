@@ -124,6 +124,7 @@ function ConteudoEstoque({
 }) {
   const { refresh } = useInventory();
   return (
+    <div className="min-h-screen px-18 py-10 bg-surface-50">
     <div className="flex gap-6">
 
       <div className="w-80 space-y-6">
@@ -204,6 +205,7 @@ function ConteudoEstoque({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
     </div>
   );
 }
