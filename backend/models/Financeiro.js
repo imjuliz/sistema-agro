@@ -871,56 +871,90 @@ export const criarNotaFiscal = async (data) => {
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Cabeçalho estilo cupom NFC-e
-    doc.fontSize(12).text(venda.unidade?.nome ?? "LOJA", { align: "center" });
-    doc.moveDown(0.3);
+    const formatDigits = (value = "") => String(value ?? "").replace(/\D/g, "");
+    const formatCpf = (value) => {
+      const digits = formatDigits(value).slice(0, 11);
+      if (digits.length !== 11) return value ?? "";
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    };
+    const formatCnpj = (value) => {
+      const digits = formatDigits(value).slice(0, 14);
+      if (digits.length !== 14) return value ?? "";
+      return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    };
+
+    const marginLeft = 40;
+    const marginRight = 550;
+    const availableWidth = marginRight - marginLeft;
+    const columnGap = 10;
+    const headerFont = 'Helvetica-Bold';
+    const normalFont = 'Helvetica';
+
+    const hr = () => { doc.moveTo(marginLeft, doc.y).lineTo(marginRight, doc.y).stroke(); };
+
+    const addRow = ({ sku, nome, qtde, unit, total }) => {
+      // Larguras que somam ao espaço disponível (incluindo gaps iguais)
+      const widths = { sku: 90, nome: 210, qtde: 60, unit: 55, total: 55 };
+      let x = marginLeft;
+      const y = doc.y;
+      doc.text(String(sku || ''), x, y, { width: widths.sku });
+      x += widths.sku + columnGap;
+      doc.text(String(nome || ''), x, y, { width: widths.nome });
+      x += widths.nome + columnGap;
+      doc.text(String(qtde || ''), x, y, { width: widths.qtde, align: 'right' });
+      x += widths.qtde + columnGap;
+      doc.text(String(unit || ''), x, y, { width: widths.unit, align: 'right' });
+      x += widths.unit + columnGap;
+      doc.text(String(total || ''), x, y, { width: widths.total, align: 'right' });
+      doc.moveDown(0.2);
+    };
+
+    // Cabeçalho estilo cupom NFC-e (limpo, alinhado)
+    doc.font(headerFont).fontSize(12).text(venda.unidade?.nome ?? "LOJA", { align: "center" });
+    doc.moveDown(0.2);
     const cnpjUnidade = venda.unidade?.cnpj ?? venda.unidade?.cnpjCnpj ?? null;
-    if (cnpjUnidade) {
-      doc.text(`CNPJ: ${cnpjUnidade}`, { align: "center" });
+    const formattedCnpj = cnpjUnidade ? formatCnpj(cnpjUnidade) : null;
+    if (formattedCnpj) {
+      doc.font(normalFont).fontSize(11).text(`CNPJ: ${formattedCnpj}`, { align: "center" });
     }
-    doc.moveDown(0.5);
+    doc.moveDown(0.4);
 
-    doc.fontSize(11).text("DANFE NFC-e - Documento Auxiliar da Nota Fiscal de", { align: "center" });
+    doc.font(normalFont).fontSize(11).text("DANFE NFC-e - Documento Auxiliar da Nota Fiscal de", { align: "center" });
     doc.text("Consumidor Eletrônica", { align: "center" });
-    doc.moveDown(0.5);
+    doc.moveDown(0.4);
 
-    // Linha de separação
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown(0.5);
+    hr();
+    doc.moveDown(0.2);
 
     // Tabela de itens
-    doc.fontSize(10);
-    doc.text("Cód".padEnd(12) + "Descrição".padEnd(26) + "Qtde".padStart(6) + " Vlr Unit".padStart(12) + " Vlr Total".padStart(12));
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    doc.font(headerFont).fontSize(10);
+    addRow({ sku: 'SKU', nome: 'Nome', qtde: 'Qtde', unit: 'Vlr Unit', total: 'Vlr Total' });
+    hr();
+    doc.moveDown(0.1);
+    doc.font(normalFont).fontSize(10);
 
     itensCriados.forEach((i) => {
       const sku = i.produto?.sku ?? i.produtoId;
       const nome = i.produto?.nome ?? String(i.produtoId);
       const q = Number(i.quantidade || 0);
-      const unit = toNumber(i.precoUnitario);
-      const sub = toNumber(i.subtotal);
-      const line =
-        String(sku).padEnd(12).slice(0, 12) +
-        String(nome).padEnd(26).slice(0, 26) +
-        String(q).padStart(6) +
-        `R$ ${unit.toFixed(2)}`.padStart(12) +
-        `R$ ${sub.toFixed(2)}`.padStart(12);
-      doc.text(line);
+      const unit = `R$ ${toNumber(i.precoUnitario).toFixed(2)}`;
+      const sub = `R$ ${toNumber(i.subtotal).toFixed(2)}`;
+      addRow({ sku, nome, qtde: q, unit, total: sub });
     });
 
-    doc.moveDown(0.5);
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown(0.5);
+    doc.moveDown(0.2);
+    hr();
+    doc.moveDown(0.4);
 
     // Resumos
     doc.fontSize(10);
-    doc.text(`Qtd. total de itens: ${totalItens}`);
-    doc.text(`Valor total da compra: R$ ${totalVenda.toFixed(2)}`);
-    doc.text(`Forma de pagamento: ${venda.pagamento}`);
-    doc.text(`Valor pago pelo cliente: R$ ${pagoCliente.toFixed(2)}`);
-    doc.text(`Total de descontos: R$ ${totalDescontos.toFixed(2)}`);
-    doc.text(`Total de impostos (aprox. 8%): R$ ${totalImpostos.toFixed(2)}`);
-    doc.text(`Data de emissão: ${new Date(venda.criadoEm).toLocaleString("pt-BR")}`);
+    doc.text(`Qtd. total de itens: ${totalItens}`, marginLeft, doc.y, { width: availableWidth });
+    doc.text(`Valor total da compra: R$ ${totalVenda.toFixed(2)}`, marginLeft, doc.y, { width: availableWidth });
+    doc.text(`Forma de pagamento: ${venda.pagamento}`, marginLeft, doc.y, { width: availableWidth });
+    doc.text(`Valor pago pelo cliente: R$ ${pagoCliente.toFixed(2)}`, marginLeft, doc.y, { width: availableWidth });
+    doc.text(`Total de descontos: R$ ${totalDescontos.toFixed(2)}`, marginLeft, doc.y, { width: availableWidth });
+    doc.text(`Total de impostos (aprox. 8%): R$ ${totalImpostos.toFixed(2)}`, marginLeft, doc.y, { width: availableWidth });
+    doc.text(`Data de emissão: ${new Date(venda.criadoEm).toLocaleString("pt-BR")}`, marginLeft, doc.y, { width: availableWidth });
 
     doc.moveDown(0.8);
     doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
@@ -931,12 +965,13 @@ export const criarNotaFiscal = async (data) => {
     doc.fontSize(10).text("DADOS DO CONSUMIDOR:");
     doc.text(`Nome: ${nomeConsumidor}`);
     const cpfConsumidor = clienteCpf || venda.cpfCliente || null;
-    if (cpfConsumidor) {
-      doc.text(`CPF: ${cpfConsumidor}`);
+    const formattedCpfConsumidor = cpfConsumidor ? formatCpf(cpfConsumidor) : null;
+    if (formattedCpfConsumidor) {
+      doc.text(`CPF: ${formattedCpfConsumidor}`);
     }
 
     doc.moveDown(0.8);
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    hr();
     doc.moveDown(0.5);
 
     // Dados do atendente
