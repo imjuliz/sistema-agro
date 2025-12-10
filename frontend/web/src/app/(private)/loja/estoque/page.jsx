@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StoreLevelView } from '@/components/Estoque/StoreLevelView';
 import { InventoryProvider, useInventory } from '@/contexts/InventoryContext';
