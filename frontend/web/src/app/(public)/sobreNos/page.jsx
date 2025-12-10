@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +13,10 @@ import { Mail, Phone, ArrowDownRight, Rocket, Lightbulb, User, Send, Instagram }
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { API_URL } from "@/lib/api";
 import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
+import { useTranslation } from "@/hooks/useTranslation";
 
+import React from "react";
 const defaultFeatures = [
     {
         icon: Rocket,
@@ -153,6 +156,26 @@ export default function sobreNos({
         if (field === "phone") { value = formatPhoneNumber(value); }
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
+const { lang, changeLang } = useTranslation();
+      const languageOptions = [
+          { value: 'pt-BR', label: 'Português (BR)' },
+          { value: 'en', label: 'English' },
+          { value: 'es', label: 'Español' },
+          { value: 'fr', label: 'Français' }
+      ];
+
+      const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+            // Estados locais para edição temporária antes de salvar
+            const [localTheme, setLocalTheme] = useState(globalTheme); 
+            const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+            const [localLang, setLocalLang] = useState(lang);
+
+      const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+      useEffect(() => {
+          setLocalTheme(globalTheme);
+          setLocalSelectedFontSize(globalSelectedFontSize);
+          setLocalLang(lang);
+      }, [globalTheme, globalSelectedFontSize, lang]);
 
     return (
         <main className="container mx-auto bg-background ">

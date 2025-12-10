@@ -8,13 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Image as ImageIcon, AlertTriangle, Phone, Mail } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
 import { usePerfilProtegido } from "@/hooks/usePerfilProtegido";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from '@/components/ui/use-toast';
 import { API_URL } from '@/lib/api';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "@/hooks/useTranslation";
+import { Transl } from '@/components/TextoTraduzido/TextoTraduzido';
+import { useAppearance } from "@/contexts/AppearanceContext"; // Importar useAppearance
 
 export default function Matriz() {
     usePerfilProtegido("GERENTE_MATRIZ");
@@ -431,19 +432,27 @@ export default function Matriz() {
         finally {setDeleting(false);}
     }
 
-     const { lang, changeLang } = useTranslation();
-        const languageOptions = [
-            { value: 'pt-BR', label: 'Português (BR)' },
-            { value: 'en', label: 'English' },
-            { value: 'es', label: 'Español' },
-            { value: 'fr', label: 'Français' }
-        ];
-        const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-        useEffect(() => {
-            setLocalTheme(globalTheme);
-            setLocalSelectedFontSize(globalSelectedFontSize);
-            setLocalLang(lang);
-        }, [globalTheme, globalSelectedFontSize, lang]);
+   const { lang, changeLang } = useTranslation();
+         const languageOptions = [
+             { value: 'pt-BR', label: 'Português (BR)' },
+             { value: 'en', label: 'English' },
+             { value: 'es', label: 'Español' },
+             { value: 'fr', label: 'Français' }
+         ];
+   
+         const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
+               // Estados locais para edição temporária antes de salvar
+               const [localTheme, setLocalTheme] = useState(globalTheme); 
+               const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+               const [localLang, setLocalLang] = useState(lang);
+   
+         const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
+         useEffect(() => {
+             setLocalTheme(globalTheme);
+             setLocalSelectedFontSize(globalSelectedFontSize);
+             setLocalLang(lang);
+         }, [globalTheme, globalSelectedFontSize, lang]);
+   
     return (
         <>
             <main className="min-h-screen px-18 py-10 bg-surface-50">
