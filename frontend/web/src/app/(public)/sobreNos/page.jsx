@@ -69,25 +69,7 @@ export default function sobreNos({
             .catch(() => toast.error("Falha ao copiar. Tente novamente."));
     };
 
-    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
-    const [localLang, setLocalLang] = useState(lang);
-        // Estados locais para edição temporária antes de salvar
-    const [localTheme, setLocalTheme] = useState(globalTheme); 
-    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
-
-    const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-    useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-        setLocalLang(lang);
-    }, [globalTheme, globalSelectedFontSize, lang]);
+  
 
     const cards = [
         {
