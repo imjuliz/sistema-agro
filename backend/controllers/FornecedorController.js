@@ -1,4 +1,22 @@
-import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, criarPedido, atualizarStatusPedido, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService, contarFornecedoresExternos, totalContratosExternos, totalContratosExternosAtivos } from "../models/Fornecedores.js";
+// Controller para deletar um contrato
+export const deleteContratoController = async (req, res) => {
+  try {
+    const contratoId = Number(req.params.id);
+    if (!contratoId) return res.status(400).json({ sucesso: false, erro: 'ID do contrato não informado.' });
+
+    const resultado = await deleteContrato(contratoId);
+    
+    if (!resultado.sucesso) {
+      return res.status(404).json(resultado);
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('[deleteContratoController] Erro:', error);
+    return res.status(500).json({ sucesso: false, erro: 'Erro ao deletar contrato.', detalhes: error.message });
+  }
+};
+import { calcularFornecedores, listarTodasAsLojas, listarFornecedoresExternos, listarFornecedoresInternos, criarContratoInterno, criarContratoExterno, listarLojasAtendidas, verContratosComFazendas, verContratosComFazendasAsFornecedor, verContratosComLojas, verContratosExternos, listarTodosFornecedoresExternos, criarFornecedorExterno, buscarPedidosExternos, criarPedido, atualizarStatusPedido, updateFornecedor, getFornecedoresKpis, deleteFornecedorWithContracts, buscarContratoPorIdService, contarFornecedoresExternos, totalContratosExternos, totalContratosExternosAtivos, deleteContrato } from "../models/Fornecedores.js";
 import { fornecedorSchema } from "../schemas/fornecedorSchema.js";
 
 export const totalContratosExternosController = async (req, res) => {

@@ -431,7 +431,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         </TabsContent>
 
         <TabsContent value="fornecedor" className="mt-4">
-          <ContratosComoFornecedor />
+          <ContratosComoFornecedor unidadeId={unidadeId} />
         </TabsContent>
       </Tabs>
 
@@ -495,7 +495,7 @@ function ContratosComoConsumidor({
         </Card>
       </div>
 
-      <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
+      <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} unidadeId={unidadeId} />
 
       <div className="flex justify-end">
         <Button onClick={onShowCreatePedido}>
@@ -509,9 +509,10 @@ function ContratosComoConsumidor({
   );
 }
 
-function ContratosComoFornecedor() {
+function ContratosComoFornecedor({ unidadeId: unidadeIdProp = null }) {
   const { user, fetchWithAuth } = useAuth();
-  const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+  // Priorizar unidadeIdProp se fornecido (ex: quando vindo de matriz com fazenda específica), senão usar do contexto
+  const unidadeId = unidadeIdProp ?? user?.unidadeId ?? user?.unidade?.id ?? null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [contratos, setContratos] = useState([]);
@@ -519,13 +520,16 @@ function ContratosComoFornecedor() {
   const [pedidos, setPedidos] = useState([]);
 
   useEffect(() => {
-    if (!unidadeId) return;
+    if (!unidadeId) {
+      console.log('[ContratosComoFornecedor] unidadeId não definida, abortando carregamento');
+      return;
+    }
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
         // 1) Buscar contratos onde essa unidade é fornecedora (CORRETO: verContratosComFazendasAsFornecedor)
-        console.log('[ContratosComoFornecedor] Buscando contratos como fornecedor para unidadeId:', unidadeId);
+        console.log('[ContratosComoFornecedor] Iniciando carregamento para unidadeId:', unidadeId, '| unidadeIdProp:', unidadeIdProp, '| user.unidadeId:', user?.unidadeId);
         const cRes = await fetchWithAuth(`${API_URL}verContratosComFazendasAsFornecedor/${unidadeId}`, { method: 'GET', credentials: 'include' });
         
         if (!cRes.ok) {
@@ -647,7 +651,7 @@ function ContratosComoFornecedor() {
       </div>
 
       {/* Exibe as lojas consumidoras com seus contratos associados usando ConsumidoresCard */}
-      <ConsumidoresCard fornecedores={lojaConsumidoras} contratos={contratos} pedidos={pedidos} carregando={loading} />
+      <ConsumidoresCard fornecedores={lojaConsumidoras} contratos={contratos} pedidos={pedidos} carregando={loading} unidadeId={unidadeId} />
 
       <OrderManagement pedidos={pedidos} />
     </div>

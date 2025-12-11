@@ -1,3 +1,28 @@
+export const deleteContrato = async (contratoId) => {
+  try {
+    const idNum = Number(contratoId);
+    
+    // Verificar se o contrato existe
+    const contrato = await prisma.contrato.findUnique({
+      where: { id: idNum },
+      select: { id: true, status: true }
+    });
+    
+    if (!contrato) {
+      return { sucesso: false, erro: 'Contrato não encontrado', detalhes: null };
+    }
+    
+    // Deletar o contrato
+    const deleted = await prisma.contrato.delete({
+      where: { id: idNum }
+    });
+    
+    return { sucesso: true, message: 'Contrato deletado com sucesso.', deletedId: deleted.id };
+  } catch (error) {
+    console.error('[deleteContrato] Erro ao deletar contrato:', error);
+    return { sucesso: false, erro: 'Erro ao deletar contrato.', detalhes: error.message };
+  }
+};
 import prisma from "../prisma/client.js";
 
 export const totalContratosExternos = async (unidadeId) => {
