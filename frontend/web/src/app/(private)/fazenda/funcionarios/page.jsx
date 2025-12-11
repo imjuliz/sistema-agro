@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/api";
 import { buildImageUrl } from '@/lib/image';
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido';
 import React, { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,23 +18,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
 
-// Função para formatar telefone
+// Função para formatar telefone (máx 9 dígitos)
 const formatarTelefone = (telefone) => {
   if (!telefone) return '';
-  const cleaned = telefone.replace(/\D/g, '');
-  if (cleaned.length === 11) { return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`; }
-  else if (cleaned.length === 10) { return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`; }
-  return telefone;
+  const cleaned = telefone.replace(/\D/g, '').slice(0, 9);
+  if (cleaned.length <= 5) return cleaned;
+  return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
 };
 
-// Função para formatar telefone enquanto digita
+// Função para formatar telefone enquanto digita (máx 9 dígitos)
 const formatarTelefoneInput = (value) => {
   if (!value) return '';
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-  if (cleaned.length <= 11) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-  return value;
+  const cleaned = value.replace(/\D/g, '').slice(0, 9);
+  if (cleaned.length <= 5) return cleaned;
+  return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
 };
 
 export default function FuncionariosFazenda() {
@@ -148,10 +146,7 @@ export default function FuncionariosFazenda() {
 
   // Abrir modal de edição
   const handleEditClick = (user) => {
-    if (!isGerenteLoja) {
-      console.warn("Sem permissão para editar este funcionário");
-      return;
-    }
+    if (!isGerenteLoja) { toast.error("Você não tem permissão para editar este funcionário."); return; }
     setSelectedUser(user);
     setEditingData({
       nome: user.nome,
@@ -169,10 +164,11 @@ export default function FuncionariosFazenda() {
 
     try {
       setSavingEdit(true);
+      const telefoneLimpo = editingData.telefone.replace(/\D/g, '').slice(0, 9);
       const res = await fetchWithAuth(`${API_URL}/usuarios/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingData),
+        body: JSON.stringify({ ...editingData, telefone: telefoneLimpo }),
       });
 
       const response = await res.json();
@@ -182,14 +178,15 @@ export default function FuncionariosFazenda() {
         setFuncionarios(prev => prev.map(f => f.id === selectedUser.id ? { ...f, ...editingData } : f));
         setIsEditModalOpen(false);
         setSelectedUser(null);
+        toast.success('Usuário atualizado.');
       } else {
         console.error("Erro na resposta:", response);
         const mensagemErro = response.erro || response.mensagem || "Erro ao salvar as edições";
-        alert(mensagemErro);
+        toast.error(mensagemErro);
       }
     } catch (error) {
       console.error("Erro ao salvar edições:", error);
-      alert("Erro ao salvar as edições");
+      toast.error("Erro ao salvar as edições");
     }
     finally { setSavingEdit(false); }
   };
@@ -214,14 +211,15 @@ export default function FuncionariosFazenda() {
         setFuncionarios(prev => prev.filter(f => f.id !== selectedUser.id));
         setIsDeleteModalOpen(false);
         setSelectedUser(null);
+        toast.success('Usuário removido.');
       } else {
         console.error("Erro na resposta:", response);
         const mensagemErro = response.erro || response.mensagem || "Erro ao deletar funcionário";
-        alert(mensagemErro);
+        toast.error(mensagemErro);
       }
     } catch (error) {
       console.error("Erro ao deletar funcionário:", error);
-      alert("Erro ao deletar funcionário");
+      toast.error("Erro ao deletar funcionário");
     }
   };
 
@@ -236,10 +234,11 @@ export default function FuncionariosFazenda() {
     setInviteSaving(true);
     try {
       const url = `${API_URL}/usuarios/criar`;
+      const telefoneLimpo = inviteData.telefone.replace(/\D/g, '').slice(0, 9);
       const payload = {
         nome: inviteData.nome,
         email: inviteData.email,
-        telefone: inviteData.telefone,
+        telefone: telefoneLimpo,
         senha: inviteData.senha,
         role: inviteData.role,
       };
@@ -247,12 +246,16 @@ export default function FuncionariosFazenda() {
       const json = await res.json();
       if (!res.ok) {
         console.error('[FuncionariosLoja] Erro ao convidar:', json);
+        toast.error(json?.erro || 'Erro ao convidar usuário.');
         return;
       }
       if (json.sucesso) {
         closeInviteModal();
         setInviteData({ nome: '', email: '', telefone: '', senha: '', role: 'FUNCIONARIO_FAZENDA' });
         await loadFuncionarios();
+        toast.success('Usuário convidado com sucesso.');
+      } else {
+        toast.error(json?.erro || 'Erro ao convidar usuário.');
       }
     } catch (err) { console.error('[FuncionariosLoja] submitInvite error', err); }
     finally { setInviteSaving(false); }

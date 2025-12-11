@@ -18,23 +18,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Mail, Phone, MessageSquare, Plus, Sliders, Pen, Trash, Eye, EyeOff } from 'lucide-react';
 
-// Função para formatar telefone
+// Função para formatar telefone (máx 9 dígitos)
 const formatarTelefone = (telefone) => {
   if (!telefone) return '';
-  const cleaned = telefone.replace(/\D/g, '');
-  if (cleaned.length === 11) { return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`; }
-  else if (cleaned.length === 10) { return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`; }
-  return telefone;
+  const cleaned = telefone.replace(/\D/g, '').slice(0, 9);
+  if (cleaned.length <= 5) return cleaned;
+  return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
 };
 
-// Função para formatar telefone enquanto digita
+// Função para formatar telefone enquanto digita (máx 9 dígitos)
 const formatarTelefoneInput = (value) => {
   if (!value) return '';
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-  if (cleaned.length <= 11) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-  return value;
+  const cleaned = value.replace(/\D/g, '').slice(0, 9);
+  if (cleaned.length <= 5) return cleaned;
+  return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
 };
 
 export default function FuncionariosFazenda() {
@@ -176,10 +173,11 @@ export default function FuncionariosFazenda() {
 
     try {
       setSavingEdit(true);
+      const telefoneLimpo = editingData.telefone.replace(/\D/g, '').slice(0, 9);
       const payload = {
         nome: editingData.nome,
         email: editingData.email,
-        telefone: editingData.telefone,
+        telefone: telefoneLimpo,
         role: editingData.role,
         unidadeId: user?.unidadeId,
       };
@@ -266,10 +264,11 @@ export default function FuncionariosFazenda() {
     setInviteSaving(true);
     try {
       const url = `${API_URL}/usuarios/criar`;
+      const telefoneLimpo = inviteData.telefone.replace(/\D/g, '').slice(0, 9);
       const payload = {
         nome: inviteData.nome,
         email: inviteData.email,
-        telefone: inviteData.telefone,
+        telefone: telefoneLimpo,
         senha: inviteData.senha,
         role: inviteData.role,
         unidadeId: user?.unidadeId,

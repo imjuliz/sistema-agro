@@ -891,12 +891,26 @@ export const criarNotaFiscal = async (data) => {
     const normalFont = 'Helvetica';
 
     const hr = () => { doc.moveTo(marginLeft, doc.y).lineTo(marginRight, doc.y).stroke(); };
+    const dashedDivider = () => {
+      const y = doc.y + 6; // 6pt acima do bloco seguinte
+      doc.moveTo(marginLeft, y).lineTo(marginRight, y).dash(3, { space: 3 }).stroke().undash();
+      doc.y = y;
+    };
 
     const addRow = ({ sku, nome, qtde, unit, total }) => {
-      // Larguras que somam ao espaço disponível (incluindo gaps iguais)
-      const widths = { sku: 90, nome: 210, qtde: 60, unit: 55, total: 55 };
+      // Larguras conforme solicitado (SKU fixo, Nome flex para ocupar o restante)
+      const columnGap = 10;
+      const widths = {
+        sku: 160,
+        qtde: 40,
+        unit: 80,
+        total: 80
+      };
+      widths.nome = Math.max(availableWidth - (widths.sku + widths.qtde + widths.unit + widths.total + columnGap * 4), 80);
       const fontSize = doc._fontSize || 10;
-      const lineHeight = fontSize * 1.15;
+      const lineHeight = Math.max(fontSize * 1.2, 12); // 1.2x e mínimo de 12pt
+      const paddingY = 3; // ~4-6pt total nos dois lados
+      const minRowHeight = 20;
       
       // Preparar textos
       const texts = {
@@ -907,10 +921,40 @@ export const criarNotaFiscal = async (data) => {
         total: String(total || '')
       };
       
+      // Função para inserir quebras em palavras longas (SKU e textos sem espaços)
+      const breakLongWord = (word, maxWidth) => {
+        const parts = [];
+        // preferir quebrar em "-" ou "_"
+        const tokens = String(word || '').split(/([_-])/).filter((t) => t !== '');
+        for (const token of tokens.length ? tokens : [String(word || '')]) {
+          if (token === '-' || token === '_') {
+            if (parts.length) parts[parts.length - 1] += token;
+            continue;
+          }
+          if (doc.widthOfString(token) <= maxWidth) {
+            parts.push(token);
+          } else {
+            const chunkSize = 12;
+            const chunked = token.match(new RegExp(`.{1,${chunkSize}}`, 'g')) || [token];
+            chunked.forEach((chunk, idx) => {
+              // soft hyphen para permitir quebra visual
+              parts.push(idx < chunked.length - 1 ? `${chunk}\u00AD` : chunk);
+            });
+          }
+        }
+        return parts;
+      };
+
       // Função para quebrar texto em linhas que cabem na largura
       const wrapText = (text, maxWidth) => {
         if (!text) return [''];
-        const words = text.split(' ');
+        const rawWords = text.split(' ');
+        const words = [];
+        rawWords.forEach((w) => {
+          const segments = breakLongWord(w, maxWidth);
+          segments.forEach((seg) => words.push(seg));
+        });
+
         const lines = [];
         let currentLine = '';
         
@@ -951,7 +995,8 @@ export const criarNotaFiscal = async (data) => {
         lines.total.length
       );
       
-      const startY = doc.y;
+      const rowHeight = Math.max(maxLines * lineHeight, minRowHeight);
+      const startY = doc.y + paddingY;
       
       // Renderizar linha por linha
       for (let i = 0; i < maxLines; i++) {
@@ -970,7 +1015,7 @@ export const criarNotaFiscal = async (data) => {
         
         // Quantidade
         const qtdeLine = lines.qtde[i] || '';
-        doc.text(qtdeLine, x, currentY, { width: widths.qtde, align: 'right' });
+        doc.text(qtdeLine, x, currentY, { width: widths.qtde, align: 'center' });
         x += widths.qtde + columnGap;
         
         // Valor Unitário
@@ -984,7 +1029,7 @@ export const criarNotaFiscal = async (data) => {
       }
       
       // Mover para a próxima linha baseado no número de linhas renderizadas
-      doc.y = startY + (maxLines * lineHeight) + 2;
+      doc.y = startY + rowHeight + paddingY;
     };
 
     // Cabeçalho estilo cupom NFC-e (limpo, alinhado)
@@ -1034,9 +1079,9 @@ export const criarNotaFiscal = async (data) => {
     doc.text(`Total de impostos (aprox. 8%): R$ ${totalImpostos.toFixed(2)}`, marginLeft, doc.y, { width: availableWidth });
     doc.text(`Data de emissão: ${new Date(venda.criadoEm).toLocaleString("pt-BR")}`, marginLeft, doc.y, { width: availableWidth });
 
-    doc.moveDown(0.8);
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown(0.5);
+    doc.moveDown(0.2);
+    dashedDivider();
+    doc.moveDown(0.3);
 
     // Dados do consumidor
     const nomeConsumidor = clienteNomeExtra || venda.nomeCliente || "CONSUMIDOR";
@@ -1048,9 +1093,9 @@ export const criarNotaFiscal = async (data) => {
       doc.text(`CPF: ${formattedCpfConsumidor}`);
     }
 
-    doc.moveDown(0.8);
-    hr();
-    doc.moveDown(0.5);
+    doc.moveDown(0.2);
+    dashedDivider();
+    doc.moveDown(0.3);
 
     // Dados do atendente
     const nomeAtendente = venda.usuario?.nome ?? venda.usuarioId;
