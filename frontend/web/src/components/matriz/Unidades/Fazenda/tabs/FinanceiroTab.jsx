@@ -23,68 +23,6 @@ import { AccountsReceivable, AccountReceivable } from '@/components/Financeiro/A
 import { DataTableActionBar, DataTableActionBarAction, DataTableActionBarSelection } from "@/components/Tabelas/DataTableActionBar";
 import { DataTablePagination } from "@/components/Tabelas/DataTablePagination";
 
-const financas = [
-  {
-    id: 1,
-    type: 'milestone',
-    title: 'Contract Renewed',
-    description: 'Annual contract renewed for $150K. Increased scope to include executive search.',
-    date: 'December 1, 2024',
-    user: 'System',
-    impact: 'positive',
-    value: '$150,000'
-  },
-  {
-    id: 2,
-    type: 'placement',
-    title: 'Successful Placement - Senior Developer',
-    description: 'Jennifer Martinez successfully placed as Senior Full Stack Developer. Client extremely satisfied with candidate quality.',
-    date: 'November 15, 2024',
-    user: 'Alex Smith',
-    impact: 'positive',
-    fee: '$25,000'
-  },
-  {
-    id: 3,
-    type: 'issue',
-    title: 'Candidate Withdrawal',
-    description: 'Top candidate for Product Manager role withdrew due to competing offer. Resuming search with alternative candidates.',
-    date: 'November 8, 2024',
-    user: 'Emma Wilson',
-    impact: 'negative'
-  },
-  {
-    id: 4,
-    type: 'milestone',
-    title: 'Quarterly Business Review',
-    description: 'Q3 review completed. 15 positions filled, 92% success rate. Client requested additional focus on diversity hiring.',
-    date: 'October 30, 2024',
-    user: 'Alex Smith',
-    impact: 'positive',
-    metrics: { filled: 15, successRate: '92%' }
-  },
-  {
-    id: 5,
-    type: 'placement',
-    title: 'Successful Placement - UX Designer',
-    description: 'Sarah Thompson placed as Lead UX Designer. Start date confirmed for November 1st.',
-    date: 'October 20, 2024',
-    user: 'Mike Johnson',
-    impact: 'positive',
-    fee: '$18,000'
-  },
-  {
-    id: 6,
-    type: 'contract',
-    title: 'Scope Expansion',
-    description: 'Contract expanded to include C-level executive search. Additional $50K annual value.',
-    date: 'September 15, 2024',
-    user: 'Alex Smith',
-    impact: 'positive',
-    value: '+$50,000'
-  }
-];
-
 const getEventIcon = (type) => {
   switch (type) {
     case 'milestone': return <Award className="size-4" />;
@@ -659,6 +597,7 @@ export function FinanceiroTab({ unidadeId }) {
 
   // useEffect para carregar dados iniciais
   useEffect(() => {
+    if (!unidadeId) return; // aguarda unidade para evitar carregar matriz por engano
     const loadData = async () => {
       setLoading(true);
       setError(null);
@@ -673,15 +612,15 @@ export function FinanceiroTab({ unidadeId }) {
     };
 
     loadData();
-  }, []); // Carregar apenas uma vez ao montar
+  }, [unidadeId]); // recarregar ao trocar unidade
 
   // Recarregar contas quando mês/ano mudar
   useEffect(() => {
-    if (!loading) {
+    if (!loading && unidadeId) {
       fetchContas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, unidadeId]);
 
   const getSelectedMonthName = () => {
     const monthObj = months.find(m => m.value === selectedMonth);

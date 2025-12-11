@@ -208,21 +208,13 @@ export async function createUnidadeController(req, res) {
     // Validar dados com schema
     const dataValidada = unidadeSchema.parse(data);
 
-    // Se a unidade é do tipo FAZENDA, ela só será ATIVA se tiver AMBOS os tipos de contrato:
-    // 1. Contrato como consumidora (fornecedorExternoId preenchido)
-    // 2. Contrato como fornecedora (fornecedorUnidadeId preenchido)
+    // Se a unidade é FAZENDA: ATIVA quando há pelo menos um contrato; INATIVA apenas se nenhum
     if (dataValidada.tipo === 'FAZENDA') {
-      if (dataValidada.contratos && dataValidada.contratos.length > 0) {
-        const temContratoComoConsumidora = dataValidada.contratos.some(c => c.fornecedorExternoId);
-        const temContratoComoFornecedora = dataValidada.contratos.some(c => c.fornecedorUnidadeId);
-        
-        // ATIVA apenas se tiver ambos os tipos de contrato
-        if (!(temContratoComoConsumidora && temContratoComoFornecedora)) {
-          dataValidada.status = 'INATIVA';
-        }
-      } else {
-        // Sem contratos, força status INATIVA
+      const temContratos = Array.isArray(dataValidada.contratos) && dataValidada.contratos.length > 0;
+      if (!temContratos) {
         dataValidada.status = 'INATIVA';
+      } else {
+        dataValidada.status = dataValidada.status || 'ATIVA';
       }
     }
 

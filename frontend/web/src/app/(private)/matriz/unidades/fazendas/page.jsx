@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -27,7 +27,7 @@ import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import AddFazendaModal from '@/components/matriz/Unidades/Fazenda/AddFazendaModal';
 
-// corrige o caminho dos ícones padrão em bundlers modernos
+    // corrige o caminho dos ícones padrão em bundlers modernos
 if (typeof window !== 'undefined') {
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -332,6 +332,15 @@ export default function FazendasPage() {
     // estado para controlar modal
     const [openAddFazenda, setOpenAddFazenda] = useState(false);
 
+    // helper para resolver URL de imagem (aceita absoluta ou relativa ao backend)
+    const resolveImageUrl = (url) => {
+        if (!url) return null;
+        if (/^https?:\/\//i.test(url)) return url;
+        const base = API_URL?.replace(/\/+$/, '') || '';
+        const cleaned = String(url).replace(/^\/+/, '');
+        return `${base}/${cleaned}`;
+    };
+
     // normalizador (mesma lógica que você já usa na fetchFazendas)
     function normalizeUnit(u) {
         const rawType = String(u.tipo ?? u.type ?? '').trim();
@@ -343,6 +352,8 @@ export default function FazendasPage() {
         const status = rawStatus.length === 0 ? 'Ativa'
             : rawStatus.toUpperCase() === 'ATIVA' ? 'Ativa'
                 : rawStatus[0]?.toUpperCase() + rawStatus.slice(1).toLowerCase();
+
+        const imageUrl = resolveImageUrl(u.imagemUrl ?? u.raw?.imagemUrl ?? null);
 
         return {
             id: Number(u.id),
@@ -358,7 +369,9 @@ export default function FazendasPage() {
                     : (u.coordenadas ? Number(String(u.coordenadas).split(',')[0]) : null)),
             longitude: u.longitude != null ? Number(u.longitude)
                 : (u.lng != null ? Number(u.lng)
-                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null))
+                    : (u.coordenadas ? Number(String(u.coordenadas).split(',')[1]) : null)),
+            imageUrl,
+            raw: u
         };
     }
 
@@ -662,19 +675,19 @@ export default function FazendasPage() {
                                             <div className="bg-card border dark:border-neutral-800 border-neutral-200 rounded-lg p-4 shadow-sm hover:shadow-md transition cursor-pointer">
                                                 <div className="flex flex-col items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
-                                                                    <Avatar>
-                                                                        {u.raw?.imagemUrl || u.imagemUrl ? (
-                                                                            <AvatarImage src={u.raw?.imagemUrl || u.imagemUrl} alt={u.name} />
-                                                                        ) : (
-                                                                            <AvatarFallback>{(() => {
-                                                                                const parts = String(u.name || '').split(' ').filter(Boolean);
-                                                                                const a = parts[0]?.[0] ?? '';
-                                                                                const b = parts[1]?.[0] ?? '';
-                                                                                const initials = (a + b).toUpperCase() || (String(u.name || '').slice(0,2).toUpperCase() || 'F');
-                                                                                return initials;
-                                                                            })()}</AvatarFallback>
-                                                                        )}
-                                                                    </Avatar>
+                                                    <Avatar>
+                                                        {u.imageUrl ? (
+                                                            <AvatarImage src={u.imageUrl} alt={u.name} />
+                                                        ) : (
+                                                            <AvatarFallback>{(() => {
+                                                                const parts = String(u.name || '').split(' ').filter(Boolean);
+                                                                const a = parts[0]?.[0] ?? '';
+                                                                const b = parts[1]?.[0] ?? '';
+                                                                const initials = (a + b).toUpperCase() || (String(u.name || '').slice(0,2).toUpperCase() || 'F');
+                                                                return initials;
+                                                            })()}</AvatarFallback>
+                                                        )}
+                                                    </Avatar>
                                                                     <div>
                                                             <div className="font-bold text-lg">{u.name}</div>
                                                             <div className="text-sm text-muted-foreground">{u.location}</div>

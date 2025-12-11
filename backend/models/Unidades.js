@@ -619,7 +619,20 @@ export async function deleteUnidade(id) {
     const unidade = await prisma.unidade.delete({ where: { id: Number(id) } });
     return { sucesso: true, unidade, message: "Unidade deletada com sucesso." };
   }
-  catch (error) {return { sucesso: false, erro: "Erro ao deletar unidade.", detalhes: error.message };}
+  catch (error) {
+    // Tratamento específico para violações de FK (ex.: estoque vinculado)
+    const message = error?.message || "";
+    const constraint = error?.meta?.field_name || error?.code || null;
+    if (error.code === "P2003" || /Foreign key constraint/i.test(message)) {
+      // Prisma P2003: Foreign key constraint failed
+      return {
+        sucesso: false,
+        erro: "Não é possível excluir a unidade porque existem registros vinculados (ex.: estoque, lançamentos ou usuários). Remova/reatribua os vínculos antes de excluir.",
+        detalhes: constraint || message,
+      };
+    }
+    return { sucesso: false, erro: "Erro ao deletar unidade.", detalhes: message || error.toString() };
+  }
 }
 
 // ATUALIZAR STATUS

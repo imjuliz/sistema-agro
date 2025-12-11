@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Building2, MapPin, Globe, Calendar, MessageSquare, Edit3 } from 'lucide-react';
+import { Building2, MapPin, Globe, Calendar, Trash, Edit3, PenSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { API_URL } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRef } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 export function CompanyHeader({ id, onLogActivity }) {
   const router = useRouter();
@@ -17,6 +20,21 @@ export function CompanyHeader({ id, onLogActivity }) {
   const [fazenda, setFazenda] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [confirmStep, setConfirmStep] = useState("intro"); // intro | input
+
+  const resolveImageUrl = (url) => {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = API_URL?.replace(/\/+$/, '') || '';
+    const cleaned = String(url).replace(/^\/+/, '');
+    return `${base}/${cleaned}`;
+  };
 
   // normalizer local
   function normalize(u) {
@@ -139,8 +157,114 @@ export function CompanyHeader({ id, onLogActivity }) {
     }
 
     load();
-    return () => { mounted = false; };
+
+    function handleUpdated(e) {
+      if (!mounted) return;
+      const detail = e?.detail;
+      const normalized = normalize(detail);
+      if (normalized) {
+        setFazenda(normalized);
+        try {
+          sessionStorage.setItem(`prefetched_fazenda_${id}`, JSON.stringify({ unidade: detail }));
+        } catch {}
+      }
+    }
+
+    const eventName = `unidade-updated-${id}`;
+    window.addEventListener(eventName, handleUpdated);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener(eventName, handleUpdated);
+    };
   }, [id, fetchWithAuth]);
+
+  const parseErrorResponse = async (res) => {
+    try {
+      const cloned = res.clone();
+      const body = await cloned.json();
+      return body;
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) return { erro: text };
+      } catch {}
+    }
+    return {};
+  };
+
+  const handleDelete = () => {
+    if (!id || deleting) return;
+    setConfirmText("");
+    setConfirmError("");
+    setConfirmStep("intro");
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (confirmText !== "Excluir") {
+      setConfirmError("Digite exatamente 'Excluir' para confirmar.");
+      return;
+    }
+    setConfirmError("");
+    setDeleting(true);
+    try {
+      const res = await fetchWithAuth(`${API_URL}unidades/${id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) {
+        const body = await parseErrorResponse(res);
+        throw new Error(body?.erro || body?.message || body?.detalhes || `Erro HTTP ${res.status}`);
+      }
+      setConfirmOpen(false);
+      router.push("/matriz/unidades/fazendas");
+    } catch (err) {
+      console.error("Erro ao excluir unidade:", err);
+      setConfirmError(err.message || "Erro ao excluir unidade.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    if (uploading) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || uploading) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('foto', file);
+      const res = await fetchWithAuth(`${API_URL}unidades/${id}/foto`, {
+        method: 'POST',
+        body: formData,
+      });
+      let body = null;
+      try { body = await res.json(); } catch {}
+      if (!res.ok || body?.sucesso === false) {
+        const parsed = body ?? await parseErrorResponse(res);
+        throw new Error(parsed?.erro || parsed?.message || parsed?.detalhes || `HTTP ${res.status}`);
+      }
+      const unidadeAtualizada = body?.unidade ?? body;
+      // mescla dados parciais retornados (id/nome/imagemUrl) com o raw atual para não perder localização/status/etc.
+      const merged = { ...(fazenda?.raw ?? {}), ...unidadeAtualizada };
+      const normalized = normalize(merged);
+      if (normalized) setFazenda(normalized);
+      try {
+        sessionStorage.setItem(`prefetched_fazenda_${id}`, JSON.stringify({ unidade: merged }));
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent(`unidade-updated-${id}`, { detail: merged }));
+      } catch {}
+    } catch (err) {
+      console.error("Erro ao enviar foto da unidade:", err);
+      setConfirmError(err.message || "Erro ao enviar foto.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   // ---------------------------------------------------------
   // UI abaixo (NÃO alterei, apenas removi o useParams)
@@ -182,13 +306,30 @@ export function CompanyHeader({ id, onLogActivity }) {
       <div className="flex flex-wrap gap-7 items-center border-b px-6 py-4 justify-between">
         {/* Company Info */}
         <div className="flex items-center gap-4">
-          <Avatar className="size-12">
-            {fazenda?.imagemUrl ? (
-              <AvatarImage src={fazenda.imagemUrl} alt={fazenda?.name ?? 'Empresa'} />
-            ) : (
-              <AvatarFallback>{(fazenda?.initials ?? (fazenda?.name || 'F').slice(0,2)).toUpperCase()}</AvatarFallback>
-            )}
-          </Avatar>
+          <div className="relative">
+            <Avatar className="size-12">
+              {fazenda?.imagemUrl ? (
+                <AvatarImage src={resolveImageUrl(fazenda.imagemUrl)} alt={fazenda?.name ?? 'Empresa'} />
+              ) : (
+                <AvatarFallback>{(fazenda?.initials ?? (fazenda?.name || 'F').slice(0,2)).toUpperCase()}</AvatarFallback>
+              )}
+            </Avatar>
+            <button
+              type="button"
+              onClick={handleAvatarClick}
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity hover:opacity-100"
+              title="Alterar foto da unidade"
+            >
+              <PenSquare className="w-4 h-4 text-white" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
 
           <div>
             <div className="flex items-center gap-3">
@@ -214,34 +355,70 @@ export function CompanyHeader({ id, onLogActivity }) {
           </div>
         </div>
 
-        {/* Actions */}
-        {/* <div className="flex items-center gap-8">
+        <div className="flex items-center gap-8">
           <div className="flex items-start space-x-3">
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="flex items-center space-x-1">
-                <MessageSquare className="w-4 h-4" />
-                <span>Comunicado</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-1"
-                onClick={onLogActivity}
-              >
-                <Calendar className="w-4 h-4" />
-                Reunião
-              </Button>
-            </div>
-
-            <div className="flex space-x-2">
-              <Button variant="ghost" size="sm">
-                <Edit3 className="w-4 h-4" />
+              <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleting}>
+                <Trash className="w-4 h-4" />
               </Button>
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={(open) => { setConfirmOpen(open); if (!open) { setConfirmText(""); setConfirmError(""); setConfirmStep("intro"); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Excluir unidade</DialogTitle>
+            {confirmStep === "intro" ? (
+              <DialogDescription>
+                Tem certeza de que deseja excluir a unidade? Essa ação não poderá ser desfeita.
+              </DialogDescription>
+            ) : (
+              <DialogDescription>
+                Digite a palavra "Excluir" para prosseguir com a exclusão.
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {confirmStep === "input" && (
+            <div className="space-y-2">
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Excluir"
+                autoFocus
+              />
+              {confirmError && <p className="text-sm text-destructive">{confirmError}</p>}
+            </div>
+          )}
+          <DialogFooter className="flex flex-row justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => { setConfirmOpen(false); setConfirmText(""); setConfirmError(""); setConfirmStep("intro"); }}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            {confirmStep === "intro" ? (
+              <Button
+                variant="destructive"
+                onClick={() => setConfirmStep("input")}
+                disabled={deleting}
+              >
+                Continuar
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Excluindo..." : "Excluir"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

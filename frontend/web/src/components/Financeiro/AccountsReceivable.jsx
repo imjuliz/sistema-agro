@@ -119,7 +119,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
     try { fetchWithAuth.__loadContas = loadContas; } catch (e) { /* ignore */ }// expor a função para chamadas internas (ex: após criar nova conta)
     loadContas();
     return () => { mounted = false; };
-  }, [fetchWithAuth, API_URL, selectedMonth, selectedYear]);
+  }, [fetchWithAuth, API_URL, selectedMonth, selectedYear, unidadeId]);
 
   const resetForm = () => {setFormData(initialForm); setFormErrors({}); setEditingAccount(null);};
   
@@ -1255,19 +1255,20 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           >
             <Download className="h-4 w-4" />Exportar CSV
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { 
-            if (open) {
-              if (isReadOnly) return;
-              setFormErrors({});
-            } else {
-              resetForm();
-            }
-            setIsAddDialogOpen(open); 
-          }}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Receita
-              </Button>
-            </DialogTrigger>
+          {!isReadOnly && (
+            <Dialog open={isAddDialogOpen} onOpenChange={(open) => { 
+              if (open) {
+                if (isReadOnly) return;
+                setFormErrors({});
+              } else {
+                resetForm();
+              }
+              setIsAddDialogOpen(open); 
+            }}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Receita
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-xl">
               <DialogHeader>
                 <DialogTitle>Nova Receita</DialogTitle>
@@ -1314,7 +1315,8 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                 <Button onClick={handleAdd}>Adicionar</Button>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          )}
         </div>
       </div>
       <div className="grid grid-cols-1  gap-4">
@@ -1348,7 +1350,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                     <TableHead>Valor</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Ações</TableHead>
+                    {!isReadOnly && <TableHead>Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1359,17 +1361,19 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                         <TableCell>{formatCurrency(account.amount)}</TableCell>
                         <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId, account.categoryId)}</TableCell>
                         <TableCell className="max-w-xs truncate">{account.description || '-'}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(account.id)} disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                        </TableCell>
+                        {!isReadOnly && (
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(account.id)} disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={isReadOnly ? 4 : 5} className="text-center text-muted-foreground py-8">
                         {localAccounts.length === 0 
                           ? 'Nenhuma receita cadastrada. Clique em "Nova Receita" para adicionar novos registros.' 
                           : `Nenhuma receita encontrada para ${getSelectedMonthName()} de ${selectedYear}. Total de receita: ${localAccounts.length}`}

@@ -6,7 +6,7 @@ const tabs = [
   { id: 'equipe', label: 'Equipe', count: null },
   { id: 'financeiro', label: 'Financeiro', count: null },
   { id: 'fornecedores', label: 'Fornecedores', count: null },
-  { id: 'comunicados', label: 'Comunicados', count: 47 },
+  // { id: 'comunicados', label: 'Comunicados', count: 47 },
 ];
 
 export function TabNavigation({ activeTab, onTabChange }) {

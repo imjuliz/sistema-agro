@@ -660,6 +660,7 @@ export function FinanceiroTab({ unidadeId }) {
 
   // useEffect para carregar dados iniciais
   useEffect(() => {
+    if (!unidadeId) return; // evita trazer dados da matriz por padrão
     const loadData = async () => {
       setLoading(true);
       setError(null);
@@ -674,15 +675,15 @@ export function FinanceiroTab({ unidadeId }) {
     };
 
     loadData();
-  }, []); // Carregar apenas uma vez ao montar
+  }, [unidadeId]); // recarregar ao trocar unidade
 
   // Recarregar contas quando mês/ano mudar
   useEffect(() => {
-    if (!loading) {
+    if (!loading && unidadeId) {
       fetchContas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, unidadeId]);
 
   const getSelectedMonthName = () => {
     const monthObj = months.find(m => m.value === selectedMonth);

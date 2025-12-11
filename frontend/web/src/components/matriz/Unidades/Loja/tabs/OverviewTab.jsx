@@ -22,6 +22,7 @@ import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTool
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from '@/components/ui/use-toast';
 import { MoreHorizontal } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const cultivos = [
   { cultura: "milho", area: 70, fill: "var(--chart-1)" },
@@ -51,7 +52,7 @@ export function OverviewTab({ lojaId }) {
   const [caixasLoading, setCaixasLoading] = useState(false)
   const [openEditInfo, setOpenEditInfo] = useState(false)
   const [openEditLocal, setOpenEditLocal] = useState(false)
-  const [formInfo, setFormInfo] = useState({ quantidadeFuncionarios: "", cnpj: "" })
+  const [formInfo, setFormInfo] = useState({ nome: "", status: "", quantidadeFuncionarios: "", cnpj: "", horarioAbertura: "", horarioFechamento: "" })
   const [formLocal, setFormLocal] = useState({ endereco: "", cidade: "", estado: "", cep: "", latitude: "", longitude: "" })
 
   const isGerenteMatriz = useMemo(() => {
@@ -176,8 +177,12 @@ export function OverviewTab({ lojaId }) {
 
   function hydrateFormsFromDados(unidade) {
     setFormInfo({
+      nome: unidade?.nome ?? "",
+      status: unidade?.status ?? "",
       quantidadeFuncionarios: unidade?.quantidadeFuncionarios ?? "",
       cnpj: formatCnpjInput(unidade?.cnpj ?? ""),
+      horarioAbertura: unidade?.horarioAbertura ?? "",
+      horarioFechamento: unidade?.horarioFechamento ?? "",
     });
     setFormLocal({
       endereco: unidade?.endereco ?? "",
@@ -196,7 +201,11 @@ export function OverviewTab({ lojaId }) {
   async function salvarInfo() {
     try {
       const payload = {
+        nome: formInfo.nome,
+        status: formInfo.status || undefined,
         cnpj: formInfo.cnpj ? formInfo.cnpj.replace(/\D/g, "") : null,
+        horarioAbertura: formInfo.horarioAbertura || null,
+        horarioFechamento: formInfo.horarioFechamento || null,
       };
       const res = await fetchWithAuth(`${API_URL}unidades/${lojaId}`, {
         method: "PUT",
@@ -209,6 +218,12 @@ export function OverviewTab({ lojaId }) {
       const unidadeAtualizada = body?.unidade ?? body;
       setDadosLoja(prev => ({ ...prev, ...unidadeAtualizada }));
       hydrateFormsFromDados(unidadeAtualizada);
+      try {
+        sessionStorage.setItem(`prefetched_loja_${lojaId}`, JSON.stringify({ unidade: unidadeAtualizada }));
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent(`unidade-updated-${lojaId}`, { detail: unidadeAtualizada }));
+      } catch {}
       setOpenEditInfo(false);
       toast({ title: "Informações atualizadas" });
     } catch (err) {
@@ -425,14 +440,33 @@ export function OverviewTab({ lojaId }) {
         <Card>
           <CardHeader className="flex items-center justify-between">
             <CardTitle className="text-base">Informações da unidade</CardTitle>
-            {isGerenteMatriz && (
+            {/* {isGerenteMatriz && (
               <Button variant="outline" size="sm" onClick={() => setOpenEditInfo(true)}>
                 Editar
               </Button>
-            )}
+            )} */}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setOpenEditInfo(true)}>Editar</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
           </CardHeader>
           <CardContent className="space-y-4">
-           
+            <div className="flex items-center gap-3">
+              <Briefcase className="size-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Nome da unidade</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando ? "Carregando..." : (dadosLoja?.nome ?? "—")}
+                </div>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <Users className="size-4 text-muted-foreground" />
               <div>
@@ -452,6 +486,33 @@ export function OverviewTab({ lojaId }) {
               <div>
                 <div className="text-sm font-medium">CNPJ</div>
                 <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatCNPJ(dadosLoja?.cnpj)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="size-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Status</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando ? "Carregando..." : (dadosLoja?.status ?? "—")}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock className="size-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Horário de abertura</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando ? "Carregando..." : (formInfo.horarioAbertura ? formatTime(formInfo.horarioAbertura) : "—")}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock className="size-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Horário de fechamento</div>
+                <div className="text-sm text-muted-foreground">
+                  {carregando ? "Carregando..." : (formInfo.horarioFechamento ? formatTime(formInfo.horarioFechamento) : "—")}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -692,6 +753,44 @@ export function OverviewTab({ lojaId }) {
           <DialogTitle>Editar informações da unidade</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Nome da unidade</Label>
+            <Input
+              value={formInfo.nome}
+              onChange={(e) => setFormInfo((f) => ({ ...f, nome: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Status</Label>
+            <Select
+              value={formInfo.status || 'ATIVA'}
+              onValueChange={(v) => setFormInfo((f) => ({ ...f, status: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ATIVA">ATIVA</SelectItem>
+                <SelectItem value="INATIVA">INATIVA</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Horário de abertura</Label>
+            <Input
+              type="time"
+              value={formInfo.horarioAbertura || ""}
+              onChange={(e) => setFormInfo(f => ({ ...f, horarioAbertura: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Horário de fechamento</Label>
+            <Input
+              type="time"
+              value={formInfo.horarioFechamento || ""}
+              onChange={(e) => setFormInfo(f => ({ ...f, horarioFechamento: e.target.value }))}
+            />
+          </div>
           <div className="space-y-1">
             <Label>Quantidade de funcionários</Label>
             <Input

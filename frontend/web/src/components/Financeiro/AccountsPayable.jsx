@@ -219,7 +219,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     
     loadContas();
     return () => { mounted = false; };
-  }, [fetchWithAuth, API_URL, selectedMonth, selectedYear]);
+  }, [fetchWithAuth, API_URL, selectedMonth, selectedYear, unidadeId]);
 
   const resetForm = () => {
     setFormData(initialForm);
@@ -1335,18 +1335,19 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                     </div>
                   </DialogContent>
                 </Dialog> */}
-                <Dialog open={isAddDialogOpen} onOpenChange={(open) => { 
-                  if (open) {
-                    if (isReadOnly) return;
-                    setFormErrors(initialErrors);
-                  } else {
-                    resetForm();
-                  }
-                  setIsAddDialogOpen(open); 
-                }}>
-                  <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Conta</Button>
-                  </DialogTrigger>
+                {!isReadOnly && (
+                  <Dialog open={isAddDialogOpen} onOpenChange={(open) => { 
+                    if (open) {
+                      if (isReadOnly) return;
+                      setFormErrors(initialErrors);
+                    } else {
+                      resetForm();
+                    }
+                    setIsAddDialogOpen(open); 
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2" disabled={isReadOnly}><Plus className="h-4 w-4" />Nova Conta</Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Nova Conta a Pagar</DialogTitle>
@@ -1406,7 +1407,8 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                       <Button onClick={handleAdd}>Adicionar</Button>
                     </div>
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                )}
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -1437,7 +1439,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                       <TableHead>Categoria</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
+                      {!isReadOnly && <TableHead>Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1451,17 +1453,19 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                           <TableCell className="max-w-xs truncate">{getSubcategoryName(account.subcategoryId, account.categoryId)}</TableCell>
                           <TableCell className="max-w-xs truncate">{account.description || '-'}</TableCell>
                           <TableCell>{getStatusBadge(account.status)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(account.id)} disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
-                            </div>
-                          </TableCell>
+                          {!isReadOnly && (
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(account.id)} disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={isReadOnly ? 7 : 8} className="text-center text-muted-foreground py-8">
                           {localAccounts.length === 0 ? (
                             'Nenhuma conta cadastrada. Clique em "Nova Conta" para adicionar uma conta a pagar.'
                           ) : (

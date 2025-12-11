@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { LeftPanel } from '@/components/matriz/Unidades/Fazenda/LeftPanel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import buildImageUrl from '@/lib/image';
-import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Calendar, MessageSquare, ChevronDown, Phone, Mail, Building2, DollarSign, Bell, Clock, Plus, Tractor, LandPlot, Trees, ScrollText, Briefcase, MoreHorizontal } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,6 +22,7 @@ import { Pie, PieChart } from "recharts"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from '@/components/ui/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // --------------------------------------------------------------------------------
 // grafico de Uso do Solo e Cultivo
@@ -59,7 +60,7 @@ export function OverviewTab({ fazendaId }) {
   const [openNovo, setOpenNovo] = useState(false)
   const [openEditInfo, setOpenEditInfo] = useState(false)
   const [openEditLocal, setOpenEditLocal] = useState(false)
-  const [formInfo, setFormInfo] = useState({ focoProdutivo: "", quantidadeFuncionarios: "", cnpj: "" })
+  const [formInfo, setFormInfo] = useState({ nome: "", status: "", focoProdutivo: "", quantidadeFuncionarios: "", cnpj: "", areaTotal: "", areaProdutiva: "" })
   const [formLocal, setFormLocal] = useState({ endereco: "", cidade: "", estado: "", cep: "", latitude: "", longitude: "" })
 
   const isGerenteMatriz = useMemo(() => {
@@ -242,9 +243,13 @@ export function OverviewTab({ fazendaId }) {
 
   function hydrateFormsFromDados(unidade) {
     setFormInfo({
+      nome: unidade?.nome ?? "",
+      status: unidade?.status ?? "",
       focoProdutivo: Array.isArray(unidade?.focoProdutivo) ? unidade.focoProdutivo.join(", ") : (unidade?.focoProdutivo ?? ""),
       quantidadeFuncionarios: unidade?.quantidadeFuncionarios ?? "",
       cnpj: formatCnpjInput(unidade?.cnpj ?? ""),
+      areaTotal: unidade?.areaTotal ?? unidade?.areaHa ?? "",
+      areaProdutiva: unidade?.areaProdutiva ?? "",
     });
     setFormLocal({
       endereco: unidade?.endereco ?? "",
@@ -263,8 +268,12 @@ export function OverviewTab({ fazendaId }) {
   async function salvarInfo() {
     try {
       const payload = {
+        nome: formInfo.nome,
+        status: formInfo.status || undefined,
         focoProdutivo: formInfo.focoProdutivo,
         cnpj: formInfo.cnpj ? formInfo.cnpj.replace(/\D/g, "") : null,
+        areaTotal: formInfo.areaTotal !== "" ? Number(formInfo.areaTotal) : null,
+        areaProdutiva: formInfo.areaProdutiva !== "" ? Number(formInfo.areaProdutiva) : null,
       };
       const res = await fetchWithAuth(`${API_URL}unidades/${fazendaId}`, {
         method: "PUT",
@@ -277,6 +286,12 @@ export function OverviewTab({ fazendaId }) {
       const unidadeAtualizada = body?.unidade ?? body;
       setDadosFazenda(prev => ({ ...prev, ...unidadeAtualizada }));
       hydrateFormsFromDados(unidadeAtualizada);
+      try {
+        sessionStorage.setItem(`prefetched_fazenda_${fazendaId}`, JSON.stringify({ unidade: unidadeAtualizada }));
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent(`unidade-updated-${fazendaId}`, { detail: unidadeAtualizada }));
+      } catch {}
       setOpenEditInfo(false);
       toast({ title: "Informações atualizadas" });
     } catch (err) {
@@ -410,110 +425,157 @@ export function OverviewTab({ fazendaId }) {
 
   return (
     <>
-    <div className="flex gap-6 ">
-      <div className="w-80 space-y-6">
-        {/* Company Details */}
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <CardTitle className="text-base">Informações da unidade</CardTitle>
-            {isGerenteMatriz && (
-              <Button variant="outline" size="sm" onClick={() => setOpenEditInfo(true)}>
-                Editar
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Briefcase className="size-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Culturas atuais</div>
-                <div className="text-sm text-muted-foreground">
-                  {carregando
-                    ? "Carregando..."
-                    : (
-                      Array.isArray(dadosFazenda?.focoProdutivo)
-                        ? dadosFazenda.focoProdutivo.join(', ')
-                        : (dadosFazenda?.focoProdutivo ?? '—')
-                    )}
+      <div className="flex gap-6 ">
+        <div className="w-80 space-y-6">
+          {/* Company Details */}
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle className="text-base">Informações da unidade</CardTitle>
+              {/* {isGerenteMatriz && (
+                <Button variant="outline" size="sm" >
+                  Editar
+                </Button>
+              )} */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setOpenEditInfo(true)}>Editar</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Briefcase className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Nome da unidade</div>
+                  <div className="text-sm text-muted-foreground">
+                    {carregando ? "Carregando..." : (dadosFazenda?.nome ?? "—")}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Users className="size-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Quantidade de funcionários</div>
-                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : dadosFazenda?.quantidadeFuncionarios || "0"}</div>
+              <div className="flex items-center gap-3">
+                <Briefcase className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Culturas atuais</div>
+                  <div className="text-sm text-muted-foreground">
+                    {carregando
+                      ? "Carregando..."
+                      : (
+                        Array.isArray(dadosFazenda?.focoProdutivo)
+                          ? dadosFazenda.focoProdutivo.join(', ')
+                          : (dadosFazenda?.focoProdutivo ?? '—')
+                      )}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="size-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Criado em</div>
-                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : (dadosFazenda?.criadoEm ? new Date(dadosFazenda.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }) : "-")}</div>
+              <div className="flex items-center gap-3">
+                <Badge className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Status</div>
+                  <div className="text-sm text-muted-foreground">
+                    {carregando ? "Carregando..." : (dadosFazenda?.status ?? "—")}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ScrollText className="size-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">CNPJ</div>
-                <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatCNPJ(dadosFazenda?.cnpj)}</div>
+              <div className="flex items-center gap-3">
+                <LandPlot className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Área Total</div>
+                  <div className="text-sm text-muted-foreground">
+                    {carregando ? "Carregando..." : (dadosFazenda?.areaTotal ?? dadosFazenda?.areaHa ?? "—")}
+                  </div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex items-center gap-3">
+                <Tractor className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Área Produtiva</div>
+                  <div className="text-sm text-muted-foreground">
+                    {carregando ? "Carregando..." : (dadosFazenda?.areaProdutiva ?? "—")}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Users className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Quantidade de funcionários</div>
+                  <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : dadosFazenda?.quantidadeFuncionarios || "0"}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Calendar className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Criado em</div>
+                  <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : (dadosFazenda?.criadoEm ? new Date(dadosFazenda.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }) : "-")}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <ScrollText className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">CNPJ</div>
+                  <div className="text-sm text-muted-foreground">{carregando ? "Carregando..." : formatCNPJ(dadosFazenda?.cnpj)}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Key Contacts */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Contatos principais</CardTitle>
-            {/* <Button variant="ghost" size="sm">
+          {/* Key Contacts */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-base">Contatos principais</CardTitle>
+              {/* <Button variant="ghost" size="sm">
               <MoreHorizontal className="size-4" />
             </Button> */}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {contatosPrincipais.length === 0 ? (
-              <div className="text-sm text-muted-foreground">Nenhum contato principal encontrado.</div>
-            ) : (
-              contatosPrincipais.map((contact) => (
-                <div key={contact.id} className="flex items-start gap-3">
-                  <Avatar className="size-10">
-                    {contact.avatar ? (
-                      <AvatarImage src={buildImageUrl(contact.avatar)} alt={contact.name} />
-                    ) : (
-                      <AvatarFallback>{String(contact.name || '').split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium text-sm">{contact.name}</div>
-                    </div>
-                    {/* <div className="text-xs text-muted-foreground">{contact.title}</div> */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <a href={buildWhatsAppUrl(contact.phone)} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${contact.name}`}>
-                        <Button variant="ghost" size="sm" className="h-7 px-2">
-                          <Phone className="size-3" />
-                        </Button>
-                      </a>
-                      <a href={`mailto:${encodeURIComponent(contact.email ?? '')}`} aria-label={`Email ${contact.name}`}>
-                        <Button variant="ghost" size="sm" className="h-7 px-2">
-                          <Mail className="size-3" />
-                        </Button>
-                      </a>
-                      {/* future: message button
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {contatosPrincipais.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Nenhum contato principal encontrado.</div>
+              ) : (
+                contatosPrincipais.map((contact) => (
+                  <div key={contact.id} className="flex items-start gap-3">
+                    <Avatar className="size-10">
+                      {contact.avatar ? (
+                        <AvatarImage src={buildImageUrl(contact.avatar)} alt={contact.name} />
+                      ) : (
+                        <AvatarFallback>{String(contact.name || '').split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-sm">{contact.name}</div>
+                      </div>
+                      {/* <div className="text-xs text-muted-foreground">{contact.title}</div> */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <a href={buildWhatsAppUrl(contact.phone)} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${contact.name}`}>
+                          <Button variant="ghost" size="sm" className="h-7 px-2">
+                            <Phone className="size-3" />
+                          </Button>
+                        </a>
+                        <a href={`mailto:${encodeURIComponent(contact.email ?? '')}`} aria-label={`Email ${contact.name}`}>
+                          <Button variant="ghost" size="sm" className="h-7 px-2">
+                            <Mail className="size-3" />
+                          </Button>
+                        </a>
+                        {/* future: message button
                         <Button variant="ghost" size="sm" className="h-7 px-2">
                           <MessageSquare className="size-3" />
                         </Button>
                       */}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+                ))
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Reminders */}
-        {/* <Card>
+          {/* Reminders */}
+          {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Reminders</CardTitle>
             <Bell className="size-4 text-muted-foreground" />
@@ -545,349 +607,413 @@ export function OverviewTab({ fazendaId }) {
             </Button>
           </CardContent>
         </Card> */}
-      </div>
-
-
-      <div className=" flex-1 min-w-0 space-y-6">
-        {/* Dados Gerais da Área */}
-        {/* Key Metrics */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* <div className="grid grid-cols-4 gap-4"> */}
-          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg">
-                  <LandPlot className="size-10" />
-                </div>
-                <div>
-                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal ? `${parseFloat(dadosFazenda.areaTotal).toFixed(2)} ha` : "0 ha")}</div>
-                  <div className="text-sm text-muted-foreground">Área Total</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg">
-                  <Tractor className="size-10" />
-                </div>
-                <div>
-                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaProdutiva ? `${parseFloat(dadosFazenda.areaProdutiva).toFixed(2)} ha` : "0 ha")}</div>
-                  <div className="text-sm text-muted-foreground">Área Produtiva</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg">
-                  <Trees className="size-10 " />
-                </div>
-                <div>
-                  <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal && dadosFazenda?.areaProdutiva ? `${(parseFloat(dadosFazenda.areaTotal) - parseFloat(dadosFazenda.areaProdutiva)).toFixed(2)} ha` : "0 ha")}</div>
-                  <div className="text-sm text-muted-foreground">Não Produtiva</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        {/* tabela */}
-        <div className="w-full">
-            <div className="flex flex-row justify-between">
-            <div className="flex flex-col gap-2">
-              <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
-              <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
-            </div>
-
-            {isGerenteMatriz && (
-              <Button size="sm" onClick={() => setOpenNovo(true)}><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
-            )}
-          </div>
-
-          <div className="flex justify-between items-center py-2">
-            <Dialog open={openNovo} onOpenChange={setOpenNovo}>
-              {/* <DialogTrigger asChild>
-                <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
-              </DialogTrigger> */}
-            <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                  <DialogTitle>Novo dado</DialogTitle>
-                </DialogHeader>
-                <form className="space-y-3" onSubmit={handleCriarDado}>
-                  <Input
-                    placeholder="Dado*"
-                    value={formNovo.dado}
-                    onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
-                    required
-                  />
-                  <Input
-                    placeholder="Valor*"
-                    value={formNovo.valor}
-                    onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
-                    required
-                  />
-                  <Input
-                    placeholder="Descrição (opcional)"
-                    value={formNovo.descricao}
-                    onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
-                  />
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
-                    <Button type="submit">Salvar</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {dadosErro && <div className="text-sm text-red-500 mb-2">{dadosErro}</div>}
-
-          <div className="overflow-hidden rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="max-w-[200px]">Dado</TableHead>
-                  <TableHead className="max-w-[220px]">Valor</TableHead>
-                  <TableHead className="max-w-[260px]">Descrição</TableHead>
-                  <TableHead className="w-[180px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dadosLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center">Carregando...</TableCell>
-                  </TableRow>
-                )}
-                {!dadosLoading && dadosGerais.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center">Nenhum dado cadastrado.</TableCell>
-                  </TableRow>
-                )}
-                {!dadosLoading && dadosGerais.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="max-w-[200px] whitespace-nowrap text-ellipsis overflow-hidden">
-                      {editingId === item.id ? (
-                        <Input value={formEdit.dado} onChange={(e) => setFormEdit(f => ({ ...f, dado: e.target.value }))} />
-                      ) : (
-                        item.dado
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[220px] whitespace-nowrap text-ellipsis overflow-hidden">
-                      {editingId === item.id ? (
-                        <Input value={formEdit.valor} onChange={(e) => setFormEdit(f => ({ ...f, valor: e.target.value }))} />
-                      ) : (
-                        item.valor
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[260px] break-words whitespace-pre-wrap">
-                      {editingId === item.id ? (
-                        <Input value={formEdit.descricao ?? ""} onChange={(e) => setFormEdit(f => ({ ...f, descricao: e.target.value }))} />
-                      ) : (
-                        item.descricao || "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="space-x-2">
-                      {isGerenteMatriz ? (
-                        editingId === item.id ? (
-                          <>
-                            <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
-                            <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Editar</Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleExcluir(item.id)}>Excluir</Button>
-                          </>
-                        )
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Somente leitura</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
         </div>
 
-        <div className="flex gap-8">
-          <div className="flex flex-col gap-6 basis-[70%] min-w-0">
-            {/* mapa */}
-            <div className='h-full'>
-              <Card className='h-full'>
-                <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
-                <CardContent className='h-full'>
-                  {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
-                    <div className='h-full rounded-md overflow-hidden'>
-                  <MapContainer
-                    style={{ height: '100%', width: '100%', zIndex: 0 }}
-                        center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
-                        zoom={12}
-                        scrollWheelZoom={false}
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
-                          <Popup>
-                            <div className="min-w-[160px]">
-                              <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
-                              <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      </MapContainer>
-                    </div>
-                  ) : (
-                    <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
-                      <div>Coordenadas não disponíveis para esta unidade.</div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          <div className="basis-[30%]">
-            <Card>
-              <CardHeader className="flex items-center justify-between">
-                <CardTitle className="text-base">Localização</CardTitle>
-                {isGerenteMatriz && (
-                  <Button variant="outline" size="sm" onClick={() => setOpenEditLocal(true)}>
-                    Editar
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
+
+        <div className=" flex-1 min-w-0 space-y-6">
+          {/* Dados Gerais da Área */}
+          {/* Key Metrics */}
+          <div className="grid grid-cols-3 gap-6">
+            {/* <div className="grid grid-cols-4 gap-4"> */}
+            <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Briefcase className="size-4 text-muted-foreground" />
+                  <div className="p-2 rounded-lg">
+                    <LandPlot className="size-10" />
+                  </div>
                   <div>
-                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.endereco || '—')}</div>
-                    <div className="text-sm text-muted-foreground">Endereço</div>
+                    <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal ? `${parseFloat(dadosFazenda.areaTotal).toFixed(2)} ha` : "0 ha")}</div>
+                    <div className="text-sm text-muted-foreground">Área Total</div>
                   </div>
                 </div>
-
+              </CardContent>
+            </Card>
+            <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Users className="size-4 text-muted-foreground" />
+                  <div className="p-2 rounded-lg">
+                    <Tractor className="size-10" />
+                  </div>
                   <div>
-                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.cidade || '—')}</div>
-                    <div className="text-sm text-muted-foreground">Cidade</div>
+                    <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaProdutiva ? `${parseFloat(dadosFazenda.areaProdutiva).toFixed(2)} ha` : "0 ha")}</div>
+                    <div className="text-sm text-muted-foreground">Área Produtiva</div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
+            <Card className={"p-0 h-fit bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg transition"}>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Calendar className="size-4 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.estado || '—')}</div>
-                    <div className="text-sm text-muted-foreground">Estado</div>
+                  <div className="p-2 rounded-lg">
+                    <Trees className="size-10 " />
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <ScrollText className="size-4 text-muted-foreground" />
                   <div>
-                    <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCEP(dadosFazenda?.cep || dadosFazenda?.cep)}</div>
-                    <div className="text-sm text-muted-foreground">CEP</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <ScrollText className="size-4 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCoords(dadosFazenda?.latitude, dadosFazenda?.longitude)}</div>
-                    <div className="text-sm text-muted-foreground">Coordenadas</div>
+                    <div className="text-2xl font-medium">{carregando ? "-" : (dadosFazenda?.areaTotal && dadosFazenda?.areaProdutiva ? `${(parseFloat(dadosFazenda.areaTotal) - parseFloat(dadosFazenda.areaProdutiva)).toFixed(2)} ha` : "0 ha")}</div>
+                    <div className="text-sm text-muted-foreground">Não Produtiva</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+          {/* tabela */}
+          <div className="w-full">
+            <div className="flex flex-row justify-between">
+              <div className="flex flex-col gap-2">
+                <h3 className="leading-none font-semibold">Dados Gerais da Área</h3>
+                <h4 className="text-sm text-muted-foreground">Gerencie dados específicos desta unidade.</h4>
+              </div>
+
+              {isGerenteMatriz && (
+                <Button size="sm" onClick={() => setOpenNovo(true)}><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center py-2">
+              <Dialog open={openNovo} onOpenChange={setOpenNovo}>
+                {/* <DialogTrigger asChild>
+                <Button size="sm"><Plus className="mr-2 h-4 w-4" />Novo dado</Button>
+              </DialogTrigger> */}
+                <DialogContent className="sm:max-w-[480px]">
+                  <DialogHeader>
+                    <DialogTitle>Novo dado</DialogTitle>
+                  </DialogHeader>
+                  <form className="space-y-3" onSubmit={handleCriarDado}>
+                    <Input
+                      placeholder="Dado*"
+                      value={formNovo.dado}
+                      onChange={(e) => setFormNovo(f => ({ ...f, dado: e.target.value }))}
+                      required
+                    />
+                    <Input
+                      placeholder="Valor*"
+                      value={formNovo.valor}
+                      onChange={(e) => setFormNovo(f => ({ ...f, valor: e.target.value }))}
+                      required
+                    />
+                    <Input
+                      placeholder="Descrição (opcional)"
+                      value={formNovo.descricao}
+                      onChange={(e) => setFormNovo(f => ({ ...f, descricao: e.target.value }))}
+                    />
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
+                      <Button type="submit">Salvar</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {dadosErro && <div className="text-sm text-red-500 mb-2">{dadosErro}</div>}
+
+            <div className="overflow-hidden rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="max-w-[200px]">Dado</TableHead>
+                    <TableHead className="max-w-[220px]">Valor</TableHead>
+                    <TableHead className="max-w-[260px]">Descrição</TableHead>
+                    <TableHead className="w-[180px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dadosLoading && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">Carregando...</TableCell>
+                    </TableRow>
+                  )}
+                  {!dadosLoading && dadosGerais.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">Nenhum dado cadastrado.</TableCell>
+                    </TableRow>
+                  )}
+                  {!dadosLoading && dadosGerais.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="px-8 max-w-[200px] whitespace-nowrap text-ellipsis overflow-hidden">
+                        {editingId === item.id ? (
+                          <Input value={formEdit.dado} onChange={(e) => setFormEdit(f => ({ ...f, dado: e.target.value }))} />
+                        ) : (
+                          item.dado
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[220px] whitespace-nowrap text-ellipsis overflow-hidden">
+                        {editingId === item.id ? (
+                          <Input value={formEdit.valor} onChange={(e) => setFormEdit(f => ({ ...f, valor: e.target.value }))} />
+                        ) : (
+                          item.valor
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[260px] break-words whitespace-pre-wrap">
+                        {editingId === item.id ? (
+                          <Input value={formEdit.descricao ?? ""} onChange={(e) => setFormEdit(f => ({ ...f, descricao: e.target.value }))} />
+                        ) : (
+                          item.descricao || "—"
+                        )}
+                      </TableCell>
+
+
+                      <TableCell className="space-x-2">
+                        {isGerenteMatriz ? (
+                          editingId === item.id ? (
+                            <>
+                              <Button size="sm" onClick={() => handleSalvarEdicao(item.id)}>Salvar</Button>
+                              <Button size="sm" variant="outline" onClick={cancelEdit}>Cancelar</Button>
+                            </>
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => startEdit(item)}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleExcluir(item.id)} className="text-destructive">
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Somente leitura</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <div className="flex gap-8">
+            <div className="flex flex-col gap-6 basis-[70%] min-w-0">
+              {/* mapa */}
+              <div className='h-full'>
+                <Card className='h-full'>
+                  <CardHeader><CardTitle>Mapa</CardTitle></CardHeader>
+                  <CardContent className='h-full'>
+                    {dadosFazenda?.latitude != null && dadosFazenda?.longitude != null ? (
+                      <div className='h-full rounded-md overflow-hidden'>
+                        <MapContainer
+                          style={{ height: '100%', width: '100%', zIndex: 0 }}
+                          center={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}
+                          zoom={12}
+                          scrollWheelZoom={false}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <Marker position={[Number(dadosFazenda.latitude), Number(dadosFazenda.longitude)]}>
+                            <Popup>
+                              <div className="min-w-[160px]">
+                                <div className="font-semibold">{dadosFazenda?.nome ?? dadosFazenda?.name}</div>
+                                <div className="text-sm text-muted-foreground">{dadosFazenda?.cidade ?? dadosFazenda?.cidade ?? ''}</div>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                    ) : (
+                      <div className='h-56 bg-muted rounded-md flex items-center justify-center'>
+                        <div>Coordenadas não disponíveis para esta unidade.</div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            <div className="basis-[30%]">
+              <Card>
+                <CardHeader className="flex items-center justify-between">
+                  <CardTitle className="text-base">Localização</CardTitle>
+                  {/* {isGerenteMatriz && (
+                    <Button variant="outline" size="sm">
+                      Editar
+                    </Button>
+                  )} */}
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setOpenEditLocal(true)}>Editar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Briefcase className="size-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.endereco || '—')}</div>
+                      <div className="text-sm text-muted-foreground">Endereço</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Users className="size-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.cidade || '—')}</div>
+                      <div className="text-sm text-muted-foreground">Cidade</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Calendar className="size-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-sm font-medium">{carregando ? "Carregando..." : (dadosFazenda?.estado || '—')}</div>
+                      <div className="text-sm text-muted-foreground">Estado</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <ScrollText className="size-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCEP(dadosFazenda?.cep || dadosFazenda?.cep)}</div>
+                      <div className="text-sm text-muted-foreground">CEP</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <ScrollText className="size-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-sm font-medium">{carregando ? "Carregando..." : formatCoords(dadosFazenda?.latitude, dadosFazenda?.longitude)}</div>
+                      <div className="text-sm text-muted-foreground">Coordenadas</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+          </div>
 
         </div>
-
       </div>
-    </div>
 
-    {/* Dialog editar informações principais */}
-    <Dialog open={openEditInfo} onOpenChange={setOpenEditInfo}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Editar informações da unidade</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Culturas atuais (separe por vírgula)</Label>
+      {/* Dialog editar informações principais */}
+      <Dialog open={openEditInfo} onOpenChange={setOpenEditInfo}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar informações da unidade</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+            <Label>Nome da unidade</Label>
             <Input
-              value={formInfo.focoProdutivo}
-              onChange={(e) => setFormInfo((f) => ({ ...f, focoProdutivo: e.target.value }))}
+              value={formInfo.nome}
+              onChange={(e) => setFormInfo((f) => ({ ...f, nome: e.target.value }))}
             />
           </div>
           <div className="space-y-1">
-            <Label>Quantidade de funcionários</Label>
+            <Label>Status</Label>
+            <Select
+              value={formInfo.status || 'ATIVA'}
+              onValueChange={(v) => setFormInfo((f) => ({ ...f, status: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ATIVA">ATIVA</SelectItem>
+                <SelectItem value="INATIVA">INATIVA</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Área Total (ha)</Label>
             <Input
               type="number"
-              value={formInfo.quantidadeFuncionarios}
-              onChange={(e) => setFormInfo((f) => ({ ...f, quantidadeFuncionarios: f.quantidadeFuncionarios }))}
-              disabled
-              readOnly
+              step="0.01"
+              value={formInfo.areaTotal}
+              onChange={(e) => setFormInfo(f => ({ ...f, areaTotal: e.target.value }))}
             />
           </div>
           <div className="space-y-1">
-            <Label>CNPJ</Label>
+            <Label>Área Produtiva (ha)</Label>
             <Input
-              value={formInfo.cnpj}
-              onChange={(e) => setFormInfo((f) => ({ ...f, cnpj: formatCnpjInput(e.target.value) }))}
+              type="number"
+              step="0.01"
+              value={formInfo.areaProdutiva}
+              onChange={(e) => setFormInfo(f => ({ ...f, areaProdutiva: e.target.value }))}
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpenEditInfo(false)}>Cancelar</Button>
-          <Button onClick={salvarInfo}>Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-1">
+              <Label>Culturas atuais (separe por vírgula)</Label>
+              <Input
+                value={formInfo.focoProdutivo}
+                onChange={(e) => setFormInfo((f) => ({ ...f, focoProdutivo: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Quantidade de funcionários</Label>
+              <Input
+                type="number"
+                value={formInfo.quantidadeFuncionarios}
+                onChange={(e) => setFormInfo((f) => ({ ...f, quantidadeFuncionarios: f.quantidadeFuncionarios }))}
+                disabled
+                readOnly
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>CNPJ</Label>
+              <Input
+                value={formInfo.cnpj}
+                onChange={(e) => setFormInfo((f) => ({ ...f, cnpj: formatCnpjInput(e.target.value) }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenEditInfo(false)}>Cancelar</Button>
+            <Button onClick={salvarInfo}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-    {/* Dialog editar localização */}
-    <Dialog open={openEditLocal} onOpenChange={setOpenEditLocal}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Editar localização</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Endereço</Label>
-            <Input value={formLocal.endereco} onChange={(e) => setFormLocal(f => ({ ...f, endereco: e.target.value }))} />
-          </div>
-          <div className="space-y-1">
-            <Label>Cidade</Label>
-            <Input value={formLocal.cidade} onChange={(e) => setFormLocal(f => ({ ...f, cidade: e.target.value }))} />
-          </div>
-          <div className="space-y-1">
-            <Label>Estado</Label>
-            <Input value={formLocal.estado} onChange={(e) => setFormLocal(f => ({ ...f, estado: e.target.value }))} />
-          </div>
-          <div className="space-y-1">
-            <Label>CEP</Label>
-            <Input value={formLocal.cep} onChange={(e) => setFormLocal(f => ({ ...f, cep: e.target.value }))} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+      {/* Dialog editar localização */}
+      <Dialog open={openEditLocal} onOpenChange={setOpenEditLocal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar localização</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Latitude</Label>
-              <Input value={formLocal.latitude} onChange={(e) => setFormLocal(f => ({ ...f, latitude: e.target.value }))} />
+              <Label>Endereço</Label>
+              <Input value={formLocal.endereco} onChange={(e) => setFormLocal(f => ({ ...f, endereco: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label>Longitude</Label>
-              <Input value={formLocal.longitude} onChange={(e) => setFormLocal(f => ({ ...f, longitude: e.target.value }))} />
+              <Label>Cidade</Label>
+              <Input value={formLocal.cidade} onChange={(e) => setFormLocal(f => ({ ...f, cidade: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Estado</Label>
+              <Input value={formLocal.estado} onChange={(e) => setFormLocal(f => ({ ...f, estado: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>CEP</Label>
+              <Input value={formLocal.cep} onChange={(e) => setFormLocal(f => ({ ...f, cep: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label>Latitude</Label>
+                <Input value={formLocal.latitude} onChange={(e) => setFormLocal(f => ({ ...f, latitude: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Longitude</Label>
+                <Input value={formLocal.longitude} onChange={(e) => setFormLocal(f => ({ ...f, longitude: e.target.value }))} />
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpenEditLocal(false)}>Cancelar</Button>
-          <Button onClick={salvarLocal}>Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenEditLocal(false)}>Cancelar</Button>
+            <Button onClick={salvarLocal}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -328,10 +328,9 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
   function validateStep1Fields() {
     const e = {};
-    // Não exigimos fornecedor obrigatório (pode ter apenas contratos internos)
-    // Validar mínimo 1 contrato
+    // Se não houver contratos, o passo 1 é opcional
     if (contracts.length === 0) {
-      e.contracts = "É obrigatório adicionar pelo menos 1 contrato.";
+      return e;
     }
     // Validar cada contrato tem campos obrigatórios
     contracts.forEach((c, idx) => {
@@ -826,12 +825,9 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
     
     // build payload without sending `null` for optional fields (Zod expects omitted fields instead)
 
-    // Determinar status da fazenda: ATIVA apenas se tiver AMBOS os tipos de contrato
-    // 1. Contrato como consumidora (recebe de fornecedor externo)
-    // 2. Contrato como fornecedora (envia para lojas via fornecedorUnidadeId ou marcado como isFornecedora)
-    const temContratoComoConsumidora = contracts?.some(c => c.fornecedorExternoId);
-    const temContratoComoFornecedora = contracts?.some(c => !!c.fornecedorUnidadeId || !!c.isFornecedora);
-    const fazeindaStatus = (temContratoComoConsumidora && temContratoComoFornecedora) ? 'ATIVA' : 'INATIVA';
+    // Determinar status da fazenda: ATIVA se existir ao menos um contrato, INATIVA se nenhum
+    const temContratos = Array.isArray(contracts) && contracts.length > 0;
+    const fazeindaStatus = temContratos ? 'ATIVA' : 'INATIVA';
 
     // Truncar campos para respeitar limites do banco
     const payload = {
@@ -1194,29 +1190,31 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
         copy[contractIndex].itens = [];
       }
 
-      // Verificar se o item já existe usando o estado atualizado
+      // Verificar duplicidade com base no estado mais atual
       const nomeItemNorm = item.nome.trim().toLowerCase();
       const jaExiste = copy[contractIndex].itens.some(i =>
         (i.nome || '').trim().toLowerCase() === nomeItemNorm
       );
-
       if (jaExiste) {
-        setItemErrors(prev => ({
-          ...prev,
+        setItemErrors(prevErr => ({
+          ...prevErr,
           [contractIndex]: { nome: 'Este item já foi adicionado ao contrato.' }
         }));
-        return copy; // Retorna sem modificar
+        return copy;
       }
 
       // Adicionar o item
-      copy[contractIndex].itens.push({
+      copy[contractIndex].itens = [
+        ...copy[contractIndex].itens,
+        {
         nome: item.nome.trim(),
         quantidade: Number(item.quantidade),
         unidadeMedida: item.unidadeMedida,
         precoUnitario: Number(item.precoUnitario),
         pesoUnidade: Number(item.pesoUnidade),
         raca: item.raca || undefined
-      });
+        }
+      ];
 
       return copy;
     });
@@ -1477,196 +1475,522 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
                 {/* TAB 1: FORNECEDOR EXTERNO */}
                 {step1ActiveTab === 'externo' && (
-                  <div className="space-y-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-blue-900 dark:text-blue-200">Fornecedor Externo</h4>
-                      
-                      <div className="flex flex-row gap-2">
-                        {/* Campo de seleção de fornecedor */}
-                        <div className="space-y-2 flex-1">
-                          <Label htmlFor="select-fornecedor-ext">Fornecedor *</Label>
-                          <Select value={selectedFornecedorId} onValueChange={(value) => {
-                            setSelectedFornecedorId(value);
-                            setNewFornecedorErrors({});
-                          }}>
-                            <SelectTrigger id="select-fornecedor-ext">
-                              <SelectValue placeholder="Selecionar fornecedor existente" />
-                            </SelectTrigger>
-                            <SelectContent className="z-[1001]">
-                              {existingFornecedores.map((f) => (
-                                <SelectItem key={f.id} value={String(f.id)}>
-                                  {f.nomeEmpresa}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <Button onClick={addContract}><Plus /> Contrato</Button>
-                          <Button variant="outline" onClick={() => setIsCreatingNewFornecedor(true)}>Novo Fornecedor</Button>
-                        </div>
-                      </div>
+                  <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4">
+                  <div className="flex flex-row gap-2">
+                    {/* Campo de seleção/criação de fornecedor */}
+                    <div className="space-y-2">
+                      <Label htmlFor="select-fornecedor">Fornecedor *</Label>
+                      <Select value={selectedFornecedorId} onValueChange={(value) => {
+                          setSelectedFornecedorId(value);
+                          // setIsCreatingNewFornecedor(value === "new");
+                          setNewFornecedorErrors({}); // Limpar erros ao mudar de seleção
+                        }}>
+                        <SelectTrigger id="select-fornecedor">
+                          <SelectValue placeholder="Selecionar ou criar novo fornecedor" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[1001]">
+                          {/* <SelectItem value="new">Criar Novo Fornecedor</SelectItem> */}
+                          {existingFornecedores.map((f) => (
+                            <SelectItem key={f.id} value={String(f.id)}>
+                              {f.nomeEmpresa}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                      {/* Formulário para criar novo fornecedor EXTERNO */}
-                      {isCreatingNewFornecedor && (
-                        <div className="space-y-4 p-3 border rounded-md bg-white dark:bg-slate-800">
-                          <h5 className="font-semibold text-sm">Dados do Novo Fornecedor Externo</h5>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="novo-nomeEmpresa" className="text-sm">Nome da Empresa *</Label>
-                              <Input
-                                id="novo-nomeEmpresa"
-                                value={newFornecedorData.nomeEmpresa}
-                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, nomeEmpresa: e.target.value }))}
-                                className={cn(newFornecedorErrors.nomeEmpresa && "border-red-500 ring-1 ring-red-500")}
-                                placeholder="Nome"
-                              />
-                              {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="novo-cnpjCpf" className="text-sm">CNPJ *</Label>
-                              <Input
-                                id="novo-cnpjCpf"
-                                value={formatCNPJ(newFornecedorData.cnpjCpf)}
-                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
-                                placeholder="00.000.000/0000-00"
-                                className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
-                              />
-                              {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="novo-email" className="text-sm">Email</Label>
-                              <Input
-                                id="novo-email"
-                                type="email"
-                                value={newFornecedorData.email}
-                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, email: e.target.value }))}
-                                className={cn(newFornecedorErrors.email && "border-red-500 ring-1 ring-red-500")}
-                                placeholder="email@exemplo.com"
-                              />
-                              {newFornecedorErrors.email && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.email}</p>}
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="novo-telefone" className="text-sm">Telefone *</Label>
-                              <Input
-                                id="novo-telefone"
-                                value={newFornecedorData.telefone}
-                                onChange={(e) => setNewFornecedorData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
-                                className={cn(newFornecedorErrors.telefone && "border-red-500 ring-1 ring-red-500")}
-                                placeholder="(00) 90000-0000"
-                              />
-                              {newFornecedorErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.telefone}</p>}
-                            </div>
-                          </div>
-                          <div className="flex gap-2 mt-3">
-                            <Button onClick={addFornecedor} className="text-sm">Adicionar Fornecedor</Button>
-                            <Button variant="outline" className="text-sm" onClick={() => {
-                              setIsCreatingNewFornecedor(false);
-                              setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
-                              setNewFornecedorErrors({});
-                            }}>Cancelar</Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Formulário compacto para contrato EXTERNO */}
-                      <div className="space-y-3 p-3 border rounded-md bg-white dark:bg-slate-800">
-                        <h5 className="font-semibold text-sm">Criar Contrato Externo</h5>
-                        <div className="grid grid-cols-4 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Data Início *</Label>
-                            <Input
-                              type="date"
-                              placeholder="Data"
-                              className="text-sm"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Dia Envio *</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={31}
-                              placeholder="1-31"
-                              className="text-sm"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Duração *</Label>
-                            <Select>
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Meses" />
-                              </SelectTrigger>
-                              <SelectContent className="z-[1001]">
-                                <SelectItem value="6m">6 meses</SelectItem>
-                                <SelectItem value="1y">1 ano</SelectItem>
-                                <SelectItem value="2y">2 anos</SelectItem>
-                                <SelectItem value="5y">5 anos</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Data Fim *</Label>
-                            <Input
-                              type="date"
-                              disabled
-                              readOnly
-                              className="text-sm bg-gray-100"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Frequência *</Label>
-                            <Select>
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Semanal" />
-                              </SelectTrigger>
-                              <SelectContent className="z-[1001]">
-                                <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
-                                <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
-                                <SelectItem value="MENSALMENTE">Mensal</SelectItem>
-                                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
-                                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Dia Pagamento *</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={31}
-                              placeholder="1-31"
-                              className="text-sm"
-                            />
-                          </div>
-                          <div className="space-y-2 col-span-2">
-                            <Label className="text-xs">Forma Pagamento *</Label>
-                            <Select>
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent className="z-[1001]">
-                                <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                                <SelectItem value="CARTAO">Cartão</SelectItem>
-                                <SelectItem value="PIX">PIX</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
+                    </div>
+                    <div className="flex items-end gap-6">
+                      <Button onClick={addContract}><Plus /></Button>
+                      <Button variant="outline" onClick={() => setIsCreatingNewFornecedor(true)}>Criar fornecedor</Button>
                     </div>
                   </div>
+                  {isCreatingNewFornecedor && (
+                    <div className="space-y-4 p-4 border rounded-md bg-muted/20">
+                      <h4 className="font-semibold">Dados do Novo Fornecedor</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="novo-nomeEmpresa">Nome da Empresa *</Label>
+                          <Input
+                            id="novo-nomeEmpresa"
+                            value={newFornecedorData.nomeEmpresa}
+                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, nomeEmpresa: e.target.value }))}
+                            className={cn(newFornecedorErrors.nomeEmpresa && "border-red-500 ring-1 ring-red-500")}
+                          />
+                          {newFornecedorErrors.nomeEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.nomeEmpresa}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="novo-cnpjCpf">CNPJ *</Label>
+                          <Input
+                            id="novo-cnpjCpf"
+                            value={formatCNPJ(newFornecedorData.cnpjCpf)}
+                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, cnpjCpf: onlyDigits(e.target.value) }))}
+                            placeholder="00.000.000/0000-00"
+                            className={cn(newFornecedorErrors.cnpjCpf && "border-red-500 ring-1 ring-red-500")}
+                          />
+                          {newFornecedorErrors.cnpjCpf && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.cnpjCpf}</p>}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-descricaoEmpresa">Descrição da Empresa</Label>
+                        <Textarea
+                          id="novo-descricaoEmpresa"
+                          value={newFornecedorData.descricaoEmpresa}
+                          onChange={(e) => setNewFornecedorData(prev => ({ ...prev, descricaoEmpresa: e.target.value }))}
+                          className={cn("min-h-[80px]", newFornecedorErrors.descricaoEmpresa && "border-red-500 ring-1 ring-red-500")}
+                        />
+                        {newFornecedorErrors.descricaoEmpresa && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.descricaoEmpresa}</p>}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="novo-email">Email</Label>
+                          <Input
+                            id="novo-email"
+                            type="email"
+                            value={newFornecedorData.email}
+                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, email: e.target.value }))}
+                            className={cn(newFornecedorErrors.email && "border-red-500 ring-1 ring-red-500")}
+                          />
+                          {newFornecedorErrors.email && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.email}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="novo-telefone">Telefone *</Label>
+                          <Input
+                            id="novo-telefone"
+                            value={newFornecedorData.telefone}
+                            onChange={(e) => setNewFornecedorData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
+                            className={cn(newFornecedorErrors.telefone && "border-red-500 ring-1 ring-red-500")}
+                          />
+                          {newFornecedorErrors.telefone && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.telefone}</p>}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="novo-endereco">Endereço</Label>
+                        <Textarea
+                          id="novo-endereco"
+                          value={newFornecedorData.endereco}
+                          onChange={(e) => setNewFornecedorData(prev => ({ ...prev, endereco: e.target.value }))}
+                          className={cn("min-h-[80px]", newFornecedorErrors.endereco && "border-red-500 ring-1 ring-red-500")}
+                        />
+                        {newFornecedorErrors.endereco && <p className="text-sm text-red-600 mt-1">{newFornecedorErrors.endereco}</p>}
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button onClick={addFornecedor}>Adicionar Fornecedor</Button>
+                        <Button variant="outline" onClick={() => {
+                          setIsCreatingNewFornecedor(false);
+                          setNewFornecedorData({ nomeEmpresa: '', descricaoEmpresa: '', cnpjCpf: '', email: '', telefone: '', endereco: '' });
+                          setNewFornecedorErrors({});
+                        }}>Cancelar</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {errors.contracts && <p className="text-sm text-red-600">{errors.contracts}</p>}
+
+                <div>
+                  <h4 className="font-medium">Lista de fornecedores</h4>
+                  <ul className="mt-2 space-y-2">
+                    {fornecedores.map((f, i) => {
+                      const documentoFormatado = f.documento || f.cnpjCpf ? formatCNPJ(String(f.documento || f.cnpjCpf || '')) : '-';
+                      const telefoneFormatado = f.contato || f.telefone ? formatTelefone(String(f.contato || f.telefone || '')) : '-';
+                      return (
+                        <li key={i} className="py-2 px-4 border rounded-sm">
+                          <div className="flex justify-between">
+                            <div>
+                              <div className="font-semibold">{f.nome || f.nomeEmpresa}</div>
+                              <div className="text-sm text-muted-foreground">{documentoFormatado} • {telefoneFormatado}</div>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                              <Button variant="ghost" onClick={() => {
+                                // Remover fornecedor e contratos relacionados
+                                const fornecedorId = String(f.id);
+                                setFornecedores(prev => prev.filter((_, idx) => idx !== i));
+                                setContracts(prev => prev.filter(c => String(c.fornecedorId) !== fornecedorId));
+                              }}>Remover</Button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+               <div>
+  <h4 className="font-medium">Contratos</h4>
+
+  <ul className="mt-2 space-y-4">
+    {contracts.map((c, i) => (
+      <li key={i} className="p-3 border rounded-lg space-y-4 bg-muted/30">
+
+        {/* CABEÇALHO DO CONTRATO */}
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="font-semibold text-lg">{c.nomeContrato}</div>
+          </div>
+
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // Remover contrato e fornecedor relacionado
+              const fornecedorId = String(c.fornecedorId);
+              setContracts(prev => prev.filter((_, idx) => idx !== i));
+              setFornecedores(prev => prev.filter(f => String(f.id) !== fornecedorId));
+            }}
+          >
+            Remover
+          </Button>
+        </div>
+
+        {/* CAMPOS OBRIGATÓRIOS DO SCHEMA */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-2">
+            <Label className="text-sm">Data de Início *</Label>
+            <Input
+              type="date"
+              value={c.dataInicio || ""}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (selectedDate <= today) {
+                  updateContractField(i, "dataInicio", selectedDate);
+                }
+              }}
+              className={cn(errors[`contract_${i}_dataInicio`] && "border-red-500 ring-1 ring-red-500")}
+            />
+            {errors[`contract_${i}_dataInicio`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataInicio`]}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Duração do Contrato *</Label>
+            <Select
+              value={c.duration || ""}
+              onValueChange={(v) => {
+                updateContractField(i, 'duration', v);
+                                    const start = c.dataInicio || new Date().toISOString().slice(0, 10);
+                const end = computeContractEndDate(start, v);
+                updateContractField(i, 'dataFim', end);
+              }}
+            >
+              <SelectTrigger className={cn("w-full", errors[`contract_${i}_duration`] && "border-red-500 ring-1 ring-red-500")}>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+                <SelectContent className="z-[1001]">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
+                <SelectItem value="6m">6 meses</SelectItem>
+                <SelectItem value="1y">1 ano</SelectItem>
+                <SelectItem value="2y">2 anos</SelectItem>
+                <SelectItem value="5y">5 anos</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors[`contract_${i}_duration`] && <p className="text-sm text-red-600">{errors[`contract_${i}_duration`]}</p>}
+
+                              </div>
+                              <div className="space-y-2">
+              <Label className="text-sm">Data de Fim *</Label>
+              <Input className={cn("w-full", errors[`contract_${i}_dataFim`] && "border-red-500 ring-1 ring-red-500")} type="date" value={c.dataFim || ""} disabled readOnly />
+              {errors[`contract_${i}_dataFim`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataFim`]}</p>}
+            </div>
+          <div className="space-y-2">
+            <Label className="text-sm">Frequência de Entregas *</Label>
+            <Select
+              value={c.frequenciaEntregas || ""}
+              onValueChange={(v) => updateContractField(i, 'frequenciaEntregas', v)}
+            >
+              <SelectTrigger className={cn("w-full", errors[`contract_${i}_frequenciaEntregas`] && "border-red-500 ring-1 ring-red-500")}>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent className="z-[1001]">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
+                {frequenciaOptions.length > 0 ? (
+                  frequenciaOptions.map(opt => (
+                    <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="SEMANALMENTE">Semanalmente</SelectItem>
+                    <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
+                    <SelectItem value="MENSALMENTE">Mensalmente</SelectItem>
+                    <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                    <SelectItem value="SEMESTRAL">Semestral</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+            {errors[`contract_${i}_frequenciaEntregas`] && <p className="text-sm text-red-600">{errors[`contract_${i}_frequenciaEntregas`]}</p>}
+          </div>
+                              <div className="space-y-2">
+                                <Label className="text-sm">Dia de Envio *</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={31}
+                                  placeholder="1 a 31"
+                                  value={c.dataEnvio || ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const cleaned = val.replace(/\D/g, '');
+                                    const num = cleaned ? parseInt(cleaned, 10) : '';
+                                    if (num === '' || (num >= 1 && num <= 31)) {
+                                      updateContractField(i, "dataEnvio", String(num));
+                                    }
+                                  }}
+                                  className={cn(errors[`contract_${i}_dataEnvio`] && "border-red-500 ring-1 ring-red-500")}
+                                />
+                                {errors[`contract_${i}_dataEnvio`] && <p className="text-sm text-red-600">{errors[`contract_${i}_dataEnvio`]}</p>}
+                              </div>
+          <div className="space-y-2">
+            <Label className="text-sm">Dia do Pagamento *</Label>
+            <Input
+              className={cn("w-full", errors[`contract_${i}_diaPagamento`] && "border-red-500 ring-1 ring-red-500")}
+              type="number"
+              min={1}
+              max={31}
+              placeholder="1 a 31"
+              value={c.diaPagamento || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                const cleaned = val.replace(/\D/g, '');
+                const num = cleaned ? parseInt(cleaned, 10) : '';
+                if (num === '' || (num >= 1 && num <= 31)) {
+                  updateContractField(i, "diaPagamento", String(num));
+                }
+              }}
+            />
+            {errors[`contract_${i}_diaPagamento`] && <p className="text-sm text-red-600">{errors[`contract_${i}_diaPagamento`]}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Forma de Pagamento *</Label>
+            <Select
+              value={c.formaPagamento || ""}
+              onValueChange={(v) => updateContractField(i, 'formaPagamento', v)}
+            >
+              <SelectTrigger className={cn("w-full", errors[`contract_${i}_formaPagamento`] && "border-red-500 ring-1 ring-red-500")}>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent className="z-[1001] ">
+                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
+                {formaPagamentoOptions.length > 0 ? (
+                  formaPagamentoOptions.map(opt => (
+                    <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                    <SelectItem value="CARTAO">Cartão</SelectItem>
+                    <SelectItem value="PIX">PIX</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+            {errors[`contract_${i}_formaPagamento`] && <p className="text-sm text-red-600">{errors[`contract_${i}_formaPagamento`]}</p>}
+          </div>
+        </div>
+
+        {/* -------- ITENS DO CONTRATO ---------- */}
+        <div className="pt-3 border-t">
+          <h5 className="font-medium mb-2">Itens do Contrato</h5>
+
+          {/* LISTA DE ITENS EXISTENTES */}
+          <ul className="space-y-2">
+            {c.itens?.map((item, idx) => (
+              <li
+                key={idx}
+                className="border rounded p-2 flex justify-between items-center"
+              >
+                <div>
+                  <div className="font-semibold">{item.nome}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {item.quantidade} {item.unidadeMedida} —
+                    R$ {item.precoUnitario}
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => removeItem(i, idx)}
+                >
+                  Remover
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          {/* FORM PARA NOVO ITEM */}
+          <div className="grid grid-cols-3 gap-3 mt-3 p-3 rounded border">
+            <div className="space-y-2">
+              <Label htmlFor={`item-nome-${i}`}>Nome do Item *</Label>
+              <Input
+                id={`item-nome-${i}`}
+                placeholder="Nome do item"
+                value={getNewItem(i).nome || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "nome", e.target.value);
+                  // Limpar erro ao digitar
+                  if (itemErrors[i]?.nome) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].nome;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.nome && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.nome && <p className="text-sm text-red-600">{itemErrors[i].nome}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`item-quantidade-${i}`}>Quantidade *</Label>
+              <Input
+                id={`item-quantidade-${i}`}
+                placeholder="Qtd"
+                value={getNewItem(i).quantidade || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "quantidade", e.target.value.replace(/\D/g, ''));
+                  if (itemErrors[i]?.quantidade) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].quantidade;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.quantidade && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.quantidade && <p className="text-sm text-red-600">{itemErrors[i].quantidade}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`item-unidade-${i}`}>Unidade de Medida *</Label>
+              <Select
+                value={getNewItem(i).unidadeMedida || ""}
+                onValueChange={(v) => {
+                  updateNewItem(i, "unidadeMedida", v);
+                  if (itemErrors[i]?.unidadeMedida) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].unidadeMedida;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className={cn("w-full", itemErrors[i]?.unidadeMedida && "border-red-500 ring-1 ring-red-500")} id={`item-unidade-${i}`}>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent className="z-[1002]">
+                  {unidadesMedidaOptions && unidadesMedidaOptions.length > 0 ? (
+                    unidadesMedidaOptions.map((opcao) => (
+                      <SelectItem key={opcao.valor || opcao.label} value={opcao.valor}>
+                        {opcao.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="KG">KG</SelectItem>
+                      <SelectItem value="G">G</SelectItem>
+                      <SelectItem value="UNIDADE">UNIDADE</SelectItem>
+                      <SelectItem value="LITRO">LITRO</SelectItem>
+                      <SelectItem value="TONELADA">TONELADA</SelectItem>
+                      <SelectItem value="METRO">METRO</SelectItem>
+                      <SelectItem value="METRO_QUADRADO">METRO²</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+              {itemErrors[i]?.unidadeMedida && <p className="text-sm text-red-600">{itemErrors[i].unidadeMedida}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`item-preco-${i}`}>Preço Unitário *</Label>
+              <Input
+                id={`item-preco-${i}`}
+                placeholder="R$ 0,00"
+                value={getNewItem(i).precoUnitario || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "precoUnitario", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'));
+                  if (itemErrors[i]?.precoUnitario) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].precoUnitario;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.precoUnitario && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.precoUnitario && <p className="text-sm text-red-600">{itemErrors[i].precoUnitario}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`item-peso-${i}`}>Peso por Unidade (KG) *</Label>
+              <Input
+                id={`item-peso-${i}`}
+                placeholder="Peso em KG"
+                value={getNewItem(i).pesoUnidade || ""}
+                onChange={(e) => {
+                  updateNewItem(i, "pesoUnidade", e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '.'));
+                  if (itemErrors[i]?.pesoUnidade) {
+                    setItemErrors(prev => {
+                      const copy = { ...prev };
+                      if (copy[i]) {
+                        delete copy[i].pesoUnidade;
+                        if (Object.keys(copy[i]).length === 0) delete copy[i];
+                      }
+                      return copy;
+                    });
+                  }
+                }}
+                className={cn(itemErrors[i]?.pesoUnidade && "border-red-500 ring-1 ring-red-500")}
+              />
+              {itemErrors[i]?.pesoUnidade && <p className="text-sm text-red-600">{itemErrors[i].pesoUnidade}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`item-raca-${i}`}>Raça (opcional)</Label>
+              <Input
+                id={`item-raca-${i}`}
+                placeholder="Raça"
+                value={getNewItem(i).raca || ""}
+                onChange={(e) => updateNewItem(i, "raca", e.target.value)}
+              />
+            </div>
+
+            <Button
+              className="col-span-3"
+              onClick={() => addItemToContract(i)}
+            >
+              Adicionar Item
+            </Button>
+          </div>
+        </div>
+      </li>
+    ))}
+  </ul>
+</div>
+</div>
                 )}
 
                 {/* TAB 2: FORNECEDOR INTERNO (LOJA) */}
                 {step1ActiveTab === 'interno' && (
-                  <div className="space-y-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="space-y-6">
                     <div className="space-y-4">
-                      <h4 className="font-semibold text-green-900 dark:text-green-200">Fornecedor Interno (Loja)</h4>
+                      <h4 className="font-semibold">Lojas parceiras</h4>
                       
                       <div className="flex flex-row gap-2">
                         {/* Campo de seleção de loja */}
@@ -1691,17 +2015,17 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                             <p className="text-sm text-red-600 mt-1">{internalContractFormErrors.selectedLojaId}</p>
                           )}
                         </div>
-                        <div className="flex items-end">
+                        <div className="flex items-end gap-6">
                           <Button onClick={createInternalContract}><Plus /> Contrato Interno</Button>
                         </div>
                       </div>
 
-                      {/* Formulário compacto para contrato INTERNO */}
-                      <div className="space-y-3 p-3 border rounded-md bg-white dark:bg-slate-800">
-                        <h5 className="font-semibold text-sm">Criar Contrato Interno</h5>
-                        <div className="grid grid-cols-4 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Data Início *</Label>
+                      {/* Formulário para criar contrato INTERNO */}
+                      <div className="space-y-4 p-4 border rounded-md bg-muted/20">
+                        <h4 className="font-semibold">Criar Contrato Interno</h4>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-sm">Data de Início *</Label>
                             <Input
                               type="date"
                               placeholder="Data"
@@ -1709,31 +2033,46 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               value={internalContractDraft.dataInicio || ''}
                               onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataInicio: e.target.value }))}
                             />
+                            {internalContractFormErrors.dataInicio && <p className="text-xs text-red-600">{internalContractFormErrors.dataInicio}</p>}
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Data Fim *</Label>
+                          <div className="space-y-2">
+                            <Label className="text-sm">Duração do Contrato *</Label>
+                            <Select
+                              value={internalContractDraft.duration || ""}
+                              onValueChange={(v) => {
+                                const start = internalContractDraft.dataInicio || new Date().toISOString().slice(0, 10);
+                                const end = computeContractEndDate(start, v);
+                                setInternalContractDraft(prev => ({ ...prev, duration: v, dataFim: end }));
+                              }}
+                            >
+                              <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1001]">
+                                <SelectItem value="__SELECIONE__">Selecione</SelectItem>
+                                <SelectItem value="6m">6 meses</SelectItem>
+                                <SelectItem value="1y">1 ano</SelectItem>
+                                <SelectItem value="2y">2 anos</SelectItem>
+                                <SelectItem value="5y">5 anos</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {internalContractFormErrors.duration && <p className="text-xs text-red-600">{internalContractFormErrors.duration}</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm">Data de Fim *</Label>
                             <Input
                               type="date"
                               placeholder="Data"
                               className="text-sm"
                               value={internalContractDraft.dataFim || ''}
                               onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataFim: e.target.value }))}
+                              disabled
+                              readOnly
                             />
+                            {internalContractFormErrors.dataFim && <p className="text-xs text-red-600">{internalContractFormErrors.dataFim}</p>}
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Dia Envio *</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={31}
-                              placeholder="1-31"
-                              className="text-sm"
-                              value={internalContractDraft.dataEnvio || ''}
-                              onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataEnvio: e.target.value }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Frequência *</Label>
+                          <div className="space-y-2">
+                          <Label className="text-sm">Frequência de Entregas *</Label>
                             <Select
                               value={internalContractDraft.frequenciaEntregas || ''}
                               onValueChange={(v) => setInternalContractDraft(prev => ({ ...prev, frequenciaEntregas: v }))}
@@ -1754,18 +2093,35 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                                   })
                                 ) : (
                                   <>
-                                    <SelectItem value="SEMANALMENTE">Semanal</SelectItem>
+                                    <SelectItem value="SEMANALMENTE">Semanalmente</SelectItem>
                                     <SelectItem value="QUINZENAL">Quinzenal</SelectItem>
-                                    <SelectItem value="MENSALMENTE">Mensal</SelectItem>
+                                        <SelectItem value="MENSALMENTE">Mensalmente</SelectItem>
+                                        <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                                        <SelectItem value="SEMESTRAL">Semestral</SelectItem>
                                   </>
                                 )}
                               </SelectContent>
                             </Select>
+                            {internalContractFormErrors.frequenciaEntregas && <p className="text-xs text-red-600">{internalContractFormErrors.frequenciaEntregas}</p>}
                           </div>
+                          <div className="space-y-2">
+                                <Label className="text-sm">Dia de Envio *</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              placeholder="1-31"
+                              className="text-sm"
+                              value={internalContractDraft.dataEnvio || ''}
+                              onChange={(e) => setInternalContractDraft(prev => ({ ...prev, dataEnvio: e.target.value }))}
+                            />
+                            {internalContractFormErrors.dataEnvio && <p className="text-xs text-red-600">{internalContractFormErrors.dataEnvio}</p>}
+                          </div>
+                          
                         </div>
                         <div className="grid grid-cols-3 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Dia Pagamento *</Label>
+                        <div className="space-y-2">
+                        <Label className="text-sm">Dia do Pagamento *</Label>
                             <Input
                               type="number"
                               min={1}
@@ -1775,9 +2131,10 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                               value={internalContractDraft.diaPagamento || ''}
                               onChange={(e) => setInternalContractDraft(prev => ({ ...prev, diaPagamento: e.target.value }))}
                             />
+                            {internalContractFormErrors.diaPagamento && <p className="text-xs text-red-600">{internalContractFormErrors.diaPagamento}</p>}
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Forma Pagamento *</Label>
+                          <div className="space-y-2">
+                          <Label className="text-sm">Forma de Pagamento *</Label>
                             <Select
                               value={internalContractDraft.formaPagamento || ''}
                               onValueChange={(v) => setInternalContractDraft(prev => ({ ...prev, formaPagamento: v }))}
@@ -1805,31 +2162,8 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                                 )}
                               </SelectContent>
                             </Select>
+                            {internalContractFormErrors.formaPagamento && <p className="text-xs text-red-600">{internalContractFormErrors.formaPagamento}</p>}
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Status *</Label>
-                            <Select
-                              value={internalContractDraft.status || 'ATIVO'}
-                              onValueChange={(v) => setInternalContractDraft(prev => ({ ...prev, status: v }))}
-                            >
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Ativo" />
-                              </SelectTrigger>
-                              <SelectContent className="z-[1001]">
-                                <SelectItem value="ATIVO">Ativo</SelectItem>
-                                <SelectItem value="INATIVO">Inativo</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 mt-3">
-                          <Label className="text-xs">Descrição</Label>
-                          <Textarea
-                            value={internalContractDraft.descricao || ''}
-                            onChange={(e) => setInternalContractDraft(prev => ({ ...prev, descricao: e.target.value }))}
-                            className="min-h-[80px] text-sm"
-                          />
                         </div>
                       </div>
                     </div>
@@ -1838,14 +2172,51 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
 
                 {/* FORA DAS ABAS: Lista de fornecedores, contratos e botões */}
                 <div className="border-t pt-6 space-y-4">
-                  {/* Lista compacta de fornecedores */}
+                  {/* Lista compacta de fornecedores / lojas conforme aba */}
+                  {step1ActiveTab === 'interno' ? (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">Lojas Adicionadas</h4>
+                      <ul className="space-y-1">
+                        {contracts
+                          .map((c, idx) => ({ ...c, __idx: idx }))
+                          .filter(c => c.isFornecedora)
+                          .map((c, i) => {
+                            const loja = existingLojas.find(l => String(l.id) === String(c.unidadeLojaId || c.selectedLojaId || c.fornecedorId));
+                            const nomeLoja = loja?.nomeEmpresa || loja?.nome || 'Loja';
+                            const documentoFormatado = loja?.cnpjCpf ? formatCNPJ(String(loja.cnpjCpf)) : '-';
+                            return (
+                              <li key={`loja-${i}`} className="py-2 px-3 border rounded-md text-sm flex justify-between items-center">
+                                <div>
+                                  <span className="font-medium">{nomeLoja}</span>
+                                  <span className="text-xs text-muted-foreground ml-2">{documentoFormatado}</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setContracts(prev => prev.filter((_, idx) => idx !== c.__idx));
+                                  }}
+                                >
+                                  Remover
+                                </Button>
+                              </li>
+                            );
+                          })}
+                        {contracts.filter(c => c.isFornecedora).length === 0 && (
+                          <li className="py-2 px-3 border rounded-md text-sm text-muted-foreground">
+                            Nenhuma loja adicionada
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  ) : (
                   <div>
                     <h4 className="font-semibold text-sm mb-2">Fornecedores Adicionados</h4>
                     <ul className="space-y-1">
                       {fornecedores.map((f, i) => {
                         const documentoFormatado = f.documento || f.cnpjCpf ? formatCNPJ(String(f.documento || f.cnpjCpf || '')) : '-';
                         return (
-                          <li key={i} className="py-2 px-3 border rounded text-sm flex justify-between items-center">
+                            <li key={i} className="py-2 px-3 border rounded-md text-sm flex justify-between items-center">
                             <div>
                               <span className="font-medium">{f.nome || f.nomeEmpresa}</span>
                               <span className="text-xs text-muted-foreground ml-2">{documentoFormatado}</span>
@@ -1866,13 +2237,14 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
                       })}
                     </ul>
                   </div>
+                  )}
 
                   {/* Lista compacta de contratos */}
                   <div>
                     <h4 className="font-semibold text-sm mb-2">Contratos Adicionados</h4>
                     <ul className="space-y-1">
                       {contracts.map((c, i) => (
-                        <li key={i} className="py-2 px-3 border rounded text-sm flex justify-between items-center">
+                        <li key={i} className="py-2 px-3 border rounded-md text-sm flex justify-between items-center">
                           <div>
                             <span className="font-medium">{c.nomeContrato}</span>
                             <span className="text-xs text-muted-foreground ml-2">
@@ -2113,6 +2485,6 @@ export default function AddFazendaWizard({ open, onOpenChange, onCreated }) {
           </main>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }
