@@ -408,7 +408,7 @@ export default function UnitManagementPageFull() {
                                                     <TableCell className="font-medium cursor-pointer" onClick={() => openDetails(u)}>{u.name}</TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
-                                                            <Avatar><AvatarFallback>{u.type[0]}</AvatarFallback></Avatar>
+                                                            <Avatar className="rounded-md"><AvatarFallback className="rounded-md">{u.type[0]}</AvatarFallback></Avatar>
                                                             <span className="capitalize">{u.type}</span>
                                                         </div>
                                                     </TableCell>

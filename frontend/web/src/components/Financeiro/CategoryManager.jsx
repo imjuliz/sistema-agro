@@ -799,7 +799,7 @@ export function CategoryManager({ categories, onCategoriesChange, fetchWithAuth,
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteCategory(category.id)}
+                            onClick={() => openDeleteDialog({ type: 'category', categoryId: category.id })}
                             className="h-8 w-8 p-0"
                           >
                             <Trash2 className="h-4 w-4" />

@@ -366,6 +366,8 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
   }, [accessToken, doRefresh]);
 
   // Força um fetch de /auth/me e atualiza o estado `user` no contexto.
+  // IMPORTANTE: Não limpa o usuário se falhar - apenas retorna success: false
+  // para evitar redirecionamentos indesejados após atualizações de perfil
   const refreshUser = useCallback(async () => {
     try {
       const meRes = await fetchWithRetry(`${BACKEND_BASE}auth/me`, {
@@ -375,13 +377,21 @@ export function AuthProvider({ children, skipInitialRefresh = false }) {
       if (meRes.ok) {
         const meData = await meRes.json().catch(() => ({}));
         const usuario = meData.usuario ?? meData.user ?? null;
-        setUser(usuario);
-        return { success: true, usuario };
+        if (usuario) {
+          setUser(usuario);
+          return { success: true, usuario };
+        }
+        // Se não houver usuário na resposta mas a requisição foi OK, não limpar
+        console.warn('[Auth] refreshUser: resposta OK mas sem usuário');
+        return { success: false, error: 'Usuário não encontrado na resposta' };
       }
-      setUser(null);
-      return { success: false };
+      // Se a requisição falhou, NÃO limpar o usuário - apenas retornar false
+      // Isso evita redirecionamentos indesejados após atualizações de perfil
+      console.warn('[Auth] refreshUser: requisição falhou com status', meRes.status);
+      return { success: false, error: `Requisição falhou com status ${meRes.status}` };
     } catch (err) {
       console.warn('[Auth] refreshUser failed', err);
+      // Não limpar o usuário em caso de erro - apenas retornar false
       return { success: false, error: err };
     }
   }, []);

@@ -161,7 +161,6 @@ export default function sobreNos({
         }
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
-    
 
     return (
         <main className="container mx-auto bg-background ">
