@@ -161,26 +161,7 @@ export default function sobreNos({
         }
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
-    const { lang, changeLang } = useTranslation();
-    const languageOptions = [
-        { value: 'pt-BR', label: 'Português (BR)' },
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Español' },
-        { value: 'fr', label: 'Français' }
-    ];
-
-    const { theme: globalTheme, selectedFontSize: globalSelectedFontSize, applyPreferences } = useAppearance(); // Obter do contexto
-    // Estados locais para edição temporária antes de salvar
-    const [localTheme, setLocalTheme] = useState(globalTheme);
-    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize);
-    const [localLang, setLocalLang] = useState(lang);
-
-    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
-    useEffect(() => {
-        setLocalTheme(globalTheme);
-        setLocalSelectedFontSize(globalSelectedFontSize);
-        setLocalLang(lang);
-    }, [globalTheme, globalSelectedFontSize, lang]);
+    
 
     return (
         <main className="container mx-auto bg-background ">
