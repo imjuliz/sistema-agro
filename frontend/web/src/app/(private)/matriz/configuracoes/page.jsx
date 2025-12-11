@@ -180,12 +180,30 @@ export default function SettingsPage() {
                     title: "Sucesso",
                     description: result.mensagem || "Perfil atualizado com sucesso!",
                 });
-                // Atualiza o usuário no contexto: requisição direta a /auth/me
-                try { await refreshUser(); }
+                
+                // Atualizar os estados locais com os dados retornados do backend
+                if (result.usuario) {
+                    if (result.usuario.nome) setNome(result.usuario.nome);
+                    if (result.usuario.telefone) setTelefone(result.usuario.telefone);
+                    if (result.usuario.ftPerfil) setAvatarUrl(result.usuario.ftPerfil);
+                    if (result.usuario.email) setEmailSelect(result.usuario.email);
+                }
+                
+                // Tentar atualizar o usuário no contexto, mas não falhar se não conseguir
+                // O perfil já foi atualizado no backend, então não é crítico
+                try { 
+                    const refreshResult = await refreshUser();
+                    if (refreshResult?.success && refreshResult?.usuario) {
+                        console.log('saveProfile - refreshUser bem-sucedido, usuário atualizado no contexto');
+                    } else {
+                        console.warn('saveProfile - refreshUser retornou false, mas perfil foi atualizado no backend');
+                        // Não fazer nada - o perfil já foi atualizado e os estados locais foram atualizados
+                    }
+                }
                 catch (e) {
-                    // fallback: tenta o fluxo de refresh de token
-                    console.warn('saveProfile - refreshUser falhou, tentando doRefresh()', e);
-                    await doRefresh();
+                    // Se houver erro, não fazer nada drástico - o perfil já foi atualizado
+                    console.warn('saveProfile - refreshUser falhou:', e);
+                    // Não limpar o usuário nem redirecionar - apenas continuar normalmente
                 }
             } else {
                 console.log("saveProfile - Chamando toast de erro.");
@@ -268,6 +286,14 @@ export default function SettingsPage() {
         return tel; // fallback: retorna como está
     }
 
+    function handleTelefoneChange(value) {
+        // Remove tudo que não é número
+        const digits = value.replace(/\D/g, "");
+        // Limita a 11 dígitos (máximo para telefone brasileiro)
+        const limitedDigits = digits.slice(0, 11);
+        setTelefone(limitedDigits);
+    }
+
     return (
         <div className="min-h-screen px-18 py-10 bg-surface-50">
 
@@ -303,11 +329,11 @@ export default function SettingsPage() {
                                         <div className="grid gap-4">
                                             <div className="w-48">
                                                 <div className="flex items-center gap-4">
-                                                    <Avatar className="h-20 w-20">
+                                                    <Avatar className="h-20 w-20 rounded-md">
                                                         {avatarUrl ? (
-                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" onError={(e) => { try { e.currentTarget.src = ''; } catch (_) { } }} style={{ objectFit: 'cover' }} />
+                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" onError={(e) => { try { e.currentTarget.src = ''; } catch (_) { } }} className="object-cover rounded-md" />
                                                         ) : (
-                                                            <AvatarFallback>
+                                                            <AvatarFallback className="rounded-md">
                                                                 {getInitials(nome || emailSelect)}
                                                             </AvatarFallback>
                                                         )}
@@ -358,7 +384,7 @@ export default function SettingsPage() {
                                             <div>
                                                 <Label className={"pb-3 font-bold"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
                                                 {profileEditing ? (
-                                                    <><Input id="telefone" value={formatarTelefoneBR(telefone)} onChange={(e) => { const value = e.target.value; if (value === "" || regexTelefone.test(value)) { setTelefone(value); } }} />
+                                                    <><Input id="telefone" value={formatarTelefoneBR(telefone)} onChange={(e) => handleTelefoneChange(e.target.value)} placeholder="(00) 00000-0000" />
                                                         <p className="text-sm text-muted-foreground mt-1">
                                                             <Transl>Telefone de contato.</Transl>
                                                         </p>

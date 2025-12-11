@@ -432,7 +432,7 @@ export default function Matriz() {
     return (
         <>
             <main className="min-h-screen px-18 py-10 bg-surface-50">
-                <h2 className="text-lg font-semibold mb-4"><Transl>Empresa</Transl></h2>
+                <h2 className="text-lg font-semibold mb-4">Empresa</h2>
                 {/* Conteúdo principal */}
                 <div className="flex gap-6">
                     <div className="flex-1 gap-6">
@@ -442,7 +442,7 @@ export default function Matriz() {
                                 <div className="flex flex-row justify-between pr-8 gap-4">
                                     {/* Avatar */}
                                     <div className="flex flex-col">
-                                        <Label className={"pb-3 font-bold"}><Transl>Avatar da empresa</Transl></Label>
+                                        <Label className={"pb-3 font-bold"}>Avatar da empresa</Label>
                                         <div className="w-full max-w-md">
                                             <div className="flex flex-col w-full items-start gap-2">
                                                 <Avatar className="h-16 w-16 cursor-pointer border-2 border-muted">
@@ -455,32 +455,32 @@ export default function Matriz() {
                                                     <div className="flex gap-2">
                                                         <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingFoto}>
                                                             <ImageIcon className="w-4 h-4 mr-1" />
-                                                            {uploadingFoto ? <Transl>Upload...</Transl> : <Transl>Upload</Transl>}
+                                                            {uploadingFoto ? "Upload..." : "Upload"}
                                                         </Button>
                                                         {companyAvatarUrl && (
                                                             <Button size="sm" variant="destructive" onClick={handleRemoverFotoUnidade} disabled={uploadingFoto}>
-                                                                <Transl>Remover</Transl>
+                                                                Remover
                                                             </Button>
                                                         )}
                                                     </div>
                                                 )}
-                                                {companyEditing && (<p className="text-xs text-muted-foreground mt-1"><Transl>Clique para enviar uma nova imagem</Transl></p>)}
+                                                {companyEditing && (<p className="text-xs text-muted-foreground mt-1">Clique para enviar uma nova imagem</p>)}
                                             </div>
                                         </div>
                                     </div>
                                     {/* Nome */}
                                     <div className="flex flex-col">
-                                        <Label className={"pb-3 font-bold"}><Transl>Nome</Transl></Label>
+                                        <Label className={"pb-3 font-bold"}>Nome</Label>
                                         <div className="w-full max-w-md">
                                             <div className="flex flex-col w-full items-start gap-2">
                                                 {companyEditing ? (
                                                     <>
                                                         <p className="text-sm text-muted-foreground mb-2">
-                                                            <Transl>Nome visível da Matriz ou da Unidade.</Transl>
+                                                            Nome visível da Matriz ou da Unidade.
                                                         </p>
                                                         <Input type="text" value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} className="w-full" />
                                                         <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Máximo de 100 caracteres.</Transl>
+                                                            Máximo de 100 caracteres.
                                                         </p>
                                                     </>
                                                 ) : (<p className="text-sm text-foreground">{companyName || "Nome não informado"}</p>)}
@@ -490,13 +490,13 @@ export default function Matriz() {
 
                                     {/* CNPJ */}
                                     <div className="flex flex-col">
-                                        <Label className={"pb-3 font-bold"}><Transl>CNPJ</Transl></Label>
+                                        <Label className={"pb-3 font-bold"}>CNPJ</Label>
                                         <div className="w-full max-w-md">
                                             <div className="flex flex-col w-full items-start gap-2">
                                                 {companyEditing ? (
                                                     <>
                                                         <p className="text-sm text-muted-foreground mb-2">
-                                                            <Transl>Formato: 00.000.000/0000-00</Transl>
+                                                            Formato: 00.000.000/0000-00
                                                         </p>
                                                         <Input type="text" value={editCnpj} onChange={handleCnpjChange} className="w-full" />
                                                     </>
@@ -506,7 +506,7 @@ export default function Matriz() {
                                     </div>
                                 </div>
                                 <div className="flex flex-col">
-                                    <Label className={"pb-3 font-bold"}><Transl>Descrição</Transl></Label>
+                                    <Label className={"pb-3 font-bold"}>Descrição</Label>
                                     <div className="w-full max-w-md">
                                         <div className="flex flex-col w-full items-start gap-2">
                                             {companyEditing ? (
@@ -520,7 +520,7 @@ export default function Matriz() {
                             <Separator className="my-4" />
                             {/* Contatos da empresa */}
                             <div className="">
-                                <Label className={"pb-3 font-bold"}><Transl>Contatos</Transl></Label>
+                                <Label className={"pb-3 font-bold"}>Contatos</Label>
                                 <div className="flex flex-wrap items-start gap-4">
                                     <div className="flex-1">
                                         {companyEditing ? (
@@ -551,28 +551,28 @@ export default function Matriz() {
 
                             {/* Endereço da Unidade */}
                             <div className="">
-                                <Label className={"pb-3 font-bold"}><Transl>Endereço</Transl></Label>
+                                <Label className={"pb-3 font-bold"}>Endereço</Label>
                                 <div className="w-full">
                                     <div className="flex flex-col items-start gap-2">
                                         {companyEditing ? (
                                             <>
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full">
                                                     <div>
-                                                        <Label className="pb-2 font-medium"><Transl>Endereço</Transl></Label>
+                                                        <Label className="pb-2 font-medium">Endereço</Label>
                                                         <Input placeholder="Endereço" value={editEndereco} onChange={e => setEditEndereco(e.target.value)} disabled={loadingCep}/>
                                                     </div>
                                                     <div>
-                                                        <Label className="pb-2 font-medium"><Transl>CEP</Transl></Label>
+                                                        <Label className="pb-2 font-medium">CEP</Label>
                                                         <Input placeholder="CEP" value={editCep} onChange={handleCepChange} disabled={loadingCep}/>
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full">
                                                     <div>
-                                                        <Label className="pb-2 font-medium"><Transl>Cidade</Transl></Label>
+                                                        <Label className="pb-2 font-medium">Cidade</Label>
                                                         <Input placeholder="Cidade"value={editCidade} onChange={e => setEditCidade(e.target.value)} disabled={loadingCep}/>
                                                     </div>
                                                     <div>
-                                                        <Label className="pb-2 font-medium"><Transl>Estado</Transl></Label>
+                                                        <Label className="pb-2 font-medium">Estado</Label>
                                                         <Select value={editEstado} onValueChange={setEditEstado} disabled={loadingCep}>
                                                             <SelectTrigger>
                                                                 <SelectValue placeholder="Selecione o Estado" />
@@ -599,28 +599,28 @@ export default function Matriz() {
                             {/* Apagar empresa (apenas em modo de edição) */}
                             {companyEditing && (
                                 <div>
-                                <Label className={"pb-3 font-bold"}><Transl>Deletar empresa</Transl></Label>
+                                <Label className={"pb-3 font-bold"}>Deletar empresa</Label>
                                 <Alert variant="destructive" className="mb-4 max-w-md">
                                     <AlertTriangle className="h-4 w-4" />
-                                    <AlertTitle><Transl>Aviso</Transl></AlertTitle>
+                                    <AlertTitle>Aviso</AlertTitle>
                                     <AlertDescription>
-                                        <p><Transl>Excluir permanentemente a empresa (Matriz) e todos os dados. A ação não é reversível — </Transl><span className="font-medium underline"><Transl>proceda com cuidado.</Transl></span></p>
+                                        <p>Excluir permanentemente a empresa (Matriz) e todos os dados. A ação não é reversível — <span className="font-medium underline">proceda com cuidado.</span></p>
                                     </AlertDescription>
                                 </Alert>
-                                <Button variant="destructive" onClick={handleDeleteClick}><Transl>Deletar empresa</Transl></Button>
+                                <Button variant="destructive" onClick={handleDeleteClick}>Deletar empresa</Button>
 
                                 {/* Primeiro modal: confirmação simples */}
                                 <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen} className="w-80">
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle><Transl>Você tem certeza que deseja excluir a matriz?</Transl></DialogTitle>
+                                            <DialogTitle>Você tem certeza que deseja excluir a matriz?</DialogTitle>
                                         </DialogHeader>
                                         <div className="mt-2">
-                                            <Transl className="text-sm text-muted-foreground">Esta ação é irreversível. Todos os dados relacionados serão removidos.</Transl>
+                                            <p className="text-sm text-muted-foreground">Esta ação é irreversível. Todos os dados relacionados serão removidos.</p>
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}><Transl>Cancelar</Transl></Button>
-                                            <Button variant="destructive" onClick={handleConfirmFirst} className="ml-2"><Transl>Sim</Transl></Button>
+                                            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancelar</Button>
+                                            <Button variant="destructive" onClick={handleConfirmFirst} className="ml-2">Sim</Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -629,16 +629,16 @@ export default function Matriz() {
                                 <Dialog open={isConfirmTypingOpen} onOpenChange={setIsConfirmTypingOpen}>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle><Transl>Você está prestes a excluir a matriz</Transl></DialogTitle>
+                                            <DialogTitle>Você está prestes a excluir a matriz</DialogTitle>
                                         </DialogHeader>
                                         <div className="mt-2 space-y-2">
-                                            <Transl className="text-sm text-muted-foreground">Para continuar, digite <strong>Excluir</strong> no campo abaixo e confirme.</Transl>
+                                            <p className="text-sm text-muted-foreground">Para continuar, digite <strong>Excluir</strong> no campo abaixo e confirme.</p>
                                             <Input value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)} placeholder="Digite Excluir" />
                                             {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="outline" onClick={handleCancelDelete}><Transl>Cancelar</Transl></Button>
-                                            <Button variant="destructive" onClick={handleFinalDelete} disabled={deleting} className="ml-2"><Transl>Excluir</Transl></Button>
+                                            <Button variant="outline" onClick={handleCancelDelete}>Cancelar</Button>
+                                            <Button variant="destructive" onClick={handleFinalDelete} disabled={deleting} className="ml-2">Excluir</Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -648,10 +648,10 @@ export default function Matriz() {
                             <div className="pt-3">
                                 {companyEditing ? (
                                     <div className="flex gap-2">
-                                        <Button onClick={saveCompany}><Transl>Salvar</Transl></Button>
-                                        <Button variant="outline" onClick={cancelCompanyEdit}><Transl>Cancelar</Transl></Button>
+                                        <Button onClick={saveCompany}>Salvar</Button>
+                                        <Button variant="outline" onClick={cancelCompanyEdit}>Cancelar</Button>
                                     </div>
-                                ) : (<Button onClick={startEditing}><Transl>Editar informações</Transl></Button>)}
+                                ) : (<Button onClick={startEditing}>Editar informações</Button>)}
                             </div>
                         </div>
                     </div>

@@ -19,7 +19,7 @@ export const criarContaController = async (req, res) => {
       });
     }
 
-    const {descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,documento,observacao  } = req.body;
+    const {descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,dataPagamento,documento,observacao  } = req.body;
 
     // Para ENTRADA, vencimento não é obrigatório
     if (tipoMovimento === 'ENTRADA') {
@@ -33,7 +33,7 @@ export const criarContaController = async (req, res) => {
       }
     }
 
-    const conta = await criarContaFinanceira({unidadeId,criadoPorId,descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,documento,observacao});
+    const conta = await criarContaFinanceira({unidadeId,criadoPorId,descricao,tipoMovimento,categoriaId,subcategoriaId,formaPagamento,valor,competencia,vencimento,dataPagamento,documento,observacao});
 
     return res.status(201).json({sucesso: true,mensagem: 'Conta criada com sucesso',dados: conta});
   } catch (error) {

@@ -385,9 +385,9 @@ export default function FuncionariosFazenda() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4 flex-1">
-                    <Avatar className="size-12">
-                      <AvatarImage src={buildImageUrl(func.avatar)} alt={func.nome} />
-                      <AvatarFallback>{func.nome.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                    <Avatar className="size-12 rounded-md">
+                      <AvatarImage src={buildImageUrl(func.avatar)} alt={func.nome} className="object-cover rounded-md" />
+                      <AvatarFallback className="rounded-md">{func.nome.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-3">

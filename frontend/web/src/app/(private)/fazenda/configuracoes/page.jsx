@@ -44,7 +44,12 @@ export default function SettingsPage() {
 
     // Estados locais para edição temporária antes de salvar
     const [localTheme, setLocalTheme] = useState(globalTheme); 
-    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize); 
+    const [localSelectedFontSize, setLocalSelectedFontSize] = useState(globalSelectedFontSize);
+    const [localLang, setLocalLang] = useState(lang);
+
+    // Indica se o usuário alterou alguma preferência em relação ao valor global
+    // Inclui idioma (`localLang`) para habilitar o botão quando o usuário apenas trocar o idioma
+    const isPreferencesDirty = localTheme !== globalTheme || localSelectedFontSize !== globalSelectedFontSize || localLang !== lang;
 
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [profileEditing, setProfileEditing] = useState(false);
@@ -56,7 +61,8 @@ export default function SettingsPage() {
     useEffect(() => {
         setLocalTheme(globalTheme);
         setLocalSelectedFontSize(globalSelectedFontSize);
-    }, [globalTheme, globalSelectedFontSize]);
+        setLocalLang(lang);
+    }, [globalTheme, globalSelectedFontSize, lang]);
 
     // Remover useEffects antigos de tema e font size
     // ... (o conteúdo dos useEffects para theme e selectedFontSize deve ser removido aqui)
@@ -162,7 +168,9 @@ export default function SettingsPage() {
 
     async function savePreferences() {
         console.log("savePreferences - Função chamada.");
-        applyPreferences(localTheme, localSelectedFontSize); 
+        applyPreferences(localTheme, localSelectedFontSize);
+        try { if (localLang && localLang !== lang) changeLang(localLang); }
+        catch (e) { console.error('savePreferences - erro ao aplicar idioma', e); }
         console.log("savePreferences - Chamando toast de sucesso.");
         toast({
             title: "Sucesso",
@@ -250,39 +258,21 @@ export default function SettingsPage() {
                                         <div className="grid gap-4">
                                             <div className="w-48">
                                                 <div className="flex items-center gap-4">
-                                                    <Avatar className="h-20 w-20">
+                                                    <Avatar className="h-20 w-20 rounded-md">
                                                         {avatarUrl ? (
-                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" />
+                                                            <AvatarImage src={buildImageUrl(avatarUrl)} alt="Avatar" className="object-cover rounded-md" />
                                                         ) : (
-                                                            <AvatarFallback>
+                                                            <AvatarFallback className="rounded-md">
                                                                 {username?.[0]?.toUpperCase() || "A"}
                                                             </AvatarFallback>
                                                         )}
                                                     </Avatar>
-                                                    <div>
-                                                        {/* mostrar upload somente em modo edição */}
-                                                        {profileEditing ? (
-                                                            <>
-                                                                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-                                                                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                                                                    <Transl>Fazer upload</Transl>
-                                                                </Button>
-                                                            </>
-                                                        ) : null}
-                                                    </div>
+                                                    {/* Página somente leitura - sem upload */}
                                                 </div>
                                             </div>
                                             <div>
                                                 <Label className={"pb-3 font-bold"} htmlFor="nome"><Transl>Nome completo</Transl></Label>
-                                                {profileEditing ? (
-                                                    <>
-                                                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Digite seu nome completo.</Transl>
-                                                        </p>
-                                                    </>
-
-                                                ) : (<p className="text-sm text-foreground">{nome || "Nome não informado"}</p>)}
+                                                <p className="text-sm text-foreground">{nome || "Nome não informado"}</p>
 
                                             </div>
 
@@ -290,39 +280,16 @@ export default function SettingsPage() {
                                                 <Label className="pb-3 font-bold" htmlFor="emailInput">
                                                     <Transl>Email</Transl>
                                                 </Label>
-
-                                                {profileEditing ? (
-                                                    <>
-                                                        <Input
-                                                            id="emailInput"
-                                                            type="email"
-                                                            value={emailSelect}
-                                                            onChange={(e) => setEmailSelect(e.target.value)}
-                                                        />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Gerencie seus emails.</Transl>
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <p className="text-sm text-foreground">
-                                                        {emailSelect || "Email não informado"}
-                                                    </p>
-                                                )}
+                                                <p className="text-sm text-foreground">
+                                                    {emailSelect || "Email não informado"}
+                                                </p>
                                             </div>
 
                                             <div>
                                                 <Label className={"pb-3 font-bold"} htmlFor="telefone"><Transl>Telefone</Transl></Label>
-                                                {profileEditing ? (
-                                                    <><Input id="telefone" value={formatarTelefoneBR(telefone)} onChange={(e) => { const value = e.target.value; if (value === "" || regexTelefone.test(value)) { setTelefone(value); } }} />
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            <Transl>Telefone de contato.</Transl>
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <p className="text-sm text-foreground">
-                                                        {telefone ? formatarTelefoneBR(telefone) : "Telefone não informado"}
-                                                    </p>
-                                                )}
+                                                <p className="text-sm text-foreground">
+                                                    {telefone ? formatarTelefoneBR(telefone) : "Telefone não informado"}
+                                                </p>
 
                                             </div>
 
@@ -352,14 +319,7 @@ export default function SettingsPage() {
                                                 </div>
                                             </div> */}
 
-                                            <div className="pt-3">
-                                                {profileEditing ? (
-                                                    <div className="flex gap-2">
-                                                        <Button onClick={saveProfile}><Transl>Salvar</Transl></Button>
-                                                        <Button variant="outline" onClick={cancelProfileEdit}><Transl>Cancelar</Transl></Button>
-                                                    </div>
-                                                ) : (<Button onClick={() => setProfileEditing(true)}><Transl>Editar perfil</Transl></Button>)}
-                                            </div>
+                                            {/* Página somente leitura - sem edição */}
                                         </div>
                                     </div>
                                 </div>
@@ -391,7 +351,7 @@ export default function SettingsPage() {
                                     {/* Language selector */}
                                     <div className="flex items-center gap-2">
                                         <Label htmlFor="language-select" className="hidden md:inline-block font-bold"><Transl>Idioma</Transl></Label>
-                                        <Select value={lang} onValueChange={(v) => changeLang(v)}>
+                                        <Select value={localLang} onValueChange={(v) => setLocalLang(v)}>
                                             <SelectTrigger id="language-select" className="w-40">
                                                 <SelectValue />
                                             </SelectTrigger>
@@ -419,7 +379,9 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="pt-2">
-                                        <Button onClick={savePreferences}><Transl>Salvar preferências</Transl></Button> 
+                                        <Button onClick={savePreferences} disabled={!isPreferencesDirty} aria-disabled={!isPreferencesDirty}>
+                                            <Transl>Salvar preferências</Transl>
+                                        </Button>
                                     </div>
                                 </div>
                             </>
