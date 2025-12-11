@@ -38,7 +38,24 @@ export async function getLotePorTipo(tipo) {
   }
 }
 
-
+export const verLote = async (id) => {
+  try {
+    const lote = await prisma.lote.findUnique({
+      where: { id: Number(id) }
+    });
+    return {
+      sucesso: true,
+      lote,
+      message: "Lote encontrado com sucesso!!",
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      message: "Erro ao encontrar lote!!",
+      error: error.message,
+    }
+  }
+}
 
 // nao funciona pq n existe a coluna dataFabricacao, q é necessaria para listar os lotes criados
 // export async function getLotePorDataCriacao(ano, produtoId) { // testar

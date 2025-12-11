@@ -206,6 +206,47 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
     }
   }
 
+  // Helpers: formatting masks for display only (we will strip non-digits when sending to backend)
+  const formatCnpjCpf = (value) => {
+    if (!value) return ''
+    const digits = String(value).replace(/\D/g, '')
+    if (digits.length <= 11) {
+      // CPF: 000.000.000-00
+      return digits
+        .replace(/^(\d{3})(\d)/, '$1.$2')
+        .replace(/^(\d{3}\.\d{3})(\d)/, '$1.$2')
+        .replace(/^(\d{3}\.\d{3}\.\d{3})(\d)/, '$1-$2')
+        .slice(0, 14)
+    }
+    // CNPJ: 00.000.000/0000-00
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2}\.\d{3})(\d)/, '$1.$2')
+      .replace(/^(\d{2}\.\d{3}\.\d{3})(\d)/, '$1/$2')
+      .replace(/^(\d{2}\.\d{3}\.\d{3}\/\d{4})(\d)/, '$1-$2')
+      .slice(0, 18)
+  }
+
+  const formatPhone = (value) => {
+    if (!value) return ''
+    const digits = String(value).replace(/\D/g, '')
+    // keep up to 11 digits (DD + 9XXXX...)
+    const d = digits.slice(0, 11)
+    if (d.length <= 2) return d
+    if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`
+    if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`
+    // 11 digits (9xxxx-xxxx)
+    return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
+  }
+
+  const handleCnpjCpfChange = (e) => {
+    setNovoCnpjCpf(formatCnpjCpf(e.target.value))
+  }
+
+  const handleTelefoneChange = (e) => {
+    setNovoTelefone(formatPhone(e.target.value))
+  }
+
   useEffect(() => {
     loadFornecedores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -222,9 +263,10 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
          unidadeId: unidadeId,
         nomeEmpresa: novoNomeEmpresa,
         descricaoEmpresa: novoDescricaoEmpresa,
-        cnpjCpf: novoCnpjCpf,
+        // send raw numeric values to backend (strip mask)
+        cnpjCpf: String(novoCnpjCpf || '').replace(/\D/g, '') || null,
         email: novoEmail || null,
-        telefone: novoTelefone,
+        telefone: String(novoTelefone || '').replace(/\D/g, '') || null,
         endereco: novoEndereco || null,
         status: novoStatus || 'ATIVO'
       };
@@ -354,11 +396,11 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>CNPJ / CPF *</Label>
-                    <Input value={novoCnpjCpf} onChange={(e) => setNovoCnpjCpf(e.target.value)} />
+                    <Input inputMode="numeric" placeholder="000.000.000-00 ou 00.000.000/0000-00" value={novoCnpjCpf} onChange={handleCnpjCpfChange} />
                   </div>
                   <div>
                     <Label>Telefone *</Label>
-                    <Input value={novoTelefone} onChange={(e) => setNovoTelefone(e.target.value)} />
+                    <Input inputMode="tel" placeholder="(00) 90000-0000" value={novoTelefone} onChange={handleTelefoneChange} />
                   </div>
                 </div>
                   <div>

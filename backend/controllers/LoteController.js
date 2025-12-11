@@ -39,7 +39,23 @@ export async function getLotePorTipoController(req, res) {
   }
 }
 
-
+export const verLoteController = async (req, res) =>{
+  try{
+    const id = req.params.id;
+    const lote =  await getLotePorId(id);
+    return res.status(200).json({
+      sucesso: true,
+      lote,
+      message: "Lote obtido com sucesso!"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      message: "Erro ao obter lote!",
+      error: error.message
+    });
+  }
+}
 
 // nao funciona pq n existe a coluna dataFabricacao, q é necessaria para listar os lotes criados
 // export async function getLotePorDataCriacaoController(req, res) {
