@@ -36,6 +36,13 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
   const [perPage, setPerPage] = useState(10);
   const isReadOnly = !!readOnly;
   const notifyReadOnly = () => toast({ title: 'Modo somente leitura', description: 'O gerente da matriz pode apenas visualizar os lançamentos desta unidade.', variant: 'secondary' });
+  
+  // Estados para modal de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteConfirmError, setDeleteConfirmError] = useState('');
+  const [deleteStep, setDeleteStep] = useState('confirm'); // confirm | input
 
   // Função auxiliar para converter data (reutilizável)
   const converterDataParaISO = (dataValue) => {
@@ -329,6 +336,14 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         contaData.status = 'PAGA';
       }
       
+      // Log detalhado para debug
+      console.debug('[AccountsPayable] Dados a enviar (CREATE):', {
+        ...contaData,
+        paymentDateOriginal: formData.paymentDate,
+        pagamentoValidado,
+        hasDataPagamento: !!contaData.dataPagamento
+      });
+      
       // Corrigir URL para usar o padrão correto (sem /api/ duplicado)
       const url = API_URL ? `${API_URL}contas-financeiras` : '/api/contas-financeiras';
       console.debug('[AccountsPayable] POST', url, contaData);
@@ -385,26 +400,33 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
 
         // Recarregar dados do backend
         if (onRefresh) {
-          await onRefresh('payable');
-          // Garantir toast após o refresh
-          toast({ title: 'Sucesso!', description: 'Conta a pagar criada com sucesso.', variant: 'default' });
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(async () => {
+            await onRefresh('payable');
+          }, 300);
         } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
-          await fetchWithAuth.__loadContas();
-          toast({ title: 'Sucesso!', description: 'Conta a pagar criada com sucesso.', variant: 'default' });
+          setTimeout(async () => {
+            await fetchWithAuth.__loadContas();
+          }, 300);
         } else {
+          // Se não houver refresh, criar conta local com dados do backend
           const today = new Date().toISOString().split('T')[0];
-          const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
+          // Priorizar dados do backend, depois pagamento validado, depois formData
+          const paymentDateFromBackend = result.dados?.dataPagamento ? converterDataParaISO(result.dados.dataPagamento) : null;
+          const finalPaymentDate = paymentDateFromBackend || pagamentoValidado || (formData.paymentDate ? converterDataParaISO(formData.paymentDate) : null);
+          const status = finalPaymentDate ? 'paid' : (vencimentoValidado && vencimentoValidado < today ? 'overdue' : 'pending');
           const newAccount = {
             id: result.dados?.id?.toString() || `temp-${Date.now()}`,
-            competencyDate: competenciaValidada || formData.competencyDate,
-            dueDate: vencimentoValidado || formData.dueDate,
-            paymentDate: pagamentoValidado || formData.paymentDate || undefined,
-            amount: parseFloat(formData.amount),
+            competencyDate: competenciaValidada || (result.dados?.competencia ? converterDataParaISO(result.dados.competencia) : formData.competencyDate),
+            dueDate: vencimentoValidado || (result.dados?.vencimento ? converterDataParaISO(result.dados.vencimento) : formData.dueDate),
+            paymentDate: finalPaymentDate || null, // Garantir que seja null se não houver
+            amount: parseFloat(result.dados?.valor || formData.amount),
             categoryId: result.dados?.categoriaId ? String(result.dados.categoriaId) : null,
             subcategoryId: formData.subcategoryId,
-            description: formData.description,
+            description: result.dados?.descricao || formData.description,
             status
           };
+          console.debug('[AccountsPayable] Nova conta criada:', { paymentDate: newAccount.paymentDate, finalPaymentDate, pagamentoValidado, paymentDateFromBackend });
           setLocalAccounts(prev => {
             const updated = [newAccount, ...prev];
             if (onAccountsChange) onAccountsChange(updated);
@@ -441,10 +463,30 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     }
     setEditingAccount(account);
     const subId = account.subcategoryId || account.categoryId || '';
+    
+    // Converter paymentDate para formato YYYY-MM-DD se existir
+    let paymentDateFormatted = '';
+    if (account.paymentDate) {
+      try {
+        const date = new Date(account.paymentDate);
+        if (!isNaN(date.getTime())) {
+          paymentDateFormatted = date.toISOString().split('T')[0];
+        } else {
+          // Tentar converter de formato string
+          const normalized = converterDataParaISO(account.paymentDate);
+          if (normalized) {
+            paymentDateFormatted = normalized;
+          }
+        }
+      } catch (e) {
+        console.warn('[AccountsPayable] Erro ao formatar paymentDate:', e);
+      }
+    }
+    
     setFormData({
-      competencyDate: account.competencyDate,
-      dueDate: account.dueDate,
-      paymentDate: account.paymentDate || '',
+      competencyDate: account.competencyDate || '',
+      dueDate: account.dueDate || '',
+      paymentDate: paymentDateFormatted,
       amount: account.amount != null ? String(account.amount) : '',
       subcategoryId: subId ? String(subId) : '',
       description: account.description || '',
@@ -519,7 +561,27 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       if (pagamentoValidado) {
         contaData.dataPagamento = pagamentoValidado;
         contaData.status = 'PAGA';
+      } else if (formData.paymentDate && formData.paymentDate.trim() !== '') {
+        // Se o usuário preencheu mas não passou na validação, tentar converter novamente
+        const paymentDateRetry = validarData(formData.paymentDate);
+        if (paymentDateRetry) {
+          contaData.dataPagamento = paymentDateRetry;
+          contaData.status = 'PAGA';
+        }
+      } else {
+        // Se não há data de pagamento, remover o campo para não sobrescrever
+        contaData.dataPagamento = null;
+        // Não alterar status se não houver dataPagamento
+        delete contaData.status;
       }
+      
+      // Log detalhado para debug
+      console.debug('[AccountsPayable] Dados a enviar (UPDATE):', {
+        ...contaData,
+        paymentDateOriginal: formData.paymentDate,
+        pagamentoValidado,
+        hasDataPagamento: !!contaData.dataPagamento
+      });
 
       const url = API_URL ? `${API_URL}contas-financeiras/${editingAccount.id}` : `/api/contas-financeiras/${editingAccount.id}`;
       console.debug('[AccountsPayable] PUT', url, contaData);
@@ -545,11 +607,14 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
         });
 
         if (onRefresh) {
-          await onRefresh('payable');
-          toast({ title: 'Sucesso!', description: 'Conta a pagar atualizada com sucesso.', variant: 'default' });
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(async () => {
+            await onRefresh('payable');
+          }, 300);
         } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
-          await fetchWithAuth.__loadContas();
-          toast({ title: 'Sucesso!', description: 'Conta a pagar atualizada com sucesso.', variant: 'default' });
+          setTimeout(async () => {
+            await fetchWithAuth.__loadContas();
+          }, 300);
         } else {
           const today = new Date().toISOString().split('T')[0];
           const status = formData.paymentDate ? 'paid' : formData.dueDate < today ? 'overdue' : 'pending';
@@ -584,13 +649,31 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
     }
   };
 
-  const handleDelete = async (id) => {
-    if (isReadOnly) {
-      notifyReadOnly();
+  const openDeleteDialog = (id) => {
+    setDeleteTargetId(id);
+    setDeleteConfirmText('');
+    setDeleteConfirmError('');
+    setDeleteStep('confirm');
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteStep === 'confirm') {
+      setDeleteStep('input');
       return;
     }
+
+    if (deleteConfirmText !== 'Excluir') {
+      setDeleteConfirmError('Digite "Excluir" para confirmar.');
+      return;
+    }
+    setDeleteConfirmError('');
+    setDeleteDialogOpen(false);
+
+    if (!deleteTargetId) return;
+
     try {
-      const url = API_URL ? `${API_URL}contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
+      const url = API_URL ? `${API_URL}contas-financeiras/${deleteTargetId}` : `/api/contas-financeiras/${deleteTargetId}`;
       console.debug('[AccountsPayable] DELETE', url);
       
       const response = await fetchWithAuth(url, {
@@ -612,13 +695,11 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
 
       if (onRefresh) {
         await onRefresh('payable');
-        toast({ title: 'Sucesso!', description: 'Conta a pagar deletada com sucesso.', variant: 'default' });
       } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
         await fetchWithAuth.__loadContas();
-        toast({ title: 'Sucesso!', description: 'Conta a pagar deletada com sucesso.', variant: 'default' });
       } else {
         setLocalAccounts(prev => {
-          const updated = prev.filter(acc => acc.id !== id);
+          const updated = prev.filter(acc => acc.id !== deleteTargetId);
           if (onAccountsChange) onAccountsChange(updated);
           return updated;
         });
@@ -1028,7 +1109,9 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       if (selectedYear) params.set('ano', String(selectedYear));
       params.set('tipoMovimento', 'SAIDA');
 
-      const url = `${API_URL}contas-financeiras/exportar/csv?${params.toString()}`;
+      // Verificar se API_URL já termina com / e ajustar
+      const baseUrl = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+      const url = `${baseUrl}contas-financeiras/exportar/csv?${params.toString()}`;
       console.debug('[AccountsPayable] GET CSV', url);
       console.debug('[AccountsPayable] Token disponível:', !!fetchWithAuth);
       
@@ -1101,6 +1184,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
       });
     }
   };
+
 
   return (
     <div className="space-y-6">
@@ -1296,7 +1380,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                           <Label className={"pb-3"}>Subcategoria</Label>
                           <Select value={formData.subcategoryId} onValueChange={(value) => { setFormData({ ...formData, subcategoryId: value }); setFormErrors(prev => ({ ...prev, subcategoryId: '' })); }}>
                             <SelectTrigger className={formErrors.subcategoryId ? 'border-destructive' : ''}><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-[200px] overflow-auto">
                               {exitCategories.map(category => (
                                 <React.Fragment key={category.id}>
                                   {category.subcategories.filter(sub => sub && sub.id).map(subcategory => (
@@ -1370,21 +1454,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm" disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                    <AlertDialogDescription>Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}>Excluir</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(account.id)} disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1501,7 +1571,7 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
                 <Label>Subcategoria</Label>
                 <Select value={formData.subcategoryId} onValueChange={(value) => { setFormData({ ...formData, subcategoryId: value }); setFormErrors(prev => ({ ...prev, subcategoryId: '' })); }}>
                   <SelectTrigger className={formErrors.subcategoryId ? 'border-destructive' : ''}><SelectValue placeholder="Selecione uma subcategoria" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px] overflow-auto">
                     {exitCategories.map(category => (
                       <React.Fragment key={category.id}>
                         {category.subcategories.filter(sub => sub && sub.id).map(subcategory => (
@@ -1525,6 +1595,43 @@ export function AccountsPayable({ accounts, categories, onAccountsChange, fetchW
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); resetForm(); }}>Cancelar</Button>
             <Button onClick={handleUpdate}>Salvar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) {
+          setDeleteStep('confirm');
+          setDeleteConfirmText('');
+          setDeleteConfirmError('');
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Você tem certeza que deseja excluir esse item? A ação não poderá ser desfeita.</DialogTitle>
+            {deleteStep === 'confirm' ? (
+              <DialogDescription>Essa ação removerá o item permanentemente.</DialogDescription>
+            ) : (
+              <DialogDescription>Digite <strong>Excluir</strong> para confirmar.</DialogDescription>
+            )}
+          </DialogHeader>
+          {deleteStep === 'input' && (
+            <div className="space-y-3">
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => { setDeleteConfirmText(e.target.value); setDeleteConfirmError(''); }}
+                placeholder='Digite "Excluir"'
+              />
+              {deleteConfirmError && <p className="text-sm text-destructive">{deleteConfirmError}</p>}
+            </div>
+          )}
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+            <Button variant={deleteStep === 'confirm' ? "default" : "destructive"} onClick={confirmDelete}>
+              {deleteStep === 'confirm' ? 'Prosseguir' : 'Excluir'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

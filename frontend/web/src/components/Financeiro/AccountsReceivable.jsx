@@ -38,6 +38,13 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
   const [perPage, setPerPage] = useState(10);
   const isReadOnly = !!readOnly;
   const notifyReadOnly = () => toast({ title: 'Modo somente leitura', description: 'O gerente da matriz pode apenas visualizar os lançamentos desta unidade.', variant: 'secondary' });
+  
+  // Estados para modal de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteConfirmError, setDeleteConfirmError] = useState('');
+  const [deleteStep, setDeleteStep] = useState('confirm'); // confirm | input
 
   useEffect(() => {if (Array.isArray(accounts) && accounts.length >= 0) setLocalAccounts(accounts);}, [accounts]);  // sincroniza prop `accounts` caso mude externamente
 
@@ -72,9 +79,26 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         
         if (mounted) {
           const contasMapeadas = lista.map(c => {
+            // Normalizar competencyDate para formato YYYY-MM-DD
+            let competencyDate = '';
+            if (c.competencia) {
+              try {
+                const date = new Date(c.competencia);
+                if (!isNaN(date.getTime())) {
+                  competencyDate = date.toISOString().split('T')[0];
+                } else {
+                  competencyDate = String(c.competencia);
+                }
+              } catch (e) {
+                competencyDate = String(c.competencia || '');
+              }
+            } else if (c.competencyDate) {
+              competencyDate = String(c.competencyDate);
+            }
+            
             return {
               id: String(c.id),
-              competencyDate: c.competencia ?? c.competencyDate ?? '',
+              competencyDate: competencyDate,
               amount: Number(c.valor ?? c.amount ?? 0),
               categoryId: c.categoriaId ? String(c.categoriaId) : null,
               subcategoryId: c.subcategoriaId ? String(c.subcategoriaId) : null,
@@ -200,11 +224,19 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         toast({ title: "Sucesso!", description: "Receita criada com sucesso.", variant: "default" });
         setFormErrors({});
 
+        // Sempre recarregar dados do backend para garantir consistência
         if (onRefresh) {
           await onRefresh('receivable');
-        } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
-          await fetchWithAuth.__loadContas();
-        } else {
+        }
+        // Sempre chamar __loadContas para garantir atualização
+        if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(() => {
+            fetchWithAuth.__loadContas();
+          }, 200);
+        }
+        if (!onRefresh && !(fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function')) {
+          // Fallback apenas se não houver refresh disponível
           const created = result.dados || null;
           // normalize competency dates so the client-side filter matches immediately
           const normalizeCompetency = (raw) => {
@@ -263,7 +295,32 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
     }
     setEditingAccount(account);
     const subId = account.subcategoryId || account.categoryId || '';
-    setFormData({competencyDate: account.competencyDate,amount: account.amount != null ? account.amount.toString() : '',subcategoryId: subId ? String(subId) : '',description: account.description});
+    // Garantir que a data de competência esteja no formato correto para o input type="date" (YYYY-MM-DD)
+    let competencyDateFormatted = account.competencyDate || '';
+    if (competencyDateFormatted) {
+      try {
+        const date = new Date(competencyDateFormatted);
+        if (!isNaN(date.getTime())) {
+          competencyDateFormatted = date.toISOString().split('T')[0];
+        } else if (typeof competencyDateFormatted === 'string' && competencyDateFormatted.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // Já está no formato correto
+        } else {
+          // Tentar converter de DD/MM/YYYY ou outros formatos
+          const normalized = validarData(competencyDateFormatted);
+          if (normalized) {
+            competencyDateFormatted = normalized;
+          }
+        }
+      } catch (e) {
+        console.warn('[AccountsReceivable] Erro ao formatar data de competência:', e);
+      }
+    }
+    setFormData({
+      competencyDate: competencyDateFormatted,
+      amount: account.amount != null ? account.amount.toString() : '',
+      subcategoryId: subId ? String(subId) : '',
+      description: account.description || ''
+    });
     setFormErrors({});
     setIsEditDialogOpen(true);
   };
@@ -321,12 +378,22 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
 
       if (result.sucesso) {
         toast({ title: "Sucesso!", description: "Receita atualizada com sucesso.", variant: "default" });
-        // operação bem sucedida — atualizar lista e fechar modal
+        // Sempre recarregar do backend para garantir dados atualizados
         if (onRefresh) {
-          await onRefresh('receivable');
-        } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
-          await fetchWithAuth.__loadContas();
-        } else {
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(async () => {
+            await onRefresh('receivable');
+          }, 300);
+        }
+        // Sempre chamar __loadContas para garantir atualização
+        if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(() => {
+            fetchWithAuth.__loadContas();
+          }, 300);
+        }
+        if (!onRefresh && !(fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function')) {
+          // Fallback apenas se não houver refresh disponível
           const updatedAccount = {
             ...editingAccount,
             competencyDate: validarData(formData.competencyDate) || formData.competencyDate || '',
@@ -355,13 +422,31 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
     }
   };
 
-  const handleDelete = async (id) => {
-    if (isReadOnly) {
-      notifyReadOnly();
+  const openDeleteDialog = (id) => {
+    setDeleteTargetId(id);
+    setDeleteConfirmText('');
+    setDeleteConfirmError('');
+    setDeleteStep('confirm');
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteStep === 'confirm') {
+      setDeleteStep('input');
       return;
     }
+
+    if (deleteConfirmText !== 'Excluir') {
+      setDeleteConfirmError('Digite "Excluir" para confirmar.');
+      return;
+    }
+    setDeleteConfirmError('');
+    setDeleteDialogOpen(false);
+
+    if (!deleteTargetId) return;
+
     try {
-      const url = API_URL ? `${API_URL}contas-financeiras/${id}` : `/api/contas-financeiras/${id}`;
+      const url = API_URL ? `${API_URL}contas-financeiras/${deleteTargetId}` : `/api/contas-financeiras/${deleteTargetId}`;
       const response = await fetchWithAuth(url, {method: 'DELETE',credentials: 'include',headers: { 'Content-Type': 'application/json', },});
 
       const result = await response.json().catch(() => ({}));
@@ -377,13 +462,23 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
         variant: "default",
       });
 
-      if (onRefresh) {
-        await onRefresh('receivable');
-      } else if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
-        await fetchWithAuth.__loadContas();
-      } else {
+        // Sempre recarregar do backend para garantir dados atualizados
+        if (onRefresh) {
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(async () => {
+            await onRefresh('receivable');
+          }, 300);
+        }
+        // Sempre chamar __loadContas para garantir atualização
+        if (fetchWithAuth && typeof fetchWithAuth.__loadContas === 'function') {
+          // Aguardar um pouco para garantir que o backend processou
+          setTimeout(() => {
+            fetchWithAuth.__loadContas();
+          }, 300);
+        } else if (!onRefresh) {
+        // Fallback apenas se não houver refresh disponível
         setLocalAccounts(prev => {
-          const updated = prev.filter(acc => acc.id !== id);
+          const updated = prev.filter(acc => acc.id !== deleteTargetId);
           if (onAccountsChange) onAccountsChange(updated);
           console.debug('[AccountsReceivable] localAccounts after delete:', updated.map(a => ({ id: a.id, competencyDate: a.competencyDate })));
           return updated;
@@ -742,7 +837,9 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       if (selectedYear) params.set('ano', String(selectedYear));
       params.set('tipoMovimento', 'ENTRADA');
 
-      const url = `${API_URL}contas-financeiras/exportar/csv?${params.toString()}`;
+      // Verificar se API_URL já termina com / e ajustar
+      const baseUrl = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+      const url = `${baseUrl}contas-financeiras/exportar/csv?${params.toString()}`;
       console.debug('[AccountsReceivable] GET CSV', url);
       
       const response = await fetchWithAuth(url, { 
@@ -812,7 +909,9 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       if (selectedYear) params.set('ano', String(selectedYear));
       params.set('tipoMovimento', 'ENTRADA');
 
-      const url = `${API_URL}contas-financeiras/exportar/excel?${params.toString()}`;
+      // Verificar se API_URL já termina com / e ajustar
+      const baseUrl = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+      const url = `${baseUrl}contas-financeiras/exportar/excel?${params.toString()}`;
       console.debug('[AccountsReceivable] GET Excel', url);
       
       const response = await fetchWithAuth(url, { 
@@ -861,6 +960,95 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
       });
       // Fallback para exportação local
       gerarExcelLocal();
+    }
+  };
+
+  const exportarPDFBackend = async () => {
+    if (!fetchWithAuth || !API_URL) {
+      toast({
+        title: "Erro de configuração",
+        description: "Função de autenticação não disponível.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.set('mes', String(selectedMonth));
+      if (selectedYear) params.set('ano', String(selectedYear));
+      params.set('tipoMovimento', 'ENTRADA');
+
+      // Verificar se API_URL já termina com / e ajustar
+      const baseUrl = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+      const url = `${baseUrl}contas-financeiras/exportar/pdf?${params.toString()}`;
+      console.debug('[AccountsReceivable] GET PDF', url);
+      
+      const response = await fetchWithAuth(url, { 
+        method: 'GET', 
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/pdf, application/json',
+        }
+      });
+
+      if (!response.ok) {
+        let errorText = '';
+        try {
+          errorText = await response.text();
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorText = errorJson.mensagem || errorJson.erro || errorJson.message || errorText;
+          } catch {
+            // Não é JSON, usar texto direto
+          }
+        } catch {
+          errorText = `Erro HTTP ${response.status}`;
+        }
+        console.error('[AccountsReceivable] Erro ao exportar PDF:', response.status, errorText);
+        
+        toast({
+          title: "Erro ao exportar PDF",
+          description: errorText || `Erro HTTP ${response.status}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      const urlBlob = URL.createObjectURL(blob);
+      
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const monthName = getSelectedMonthName().replace(/\s+/g, '-').toLowerCase().trim();
+      let filename = `receitas_${monthName}_${selectedYear}_${new Date().getTime()}.pdf`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1].trim();
+        }
+      }
+      
+      link.setAttribute('href', urlBlob);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "PDF exportado com sucesso",
+        description: `Arquivo "${filename}" baixado com sucesso.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('[AccountsReceivable] Erro ao exportar PDF do backend:', error);
+      toast({
+        title: "Erro ao exportar PDF",
+        description: "Erro ao exportar do servidor. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1174,21 +1362,7 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button variant="ghost" size="sm" onClick={() => handleEdit(account)} disabled={isReadOnly}><Edit className="h-4 w-4" /></Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(account.id)} disabled={isReadOnly}>Excluir</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(account.id)} disabled={isReadOnly}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1311,6 +1485,43 @@ export function AccountsReceivable({ accounts, categories, onAccountsChange, fet
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); resetForm(); }}>Cancelar</Button>
             <Button onClick={handleUpdate}>Salvar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) {
+          setDeleteStep('confirm');
+          setDeleteConfirmText('');
+          setDeleteConfirmError('');
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Você tem certeza que deseja excluir esse item? A ação não poderá ser desfeita.</DialogTitle>
+            {deleteStep === 'confirm' ? (
+              <DialogDescription>Essa ação removerá o item permanentemente.</DialogDescription>
+            ) : (
+              <DialogDescription>Digite <strong>Excluir</strong> para confirmar.</DialogDescription>
+            )}
+          </DialogHeader>
+          {deleteStep === 'input' && (
+            <div className="space-y-3">
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => { setDeleteConfirmText(e.target.value); setDeleteConfirmError(''); }}
+                placeholder='Digite "Excluir"'
+              />
+              {deleteConfirmError && <p className="text-sm text-destructive">{deleteConfirmError}</p>}
+            </div>
+          )}
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+            <Button variant={deleteStep === 'confirm' ? "default" : "destructive"} onClick={confirmDelete}>
+              {deleteStep === 'confirm' ? 'Prosseguir' : 'Excluir'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -84,6 +84,7 @@ export const criarContaFinanceira = async (dados) => {
       valor,
       competencia,
       vencimento,
+      dataPagamento = null,
       parcela = null,
       totalParcelas = null,
       documento = null,
@@ -108,8 +109,17 @@ export const criarContaFinanceira = async (dados) => {
     }
 
     // Para ENTRADA, status é sempre RECEBIDA (não há pendência)
-    // Para SAIDA, status é PENDENTE
-    const statusInicial = tipoMovimento === 'ENTRADA' ? 'PAGA' : 'PENDENTE';
+    // Para SAIDA, status é PENDENTE, mas se houver dataPagamento, é PAGA
+    let statusInicial = tipoMovimento === 'ENTRADA' ? 'PAGA' : 'PENDENTE';
+    
+    // Validar e converter dataPagamento se fornecida
+    let dataPagamentoDate = null;
+    if (dataPagamento) {
+      dataPagamentoDate = validarEConverterData(dataPagamento, false);
+      if (dataPagamentoDate && tipoMovimento === 'SAIDA') {
+        statusInicial = 'PAGA';
+      }
+    }
 
     const conta = await prisma.financeiro.create({
       data: {
@@ -123,6 +133,7 @@ export const criarContaFinanceira = async (dados) => {
         valor: parseFloat(valor),
         competencia: competenciaDate,
         vencimento: vencimentoDate,
+        dataPagamento: dataPagamentoDate,
         parcela,
         totalParcelas,
         documento,
@@ -352,9 +363,24 @@ export const atualizarContaFinanceira = async (contaId, dados) => {
       const vencimentoDate = validarEConverterData(vencimento, true);
       if (vencimentoDate) dataAtualizacao.vencimento = vencimentoDate;
     }
-    if (dataPagamento) {
-      const dataPagamentoDate = validarEConverterData(dataPagamento, false);
-      if (dataPagamentoDate) dataAtualizacao.dataPagamento = dataPagamentoDate;
+    if (dataPagamento !== undefined) {
+      if (dataPagamento === null || dataPagamento === '') {
+        // Se dataPagamento for null ou string vazia, remover a data de pagamento
+        dataAtualizacao.dataPagamento = null;
+        // Se remover dataPagamento e status não foi explicitamente definido, voltar para PENDENTE
+        if (!status) {
+          dataAtualizacao.status = 'PENDENTE';
+        }
+      } else {
+        const dataPagamentoDate = validarEConverterData(dataPagamento, false);
+        if (dataPagamentoDate) {
+          dataAtualizacao.dataPagamento = dataPagamentoDate;
+          // Se há dataPagamento e status não foi explicitamente definido, marcar como PAGA
+          if (!status) {
+            dataAtualizacao.status = 'PAGA';
+          }
+        }
+      }
     }
     if (status) dataAtualizacao.status = status;
     if (documento) dataAtualizacao.documento = documento;
