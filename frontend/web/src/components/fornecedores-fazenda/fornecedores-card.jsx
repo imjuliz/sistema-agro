@@ -4,18 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import CreateContratoModal from './CreateContratoModal';
 import { LayoutGrid, List, Search, Plus, ShoppingCart, Eye, Trash } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+export default function FornecedoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false, unidadeId: unidadeIdProp = null }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();
-    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+    // Priorizar unidadeIdProp se fornecido (ex: quando vindo de matriz com fazenda específica), senão usar do contexto
+    const unidadeId = unidadeIdProp ?? user?.unidadeId ?? user?.unidade?.id ?? null;
 
     // Small local state to hide removed suppliers without forcing parent refresh
     const [removedIds, setRemovedIds] = useState(new Set());
@@ -24,6 +27,11 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     const [selectedContratoDetalhes, setSelectedContratoDetalhes] = useState(null);
     const [showContratoDetalhesModal, setShowContratoDetalhesModal] = useState(false);
     const [loadingContratoDetalhes, setLoadingContratoDetalhes] = useState(false);
+    // Modal para confirmar exclusão de contrato
+    const [showDeleteContratoConfirm, setShowDeleteContratoConfirm] = useState(false);
+    const [deletingContrato, setDeletingContrato] = useState(false);
+    // Modal para criar contrato (quando MATRIZ visualiza fazenda) - only keep open state here
+    const [showCreateContratoModal, setShowCreateContratoModal] = useState(false);
 
     const isUserGerenteMatriz = (() => {
         if (!user) return false;
@@ -39,7 +47,6 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
     })();
 
     const handleEdit = async (supplier) => {
-        if (!isUserGerenteMatriz) return alert('Apenas GERENTE_MATRIZ pode editar fornecedores.');
         const id = supplier.id ?? supplier.raw?.id ?? supplier.raw?.ID;
         if (!id) return alert('Fornecedor sem ID — não é possível editar.');
 
@@ -107,6 +114,37 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
             setLoadingContratoDetalhes(false);
         }
     };
+
+    const handleDeleteContrato = async () => {
+        if (!selectedContratoDetalhes?.id) return alert('Contrato sem ID — não é possível excluir.');
+        
+        setDeletingContrato(true);
+        try {
+            const base = String(API_URL || '/api').replace(/\/$/, '');
+            const res = await fetchWithAuth(`${base}/contratos/${selectedContratoDetalhes.id}`, { method: 'DELETE' });
+            
+            if (!res.ok) {
+                const text = await res.text().catch(() => null);
+                throw new Error(text || `HTTP ${res.status}`);
+            }
+            
+            // Sucesso: fechar modais e atualizar
+            setShowDeleteContratoConfirm(false);
+            setShowContratoDetalhesModal(false);
+            setSelectedContratoDetalhes(null);
+            try { router.refresh(); } catch (e) { /* ignore */ }
+            alert('Contrato excluído com sucesso');
+        } catch (err) {
+            console.error('[FornecedoresCard] Erro ao excluir contrato:', err);
+            alert('Erro ao excluir contrato: ' + (err?.message || err));
+        } finally {
+            setDeletingContrato(false);
+        }
+    };
+
+    // fornecedor loading handled in CreateContratoModal
+
+    // enviarContrato handled inside CreateContratoModal; onSuccess we refresh below
 
     // Normalize incoming suppliers into a predictable shape
     const suppliers = (fornecedores || []).map(s => ({
@@ -415,7 +453,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                     <button onClick={() => setContractsViewMode('table')} className={`p-2 ${contractsViewMode === 'table' ? 'bg-muted rounded' : ''}`} title="table"><List className="h-4 w-4" /></button>
                 </div>
 
-                {isUserGerenteMatriz && <Button><Plus />Editar contrato</Button>}
+                {isUserGerenteMatriz && <Button onClick={() => setShowCreateContratoModal(true)}><Plus /> Criar Contrato</Button>}
             </div>
         </header>
     );
@@ -424,8 +462,28 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(() => {
                 const allContratos = (Array.isArray(contratos) ? contratos : contratos?.contratos) || [];
+                
+                // Debug: Log do estado atual
+                if (allContratos.length > 0) {
+                    console.log('[FornecedoresCard] Total contratos recebidos:', allContratos.length);
+                    console.log('[FornecedoresCard] unidadeId atual:', unidadeId);
+                    console.log('[FornecedoresCard] Primeiro contrato exemplo:', allContratos[0]);
+                }
+                
                 // FILTRO: Mostrar apenas contratos onde esta unidade é CONSUMIDORA (unidadeId = unidadeAtual)
-                const contratosConsumidor = allContratos.filter(c => c.unidadeId === Number(unidadeId));
+                // Suportar tanto unidadeId numérico quanto string
+                const contratosConsumidor = allContratos.filter(c => {
+                    const contratoUnitadeId = Number(c.unidadeId);
+                    const atualUnitadeId = Number(unidadeId);
+                    const matches = contratoUnitadeId === atualUnitadeId;
+                    if (allContratos.length > 0 && !matches) {
+                        console.log(`[FornecedoresCard] Contrato ${c.id} descartado: contratoUnitadeId=${contratoUnitadeId} !== atualUnitadeId=${atualUnitadeId}`);
+                    }
+                    return matches;
+                });
+                
+                console.log('[FornecedoresCard] Contratos após filtro de unidadeId:', contratosConsumidor.length);
+                
                 const filteredContratos = contratosConsumidor.filter(c => {
                     const q = (contractSearchTerm || '').trim().toLowerCase();
                     if (q === '') return true;
@@ -439,6 +497,7 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                 return filteredContratos.length === 0 ? (
                     <div className="col-span-full p-8 text-center text-muted-foreground">
                         <p className="text-lg">Nenhum contrato encontrado</p>
+                        {allContratos.length > 0 && <p className="text-xs mt-2">Total de contratos recebidos: {allContratos.length}, mas nenhum para unidadeId {unidadeId}</p>}
                         {carregando && <p className="text-sm mt-2">Carregando contratos...</p>}
                     </div>
                 ) : (
@@ -515,25 +574,40 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                 </TableHeader>
 
                 <TableBody>
-                    {((Array.isArray(contratos) ? contratos : contratos?.contratos) || [])
-                        .filter(c => c.unidadeId === Number(unidadeId))
-                        .map((c) => (
-                        <TableRow key={c.id}>
-                            <TableCell className="font-medium">{c.titulo || c.numero || `Contrato ${c.id}`}</TableCell>
-                            <TableCell>{c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</TableCell>
-                            <TableCell>{formatDate(c.dataInicio)}</TableCell>
-                            <TableCell>{formatDate(c.dataFim)}</TableCell>
-                            <TableCell>{formatDate(c.dataEnvio)}</TableCell>
-                            <TableCell>{c.frequenciaEntregas ?? c.frequencia_entregas ?? '—'}</TableCell>
-                            <TableCell>{c.diaPagamento ?? c.dia_pagamento ?? '—'}</TableCell>
-                            <TableCell>{c.formaPagamento ?? c.forma_pagamento ?? '—'}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(c.valorTotal ?? c.valor_total)}</TableCell>
-                        </TableRow>
-                    ))}
+                    {(() => {
+                        const allContratos = (Array.isArray(contratos) ? contratos : contratos?.contratos) || [];
+                        const filteredContratos = allContratos.filter(c => Number(c.unidadeId) === Number(unidadeId));
+                        
+                        if (filteredContratos.length === 0) {
+                            return (
+                                <TableRow>
+                                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                                        Nenhum contrato encontrado para esta unidade
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        }
+                        
+                        return filteredContratos.map((c) => (
+                            <TableRow key={c.id}>
+                                <TableCell className="font-medium">{c.titulo || c.numero || `Contrato ${c.id}`}</TableCell>
+                                <TableCell>{c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</TableCell>
+                                <TableCell>{formatDate(c.dataInicio)}</TableCell>
+                                <TableCell>{formatDate(c.dataFim)}</TableCell>
+                                <TableCell>{formatDate(c.dataEnvio)}</TableCell>
+                                <TableCell>{c.frequenciaEntregas ?? c.frequencia_entregas ?? '—'}</TableCell>
+                                <TableCell>{c.diaPagamento ?? c.dia_pagamento ?? '—'}</TableCell>
+                                <TableCell>{c.formaPagamento ?? c.forma_pagamento ?? '—'}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(c.valorTotal ?? c.valor_total)}</TableCell>
+                            </TableRow>
+                        ));
+                    })()}
                 </TableBody>
             </Table>
         </div>
     );
+
+    // CreateContratoModal moved to separate component file (imports at top)
 
     const CatalogModal = () => {
         // Tenta extrair o nome da unidade/fazenda de várias fontes possíveis
@@ -607,8 +681,15 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
             <Dialog open={showContratoDetalhesModal} onOpenChange={setShowContratoDetalhesModal}>
                 <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>
-                            Detalhes do Contrato
+                        <DialogTitle className="flex items-center justify-between">
+                            <span>Detalhes do Contrato</span>
+                            <button
+                                onClick={() => setShowDeleteContratoConfirm(true)}
+                                className="ml-auto p-2 hover:bg-destructive/20 rounded-lg transition"
+                                title="Excluir contrato"
+                            >
+                                <Trash className="h-4 w-4 text-destructive" />
+                            </button>
                         </DialogTitle>
                     </DialogHeader>
 
@@ -708,6 +789,42 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
         );
     };
 
+    const DeleteContratoConfirmModal = () => {
+        return (
+            <Dialog open={showDeleteContratoConfirm} onOpenChange={setShowDeleteContratoConfirm}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Exclusão</DialogTitle>
+                        <DialogDescription>
+                            Tem certeza que deseja excluir este contrato? Esta ação não poderá ser desfeita.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <div className="flex gap-2 w-full">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setShowDeleteContratoConfirm(false)}
+                                disabled={deletingContrato}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={handleDeleteContrato}
+                                disabled={deletingContrato}
+                                className="ml-auto"
+                            >
+                                {deletingContrato ? 'Excluindo...' : 'Excluir'}
+                            </Button>
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    };
+
 
 
 
@@ -721,8 +838,19 @@ export default function FornecedoresCard({ fornecedores = [], contratos = [], pe
                 {contractsViewMode === 'table' ? renderTableContratos() : renderCardsContratos()}
             </div>
 
+            <CreateContratoModal
+                open={showCreateContratoModal}
+                onOpenChange={setShowCreateContratoModal}
+                unidadeId={unidadeId}
+                onSuccess={(body) => {
+                    setShowCreateContratoModal(false);
+                    try { router.refresh(); } catch (e) { /* ignore */ }
+                    try { if (body?.message) alert(body.message); else alert('Contrato criado com sucesso'); } catch(e) {}
+                }}
+            />
             <CatalogModal />
             <ContratoDetalhesModal />
+            <DeleteContratoConfirmModal />
         </div>
     );
 }

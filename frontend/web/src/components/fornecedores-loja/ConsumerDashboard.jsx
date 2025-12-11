@@ -3,13 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { ProductCatalog } from './ProductCatalog';
-// import { OrderManagement } from './OrderManagement';
-import { ChatInterface } from './ChatInterface';
-import { ComplaintSystem } from './ComplaintSystem';
-import { ShoppingCart, MessageSquare, AlertTriangle, Search, TrendingUp, Clock, CheckCircle, FileCheck } from 'lucide-react';
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import { ShoppingCart, Clock, CheckCircle, FileCheck } from 'lucide-react';
 import { Card, CardContent, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card"
 import FornecedoresCard from './fornecedores-card';
 import { OrderManagement } from './OrderManagement';
@@ -55,7 +49,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
         
         console.log('[ConsumerDashboard] Contratos externos recebidos:', contratosArray.length, contratosArray);
         
-        // 2) Busca contratos INTERNOS da unidade (com outras fazendas) - onde esta unidade CONSOME
+        // 2) Busca contratos INTERNOS da unidade (com fazendas) - onde esta loja CONSOME
         try {
           const cInternRes = await fetchWithAuth(`${API_URL}verContratosComFazendas/${unidadeId}`, { 
             method: 'GET', 
@@ -64,57 +58,34 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
           
           if (cInternRes.ok) {
             const cInternBody = await cInternRes.json().catch(() => ({}));
-            console.log('[ConsumerDashboard] Resposta completa de contratos internos (consumidor):', cInternBody);
+            console.log('[ConsumerDashboard - Loja] Resposta completa de contratos com fazendas:', cInternBody);
             const contratosInternos = Array.isArray(cInternBody.contratos) ? cInternBody.contratos : 
                                        (cInternBody.contratos?.contratos ? cInternBody.contratos.contratos : []);
-            console.log('[ConsumerDashboard] Contratos internos (onde esta unidade CONSOME) recebidos:', contratosInternos.length, contratosInternos);
+            console.log('[ConsumerDashboard - Loja] Contratos com fazendas recebidos:', contratosInternos.length, contratosInternos);
             
-            // Combina contratos externos e internos
+            // Combina contratos externos e internos (com fazendas)
             contratosArray = [...contratosArray, ...contratosInternos];
-            console.log('[ConsumerDashboard] Total de contratos (externos + internos consumidor):', contratosArray.length);
+            console.log('[ConsumerDashboard - Loja] Total de contratos (externos + internos):', contratosArray.length);
           } else {
-            console.warn('[ConsumerDashboard] Resposta de contratos internos não OK:', cInternRes.status);
+            console.warn('[ConsumerDashboard - Loja] Resposta de contratos com fazendas não OK:', cInternRes.status);
           }
         } catch (e) {
-          console.warn('[ConsumerDashboard] Aviso ao buscar contratos internos:', e?.message);
-        }
-
-        // 3) Busca contratos onde esta unidade é FORNECEDORA para outras unidades
-        try {
-          const cFornecedorRes = await fetchWithAuth(`${API_URL}verContratosComFazendasAsFornecedor/${unidadeId}`, { 
-            method: 'GET', 
-            credentials: 'include' 
-          });
-          
-          if (cFornecedorRes.ok) {
-            const cFornecedorBody = await cFornecedorRes.json().catch(() => ({}));
-            console.log('[ConsumerDashboard] Resposta completa de contratos como fornecedor:', cFornecedorBody);
-            const contratosAsFornecedor = Array.isArray(cFornecedorBody.contratos) ? cFornecedorBody.contratos : 
-                                          (cFornecedorBody.contratos?.contratos ? cFornecedorBody.contratos.contratos : []);
-            console.log('[ConsumerDashboard] Contratos (onde esta unidade FORNECE) recebidos:', contratosAsFornecedor.length, contratosAsFornecedor);
-            
-            // Combina com todos os contratos
-            contratosArray = [...contratosArray, ...contratosAsFornecedor];
-            console.log('[ConsumerDashboard] Total de contratos (externos + internos consumidor + fornecedor):', contratosArray.length);
-          } else {
-            console.warn('[ConsumerDashboard] Resposta de contratos como fornecedor não OK:', cFornecedorRes.status);
-          }
-        } catch (e) {
-          console.warn('[ConsumerDashboard] Aviso ao buscar contratos como fornecedor:', e?.message);
+          console.warn('[ConsumerDashboard - Loja] Aviso ao buscar contratos com fazendas:', e?.message);
         }
         
         setContratosExternos(contratosArray);
 
         // 3) Extrai fornecedores ÚNICOS dos contratos (EXTERNOS e INTERNOS)
+        // Para loja, os "fornecedores" são tanto fornecedores externos quanto FAZENDAS internas
         const fornecedoresFromContratos = contratosArray
-          .map(c => c.fornecedorExterno || c.fornecedorInterno)
+          .map(c => c.fornecedorExterno || c.fornecedorInterno || c.fornecedorUnidade)
           .filter(f => f && typeof f.id !== 'undefined')
           .reduce((acc, f) => {
             if (!acc.find(x => x.id === f.id)) acc.push(f);
             return acc;
           }, []);
 
-        console.log('[ConsumerDashboard] Fornecedores extraídos dos contratos:', fornecedoresFromContratos.length, fornecedoresFromContratos);
+        console.log('[ConsumerDashboard - Loja] Fornecedores (externos + fazendas) extraídos dos contratos:', fornecedoresFromContratos.length, fornecedoresFromContratos);
 
         // 4) Normaliza fornecedores para o formato esperado pelo FornecedoresCard
         let normalized = fornecedoresFromContratos.map(f => ({
@@ -217,14 +188,14 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
   return (
     <div className="space-y-6 flex flex-col gap-12">
     
-          <ContratosComoConsumidor 
-            fornecedores={fornecedoresExternos} 
-            contratos={contratosExternos} 
-            pedidos={pedidosExternos} 
-            carregando={carregandoFornecedores}
-            unidadeId={unidadeId}
-            onShowCreatePedido={() => setShowCreatePedidoModal(true)}
-          />
+      <FornecedoresTab 
+        fornecedores={fornecedoresExternos} 
+        contratos={contratosExternos} 
+        pedidos={pedidosExternos} 
+        carregando={carregandoFornecedores}
+        unidadeId={unidadeId}
+        onShowCreatePedido={() => setShowCreatePedidoModal(true)}
+      />
         
       {/* Modal para criar pedido interno */}
       <CreatePedidoLojaModal
@@ -242,7 +213,7 @@ export function ConsumerDashboard({ unidadeId: unidadeIdProp = null }) {
   );
 }
 
-function ContratosComoConsumidor({ 
+function FornecedoresTab({ 
   fornecedores = [], 
   contratos = [], 
   pedidos = [], 
@@ -250,7 +221,9 @@ function ContratosComoConsumidor({
   unidadeId = null,
   onShowCreatePedido = () => {}
 }) {
-  // This tab receives pre-fetched data from the parent `ConsumerDashboard` via props.
+  // Tab de fornecedores da loja: lista fazendas fornecedoras e contratos internos
+  // Para lojas, o conceito é simples: elas consomem de fornecedores externos e de fazendas internas
+  // Não há "Contratos como fornecedor" pois lojas não fornecem para outras unidades
   return (
     <div className="space-y-6 flex flex-col gap-12">
      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-0">
@@ -277,7 +250,7 @@ function ContratosComoConsumidor({
         </Card>
       </div>  */}
 
-      <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} />
+      <FornecedoresCard fornecedores={fornecedores} contratos={contratos} pedidos={pedidos} carregando={carregando} unidadeId={unidadeId} />
 
       <div className="flex justify-end">
         <Button onClick={onShowCreatePedido}>

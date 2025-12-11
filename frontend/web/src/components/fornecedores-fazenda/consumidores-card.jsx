@@ -13,10 +13,11 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
-export default function ConsumidoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false }) {
+export default function ConsumidoresCard({ fornecedores = [], contratos = [], pedidos = [], carregando = false, unidadeId: unidadeIdProp = null }) {
     const router = useRouter();
     const { user, fetchWithAuth } = useAuth();
-    const unidadeId = user?.unidadeId ?? user?.unidade?.id ?? null;
+    // Priorizar unidadeIdProp se fornecido (ex: quando vindo de matriz com fazenda específica), senão usar do contexto
+    const unidadeId = unidadeIdProp ?? user?.unidadeId ?? user?.unidade?.id ?? null;
 
     // Small local state to hide removed suppliers without forcing parent refresh
     const [removedIds, setRemovedIds] = useState(new Set());
@@ -425,8 +426,28 @@ export default function ConsumidoresCard({ fornecedores = [], contratos = [], pe
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(() => {
                 const allContratos = (Array.isArray(contratos) ? contratos : contratos?.contratos) || [];
+                
+                // Debug: Log do estado atual
+                if (allContratos.length > 0) {
+                    console.log('[ConsumidoresCard] Total contratos recebidos:', allContratos.length);
+                    console.log('[ConsumidoresCard] unidadeId atual (fazenda fornecedora):', unidadeId);
+                    console.log('[ConsumidoresCard] Primeiro contrato exemplo:', allContratos[0]);
+                }
+                
                 // FILTRO: Mostrar apenas contratos onde esta unidade é FORNECEDORA (fornecedorUnidadeId = unidadeAtual)
-                const contratasFornecedor = allContratos.filter(c => c.fornecedorUnidadeId === Number(unidadeId));
+                // Suportar tanto fornecedorUnidadeId numérico quanto string
+                const contratasFornecedor = allContratos.filter(c => {
+                    const contratoFornecedorId = Number(c.fornecedorUnidadeId);
+                    const atualUnitadeId = Number(unidadeId);
+                    const matches = contratoFornecedorId === atualUnitadeId;
+                    if (allContratos.length > 0 && !matches) {
+                        console.log(`[ConsumidoresCard] Contrato ${c.id} descartado: fornecedorUnidadeId=${contratoFornecedorId} !== unidadeId=${atualUnitadeId}`);
+                    }
+                    return matches;
+                });
+                
+                console.log('[ConsumidoresCard] Contratos após filtro de fornecedorUnidadeId:', contratasFornecedor.length);
+                
                 const filteredContratos = contratasFornecedor.filter(c => {
                     const q = (contractSearchTerm || '').trim().toLowerCase();
                     if (q === '') return true;
@@ -440,6 +461,7 @@ export default function ConsumidoresCard({ fornecedores = [], contratos = [], pe
                 return filteredContratos.length === 0 ? (
                     <div className="col-span-full p-8 text-center text-muted-foreground">
                         <p className="text-lg">Nenhum contrato encontrado</p>
+                        {allContratos.length > 0 && <p className="text-xs mt-2">Total de contratos recebidos: {allContratos.length}, mas nenhum para fornecedorUnidadeId {unidadeId}</p>}
                         {carregando && <p className="text-sm mt-2">Carregando contratos...</p>}
                     </div>
                 ) : (
@@ -515,21 +537,34 @@ export default function ConsumidoresCard({ fornecedores = [], contratos = [], pe
                 </TableHeader>
 
                 <TableBody>
-                    {((Array.isArray(contratos) ? contratos : contratos?.contratos) || [])
-                        .filter(c => c.fornecedorUnidadeId === Number(unidadeId))
-                        .map((c) => (
-                        <TableRow key={c.id}>
-                            <TableCell className="font-medium">{c.titulo || c.numero || `Contrato ${c.id}`}</TableCell>
-                            <TableCell>{c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</TableCell>
-                            <TableCell>{formatDate(c.dataInicio)}</TableCell>
-                            <TableCell>{formatDate(c.dataFim)}</TableCell>
-                            <TableCell>{formatDate(c.dataEnvio)}</TableCell>
-                            <TableCell>{c.frequenciaEntregas ?? c.frequencia_entregas ?? '—'}</TableCell>
-                            <TableCell>{c.diaPagamento ?? c.dia_pagamento ?? '—'}</TableCell>
-                            <TableCell>{c.formaPagamento ?? c.forma_pagamento ?? '—'}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(c.valorTotal ?? c.valor_total)}</TableCell>
-                        </TableRow>
-                    ))}
+                    {(() => {
+                        const allContratos = (Array.isArray(contratos) ? contratos : contratos?.contratos) || [];
+                        const filteredContratos = allContratos.filter(c => Number(c.fornecedorUnidadeId) === Number(unidadeId));
+                        
+                        if (filteredContratos.length === 0) {
+                            return (
+                                <TableRow>
+                                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                                        Nenhum contrato encontrado para esta unidade
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        }
+                        
+                        return filteredContratos.map((c) => (
+                            <TableRow key={c.id}>
+                                <TableCell className="font-medium">{c.titulo || c.numero || `Contrato ${c.id}`}</TableCell>
+                                <TableCell>{c.fornecedorExterno?.nomeEmpresa ?? c.fornecedorInterno?.nome ?? c.fornecedor?.nome ?? '—'}</TableCell>
+                                <TableCell>{formatDate(c.dataInicio)}</TableCell>
+                                <TableCell>{formatDate(c.dataFim)}</TableCell>
+                                <TableCell>{formatDate(c.dataEnvio)}</TableCell>
+                                <TableCell>{c.frequenciaEntregas ?? c.frequencia_entregas ?? '—'}</TableCell>
+                                <TableCell>{c.diaPagamento ?? c.dia_pagamento ?? '—'}</TableCell>
+                                <TableCell>{c.formaPagamento ?? c.forma_pagamento ?? '—'}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(c.valorTotal ?? c.valor_total)}</TableCell>
+                            </TableRow>
+                        ));
+                    })()}
                 </TableBody>
             </Table>
         </div>
