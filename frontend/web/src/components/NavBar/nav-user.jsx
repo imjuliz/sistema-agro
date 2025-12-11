@@ -80,9 +80,9 @@ export function NavUser() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <Avatar className="h-8 w-8 rounded-md">
-                <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} className="object-cover rounded-md" />
-                  <AvatarFallback className="rounded-md">{getInitials(user.nome || user.email)}</AvatarFallback>
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} style={{ objectFit: 'cover' }} />
+                  <AvatarFallback className="rounded-lg">{getInitials(user.nome || user.email)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.nome}</span>
@@ -94,9 +94,9 @@ export function NavUser() {
           <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg" side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-md">
-                  <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} className="object-cover rounded-md" />
-                  <AvatarFallback className="rounded-md">{getInitials(user.nome || user.email)}</AvatarFallback>
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={buildImageUrl(user.ftPerfil || user.avatar)} alt={user.nome || user.email || ''} onError={(e) => { try { e.currentTarget.src = ''; } catch(_){} }} style={{ objectFit: 'cover' }} />
+                  <AvatarFallback className="rounded-lg">{getInitials(user.nome || user.email)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.nome}</span>
