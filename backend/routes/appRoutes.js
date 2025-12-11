@@ -51,7 +51,7 @@ import {
 // import { getDashboardDataController } from '../controllers/dashboardController.js';
 import { getProdutosController, produtosDoEstoqueController } from "../controllers/ProdutosController.js";
 import { getDashboardDataController, getLotesPorStatusController } from '../controllers/dashboardController.js';
-import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController, listarLotesPlantioControllerOld, contarLotesController} from "../controllers/LoteController.js";
+import { totalLotesPlantioController,totalLotesAnimaliaController, contarLotesPlantioDisponiveisController, contarLotesAnimaliaDisponiveisController, contarLotesColheitaController, lotesPlantioImproprioController, lotesAnimaliaImproprioController, contarLotesAnimaliaPorTipoController, criarAtividadeAgricolaController, listarLotesAnimaliaController, listarLotesPlantioController, atualizarCamposLoteController , listarAtividadesPlantioController, listarAtividadesAnimaliaController, qtdColheitasPorMesController, criarLoteController, contarLotesImpropriosController, contarAnimaisController, criarAtividadeAnimaliaController, listarAtividadesDoLoteController, criarEnvioLoteController, listarEnviosLoteController, listarLotesPlantioControllerOld, contarLotesController, verLoteController} from "../controllers/LoteController.js";
 // import { adicionarProdutoEstoqueController } from "../controllers/EstoqueController.js";
 
 // tradução
@@ -99,6 +99,7 @@ router.post("/criarAtividadeAnimalia", criarAtividadeAnimaliaController);
 router.post("/criarLote", criarLoteController);
 router.get("/consultarLote", consultarLoteController);
 router.get("/lotes/:loteId/producao", verificarProducaoLoteController);
+router.get("/verLote/:id", verLoteController);
 router.get("/produto-mais-vendido", auth, buscarProdutoMaisVendidoController);
 // router.get("/produtos/:unidadeId",  listarProdutosController);
 router.get("/listarProdutos/:unidadeId", getProdutosController);

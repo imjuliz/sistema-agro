@@ -167,17 +167,17 @@ export default function LotesPage() {
 
               {/* FILTROS AVANÇADOS: usa Popover para menu parecido com dropdown */}
               <Popover>
-                <PopoverTrigger asChild>
+                {/* <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <Sliders className="h-4 w-4" />Filtros avançados
                   </Button>
-                </PopoverTrigger>
+                </PopoverTrigger> */}
                 <PopoverContent side="bottom" align="start" className="w-[360px] p-3">
                   {/* header com ações rápidas */}
-                  <div className="flex items-center justify-between mb-2">
+                  {/* <div className="flex items-center justify-between mb-2">
                     <div className="font-semibold">Filtros Avançados</div>
                     <div className="text-sm text-neutral-400">{filtered.length} resultados</div>
-                  </div>
+                  </div> */}
 
                   <div className="space-y-3">
 
@@ -333,14 +333,7 @@ export default function LotesPage() {
                  
               </div>
 
-              <Button
-                variant=""
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setOpenAddLote(true)}
-              >
-                <span className="flex flex-row gap-3 items-center text-sm"><Plus />Novo lote</span>
-              </Button>
+              
 
             </div>
           </div>
@@ -357,7 +350,7 @@ export default function LotesPage() {
             <div>
               {/* Grid of cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {units.map(u => {
+                {paginated.map(u => {
                   // u is a Lote object; map visual fields without changing layout
                   const loteName = u.nome || u.name || `Lote ${u.id}`
                   const tipoProduto = u.tipoProduto || '—'
@@ -383,7 +376,7 @@ export default function LotesPage() {
               </div>
 
               {/* Empty state */}
-              {units.length === 0 && !loading && (
+              {filtered.length === 0 && !loading && (
                 <div className="py-8 flex flex-col items-center gap-4 text-center text-muted-foreground">
                   <Tractor size={50} />
                   <p className="font-medium">Nenhum lote encontrado.</p>
@@ -391,7 +384,7 @@ export default function LotesPage() {
               )}
 
               {/* Pagination controls */}
-              {units.length > 0 && (
+              {filtered.length > 0 && (
                 <div className="mt-6 flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     Página <span className="font-semibold">{page}</span> de{' '}

@@ -387,7 +387,7 @@ export function TableDemo() {
     useEffect(() => { setPage(1); }, [atividades.length]);
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-black flex flex-col h-[600px] p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-neutral-950 flex flex-col h-[600px] p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <Transl className="text-xl font-semibold">Atividades de Animalia</Transl    >
@@ -811,7 +811,7 @@ export function TableDemo2() {
     }, [rawLotes, busca, tipoFilter, statusFilter, priceSort]);
 
     return (
-        <div className="border rounded-lg shadow-sm bg-white dark:bg-black h-full p-4">
+        <div className="border rounded-lg shadow-sm bg-white dark:bg-neutral-950 h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                     <Transl className="text-xl font-semibold">Lotes de Animais</Transl>
@@ -863,7 +863,7 @@ export function TableDemo2() {
                         <TableHead className="font-semibold">Produto</TableHead>
                         <TableHead className="font-semibold">Tipo</TableHead>
                         {/* <TableHead className="font-semibold">Talhão</TableHead> */}
-                        <TableHead className="font-semibold">Validade</TableHead>
+                        {/* <TableHead className="font-semibold">Validade</TableHead> */}
                         <TableHead className="font-semibold">Data</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold">Quantidade</TableHead>
@@ -881,7 +881,7 @@ export function TableDemo2() {
                             <TableCell>{lote.tipo}</TableCell>
                             {/* <TableCell>{lote.talhao}</TableCell> */}
                             {/* removed plantio cell */}
-                            <TableCell>{lote.validade}</TableCell>
+                            {/* <TableCell>{lote.validade}</TableCell> */}
                             <TableCell>{formatDateShort(lote.dataCriacao)}</TableCell>
                             <TableCell>
                                 {editingId === lote.id ? (
