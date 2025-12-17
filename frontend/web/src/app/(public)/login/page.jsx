@@ -40,7 +40,7 @@ export default function LoginPage() {
       
       {/* Conteúdo na frente */}
       <div className="relative z-10 flex w-full max-w-sm flex-col gap-6">
-        <a href="/" className="flex items-center gap-2 self-center font-medium">
+        <a href="/" className="flex items-center gap-2 self-center text-xl font-bold">
           <div className="text-primary-foreground flex size-6 items-center justify-center rounded-md">
           <img src="/img/ruraltech-logo.svg" className='h-6 dark:brightness-[0.9]' alt="RuralTech Logo" />
           </div>

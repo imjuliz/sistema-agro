@@ -7,9 +7,42 @@ import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
 
+// Componentes Field simplificados usando componentes existentes
+function FieldGroup({ className, ...props }) {
+    return <div className={cn("flex flex-col gap-4", className)} {...props} />;
+}
+
+function Field({ className, ...props }) {
+    return <div className={cn("flex flex-col gap-2", className)} {...props} />;
+}
+
+function FieldLabel({ className, ...props }) {
+    return <Label className={cn("", className)} {...props} />;
+}
+
+function FieldDescription({ className, ...props }) {
+    return <p className={cn("text-muted-foreground text-sm", className)} {...props} />;
+}
+
+function FieldSeparator({ className, children, ...props }) {
+    return (
+        <div
+            className={cn(
+                "relative flex items-center gap-4 text-sm text-muted-foreground",
+                "before:flex-1 before:border-t before:border-border",
+                "after:flex-1 after:border-t after:border-border",
+                className
+            )}
+            {...props}
+        >
+            <span data-slot="field-separator-content">{children}</span>
+        </div>
+    );
+}
 export async function fetchPublic(url, options = {}) {
-    return fetch(url, {headers: { "Content-Type": "application/json" },...options,});
+    return fetch(url, { headers: { "Content-Type": "application/json" }, ...options, });
 };
 
 export function EsqueciForm() {
@@ -45,20 +78,37 @@ export function EsqueciForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6 items-center">
-            <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-3xl font-bold text-black dark:text-white mb-5">Esqueci a senha</h1>
-                <p className="text-muted-foreground text-sm text-balance mb-15">Insira seu e-mail para recuperar sua senha.</p>
-            </div>
-            <div className="grid gap-6">
-                <Label htmlFor="email" className="text-black dark:text-white">Email</Label>
-                <Input id="email" type="email" placeholder="m@example.com" className="text-white w-full" value={email} required onChange={(e) => setEmail(e.target.value)} />
-                <Button type="submit" className="w-full bg-black text-white dark:bg-white dark:text-black" disabled={loading}>
-                    {loading ? "Enviando..." : "Enviar código"}
-                </Button>
-            </div>
-            <a href="/login" className="underline text-black dark:text-white text-sm">Voltar</a>
-        </form>
+        <Card>
+            <CardHeader className="text-center">
+                <CardTitle className="text-xl">Esqueci a senha</CardTitle>
+                <CardDescription>Digite seu e-mail e enviaremos instruções para redefinir sua senha</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit}>
+                    <FieldGroup>
+                        <Field>
+                            <FieldLabel htmlFor="email">Email</FieldLabel>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="m@example.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </Field>
+
+                        <Field>
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? "Enviando..." : "Enviar código"}
+                            </Button>
+                        </Field>
+
+                        <Field><a href="/login" className="underline text-black dark:text-white text-center mt-5 text-sm">Voltar</a></Field>
+                    </FieldGroup>
+                </form>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -100,34 +150,41 @@ export function RedefinirForm({ className, ...props }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6 items-center", className)} {...props}>
-            <div className="flex flex-col items-center gap-2 text-center w-full">
-                <h1 className="text-3xl font-bold text-black mb-5 dark:text-white">Redefinição de senha</h1>
-                <p className="text-muted-foreground text-1sm text-balance mb-15">
-                    Defina uma nova senha para sua conta. {emailQuery ? <span className="font-medium">({emailQuery})</span> : null}
-                </p>
-            </div>
-            <div className="grid gap-6 w-full">
-                <div className="grid gap-3">
-                    <Label htmlFor="Senha" className={'text-black dark:text-white'}>Senha</Label>
-                    <Input id="senha" type="password" placeholder="Digite sua nova senha" className={'text-black w-[100%] dark:text-white'} value={senha} onChange={(e) => setSenha(e.target.value)} required />
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="Confirmar senha" className={'text-black dark:text-white'}>Confirme sua senha</Label>
-                    <Input id="senhaConfirmada" type="password" placeholder="Confirme a senha" className={'text-black w-[100%] dark:text-white'} value={confSenha} onChange={(e) => setConfSenha(e.target.value)} required />
-                </div>
-                <Button type="submit" className="w-full bg-black text-white mt-15 dark:bg-white dark:text-black" disabled={loading}>
-                    {loading ? 'Redefinindo...' : 'Redefinir'}
-                </Button>
-            </div>
-            {message && (
-                <div className={`mt-4 text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</div>
-            )}
-            <div className="text-center text-sm text-white">
-                <a href="/login" className="underline underline-offset-4 text-black dark:text-white">
-                    Voltar
-                </a>
-            </div>
-        </form>
+        <Card>
+            <CardHeader className="text-center">
+                <CardTitle className="text-xl">Redefinição de senha</CardTitle>
+                <CardDescription>Defina uma nova senha para sua conta {emailQuery ? <span className="font-semibold">{emailQuery}</span> : null}</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <form onSubmit={handleSubmit}>
+
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel htmlFor="email">Senha</FieldLabel>
+                        <Input id="senha" type="password" placeholder="Digite sua nova senha" className={'text-black w-[100%] dark:text-white'} value={senha} onChange={(e) => setSenha(e.target.value)} required />
+                    </Field>
+
+                    <Field>
+                        <FieldLabel htmlFor="Confirmar senha" className={'text-black dark:text-white'}>Confirme sua senha</FieldLabel>
+                        <Input id="senhaConfirmada" type="password" placeholder="Confirme a senha" className={'text-black w-[100%] dark:text-white'} value={confSenha} onChange={(e) => setConfSenha(e.target.value)} required />
+                    </Field>
+
+                    <Field>
+                        <Button type="submit" className="w-full bg-black text-white dark:bg-white dark:text-black" disabled={loading}>
+                            {loading ? 'Redefinindo...' : 'Redefinir'}
+                        </Button>
+                    </Field>
+                    {message && (
+                        <div className={`mt-4 text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</div>
+                    )}
+                    <Field className="text-center text-sm text-white mt-5">
+                        <a href="/login" className="underline underline-offset-4 text-black dark:text-white">
+                            Voltar
+                        </a>
+                    </Field>
+                </FieldGroup>
+            </form>
+            </CardContent>
+        </Card>
     );
 }
