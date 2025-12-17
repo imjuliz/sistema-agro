@@ -85,7 +85,7 @@ function ConteudoEstoque({onOpenMovimento, isModalOpen, setIsModalOpen, modalIte
   const { refresh } = useInventory();
 
   return (
-    <div className="flex gap-6">
+    <div className="flex px-18 py-10 gap-6">
       <div className="w-80 space-y-6">
         {/* Company Details */}
         <Card>

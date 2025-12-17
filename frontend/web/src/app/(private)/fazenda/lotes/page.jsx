@@ -155,7 +155,7 @@ export default function LotesPage() {
   }, [filtered, page, perPage])
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen px-18 py-10 bg-surface-50">
       <Card className={"mb-8"}>
         <CardHeader>
           <CardTitle className={"mb-4"}>Lista de Lotes</CardTitle>
