@@ -62,7 +62,7 @@ function getMenuByPerfil(perfil) {
       return {
         navMain: [
           { title: <Transl>Dashboard</Transl>, url: "/loja/dashboard", icon: PieChart, },
-          { title: <Transl>Financeiro</Transl>, url: "/loja/vendasDespesas", icon: WalletCards },
+          { title: <Transl>Financeiro</Transl>, url: "/loja/financeiro", icon: WalletCards },
           { title: <Transl>Funcionários</Transl>, url: "/loja/funcionarios", icon: UserCog, },
           { title: <Transl>Fornecedores</Transl>, url: "/loja/fornecedores", icon: Container },
           { title: <Transl>Configurações</Transl>, url: "/loja/configuracoes", icon: Settings2, },
@@ -119,7 +119,7 @@ function getMenuByPerfil(perfil) {
         projects: [
           { name: <Transl>Estoque</Transl>, url: "/fazenda/estoque", icon: Boxes },
           { name: <Transl>Fornecedores</Transl>, url: "/fazenda/fornecedores", icon: Container, },
-          { name: <Transl>Financeiro</Transl>, url: "/fazenda/vendasDespesas", icon: Frame },
+          { name: <Transl>Financeiro</Transl>, url: "/fazenda/financeiro", icon: Frame },
         ],
       }
 

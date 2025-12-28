@@ -1,4 +1,4 @@
-## RuralTech – Plataforma de Gestão Agropecuária
+## RuralTech – Plataforma de Gestão de Agronegócio
 
 Sistema completo para gestão de fazendas e operações agro (estoque, financeiro, rebanho, plantio, vendas, fornecedores e relatórios), composto por:
 

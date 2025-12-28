@@ -1,21 +1,24 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { API_URL } from "@/lib/api"
 import { usePerfilProtegido } from '@/hooks/usePerfilProtegido'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card'
+import { Search, SearchX, ChevronLeft, ChevronsLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 
-export default function Page() {
+export default function ConsultarLote() {
     const { fetchWithAuth, user } = useAuth()
     usePerfilProtegido("GERENTE_FAZENDA")
 
     const [lotes, setLotes] = useState([])
     const [loadingLotes, setLoadingLotes] = useState(false)
     const [loteIdInput, setLoteIdInput] = useState("")
-    const [selectedLoteId, setSelectedLoteId] = useState("")
+    const [selectedLoteId, setSelectedLoteId] = useState("__placeholder")
 
     const [loadingConsult, setLoadingConsult] = useState(false)
     const [atividades, setAtividades] = useState([])
@@ -44,6 +47,18 @@ export default function Page() {
             } catch (e) { }
         }
         return null
+    }
+
+    // helper: converte texto para Title Case (cada palavra com inicial maiúscula), respeitando acentuação PT-BR
+    const titleCase = (value) => {
+        if (value == null) return ''
+        const s = String(value).trim()
+        if (!s) return ''
+        return s
+            .toLocaleLowerCase('pt-BR')
+            .split(/\s+/)
+            .map(w => w ? (w.charAt(0).toLocaleUpperCase('pt-BR') + w.slice(1)) : '')
+            .join(' ')
     }
 
     useEffect(() => {
@@ -90,16 +105,21 @@ export default function Page() {
         loadLotes()
     }, [fetchWithAuth, user])
 
-    const onSelectChange = (e) => {
-        setSelectedLoteId(e.target.value)
-        setLoteIdInput(e.target.value)
+    const onSelectChange = (v) => {
+        if (v === "__placeholder") {
+            setSelectedLoteId("__placeholder")
+            setLoteIdInput("")
+        } else {
+            setSelectedLoteId(v)
+            setLoteIdInput(v)
+        }
     }
 
     const consultarLote = async () => {
         setError(null)
         setAtividades([])
         setLoteInfo(null)
-        const id = loteIdInput?.trim() || selectedLoteId
+        const id = loteIdInput?.trim() || (selectedLoteId === "__placeholder" ? "" : selectedLoteId)
         if (!id) {
             setError('Informe um ID de lote ou selecione um lote')
             return
@@ -108,7 +128,7 @@ export default function Page() {
         setLoadingConsult(true)
         try {
             const fetchFn = fetchWithAuth || fetch
-            
+
             // Buscar informações do lote (tenta múltiplas rotas até encontrar uma resposta válida)
             const tryUrls = [
                 `${base}/verLote/${id}`,
@@ -158,7 +178,7 @@ export default function Page() {
 
             console.log('[ConsultarLote] Lote encontrado (após tentativas/unwrap):', loteFound)
             setLoteInfo(loteFound)
-            
+
             // Buscar atividades do lote
             const url = `${base}/atividadesLote/${id}`
             const res = await fetchFn(url)
@@ -178,6 +198,8 @@ export default function Page() {
 
             setAtividades(found || [])
             if (!found || found.length === 0) {
+                // Não mostrar as informações do lote se não houver atividades
+                setLoteInfo(null)
                 setError('Nenhuma atividade encontrada para este lote.')
             }
         } catch (err) {
@@ -188,160 +210,236 @@ export default function Page() {
         }
     }
 
+    // paginacao
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+
+    // pagination helpers for atividades
+    const filteredItems = atividades || [];
+    const totalPages = Math.max(1, Math.ceil(filteredItems.length / perPage));
+
+    // keep current page valid when totalPages changes
+    useEffect(() => {
+        setPage(p => Math.min(Math.max(1, p), totalPages));
+    }, [totalPages]);
+
+    // reset to first page when atividades or perPage change
+    useEffect(() => {
+        setPage(1);
+    }, [atividades, perPage]);
+
+    const paginatedItems = useMemo(() => {
+        const start = (page - 1) * perPage;
+        return filteredItems.slice(start, start + perPage);
+    }, [filteredItems, page, perPage]);
+
+
     return (
-        <div className="p-6 max-w-5xl mx-auto">
-            <Card className="shadow-lg">
-                <CardHeader>
-                    <CardTitle>Consultar atividades por lote</CardTitle>
-                </CardHeader>
+        <div className="min-h-screen px-18 py-10 bg-surface-50">
 
-                <CardContent className="space-y-6">
-                    <p className="text-sm text-neutral-600">Digite o ID de um lote ou selecione um dos lotes da sua unidade. Em seguida clique em <strong>Consultar Lote</strong> para ver as atividades relacionadas.</p>
+            <div className="flex gap-8">
+                <Card className="w-full p-0 border-none">
+                    <CardHeader className="p-0">
+                        <CardTitle>Consultar atividades por lote</CardTitle>
+                        <CardDescription>Digite o ID de um lote <strong>ou</strong> selecione um dos lotes da sua unidade. Em seguida clique na lupa de consulta para ver as informações e atividades relacionadas.</CardDescription>
+                    </CardHeader>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-2">
-                            <Label className="font-medium">Digite o ID do lote</Label>
-                            <Input value={loteIdInput} onChange={(e) => setLoteIdInput(e.target.value)} placeholder="ex: 123" className="h-11" />
-                            <p className="text-xs text-neutral-500">Você pode inserir o ID manualmente ou selecionar abaixo.</p>
+                    <CardContent className="p-0 flex flex-col gap-10">
+                        {/* <p className="text-sm text-neutral-600 mb-4"></p> */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <Label className="font-medium">Digite o ID do lote</Label>
+                                <Input value={loteIdInput} onChange={(e) => setLoteIdInput(e.target.value)} placeholder="ex: 123" />
+                                <p className="text-xs text-neutral-500">Você pode inserir o ID manualmente</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="font-medium">Ou selecione um lote da unidade</Label>
+                                {loadingLotes ? (
+                                    <div className="text-sm flex items-center">Carregando lotes...</div>
+                                ) : (
+                                    <div className="flex flex-row gap-6">
+                                        <Select value={selectedLoteId} onValueChange={onSelectChange}>
+                                            <SelectTrigger className="h-11 w-full">
+                                                <SelectValue placeholder="Selecione um lote" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__placeholder">Selecione um lote</SelectItem>
+                                                {lotes.map(l => (
+                                                    <SelectItem key={l.id} value={String(l.id)}>{l.nome ? `ID ${l.id}: ${l.nome}  ` : `Lote ${l.id}`}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <div className="gap-2 flex flex-col">
+                                            {/* <Label className="font-medium">Consultar</Label> */}
+                                            <Button size="sm" variant="default" onClick={consultarLote} disabled={loadingConsult}><Search /></Button>
+                                        </div>
+                                    </div>
+                                )}
+                                <p className="text-xs text-neutral-500">Você pode selecionar algum lote</p>
+                            </div>
+
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="font-medium">Ou selecione um lote da unidade</Label>
-                            {loadingLotes ? (
-                                <div className="h-11 flex items-center">Carregando lotes...</div>
-                            ) : (
-                                <select className="w-full border rounded p-2 h-11 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100" value={selectedLoteId} onChange={onSelectChange}>
-                                    <option value="">-- selecione um lote --</option>
-                                    {lotes.map(l => (
-                                        <option key={l.id} value={l.id}>{l.nome ? `${l.id} ${l.nome}  ` : `Lote ${l.id}`}</option>
-                                    ))}
-                                </select>
-                            )}
-                            <p className="text-xs text-neutral-500">Listando lotes de plantio e animalia da unidade.</p>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex ">
-                                <div className="w-full gap-2 flex flex-col">
-                                    <Label className="font-medium">Consultar</Label>
-                                    <Button className="w-full h-11 bg-neutral-900 text-neutral-100 dark:bg-neutral-900 dark:text-neutral-100" onClick={consultarLote} disabled={loadingConsult}>{loadingConsult ? 'Consultando...' : 'Consultar Lote'}</Button>
+                        <div>
+                            {error && (<div className="text-red-600 mb-3">{error}</div>)}
+
+                            {atividades.length > 0 && (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Painel de informações do lote */}
+                                    {loteInfo && (
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle>Informações do Lote</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-3">
+                                                {loteInfo.id && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">ID</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.id}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.nome && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Nome</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{titleCase(loteInfo.nome)}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.tipoProduto && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Tipo de Produto</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{titleCase(loteInfo.tipoProduto)}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.tipo && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Tipo</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{titleCase(loteInfo.tipo)}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.status && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Status</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{titleCase(loteInfo.status)}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.quantidade != null && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Quantidade</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.quantidade} {loteInfo.unidadeMedida ? titleCase(loteInfo.unidadeMedida) : ''}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.preco != null && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Preço</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">R$ {Number(loteInfo.preco).toFixed(2)}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.criadoEm && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Data de Criação</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{new Date(loteInfo.criadoEm).toLocaleString('pt-BR')}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.atualizadoEm && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Última Atualização</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{new Date(loteInfo.atualizadoEm).toLocaleString('pt-BR')}</p>
+                                                    </div>
+                                                )}
+                                                {loteInfo.observacoes && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-neutral-500 uppercase">Observações</p>
+                                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{titleCase(loteInfo.observacoes)}</p>
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    )}
+
+                                    {/* Tabela de atividades */}
+                                    {atividades.length > 0 && (
+                                        <Card className={loteInfo ? 'lg:col-span-2' : 'lg:col-span-3' + "h-fit"}>
+                                            <CardHeader>
+                                                <CardTitle>Atividades Realizadas</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            {/* <TableHead>ID</TableHead> */}
+                                                            <TableHead>Tipo</TableHead>
+                                                            <TableHead>Descrição</TableHead>
+                                                            <TableHead>Data de Início</TableHead>
+                                                            <TableHead>Responsável</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {paginatedItems.map((a, idx) => (
+                                                            <TableRow key={a.id || idx}>
+                                                                {/* <TableCell className="max-w-xs"><div className="font-medium">{a.id}</div></TableCell> */}
+                                                                <TableCell className="max-w-xs"><div className="font-medium">{titleCase(a.tipo || a.tipoAtvd || a.tipo_atividade || '')}</div></TableCell>
+                                                                <TableCell className="max-w-xs"><div className="font-medium">{titleCase(a.descricao)}</div></TableCell>
+                                                                <TableCell className="max-w-xs"><div className="font-medium">{a.dataInicio ? new Date(a.dataInicio).toLocaleString() : ''}</div></TableCell>
+                                                                <TableCell className="max-w-xs"><div className="font-medium">{titleCase(a.responsavel?.nome || a.responsavel?.nomeCompleto || a.responsavelNome || (a.responsavelId ? String(a.responsavelId) : ''))}</div></TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+
+                                                 <CardFooter className="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-800 border-neutral-200">
+                                                    <div className="flex items-center gap-3">
+                                                        <Label className="text-sm font-medium">Linhas por pág.</Label>
+                                                        <Select value={String(perPage)} onValueChange={(val) => { const v = Number(val); setPerPage(v); setPage(1); }}>
+                                                            <SelectTrigger className="w-[80px]">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="5">5</SelectItem>
+                                                                <SelectItem value="6">6</SelectItem>
+                                                                <SelectItem value="10">10</SelectItem>
+                                                                <SelectItem value="20">20</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+
+                                                        <div className="text-sm">Pág. {page} de {totalPages}</div>
+
+                                                        <div className="inline-flex items-center gap-1 border-l dark:border-neutral-800 border-neutral-200 pl-3">
+                                                            <Button variant="ghost" size="sm" onClick={() => setPage(1)} disabled={page === 1} aria-label="Primeira página" >
+                                                                <ChevronsLeft className="h-4 w-4" />
+                                                            </Button>
+
+                                                            <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior" >
+                                                                <ChevronLeft className="h-4 w-4" />
+                                                            </Button>
+
+                                                            <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Próxima página">
+                                                                <ChevronRight className="h-4 w-4" />
+                                                            </Button>
+
+                                                            <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="Última página">
+                                                                <ChevronsRight className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </CardFooter>
+                                            </CardContent>
+                                        </Card>
+                                    )}
                                 </div>
-                            </div>
+                            )}
+
+                            {!loteInfo && atividades.length === 0 && !loadingConsult && (
+                                <div className="flex flex-col gap-2 items-center justify-center">
+                                    <SearchX className="text-neutral-500" />
+                                    <p className="text-neutral-500">Nenhuma informação para exibir.</p>
+                                </div>
+                            )}
                         </div>
-                    </div>
-
-                    <div className="mt-2">
-                        {error && (<div className="text-red-600 mb-3">{error}</div>)}
-
-                        {(loteInfo || atividades.length > 0) && (
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Painel de informações do lote */}
-                                {loteInfo && (
-                                    <div className="lg:col-span-1 bg-neutral-50 dark:bg-neutral-950 rounded border border-neutral-200 dark:border-neutral-700 p-4">
-                                        <h3 className="font-bold text-lg mb-4 text-neutral-900 dark:text-neutral-100">Informações do Lote</h3>
-                                        <div className="space-y-3">
-                                            {loteInfo.id && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">ID</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.id}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.nome && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Nome</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.nome}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.tipoProduto && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Tipo de Produto</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.tipoProduto}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.tipo && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Tipo</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.tipo}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.status && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Status</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200 capitalize">{loteInfo.status}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.quantidade != null && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Quantidade</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.quantidade} {loteInfo.unidadeMedida || ''}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.preco != null && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Preço</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">R$ {Number(loteInfo.preco).toFixed(2)}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.criadoEm && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Data de Criação</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{new Date(loteInfo.criadoEm).toLocaleString('pt-BR')}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.atualizadoEm && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Última Atualização</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{new Date(loteInfo.atualizadoEm).toLocaleString('pt-BR')}</p>
-                                                </div>
-                                            )}
-                                            {loteInfo.observacoes && (
-                                                <div>
-                                                    <p className="text-xs font-semibold text-neutral-500 uppercase">Observações</p>
-                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{loteInfo.observacoes}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Tabela de atividades */}
-                                {atividades.length > 0 && (
-                                    <div className={loteInfo ? 'lg:col-span-2' : 'lg:col-span-3'}>
-                                        <h3 className="font-bold text-lg mb-4 text-neutral-900 dark:text-neutral-100">Atividades Realizadas</h3>
-                                        <div className="overflow-x-auto border rounded">
-                                            <table className="min-w-full divide-y divide-neutral-200">
-                                                <thead className="bg-neutral-50">
-                                                    <tr>
-                                                        <th className="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-300 dark:bg-neutral-800">ID</th>
-                                                        <th className="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-300 dark:bg-neutral-800">Tipo</th>
-                                                        <th className="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-300 dark:bg-neutral-800">Descrição</th>
-                                                        <th className="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-300 dark:bg-neutral-800">Data Início</th>
-                                                        <th className="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-300 dark:bg-neutral-800">Responsável</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white divide-y divide-neutral-100">
-                                                    {atividades.map((a, idx) => (
-                                                        <tr key={a.id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}>
-                                                            <td className="px-4 py-3 text-sm text-neutral-800 dark:text-neutral-300 dark:bg-neutral-950">{a.id}</td>
-                                                            <td className="px-4 py-3 text-sm text-neutral-800 dark:text-neutral-300 dark:bg-neutral-950">{a.tipo || a.tipoAtvd || a.tipo_atividade || ''}</td>
-                                                            <td className="px-4 py-3 text-sm text-neutral-800 dark:text-neutral-300 dark:bg-neutral-950">{a.descricao}</td>
-                                                            <td className="px-4 py-3 text-sm text-neutral-800 dark:text-neutral-300 dark:bg-neutral-950">{a.dataInicio ? new Date(a.dataInicio).toLocaleString() : ''}</td>
-                                                            <td className="px-4 py-3 text-sm text-neutral-800 dark:text-neutral-300 dark:bg-neutral-950">{a.responsavel?.nome || a.responsavel?.nomeCompleto || a.responsavelNome || (a.responsavelId ? String(a.responsavelId) : '')}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {!loteInfo && atividades.length === 0 && !loadingConsult && (
-                            <p className="text-neutral-500">Nenhuma informação para exibir.</p>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }

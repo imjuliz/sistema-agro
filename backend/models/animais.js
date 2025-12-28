@@ -52,7 +52,7 @@ export async function getAnimaisPelaRaca(raca) {
 export async function calcularRentabilidadeAnimal({ animalId, loteId }) {
   try {
     const animal = await prisma.animal.findUnique({
-      where: { id: animalId }
+      where: { id: Number(animalId) }
     });
 
     if (!animal) {
@@ -60,7 +60,7 @@ export async function calcularRentabilidadeAnimal({ animalId, loteId }) {
     }
 
     const lote = await prisma.lote.findUnique({
-      where: { id: loteId }
+      where: { id: Number(loteId) }
     });
 
     if (!lote) {

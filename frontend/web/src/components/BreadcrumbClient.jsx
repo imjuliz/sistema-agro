@@ -26,6 +26,7 @@ const titleMap = {
   producao: "Produção",
   vendas: "Vendas",
   financeiro: "Financeiro",
+  consultarLote: "Consultar Lote"
 };
 
 function humanize(seg) {

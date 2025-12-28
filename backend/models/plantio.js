@@ -84,7 +84,7 @@ export async function createPlantio(data, unidadeId, loteId) {
 
 export async function updatePlantio(id, data, unidadeId, loteId) {
   try {
-    const plantio = await prisma.plantio.findUnique({ where: { id } });
+    const plantio = await prisma.plantio.findUnique({ where: { id: Number(id) } });
     if(!plantio) {
       return res.status(400).json({erro: "Plantio nao encontrado."})
     }
@@ -101,16 +101,16 @@ export async function updatePlantio(id, data, unidadeId, loteId) {
       };
     }
     
-    const lote = await prisma.lote.findUnique({ where: { id: loteId } });
+    const lote = await prisma.lote.findUnique({ where: { id: Number(loteId) } });
     if(!lote) {
       return res.status(400).json({erro: "Lote nao encontrado."})
     }
 
     const Plantio = await prisma.plantio.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         unidadeId: unidadeId,
-        loteId: loteId,
+        loteId: Number(loteId),
         ...data
       },
     })
@@ -131,12 +131,12 @@ export async function updatePlantio(id, data, unidadeId, loteId) {
 
 export async function deletePlantio(id) {
   try {
-    const plantio = await prisma.plantio.findUnique({ where: { id } });
+    const plantio = await prisma.plantio.findUnique({ where: { id: Number(id) } });
     if(!plantio) {
       return res.status(400).json({erro: "Plantio nao encontrado."})
     }
 
-    const Plantio = await prisma.plantio.delete({ where: { id } });
+    const Plantio = await prisma.plantio.delete({ where: { id: Number(id) } });
     
     return {
       sucesso: true,

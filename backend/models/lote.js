@@ -716,7 +716,7 @@ export const criarAtividadeAnimalia = async ({
 
 export async function getLotePorId(id) {
   try {
-    const lote = await prisma.lote.findUnique({ where: { id } });
+    const lote = await prisma.lote.findUnique({ where: { id: Number(id) } });
     return {
       sucesso: true,
       lote,
@@ -967,13 +967,13 @@ export async function updateLoteCampos(id, fields) {
 
 export async function deleteLote(id) {
   try {
-    const lote = await prisma.lote.findUnique({ where: { id: id } });
+    const lote = await prisma.lote.findUnique({ where: { id: Number(id) } });
     if (!lote) {
       return { sucesso: false, message: "Lote nao encontrado!" };
     }
 
     const loteDeletado = await prisma.lote.delete({
-      where: { id },
+      where: { id: Number(id) },
     })
 
     return {

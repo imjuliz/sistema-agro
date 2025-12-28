@@ -225,12 +225,25 @@ export default function DashboardLoja() {
                   <div className="text-sm text-muted-foreground">Nenhum alerta no momento.</div>
                 ) : (
                   <ul className="space-y-3">
-                    {alerts.map((a) => (
-                      <li key={a.id} className="flex items-center gap-3 text-sm">
-                        <a.icon className="w-4 h-4 text-muted-foreground" />
-                        <span>{a.text}</span>
-                      </li>
-                    ))}
+                    {alerts.map((a) => {
+                      // Support different icon types: React element, component, or undefined
+                      if (React.isValidElement(a.icon)) {
+                        return (
+                          <li key={a.id} className="flex items-center gap-3 text-sm">
+                            {React.cloneElement(a.icon, { className: "w-4 h-4 text-muted-foreground" })}
+                            <span>{a.text}</span>
+                          </li>
+                        );
+                      }
+
+                      const Icon = typeof a.icon === "function" ? a.icon : Clock;
+                      return (
+                        <li key={a.id} className="flex items-center gap-3 text-sm">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                          <span>{a.text}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </CardContent>

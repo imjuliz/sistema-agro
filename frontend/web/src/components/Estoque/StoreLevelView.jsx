@@ -65,7 +65,6 @@ export function StoreLevelView({ onOpenMovimento }) {
     fornecedorExternoId: '',
   });
 
-
   // paginacao
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
